@@ -1289,9 +1289,189 @@ public class QuadraticSolver {
 
 ---
 
+## Appendix: Advanced Keywords & Modifiers 🔥
+
+### 1. `transient` (سيبه في البيت ومتاخدوش معاك) 🧳
+
+الـ `transient` ملهاش علاقة بالـ Threads، دي ليها علاقة بموضوع **التخزين (Serialization)**.
+
+**المشكلة:** أحياناً بيكون جوه الـ Object بيانات مش عايز تاخدها معاك في الشنطة:
+1. **بيانات سرية:** زي "الباسورد". مينفعش يتكتب في ملف plain text.
+2. **بيانات مؤقتة:** زي "ناتج عملية حسابية" ممكن نحسبه تاني.
+3. **بيانات ضخمة أو غير قابلة للنقل:** زي "اتصال بقاعدة بيانات".
+
+**الحل:** بنحط كلمة `transient` قبل المتغير ده.
+- معناها: "يا جافا، وأنتِ بتعبي الشنطة (Serialization)، **سيبي المتغير ده مكانه ومتخزنيش قيمته**".
+
+```java
+public class User implements Serializable {
+    String username;              // هتتسجل عادي
+    transient String password;    // مش هتتسجل!
+    transient int ageCalculatedNow; // مش هيتسجل
+}
+```
+
+**مقارنة مهمة:**
+
+| **الكلمة** | **بتعمل إيه؟** | **السياق** |
+|:--|:--|:--|
+| `transient` | بتمنع المتغير إنه **يتخزن** | Serialization |
+| `volatile` | بتمنع المتغير إنه **يتكيش** | Threading |
+| `static` | المتغير بتاع الكلاس (مش بيتسجل أيضاً) | Memory |
+
+---
+
+### 2. `native` (الجاسوس / الكوبري) 🌉
+
+دي طريقتك عشان تخرج بره "سجن" الجافا (JVM) وتتكلم مع نظام التشغيل مباشرة بلغة C أو C++.
+
+```java
+public class NativeDemo {
+    public native void fastHardwareAccess(); // مفيش body هنا
+    
+    static {
+        System.loadLibrary("MyCLibrary"); 
+    }
+}
+```
+
+**المخاطرة:** لو الملف `MyCLibrary.dll` ضاع أو مش متوافق، البرنامج هيموت فوراً (`UnsatisfiedLinkError`).
+
+---
+
+### 3. `strictfp` (مهووس الدقة) 📏
+
+دي كانت مهمة جداً للناس بتوع "ناسا" والعلوم النووية.
+
+**المشكلة:** الـ CPU بتاع Intel بيحسب الكسور العشرية (Double) بطريقة مختلفة شعرة عن الـ CPU بتاع ARM.
+
+**الحل:** بتحط `strictfp` عشان تجبر الجافا تستخدم معيار ثابت (IEEE 754).
+
+```java
+public strictfp class MathRocket {
+    public double calculateTrajectory() {
+        return 0.123456789 * 0.987654321; // الناتج مضمون يكون هو هو على أي جهاز
+    }
+}
+```
+
+> [!NOTE] 
+> بدءاً من **Java 17**، الجافا بقت `strict` لوحدها أوتوماتيك.
+
+---
+
+### 4. `assert` (الحارس النائم والمخادع) 😴⚠️
+
+**المصيبة بالكود:**
+
+```java
+ArrayList<String> users = new ArrayList<>();
+users.add("Mohamed");
+
+// ⚠️ كارثة هنا!
+assert users.remove("Mohamed") : "Failed to remove user!";
+
+System.out.println("Users count: " + users.size());
+```
+
+**النتيجة الصادمة:**
+1. لو شغلت البرنامج عادي: `assert` **مش هتشتغل** - اليوزر **مش هيتمسح**!
+2. لو شغلته بـ `-ea`: السطر هيشتغل، واليوزر هيتمسح.
+
+> [!WARNING]
+> عمرك ما تكتب كود بيغير داتا (زي remove أو ++) جوه assert.
+
+---
+
+## Appendix: Static & Private Methods in Interfaces (Java 8+/9+) 🔧
+
+### Static Methods in Interfaces (Java 8+)
+
+**قبل Java 8:** مكنش ينفع تحط كود جوه الإنترفيس. فكنا بنضطر نعمل **Utility Class** يشيل الدوال الـ Static:
+
+```java
+// قبل: ملفين وشتات!
+interface Shape { void draw(); }
+class ShapeUtils { 
+    static double calculateCircleArea(double r) { return 3.14 * r * r; }
+}
+```
+
+**بعد Java 8:** الإنترفيس بقى ذكي:
+
+```java
+interface Shape {
+    void draw();
+    
+    static double calculateCircleArea(double radius) {
+        return 3.14 * radius * radius;
+    }
+}
+
+// الاستخدام: Shape.calculateCircleArea(5);
+```
+
+**أفضل استخدام:** نمط **Factory Method**:
+
+```java
+interface Vehicle {
+    void drive();
+    
+    static Vehicle create(String type) {
+        return type.equals("Truck") ? new Truck() : new Car();
+    }
+}
+// الاستخدام: Vehicle v = Vehicle.create("Truck");
+```
+
+---
+
+### Private Methods in Interfaces (Java 9+)
+
+**المشكلة:** لما يكون عندك 2 Default Methods وفيه كود مشترك بينهم:
+- في Java 8 كنت بتضطر تعمل الدالة المساعدة `default` → فبتبقى جزء من API!
+
+**الحل:** Java 9 سمحت بالـ **Private Interface Methods**:
+
+```java
+public interface IntStack {
+    void push(int item);
+    int pop();
+    int size();
+
+    default int[] popNElements(int n) {
+        return getElementsInternal(0, n);
+    }
+
+    default int[] skipAndPopNElements(int skip, int n) {
+        return getElementsInternal(skip, n);
+    }
+
+    // 🔒 Private Method - مفيش حد يشوفها غير الدالتين اللي فوق
+    private int[] getElementsInternal(int skip, int n) {
+        if ((skip + n) > size()) return new int[0];
+        for (int i = 0; i < skip; i++) pop();
+        int[] result = new int[n];
+        for (int i = 0; i < n; i++) result[i] = pop();
+        return result;
+    }
+}
+```
+
+### القواعد الذهبية:
+
+| **Type** | **Access** | **Body** | **Can Override** |
+|:--|:--|:--|:--|
+| Abstract | الكل | ❌ | ✅ Must |
+| Default | الكل | ✅ | ✅ Optional |
+| Static | `Interface.method()` | ✅ | ❌ |
+| Private | داخل الإنترفيس فقط | ✅ | ❌ |
+
+---
+
 ## 🔗 Related Notes
 
 > [!TIP] **مسار التعلم (Learning Path)**
 > - **حالة خاصة:** [[Inner Classes]] - Inner classes تكسر قواعد الوصول العادية
 > - **تطور Interfaces:** [[Functional interfaces]] - Default methods في Java 8
-> - **السياق التاريخي:** [[The History and Evolution of Java]] - لماذا Package naming convention
+> - **السياق التاريخي:** [[Java Architecture and JVM]] - لماذا Package naming convention
