@@ -11,10 +11,14 @@
             "id": "ae84a341f80603f9",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "_agent-proposals/2026-01-06-Java-Internal.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "2026-01-06-Java-Internal"
             }
           }
         ]
