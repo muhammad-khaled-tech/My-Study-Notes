@@ -1,3 +1,16 @@
+---
+tags:
+  - java-concurrency
+  - java-threading
+  - java-multithreading
+  - java-synchronization
+difficulty: 4
+related:
+  - "[[Exceptions]]"
+  - "[[Stream API]]"
+  - "[[Functional interfaces]]"
+  - "[[Inner Classes]]"
+---
 
 # Lesson 10: Multi-Threading in Java
 
@@ -661,3 +674,13 @@ public static void main(String[] args) {
 > 5. وختمنا بالـ Multi-Threading والـ I/O Streams.
 > 
 > مبروك عليك! أنت دلوقتي جاهز تدخل في الـ Enterprise Java (Spring Boot / Jakarta EE) بقلب جامد. 🚀🎓
+
+---
+
+## 🔗 Related Notes
+
+> [!TIP] **مسار التعلم (Learning Path)**
+> - **Error Handling:** [[Exceptions]] - InterruptedException يجب معالجته دائماً
+> - **البديل الحديث:** [[Stream API]] - Parallel Streams تجرد تعقيد Threading
+> - **الأساس:** [[Functional interfaces]] - Runnable هو Functional Interface
+> - **التنفيذ:** [[Inner Classes]] - Anonymous classes لإنشاء Runnables

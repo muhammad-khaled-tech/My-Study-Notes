@@ -1,3 +1,16 @@
+---
+tags:
+  - java-collections
+  - java-data-structures
+  - java-generics
+  - java-performance
+difficulty: 4
+related:
+  - "[[Generics and Lambda Expressions and Method Reference]]"
+  - "[[Stream API]]"
+  - "[[Wrapers]]"
+  - "[[Exceptions]]"
+---
 
 # Lesson 9: Introduction to Java Collections Framework
 
@@ -1645,3 +1658,10 @@ public class SimpleWordDictionary {
 
 ---
 
+## 🔗 Related Notes
+
+> [!TIP] **مسار التعلم (Learning Path)**
+> - **Type Safety:** [[Generics and Lambda Expressions and Method Reference]] - Collections بدون Generics ترجع Object
+> - **Modern API:** [[Stream API]] - stream() هو الجسر الحديث
+> - **Requirement:** [[Wrapers]] - Collections لا تقبل primitives
+> - **Error Handling:** [[Exceptions]] - ConcurrentModificationException مع Iterator

@@ -1,3 +1,16 @@
+---
+tags:
+  - java-exceptions
+  - java-error-handling
+  - java-runtime
+  - java-checked-unchecked
+difficulty: 3
+related:
+  - "[[Threading]]"
+  - "[[Java collections]]"
+  - "[[Wrapers]]"
+  - "[[Stream API]]"
+---
 
 # Lesson 6 (Part 1): The Anatomy & Hierarchy
 
@@ -553,3 +566,11 @@ ABORT LAUNCH: Thruster Power Low ⚠️
 لاحظ إن رسالة "LIFTOFF" متطبعتش لأن التنفيذ قفز للـ `catch`، بس رسالة `finally` اتطبعت في الآخر.
 
 ---
+
+## 🔗 Related Notes
+
+> [!TIP] **مسار التعلم (Learning Path)**
+> - **Concurrency:** [[Threading]] - InterruptedException هو استثناء Threading الأساسي
+> - **Collections:** [[Java collections]] - ConcurrentModificationException, NoSuchElementException
+> - **Wrappers:** [[Wrapers]] - NullPointerException مع auto-unboxing
+> - **Modern Java:** [[Stream API]] - try-with-resources مع Streams

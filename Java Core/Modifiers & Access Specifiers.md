@@ -1,3 +1,15 @@
+---
+tags:
+  - java-oop
+  - java-encapsulation
+  - java-access-control
+  - java-interfaces
+difficulty: 3
+related:
+  - "[[Inner Classes]]"
+  - "[[Functional interfaces]]"
+  - "[[The History and Evolution of Java]]"
+---
 
 
 # Lesson 4 (Part 1): Modifiers & Access Specifiers
@@ -1274,3 +1286,12 @@ public class QuadraticSolver {
 ```
 
 كده يا هندسة معاك كل سطر كود اتذكر في الملفات دي من غير أي اختصار. بالتوفيق في الامتحان! 🚀
+
+---
+
+## 🔗 Related Notes
+
+> [!TIP] **مسار التعلم (Learning Path)**
+> - **حالة خاصة:** [[Inner Classes]] - Inner classes تكسر قواعد الوصول العادية
+> - **تطور Interfaces:** [[Functional interfaces]] - Default methods في Java 8
+> - **السياق التاريخي:** [[The History and Evolution of Java]] - لماذا Package naming convention
