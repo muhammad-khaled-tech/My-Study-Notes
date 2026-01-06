@@ -1,3 +1,15 @@
+---
+tags:
+  - java-core
+  - java-var
+  - java-java10
+  - java-type-inference
+difficulty: 2
+related:
+  - "[[Data Types]]"
+  - "[[Generics and Lambda Expressions and Method Reference]]"
+---
+
 الـ `var` دي حكاية كبيرة ظهرت في **Java 10** تحت اسم **Local Variable Type Inference**. وعشان تضمن أي سؤال يجيلك فيها في الامتحان، لازم تفهم هي "إيه" وهي "مش إيه".
 
 إليك الشرح التفصيلي الممل (زي ما الكتاب بيقول):

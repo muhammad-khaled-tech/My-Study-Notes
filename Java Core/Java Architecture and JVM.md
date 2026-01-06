@@ -1,3 +1,17 @@
+---
+tags:
+  - java-history
+  - java-jvm
+  - java-architecture
+  - java-bytecode
+  - java-buzzwords
+difficulty: 2
+related:
+  - "[[Data Types]]"
+  - "[[Threading]]"
+  - "[[Modifiers & Access Specifiers]]"
+---
+
 # The History and Evolution of Java
 
 **(تاريخ وتطور الجافا)**
