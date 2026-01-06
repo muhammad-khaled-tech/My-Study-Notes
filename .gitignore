@@ -1,10 +1,10 @@
-# Antigravity & AI Agent Files
-agent-instructions.md
-_agent-proposals/
-_connection-map.md
-
-# Local Scripts
-*.sh
-
-# Obsidian Internal Settings (Optional but recommended to keep repo clean)
-.obsidian/
+# # Antigravity & AI Agent Files
+# agent-instructions.md
+# _agent-proposals/
+# _connection-map.md
+# 
+# # Local Scripts
+# *.sh
+# 
+# # Obsidian Internal Settings (Optional but recommended to keep repo clean)
+# .obsidian/

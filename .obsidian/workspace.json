@@ -1,0 +1,259 @@
+{
+  "main": {
+    "id": "c652585a3c27fd79",
+    "type": "split",
+    "children": [
+      {
+        "id": "383b3b63a29280bb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ae84a341f80603f9",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "1357b7d3c6cc0f1d",
+    "type": "split",
+    "children": [
+      {
+        "id": "32f9637151e57698",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a4263eb0ef45c795",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "4006023fbe959311",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "b82e530aa099b454",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200
+  },
+  "right": {
+    "id": "b3f71f33ce591960",
+    "type": "split",
+    "children": [
+      {
+        "id": "56979a6c4ca11ab2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0b6fe10fa0a23248",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "متفرقات/Untitled.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Untitled"
+            }
+          },
+          {
+            "id": "a01d9a404bfb84e7",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "متفرقات/Untitled.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Untitled"
+            }
+          },
+          {
+            "id": "8d83e2a71dbdb584",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "9b529688cc4ab471",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "99e4c975ce041180",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "متفرقات/Untitled.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Untitled"
+            }
+          },
+          {
+            "id": "6d980fd7e891c79b",
+            "type": "leaf",
+            "state": {
+              "type": "smart-connections-view",
+              "state": {},
+              "icon": "lucide-ghost",
+              "title": "smart-connections-view"
+            }
+          },
+          {
+            "id": "a810d618a7695718",
+            "type": "leaf",
+            "state": {
+              "type": "antigravity-debugger-view",
+              "state": {},
+              "icon": "lucide-ghost",
+              "title": "antigravity-debugger-view"
+            }
+          }
+        ],
+        "currentTab": 6
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "obsidian-excalidraw-plugin:New drawing": false,
+      "omnisearch:Omnisearch": false,
+      "smart-connections:Smart Connections: Open connections view": false,
+      "smart-connections:Smart Lookup: Open lookup view": false,
+      "smart-connections:Smart Connections: Open random connection": false,
+      "obsidian-advanced-slides:Show Slide Preview": false,
+      "copilot:Open Copilot Chat": false,
+      "templater-obsidian:Templater": false,
+      "vscode-editor:Create Code File": false,
+      "obsidian-git:Open Git source control": false,
+      "antigravity-debugger:AntiGravity Debugger": false
+    }
+  },
+  "active": "ae84a341f80603f9",
+  "lastOpenFiles": [
+    "_agent-proposals/2026-01-06-Java-Internal.md",
+    "_agent-proposals/approved/2026-01-06-JavaCore-Synthesis.md",
+    "_agent-proposals/2026-01-06-JavaCore-Synthesis.md",
+    "Untitled 1.md",
+    "Untitled 2.md",
+    "Untitled.md",
+    "Excalidraw/Drawing 2025-12-28 18.34.04.excalidraw.md",
+    "scripts/tree.md",
+    "scripts/Downloaded/Slideshow.md",
+    "scripts/BinaryTree_Anim.md",
+    "scripts/Downloaded/Slideshow.svg",
+    "scripts/Downloaded",
+    "Excalidraw/ExcalidrawStartup.md",
+    "Excalidraw/Drawing 2025-12-28 18.34.04.excalidraw.restored.md",
+    "GIT.md",
+    "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
+    "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.md",
+    "scripts/BinaryTree_Anim/Downloaded/Split Ellipse.svg",
+    "scripts/BinaryTree_Anim/Downloaded/Split Ellipse.md",
+    "scripts/BinaryTree_Anim/Downloaded/Image Occlusion.svg",
+    "scripts/BinaryTree_Anim/Downloaded/Image Occlusion.md",
+    "scripts/BinaryTree_Anim/Downloaded/Mindmap connector.svg",
+    "scripts/BinaryTree_Anim/Downloaded/Mindmap connector.md",
+    "scripts/BinaryTree_Anim/Downloaded/Mindmap format.svg",
+    "scripts/BinaryTree_Anim/Downloaded/Mindmap format.md",
+    "scripts/BinaryTree_Anim/Downloaded",
+    "scripts/BinaryTree_Anim",
+    "Git/Untitled.md",
+    "Excalidraw",
+    "scripts",
+    "Git",
+    "notes/متفرقات.md",
+    "notes/day-8.md",
+    "notes/Declaration Master Sheet.md",
+    "notes/day-7.md",
+    "notes/day-6.md",
+    "notes/day-5.md",
+    "notes/day-4.md",
+    "notes",
+    "copilot/copilot-custom-prompts",
+    "copilot",
+    "Exam Simulation"
+  ]
+}

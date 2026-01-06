@@ -1,0 +1,10 @@
+{
+    "id": "antigravity-debugger",
+    "name": "AntiGravity Debugger",
+    "version": "1.0.0",
+    "minAppVersion": "1.0.0",
+    "description": "Time-travel C++ debugger visualization with stack/heap and pointer visualization",
+    "author": "AntiGravity Team",
+    "authorUrl": "https://github.com/antigravity",
+    "isDesktopOnly": true
+}
