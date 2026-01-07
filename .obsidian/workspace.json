@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Algorthims/Merge sort.md",
+                "file": "Algorthims/Quick Sort.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Merge sort"
+              "title": "Quick Sort"
             }
           }
         ]
@@ -217,8 +217,9 @@
   },
   "active": "de66ff96b311ea02",
   "lastOpenFiles": [
-    "Algorthims/Selection Sort.md",
     "Algorthims/Merge sort.md",
+    "Algorthims/Quick Sort.md",
+    "Algorthims/Selection Sort.md",
     "Algorithms.md",
     "Untitled.md",
     "Untitled.base",
@@ -245,7 +246,6 @@
     "Untitled 2.md",
     "Excalidraw/Drawing 2025-12-28 18.34.04.excalidraw.md",
     "scripts/tree.md",
-    "scripts/Downloaded/Slideshow.md",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/Downloaded",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
