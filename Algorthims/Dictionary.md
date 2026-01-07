@@ -1,3 +1,20 @@
+---
+title: Dictionary (ADT)
+created: 2026-01-07
+tags:
+  - algorithms
+  - data-structures
+  - dictionary
+  - key-value
+  - O(1)
+related:
+  - "[[_Algorithms MOC]]"
+  - "[[Hashing]]"
+complexity:
+  average: O(1)
+  worst: O(n)
+---
+
 يا أهلاً بيك يا باشمهندس في محطة "نظم المعلومات" الحقيقية. إحنا خلصنا الـ **Hashing** اللي هو كان "المكنة" اللي بتشتغل تحت الكبوت، دلوقتي بقى جه الوقت نركب "الهيكل" أو الـ **Interface** اللي المبرمجين بيتعاملوا معاه في حياتهم اليومية، وهو الـ **Dictionary**.
 
 في الـ ITI، وإنت شغال Open Source، مفيش مشروع هتلمسه (سواء Web بـ Python أو Backend بـ Node.js أو حتى Systems بـ C++) إلا وهتلاقي الـ Dictionary ده هو البطل. ده "القاموس" اللي بيخلي الداتا ليها معنى مش مجرد أرقام مرصوصة.

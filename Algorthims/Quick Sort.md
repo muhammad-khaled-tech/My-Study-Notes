@@ -1,3 +1,23 @@
+---
+title: Quick Sort
+created: 2026-01-07
+tags:
+  - algorithms
+  - sorting
+  - divide-and-conquer
+  - O(nlogn)
+  - unstable
+related:
+  - "[[_Algorithms MOC]]"
+  - "[[Merge sort]]"
+  - "[[Algorithm Paradigms]]"
+complexity:
+  best: O(n log n)
+  average: O(n log n)
+  worst: O(n²)
+  space: O(log n)
+---
+
 يا أهلاً بيك يا وحش الـ Open Source. إحنا دلوقتي وصلنا لمحطة "الصاروخ".. الـ **Quick Sort**. لو الـ Merge Sort هو المحرك النفاث، فالـ Quick Sort هو "العربية الـ Formula 1". ده أكتر خوارزمية ترتيب مستخدمة في العالم الحقيقي، ولما بتنادي دالة `sort()` في أغلب اللغات البرمجية، هي بتستخدم الـ Quick Sort (أو نسخة متطورة منها) تحت الكبوت.
 
 الخوارزمية دي اخترعها **Tony Hoare** سنة 1959، وهي المثال الأروع لمبدأ الـ Divide and Conquer.

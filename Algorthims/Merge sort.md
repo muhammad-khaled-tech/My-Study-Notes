@@ -1,3 +1,23 @@
+---
+title: Merge Sort
+created: 2026-01-07
+tags:
+  - algorithms
+  - sorting
+  - divide-and-conquer
+  - O(nlogn)
+  - stable
+related:
+  - "[[_Algorithms MOC]]"
+  - "[[Quick Sort]]"
+  - "[[Algorithm Paradigms]]"
+complexity:
+  best: O(n log n)
+  average: O(n log n)
+  worst: O(n log n)
+  space: O(n)
+---
+
 أهلاً بك يا بطل في "التقيل"! إحنا دلوقتي قدام واحد من أعظم الابتكارات في تاريخ الـ Computer Science. لو الـ Bubble والـ Selection والـ Insertion Sort هما "العجلة"، فالـ **Merge Sort** هو "المحرك النفاث".
 
 ده أول خوارزمية هندرسها بتكسر حاجز الـ $O(N^2)$ وبتاخدنا لعالم الـ $O(N \log N)$. اللي صمم الخوارزمية دي هو العالم الأسطوري **John von Neumann** سنة 1945، ومن ساعتها وهي حجر أساس في أنظمة كتير.
