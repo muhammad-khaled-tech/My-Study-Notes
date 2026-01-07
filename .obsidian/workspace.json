@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Data Structure/11-Binary Tree.md",
+                "file": "Data Structure/Untitled.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "11-Binary Tree"
+              "title": "Untitled"
             }
           }
         ]
@@ -217,8 +217,9 @@
   },
   "active": "bf393b4ec9d7f090",
   "lastOpenFiles": [
-    "Data Structure/10-Introduction to trees.md",
     "Data Structure/11-Binary Tree.md",
+    "Data Structure/Untitled.md",
+    "Data Structure/10-Introduction to trees.md",
     "Data Structure/9-Double-Ended Queue.md",
     "Data Structure/8-Circular Queue.md",
     "Data Structure/7-Queue.md",
@@ -244,7 +245,6 @@
     "problem solving/problem solving road map.md",
     "Java Core/Stream API.md",
     "problem solving/problem_solving_roadmap_cpp.md",
-    "Algorthims/Bubble Sort.md",
     "Algorthims",
     "problem solving",
     "scripts/Downloaded/Slideshow.svg",

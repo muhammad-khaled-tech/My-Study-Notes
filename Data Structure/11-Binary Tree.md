@@ -164,8 +164,3 @@ int main() {
 
 ---
 
-إيه رأيك يا دكتور في الـ Binary Trees؟ هل التصنيفات وطرق الـ Traversal كده بقت واضحة؟
-
-إحنا دلوقتي جاهزين ندخل في "الوحش" اللي بجد، وهو الـ **Binary Search Tree (BST)**، اللي بسببه الداتا بتترتب وبنبحث فيها بسرعة البرق.
-
-**هل ننتقل للـ Binary Search Tree (BST) أم نتعمق أكتر في الـ Level-order traversal والـ Queues؟**
