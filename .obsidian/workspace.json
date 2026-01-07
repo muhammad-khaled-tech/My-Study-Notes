@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "problem solving/problem solving road map.md",
+                "file": "Algorthims/Bubble Sort.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "problem solving road map"
+              "title": "Bubble Sort"
             }
           }
         ],
@@ -68,7 +68,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "tag:#include",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -89,7 +89,8 @@
               "title": "Bookmarks"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -232,8 +233,10 @@
   },
   "active": "35f43fa5c799230d",
   "lastOpenFiles": [
-    "Java Core/Stream API.md",
     "problem solving/problem solving road map.md",
+    "Algorthims/Bubble Sort.md",
+    "Algorthims",
+    "Java Core/Stream API.md",
     "problem solving",
     "Java Core/Type Inference and var.md",
     "Java Core/Java Architecture and JVM.md",
@@ -264,7 +267,6 @@
     "scripts/BinaryTree_Anim/Downloaded/Image Occlusion.svg",
     "scripts/BinaryTree_Anim/Downloaded/Image Occlusion.md",
     "scripts/BinaryTree_Anim/Downloaded/Mindmap connector.svg",
-    "scripts/BinaryTree_Anim/Downloaded/Mindmap connector.md",
     "scripts/BinaryTree_Anim/Downloaded/Mindmap format.svg",
     "scripts/BinaryTree_Anim/Downloaded",
     "scripts/BinaryTree_Anim",
@@ -272,7 +274,6 @@
     "scripts",
     "Git",
     "notes",
-    "copilot/copilot-custom-prompts",
-    "copilot"
+    "copilot/copilot-custom-prompts"
   ]
 }
