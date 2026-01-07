@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Algorthims/Hashing.md",
+                "file": "Algorthims/Dictionary.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Hashing"
+              "title": "Dictionary"
             }
           }
         ],
@@ -232,8 +232,9 @@
   },
   "active": "ba90588ddd61cd9d",
   "lastOpenFiles": [
-    "Algorthims/Binary Search.md",
     "Algorthims/Hashing.md",
+    "Algorthims/Dictionary.md",
+    "Algorthims/Binary Search.md",
     "Algorthims/Introduction to programming.md",
     "Algorthims/Quick Sort.md",
     "Algorthims/Merge sort.md",
@@ -260,7 +261,6 @@
     "_agent-proposals/2026-01-06-Java-Internal.md",
     "_agent-proposals/approved/2026-01-06-JavaCore-Synthesis.md",
     "_agent-proposals/2026-01-06-JavaCore-Synthesis.md",
-    "Untitled 2.md",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/Downloaded",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
