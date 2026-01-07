@@ -87,26 +87,16 @@
 ```mermaid
 flowchart TD
     Start([Start Pass]) --> InitFlag[Swapped = False]
-    InitFlag --> Loop{End of Array?}
-    Loop -- No --> Compare{Arr[j] > Arr[j+1]?}
+    InitFlag --> Loop{"End of Array?"}
+    Loop -- No --> Compare{"Arr[j] > Arr[j+1]?"}
     Compare -- Yes --> Swap[Swap Elements]
     Swap --> SetFlag[Swapped = True]
     SetFlag --> Next[Next Pair]
     Compare -- No --> Next
     Next --> Loop
-    Loop -- Yes --> CheckFlag{Swapped == False?}
+    Loop -- Yes --> CheckFlag{"Swapped == False?"}
     CheckFlag -- Yes --> Finish([Sorted!])
     CheckFlag -- No --> Start
-
-
----
-
-### 4. C++ Implementation (Optimized)
-
-ده الكود "البروفيشنال". مش بس بيرتب، ده بيوفر في اللفات (Optimized).
-
-C++
-
 ```
 
 ```c++
