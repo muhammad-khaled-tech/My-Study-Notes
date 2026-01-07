@@ -92,9 +92,9 @@
 
 ده كود احترافي مع شرح "دسم" لكل تفصيلة:
 
-C++
 
-```
+
+```c++
 #include <iostream>
 #include <vector>
 
@@ -194,7 +194,7 @@ int main() {
 
 Code snippet
 
-```
+```mermaid
 graph TD
     %% استخدام علامات التنصيص للتعامل مع الرموز والعربي
     Start(("بداية اللفة i"))

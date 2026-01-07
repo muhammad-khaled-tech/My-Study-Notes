@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "ca481ee5635dc99d",
+        "id": "ec198c4b18821f00",
         "type": "tabs",
         "children": [
           {
-            "id": "dfe4c44093344aff",
+            "id": "de66ff96b311ea02",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Algorthims/Insertion Sort.md",
+                "file": "Algorthims/Selection Sort.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Insertion Sort"
+              "title": "Selection Sort"
             }
           }
         ]
@@ -215,10 +215,13 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "dfe4c44093344aff",
+  "active": "de66ff96b311ea02",
   "lastOpenFiles": [
-    "problem solving/problem solving road map.md",
+    "Algorithms.md",
+    "Algorthims/Selection Sort.md",
     "Algorthims/Insertion Sort.md",
+    "Untitled.md",
+    "problem solving/problem solving road map.md",
     "Java Core/Stream API.md",
     "problem solving/problem_solving_roadmap_cpp.md",
     "Algorthims/Bubble Sort.md",
@@ -245,9 +248,6 @@
     "scripts/BinaryTree_Anim.md",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/Downloaded",
-    "Excalidraw/ExcalidrawStartup.md",
-    "Excalidraw/Drawing 2025-12-28 18.34.04.excalidraw.restored.md",
-    "GIT.md",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
     "scripts/BinaryTree_Anim/Downloaded/Split Ellipse.svg",
     "scripts/BinaryTree_Anim/Downloaded/Image Occlusion.svg",
