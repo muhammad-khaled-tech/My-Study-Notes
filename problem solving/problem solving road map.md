@@ -520,11 +520,6 @@ def lca(root, p, q):
 - [ ] [1137. N-th Tribonacci Number](https://leetcode.com/problems/n-th-tribonacci-number/)
 - [ ] [1646. Get Maximum in Generated Array](https://leetcode.com/problems/get-maximum-in-generated-array/)
 - [ ] [1025. Divisor Game](https://leetcode.com/problems/divisor-game/)
-- [ ] [1025. Divisor Game](https://leetcode.com/problems/divisor-game/)
-	](https://leetcode.com/problems/divisor-game/)
-
-- [ ] [1025. Divisor Game](https://leetcode.com/problems/divisor-game/)
-- [ ] [1025. Divisor Game](https://leetcode.com/problems/divisor-game/)
 
 **DP - Medium (25 مسألة):**
 
@@ -1017,40 +1012,38 @@ def binary_search(arr, target):
             left = mid + 1
         else:
             right = mid - 1
-```
-
-return -1
+    
+    return -1
 
 # Binary Search للـ leftmost position:
-
-def find_first(arr, target): left, right = 0, len(arr)
-
-```
-while left < right:
-    mid = left + (right - left) // 2
+def find_first(arr, target):
+    left, right = 0, len(arr)
     
-    if arr[mid] < target:
-        left = mid + 1
-    else:
-        right = mid
-
-return left
-```
+    while left < right:
+        mid = left + (right - left) // 2
+        
+        if arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid
+    
+    return left
 
 # Binary Search على الـ answer (معندكش array):
-
-def binary_search_answer(predicate, lo, hi): """ Find the smallest x where predicate(x) is True """ while lo < hi: mid = lo + (hi - lo) // 2
-
+def binary_search_answer(predicate, lo, hi):
+    """
+    Find the smallest x where predicate(x) is True
+    """
+    while lo < hi:
+        mid = lo + (hi - lo) // 2
+        
+        if predicate(mid):
+            hi = mid
+        else:
+            lo = mid + 1
+    
+    return lo
 ```
-    if predicate(mid):
-        hi = mid
-    else:
-        lo = mid + 1
-
-return lo
-```
-
-````
 
 ---
 
