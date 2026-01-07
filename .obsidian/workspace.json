@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Algorthims/Selection Sort.md",
+                "file": "Algorthims/Merge sort.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Selection Sort"
+              "title": "Merge sort"
             }
           }
         ]
@@ -217,16 +217,18 @@
   },
   "active": "de66ff96b311ea02",
   "lastOpenFiles": [
-    "Algorithms.md",
     "Algorthims/Selection Sort.md",
-    "Algorthims/Insertion Sort.md",
+    "Algorthims/Merge sort.md",
+    "Algorithms.md",
     "Untitled.md",
+    "Untitled.base",
+    "Untitled 1.md",
+    "Algorthims/Insertion Sort.md",
     "problem solving/problem solving road map.md",
     "Java Core/Stream API.md",
     "problem solving/problem_solving_roadmap_cpp.md",
     "Algorthims/Bubble Sort.md",
     "Java Core/Java collections.md",
-    "Untitled.base",
     "Algorthims",
     "problem solving",
     "Java Core/Type Inference and var.md",
@@ -240,12 +242,10 @@
     "_agent-proposals/2026-01-06-Java-Internal.md",
     "_agent-proposals/approved/2026-01-06-JavaCore-Synthesis.md",
     "_agent-proposals/2026-01-06-JavaCore-Synthesis.md",
-    "Untitled 1.md",
     "Untitled 2.md",
     "Excalidraw/Drawing 2025-12-28 18.34.04.excalidraw.md",
     "scripts/tree.md",
     "scripts/Downloaded/Slideshow.md",
-    "scripts/BinaryTree_Anim.md",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/Downloaded",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
