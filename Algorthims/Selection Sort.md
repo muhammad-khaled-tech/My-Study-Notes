@@ -1,3 +1,23 @@
+---
+title: Selection Sort
+created: 2026-01-07
+tags:
+  - algorithms
+  - sorting
+  - O(n²)
+  - unstable
+related:
+  - "[[_Algorithms MOC]]"
+  - "[[Bubble Sort]]"
+  - "[[Insertion Sort]]"
+  - "[[Heap Sort]]"
+complexity:
+  best: O(n²)
+  average: O(n²)
+  worst: O(n²)
+  space: O(1)
+---
+
 ## Selection Sort (الشرح الوافي)
 
 ### التعريف السريع

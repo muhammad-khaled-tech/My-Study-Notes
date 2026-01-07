@@ -1,3 +1,21 @@
+---
+title: Bubble Sort
+created: 2026-01-07
+tags:
+  - algorithms
+  - sorting
+  - O(n²)
+  - stable
+related:
+  - "[[_Algorithms MOC]]"
+  - "[[Selection Sort]]"
+  - "[[Insertion Sort]]"
+complexity:
+  best: O(n)
+  average: O(n²)
+  worst: O(n²)
+  space: O(1)
+---
 
 
 الـ **Bubble Sort** ده هو "الجد الأكبر" لكل خوارزميات الترتيب. هو أبطأ واحد فيهم، بس فهمه هو "تذكرة الدخول" لعالم الـ Algorithms، وفيه "تريكة" (Optimization) بتخليه ذكي جداً في حالات معينة.

@@ -1,3 +1,19 @@
+---
+title: Binary Search
+created: 2026-01-07
+tags:
+  - algorithms
+  - searching
+  - divide-and-conquer
+  - O(log-n)
+related:
+  - "[[_Algorithms MOC]]"
+  - "[[Algorithm Paradigms]]"
+complexity:
+  time: O(log n)
+  space: O(1)
+---
+
 إحنا النهاردة هنشرح الـ **Searching Algorithms**، بس مش كود وبس، إحنا هنفهم الفلسفة اللي ورا "البحث" وليه دي أهم مشكلة واجهت البشرية من يوم ما اخترعوا الكتابة.
 
 ---

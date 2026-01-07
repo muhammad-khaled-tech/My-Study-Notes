@@ -1,3 +1,19 @@
+---
+title: Algorithm Paradigms
+created: 2026-01-07
+tags:
+  - algorithms
+  - paradigms
+  - divide-and-conquer
+  - dynamic-programming
+  - greedy
+related:
+  - "[[_Algorithms MOC]]"
+  - "[[Merge sort]]"
+  - "[[Quick Sort]]"
+  - "[[Binary Search]]"
+---
+
 ## نماذج تصميم الخوارزميات - Algorithm Paradigms
 
 ### التعريف السريع

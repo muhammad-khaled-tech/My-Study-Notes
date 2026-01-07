@@ -1,3 +1,24 @@
+---
+title: Insertion Sort
+created: 2026-01-07
+tags:
+  - algorithms
+  - sorting
+  - O(n²)
+  - stable
+  - adaptive
+related:
+  - "[[_Algorithms MOC]]"
+  - "[[Bubble Sort]]"
+  - "[[Selection Sort]]"
+  - "[[Shell Sort]]"
+complexity:
+  best: O(n)
+  average: O(n²)
+  worst: O(n²)
+  space: O(1)
+---
+
 وصلنا للمحطة الأخيرة في "عالم الترتيب البسيط"، ومعانا النهاردة **Insertion Sort**. بص يا بطل، لو الـ Bubble Sort والـ Selection Sort هما بتوع "الكتب والمناهج"، فالـ **Insertion Sort** هو اللي "شغال بجد" في الكواليس. ده الـ Algorithm اللي لغات برمجة زي Python و Java بتعتمد عليه (كجزء من Timsort) لما الـ Data حجمها بيصغر.
 
 تعال نفهم "الزتونة" وليه ده أذكى واحد في اخواته الـ $O(N^2)$.
