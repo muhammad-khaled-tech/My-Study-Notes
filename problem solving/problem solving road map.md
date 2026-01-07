@@ -1,3 +1,18 @@
+---
+title: Problem Solving Roadmap
+created: 2026-01-07
+tags:
+  - leetcode
+  - dsa
+  - interview-prep
+  - algorithms
+  - competitive-programming
+status: in-progress
+total_problems: 550
+solved: 0
+current_week: 1
+---
+
 # خطة Problem Solving الشاملة: من Zero إلى Hero (550+ مسألة)
 
 ## 📊 الإحصائيات والتوزيع الزمني
@@ -10,6 +25,63 @@
 |**Phase 4: Mock Interviews**|4 أسابيع|100 مسألة|3-4 مسائل|Mixed|
 
 **المجموع: 550 مسألة في 24 أسبوع = 6 شهور**
+
+---
+
+## 📈 Progress Tracking
+
+| Week | Topic | Target | Solved | Date Started | Date Completed | Notes |
+|------|-------|--------|--------|--------------|----------------|-------|
+| 1 | Arrays | 15 | 0 | | | |
+| 2 | Strings | 20 | 0 | | | |
+| 3 | Linked Lists | 20 | 0 | | | |
+| 4 | Stack | 12 | 0 | | | |
+| 5 | Queue | 13 | 0 | | | |
+| 6 | Hash Tables | 20 | 0 | | | |
+| 7-9 | Binary Trees | 50 | 0 | | | |
+| 10-11 | Dynamic Programming | 40 | 0 | | | |
+| 12-14 | Graphs | 50 | 0 | | | |
+| 14 | Backtracking | 30 | 0 | | | |
+| 15-16 | Advanced DP | 40 | 0 | | | |
+| 17-18 | Binary Search | 35 | 0 | | | |
+| 19-20 | Heaps & Trie | 40 | 0 | | | |
+| 20 | Bit Manipulation | 35 | 0 | | | |
+| 21-24 | Mock Interviews | 100 | 0 | | | |
+
+---
+
+## 🧠 Pattern Recognition Guide
+
+> **متى تستخدم إيه؟ Quick mental shortcuts**
+
+| Problem Says... | Think About... |
+|----------------|----------------|
+| "Find pair/triplet..." | Two Pointers or HashMap |
+| "Subarray with sum..." | Sliding Window or Prefix Sum |
+| "Sorted array..." | Binary Search or Two Pointers |
+| "Shortest path..." | BFS |
+| "All possible combinations..." | Backtracking |
+| "Minimum/Maximum..." | DP or Greedy |
+| "Connected components..." | Union Find or DFS |
+| "Top K elements..." | Heap |
+| "Prefix matching..." | Trie |
+| "Detect cycle..." | Fast & Slow Pointers |
+
+---
+
+## ⏱️ Time Complexity Cheat Sheet
+
+| Pattern | Time | Space | Best For |
+|---------|------|-------|----------|
+| Two Pointers | O(n) | O(1) | Sorted arrays, pairs |
+| Sliding Window | O(n) | O(k) | Subarray/substring |
+| Binary Search | O(log n) | O(1) | Sorted data, search on answer |
+| BFS | O(V+E) | O(V) | Shortest path, level-by-level |
+| DFS | O(V+E) | O(H) | Explore all paths, backtracking |
+| Dynamic Programming | O(n²) or O(n×m) | O(n) or O(n×m) | Optimization problems |
+| Union Find | O(α(n)) ≈ O(1) | O(n) | Connected components |
+| Heap Operations | O(log n) | O(n) | Priority-based selection |
+| Trie Operations | O(L) | O(ALPHABET×L×N) | Prefix matching |
 
 ---
 
@@ -1399,6 +1471,65 @@ class Trie:
 - [ ] فهمت الـ patterns الأساسية للـ topic
 - [ ] كتبت ملاحظات عن الـ common pitfalls
 - [ ] حاولت أحل مسألة واحدة بدون مساعدة
+
+---
+
+## 🔄 Spaced Repetition Review
+
+> **راجع المسائل المهمة بعد فترة عشان تثبت في ذاكرتك**
+
+| Problem | First Solve | Day 3 Review | Week 1 Review | Week 2 Review | Month Review |
+|---------|-------------|--------------|---------------|---------------|--------------|
+| Two Sum | [ ] | [ ] | [ ] | [ ] | [ ] |
+| Valid Parentheses | [ ] | [ ] | [ ] | [ ] | [ ] |
+| Reverse Linked List | [ ] | [ ] | [ ] | [ ] | [ ] |
+| Binary Tree Level Order | [ ] | [ ] | [ ] | [ ] | [ ] |
+| Number of Islands | [ ] | [ ] | [ ] | [ ] | [ ] |
+| Coin Change | [ ] | [ ] | [ ] | [ ] | [ ] |
+| LRU Cache | [ ] | [ ] | [ ] | [ ] | [ ] |
+| (أضف مسائل تانية هنا) | [ ] | [ ] | [ ] | [ ] | [ ] |
+
+---
+
+## 📝 Personal Notes Per Week
+
+### Week 1 Notes:
+- 
+- 
+
+### Week 2 Notes:
+- 
+- 
+
+### Week 3 Notes:
+- 
+- 
+
+*(أضف notes لكل أسبوع وانت ماشي)*
+
+---
+
+## ⚠️ Common Mistakes to Avoid
+
+### Arrays & Strings:
+- [ ] Off-by-one errors in loop boundaries
+- [ ] Not handling empty arrays/strings
+- [ ] Forgetting negative numbers exist
+
+### Linked Lists:
+- [ ] Losing reference to head
+- [ ] Not handling null pointers
+- [ ] Forgetting to update both next and prev in doubly linked
+
+### Trees:
+- [ ] Not handling null root
+- [ ] Confusing BST with regular binary tree
+- [ ] Stack overflow in deep recursion
+
+### DP:
+- [ ] Wrong base case initialization
+- [ ] Incorrect state transition
+- [ ] Not considering all subproblems
 
 ---
 

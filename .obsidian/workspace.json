@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "problem solving/problem solving road map.md",
+                "file": "Java Core/Stream API.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "problem solving road map"
+              "title": "Stream API"
             }
           }
         ]
@@ -217,8 +217,8 @@
   },
   "active": "dfe4c44093344aff",
   "lastOpenFiles": [
-    "problem solving/problem_solving_roadmap_cpp.md",
     "problem solving/problem solving road map.md",
+    "problem solving/problem_solving_roadmap_cpp.md",
     "Algorthims/Bubble Sort.md",
     "Java Core/Stream API.md",
     "Java Core/Java collections.md",
