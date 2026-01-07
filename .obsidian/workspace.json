@@ -20,8 +20,23 @@
               "icon": "lucide-file",
               "title": "Stream API"
             }
+          },
+          {
+            "id": "35f43fa5c799230d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "problem solving/Untitled.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Untitled"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -215,8 +230,11 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "dfe4c44093344aff",
+  "active": "a4263eb0ef45c795",
   "lastOpenFiles": [
+    "Java Core/Stream API.md",
+    "problem solving/Untitled.md",
+    "problem solving",
     "Java Core/Type Inference and var.md",
     "Java Core/Java Architecture and JVM.md",
     "Java Core/Data Types.md",
@@ -230,7 +248,6 @@
     "_agent-proposals/2026-01-06-JavaCore-Synthesis.md",
     "Untitled 1.md",
     "Untitled 2.md",
-    "Untitled.md",
     "Excalidraw/Drawing 2025-12-28 18.34.04.excalidraw.md",
     "scripts/tree.md",
     "scripts/Downloaded/Slideshow.md",
@@ -249,7 +266,6 @@
     "scripts/BinaryTree_Anim/Downloaded/Mindmap connector.svg",
     "scripts/BinaryTree_Anim/Downloaded/Mindmap connector.md",
     "scripts/BinaryTree_Anim/Downloaded/Mindmap format.svg",
-    "scripts/BinaryTree_Anim/Downloaded/Mindmap format.md",
     "scripts/BinaryTree_Anim/Downloaded",
     "scripts/BinaryTree_Anim",
     "Excalidraw",
@@ -257,7 +273,6 @@
     "Git",
     "notes",
     "copilot/copilot-custom-prompts",
-    "copilot",
-    "Exam Simulation"
+    "copilot"
   ]
 }
