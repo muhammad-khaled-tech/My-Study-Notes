@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Data Structure/9-Double-Ended Queue.md",
+                "file": "Data Structure/11-Binary Tree.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "9-Double-Ended Queue"
+              "title": "11-Binary Tree"
             }
           }
         ]
@@ -217,8 +217,10 @@
   },
   "active": "bf393b4ec9d7f090",
   "lastOpenFiles": [
-    "Data Structure/8-Circular Queue.md",
+    "Data Structure/10-Introduction to trees.md",
+    "Data Structure/11-Binary Tree.md",
     "Data Structure/9-Double-Ended Queue.md",
+    "Data Structure/8-Circular Queue.md",
     "Data Structure/7-Queue.md",
     "Data Structure/6-Stack.md",
     "Data Structures.md",
@@ -243,10 +245,8 @@
     "Java Core/Stream API.md",
     "problem solving/problem_solving_roadmap_cpp.md",
     "Algorthims/Bubble Sort.md",
-    "Java Core/Java collections.md",
     "Algorthims",
     "problem solving",
-    "Java Core/Type Inference and var.md",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/Downloaded",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
