@@ -1018,3 +1018,397 @@ def binary_search(arr, target):
         else:
             right = mid - 1
 ```
+
+return -1
+
+# Binary Search للـ leftmost position:
+
+def find_first(arr, target): left, right = 0, len(arr)
+
+```
+while left < right:
+    mid = left + (right - left) // 2
+    
+    if arr[mid] < target:
+        left = mid + 1
+    else:
+        right = mid
+
+return left
+```
+
+# Binary Search على الـ answer (معندكش array):
+
+def binary_search_answer(predicate, lo, hi): """ Find the smallest x where predicate(x) is True """ while lo < hi: mid = lo + (hi - lo) // 2
+
+```
+    if predicate(mid):
+        hi = mid
+    else:
+        lo = mid + 1
+
+return lo
+```
+
+````
+
+---
+
+### **Week 19-20: Heaps, Trie, & Advanced Data Structures (40 مسألة)**
+
+**Heaps - Medium/Hard (20 مسائل):**
+- [ ] [23. Merge k Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) ⭐⭐⭐
+- [ ] [215. Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array/) ⭐⭐
+- [ ] [253. Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/) (Premium) ⭐
+- [ ] [264. Ugly Number II](https://leetcode.com/problems/ugly-number-ii/)
+- [ ] [295. Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/) ⭐⭐⭐
+- [ ] [313. Super Ugly Number](https://leetcode.com/problems/super-ugly-number/)
+- [ ] [347. Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) ⭐
+- [ ] [355. Design Twitter](https://leetcode.com/problems/design-twitter/)
+- [ ] [373. Find K Pairs with Smallest Sums](https://leetcode.com/problems/find-k-pairs-with-smallest-sums/)
+- [ ] [378. Kth Smallest Element in a Sorted Matrix](https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/)
+- [ ] [407. Trapping Rain Water II](https://leetcode.com/problems/trapping-rain-water-ii/)
+- [ ] [451. Sort Characters By Frequency](https://leetcode.com/problems/sort-characters-by-frequency/)
+- [ ] [502. IPO](https://leetcode.com/problems/ipo/)
+- [ ] [692. Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words/)
+- [ ] [703. Kth Largest Element in a Stream](https://leetcode.com/problems/kth-largest-element-in-a-stream/)
+- [ ] [767. Reorganize String](https://leetcode.com/problems/reorganize-string/)
+- [ ] [846. Hand of Straights](https://leetcode.com/problems/hand-of-straights/)
+- [ ] [857. Minimum Cost to Hire K Workers](https://leetcode.com/problems/minimum-cost-to-hire-k-workers/)
+- [ ] [973. K Closest Points to Origin](https://leetcode.com/problems/k-closest-points-to-origin/) ⭐
+- [ ] [1046. Last Stone Weight](https://leetcode.com/problems/last-stone-weight/)
+
+**Trie - Medium/Hard (20 مسائل):**
+- [ ] [208. Implement Trie](https://leetcode.com/problems/implement-trie-prefix-tree/) ⭐⭐⭐
+- [ ] [211. Design Add and Search Words Data Structure](https://leetcode.com/problems/design-add-and-search-words-data-structure/) ⭐⭐
+- [ ] [212. Word Search II](https://leetcode.com/problems/word-search-ii/) ⭐⭐⭐
+- [ ] [336. Palindrome Pairs](https://leetcode.com/problems/palindrome-pairs/)
+- [ ] [421. Maximum XOR of Two Numbers](https://leetcode.com/problems/maximum-xor-of-two-numbers-in-an-array/) ⭐
+- [ ] [472. Concatenated Words](https://leetcode.com/problems/concatenated-words/)
+- [ ] [588. Design In-Memory File System](https://leetcode.com/problems/design-in-memory-file-system/) (Premium)
+- [ ] [642. Design Search Autocomplete System](https://leetcode.com/problems/design-search-autocomplete-system/) (Premium)
+- [ ] [648. Replace Words](https://leetcode.com/problems/replace-words/)
+- [ ] [676. Implement Magic Dictionary](https://leetcode.com/problems/implement-magic-dictionary/)
+- [ ] [677. Map Sum Pairs](https://leetcode.com/problems/map-sum-pairs/)
+- [ ] [720. Longest Word in Dictionary](https://leetcode.com/problems/longest-word-in-dictionary/)
+- [ ] [745. Prefix and Suffix Search](https://leetcode.com/problems/prefix-and-suffix-search/)
+- [ ] [820. Short Encoding of Words](https://leetcode.com/problems/short-encoding-of-words/)
+- [ ] [1065. Index Pairs of a String](https://leetcode.com/problems/index-pairs-of-a-string/) (Premium)
+- [ ] [1166. Design File System](https://leetcode.com/problems/design-file-system/) (Premium)
+- [ ] [1233. Remove Sub-Folders from the Filesystem](https://leetcode.com/problems/remove-sub-folders-from-the-filesystem/)
+- [ ] [1268. Search Suggestions System](https://leetcode.com/problems/search-suggestions-system/)
+- [ ] [1804. Implement Trie II](https://leetcode.com/problems/implement-trie-ii-prefix-tree/) (Premium)
+- [ ] [1858. Longest Word With All Prefixes](https://leetcode.com/problems/longest-word-with-all-prefixes/) (Premium)
+
+#### 💡 Heap & Trie Tips:
+```python
+# Heap (Priority Queue) in Python:
+import heapq
+
+# Min Heap (default):
+min_heap = []
+heapq.heappush(min_heap, 5)
+heapq.heappush(min_heap, 3)
+smallest = heapq.heappop(min_heap)  # 3
+
+# Max Heap (negate values):
+max_heap = []
+heapq.heappush(max_heap, -5)
+heapq.heappush(max_heap, -3)
+largest = -heapq.heappop(max_heap)  # 5
+
+# Heapify existing list:
+arr = [3, 1, 4, 1, 5]
+heapq.heapify(arr)  # O(n)
+
+# K largest elements:
+k_largest = heapq.nlargest(k, arr)
+
+# Trie Implementation:
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.is_end = False
+
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+    
+    def insert(self, word):
+        node = self.root
+        for char in word:
+            if char not in node.children:
+                node.children[char] = TrieNode()
+            node = node.children[char]
+        node.is_end = True
+    
+    def search(self, word):
+        node = self.root
+        for char in word:
+            if char not in node.children:
+                return False
+            node = node.children[char]
+        return node.is_end
+    
+    def starts_with(self, prefix):
+        node = self.root
+        for char in prefix:
+            if char not in node.children:
+                return False
+            node = node.children[char]
+        return True
+````
+
+---
+
+### **Week 20: Bit Manipulation & Math (35 مسألة)**
+
+**Bit Manipulation (20 مسائل):**
+
+- [ ] [136. Single Number](https://leetcode.com/problems/single-number/) ⭐
+- [ ] [137. Single Number II](https://leetcode.com/problems/single-number-ii/)
+- [ ] [190. Reverse Bits](https://leetcode.com/problems/reverse-bits/)
+- [ ] [191. Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits/)
+- [ ] [201. Bitwise AND of Numbers Range](https://leetcode.com/problems/bitwise-and-of-numbers-range/)
+- [ ] [231. Power of Two](https://leetcode.com/problems/power-of-two/)
+- [ ] [260. Single Number III](https://leetcode.com/problems/single-number-iii/)
+- [ ] [268. Missing Number](https://leetcode.com/problems/missing-number/)
+- [ ] [318. Maximum Product of Word Lengths](https://leetcode.com/problems/maximum-product-of-word-lengths/)
+- [ ] [338. Counting Bits](https://leetcode.com/problems/counting-bits/) ⭐
+- [ ] [371. Sum of Two Integers](https://leetcode.com/problems/sum-of-two-integers/)
+- [ ] [389. Find the Difference](https://leetcode.com/problems/find-the-difference/)
+- [ ] [393. UTF-8 Validation](https://leetcode.com/problems/utf-8-validation/)
+- [ ] [421. Maximum XOR of Two Numbers](https://leetcode.com/problems/maximum-xor-of-two-numbers-in-an-array/)
+- [ ] [461. Hamming Distance](https://leetcode.com/problems/hamming-distance/)
+- [ ] [477. Total Hamming Distance](https://leetcode.com/problems/total-hamming-distance/)
+- [ ] [693. Binary Number with Alternating Bits](https://leetcode.com/problems/binary-number-with-alternating-bits/)
+- [ ] [762. Prime Number of Set Bits](https://leetcode.com/problems/prime-number-of-set-bits-in-binary-representation/)
+- [ ] [898. Bitwise ORs of Subarrays](https://leetcode.com/problems/bitwise-ors-of-subarrays/)
+- [ ] [1356. Sort Integers by The Number of 1 Bits](https://leetcode.com/problems/sort-integers-by-the-number-of-1-bits/)
+
+**Math (15 مسائل):**
+
+- [ ] [7. Reverse Integer](https://leetcode.com/problems/reverse-integer/)
+- [ ] [9. Palindrome Number](https://leetcode.com/problems/palindrome-number/)
+- [ ] [50. Pow(x, n)](https://leetcode.com/problems/powx-n/) ⭐
+- [ ] [60. Permutation Sequence](https://leetcode.com/problems/permutation-sequence/)
+- [ ] [69. Sqrt(x)](https://leetcode.com/problems/sqrtx/)
+- [ ] [149. Max Points on a Line](https://leetcode.com/problems/max-points-on-a-line/)
+- [ ] [166. Fraction to Recurring Decimal](https://leetcode.com/problems/fraction-to-recurring-decimal/)
+- [ ] [168. Excel Sheet Column Title](https://leetcode.com/problems/excel-sheet-column-title/)
+- [ ] [171. Excel Sheet Column Number](https://leetcode.com/problems/excel-sheet-column-number/)
+- [ ] [172. Factorial Trailing Zeroes](https://leetcode.com/problems/factorial-trailing-zeroes/)
+- [ ] [204. Count Primes](https://leetcode.com/problems/count-primes/) ⭐
+- [ ] [223. Rectangle Area](https://leetcode.com/problems/rectangle-area/)
+- [ ] [258. Add Digits](https://leetcode.com/problems/add-digits/)
+- [ ] [263. Ugly Number](https://leetcode.com/problems/ugly-number/)
+- [ ] [279. Perfect Squares](https://leetcode.com/problems/perfect-squares/)
+
+---
+
+## 🎯 Phase 4: Company-Specific & Mock Interviews (Weeks 21-24) - 100 Problems
+
+### **Week 21-22: FAANG Favorites (50 مسألة)**
+
+**Meta/Facebook (15 مسائل):**
+
+- [ ] [1. Two Sum](https://leetcode.com/problems/two-sum/)
+- [ ] [15. 3Sum](https://leetcode.com/problems/3sum/)
+- [ ] [23. Merge k Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/)
+- [ ] [31. Next Permutation](https://leetcode.com/problems/next-permutation/)
+- [ ] [56. Merge Intervals](https://leetcode.com/problems/merge-intervals/) ⭐⭐
+- [ ] [76. Minimum Window Substring](https://leetcode.com/problems/minimum-window-substring/) ⭐⭐⭐
+- [ ] [125. Valid Palindrome](https://leetcode.com/problems/valid-palindrome/)
+- [ ] [236. Lowest Common Ancestor](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/)
+- [ ] [238. Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/)
+- [ ] [273. Integer to English Words](https://leetcode.com/problems/integer-to-english-words/)
+- [ ] [301. Remove Invalid Parentheses](https://leetcode.com/problems/remove-invalid-parentheses/)
+- [ ] [314. Binary Tree Vertical Order Traversal](https://leetcode.com/problems/binary-tree-vertical-order-traversal/) (Premium)
+- [ ] [380. Insert Delete GetRandom O(1)](https://leetcode.com/problems/insert-delete-getrandom-o1/)
+- [ ] [543. Diameter of Binary Tree](https://leetcode.com/problems/diameter-of-binary-tree/)
+- [ ] [670. Maximum Swap](https://leetcode.com/problems/maximum-swap/)
+
+**Google (15 مسائل):**
+
+- [ ] [2. Add Two Numbers](https://leetcode.com/problems/add-two-numbers/)
+- [ ] [17. Letter Combinations](https://leetcode.com/problems/letter-combinations-of-a-phone-number/)
+- [ ] [20. Valid Parentheses](https://leetcode.com/problems/valid-parentheses/)
+- [ ] [42. Trapping Rain Water](https://leetcode.com/problems/trapping-rain-water/)
+- [ ] [127. Word Ladder](https://leetcode.com/problems/word-ladder/)
+- [ ] [200. Number of Islands](https://leetcode.com/problems/number-of-islands/)
+- [ ] [207. Course Schedule](https://leetcode.com/problems/course-schedule/)
+- [ ] [212. Word Search II](https://leetcode.com/problems/word-search-ii/)
+- [ ] [253. Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/) (Premium)
+- [ ] [295. Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/)
+- [ ] [329. Longest Increasing Path in Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix/)
+- [ ] [759. Employee Free Time](https://leetcode.com/problems/employee-free-time/) (Premium)
+- [ ] [843. Guess the Word](https://leetcode.com/problems/guess-the-word/) (Premium)
+- [ ] [google.com/problems](https://leetcode.com/company/google/)
+
+**Amazon (10 مسائل):**
+
+- [ ] [1. Two Sum](https://leetcode.com/problems/two-sum/)
+- [ ] [5. Longest Palindromic Substring](https://leetcode.com/problems/longest-palindromic-substring/)
+- [ ] [48. Rotate Image](https://leetcode.com/problems/rotate-image/)
+- [ ] [121. Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/)
+- [ ] [200. Number of Islands](https://leetcode.com/problems/number-of-islands/)
+- [ ] [206. Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/)
+- [ ] [215. Kth Largest Element](https://leetcode.com/problems/kth-largest-element-in-an-array/)
+- [ ] [937. Reorder Data in Log Files](https://leetcode.com/problems/reorder-data-in-log-files/)
+- [ ] [973. K Closest Points to Origin](https://leetcode.com/problems/k-closest-points-to-origin/)
+- [ ] [Amazon Company Tag](https://leetcode.com/company/amazon/)
+
+**Microsoft (10 مسائل):**
+
+- [ ] [13. Roman to Integer](https://leetcode.com/problems/roman-to-integer/)
+- [ ] [46. Permutations](https://leetcode.com/problems/permutations/)
+- [ ] [48. Rotate Image](https://leetcode.com/problems/rotate-image/)
+- [ ] [103. Binary Tree Zigzag](https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/)
+- [ ] [146. LRU Cache](https://leetcode.com/problems/lru-cache/) ⭐⭐⭐
+- [ ] [200. Number of Islands](https://leetcode.com/problems/number-of-islands/)
+- [ ] [206. Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/)
+- [ ] [236. Lowest Common Ancestor](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/)
+- [ ] [387. First Unique Character](https://leetcode.com/problems/first-unique-character-in-a-string/)
+- [ ] [Microsoft Company Tag](https://leetcode.com/company/microsoft/)
+
+---
+
+### **Week 23-24: Mixed Practice & System Design Prep (50 مسائل)**
+
+**High-Frequency Interview Questions (50 مسائل):**
+
+- [ ] [3. Longest Substring Without Repeating](https://leetcode.com/problems/longest-substring-without-repeating-characters/)
+- [ ] [4. Median of Two Sorted Arrays](https://leetcode.com/problems/median-of-two-sorted-arrays/)
+- [ ] [5. Longest Palindromic Substring](https://leetcode.com/problems/longest-palindromic-substring/)
+- [ ] [10. Regular Expression Matching](https://leetcode.com/problems/regular-expression-matching/)
+- [ ] [11. Container With Most Water](https://leetcode.com/problems/container-with-most-water/)
+- [ ] [15. 3Sum](https://leetcode.com/problems/3sum/)
+- [ ] [17. Letter Combinations](https://leetcode.com/problems/letter-combinations-of-a-phone-number/)
+- [ ] [19. Remove Nth Node From End](https://leetcode.com/problems/remove-nth-node-from-end-of-list/)
+- [ ] [20. Valid Parentheses](https://leetcode.com/problems/valid-parentheses/)
+- [ ] [21. Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/)
+- [ ] [22. Generate Parentheses](https://leetcode.com/problems/generate-parentheses/)
+- [ ] [23. Merge k Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/)
+- [ ] [26. Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/)
+- [ ] [33. Search in Rotated Sorted Array](https://leetcode.com/problems/search-in-rotated-sorted-array/)
+- [ ] [39. Combination Sum](https://leetcode.com/problems/combination-sum/)
+- [ ] [42. Trapping Rain Water](https://leetcode.com/problems/trapping-rain-water/)
+- [ ] [46. Permutations](https://leetcode.com/problems/permutations/)
+- [ ] [48. Rotate Image](https://leetcode.com/problems/rotate-image/)
+- [ ] [49. Group Anagrams](https://leetcode.com/problems/group-anagrams/)
+- [ ] [53. Maximum Subarray](https://leetcode.com/problems/maximum-subarray/)
+- [ ] [54. Spiral Matrix](https://leetcode.com/problems/spiral-matrix/)
+- [ ] [55. Jump Game](https://leetcode.com/problems/jump-game/)
+- [ ] [56. Merge Intervals](https://leetcode.com/problems/merge-intervals/)
+- [ ] [62. Unique Paths](https://leetcode.com/problems/unique-paths/)
+- [ ] [70. Climbing Stairs](https://leetcode.com/problems/climbing-stairs/)
+- [ ] [72. Edit Distance](https://leetcode.com/problems/edit-distance/)
+- [ ] [73. Set Matrix Zeroes](https://leetcode.com/problems/set-matrix-zeroes/)
+- [ ] [75. Sort Colors](https://leetcode.com/problems/sort-colors/)
+- [ ] [76. Minimum Window Substring](https://leetcode.com/problems/minimum-window-substring/)
+- [ ] [78. Subsets](https://leetcode.com/problems/subsets/)
+- [ ] [79. Word Search](https://leetcode.com/problems/word-search/)
+- [ ] [84. Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram/)
+- [ ] [91. Decode Ways](https://leetcode.com/problems/decode-ways/)
+- [ ] [98. Validate Binary Search Tree](https://leetcode.com/problems/validate-binary-search-tree/)
+- [ ] [102. Binary Tree Level Order](https://leetcode.com/problems/binary-tree-level-order-traversal/)
+- [ ] [104. Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree/)
+- [ ] [105. Construct Binary Tree from Preorder and Inorder](https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
+- [ ] [121. Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/)
+- [ ] [124. Binary Tree Maximum Path Sum](https://leetcode.com/problems/binary-tree-maximum-path-sum/)
+- [ ] [125. Valid Palindrome](https://leetcode.com/problems/valid-palindrome/)
+- [ ] [128. Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence/)
+- [ ] [139. Word Break](https://leetcode.com/problems/word-break/)
+- [ ] [141. Linked List Cycle](https://leetcode.com/problems/linked-list-cycle/)
+- [ ] [146. LRU Cache](https://leetcode.com/problems/lru-cache/)
+- [ ] [152. Maximum Product Subarray](https://leetcode.com/problems/maximum-product-subarray/)
+- [ ] [153. Find Minimum in Rotated Sorted Array](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/)
+- [ ] [155. Min Stack](https://leetcode.com/problems/min-stack/)
+- [ ] [198. House Robber](https://leetcode.com/problems/house-robber/)
+- [ ] [200. Number of Islands](https://leetcode.com/problems/number-of-islands/)
+- [ ] [206. Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/)
+
+---
+
+## 📚 الموارد الإضافية والنصائح
+
+### 🔥 نصائح عامة للنجاح:
+
+**1. اللي يخليك تنجح:**
+
+- اتعامل مع Problem Solving زي الـ Gym - **consistency أهم من intensity**
+- حل 2-3 مسائل يومياً أفضل من 20 مسألة في يوم واحد كل أسبوع
+- لو مسألة وقفت معاك أكتر من 30 دقيقة، **اتفرج على الـ solution**
+- **راجع المسائل اللي حلتها** بعد أسبوع - هتنسى الحل وده كويس!
+
+**2. طريقة الحل الصحيحة:**
+
+```
+1. اقرأ المسألة 3 مرات (افهم الـ input/output)
+2. حل أمثلة على الورق (edge cases)
+3. فكر في الـ brute force solution الأول
+4. حاول تحسنها (Time/Space complexity)
+5. اكتب الكود
+6. Test مع الأمثلة
+7. Submit
+8. اقرأ solutions تانية (هتتعلم patterns جديدة)
+```
+
+**3. تجنب الأخطاء دي:**
+
+- ❌ حل المسائل عشوائياً بدون ترتيب
+- ❌ الاستسلام بسرعة وانت بتحل
+- ❌ عدم مراجعة المسائل القديمة
+- ❌ التركيز على Hard problems في الأول
+- ❌ عدم كتابة الكود بنفسك (مجرد قراءة الـ solution)
+
+---
+
+### 📊 جدول التتبع الأسبوعي:
+
+اعمل ملف Excel أو Google Sheets بالتنسيق ده:
+
+|Week|Topic|Target|Solved|Easy|Medium|Hard|Notes|
+|---|---|---|---|---|---|---|---|
+|1|Arrays|15|0|0|0|0||
+|2|Strings|20|0|0|0|0||
+|...|...|...|...|...|...|...|...|
+
+---
+
+### 🎓 مصادر إضافية:
+
+**YouTube Channels:**
+
+- [NeetCode](https://www.youtube.com/@NeetCode) - أفضل channel للـ LeetCode
+- [Back To Back SWE](https://www.youtube.com/@BackToBackSWE)
+- [Abdul Bari (Algorithms)](https://www.youtube.com/@abdul_bari)
+- [Errichto (Competitive Programming)](https://www.youtube.com/@Errichto)
+
+**Websites:**
+
+- [NeetCode.io](https://neetcode.io/) - Roadmap + Video Solutions
+- [LeetCode Patterns](https://seanprashad.com/leetcode-patterns/)
+- [Tech Interview Handbook](https://www.techinterviewhandbook.org/)
+
+**Books (optional):**
+
+- Cracking the Coding Interview (CTCI)
+- Elements of Programming Interviews (EPI)
+- Grokking Algorithms
+
+---
+
+## ✅ Checklist نهاية كل أسبوع:
+
+- [ ] حليت الـ target problems للأسبوع
+- [ ] راجعت 5 مسائل قديمة على الأقل
+- [ ] فهمت الـ patterns الأساسية للـ topic
+- [ ] كتبت ملاحظات عن الـ common pitfalls
+- [ ] حاولت أحل مسألة واحدة بدون مساعدة
+
+---
+
+**ملاحظة أخيرة:** الـ roadmap ده طموح جداً (550 مسألة في 6 شهور). لو لقيت نفسك متأخر، **مفيش مشكلة**! الأهم الـ consistency مش السرعة. حتى لو وصلت لـ 300-400 مسألة بجودة عالية، ده أفضل بكتير من 550 مسألة حلتهم بسرعة ونسيتهم.
+
+**بالتوفيق! 🚀**

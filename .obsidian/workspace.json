@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "problem solving/Untitled.md",
+                "file": "problem solving/problem solving road map.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled"
+              "title": "problem solving road map"
             }
           }
         ],
@@ -230,10 +230,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "a4263eb0ef45c795",
+  "active": "35f43fa5c799230d",
   "lastOpenFiles": [
     "Java Core/Stream API.md",
-    "problem solving/Untitled.md",
+    "problem solving/problem solving road map.md",
     "problem solving",
     "Java Core/Type Inference and var.md",
     "Java Core/Java Architecture and JVM.md",
