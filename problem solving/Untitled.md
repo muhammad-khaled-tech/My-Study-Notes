@@ -521,4 +521,500 @@ def lca(root, p, q):
 - [ ] [1646. Get Maximum in Generated Array](https://leetcode.com/problems/get-maximum-in-generated-array/)
 - [ ] [1025. Divisor Game](https://leetcode.com/problems/divisor-game/)
 - [ ] [1025. Divisor Game](https://leetcode.com/problems/divisor-game/)
-- [ ] [1025. Divisor Game
+	](https://leetcode.com/problems/divisor-game/)
+
+- [ ] [1025. Divisor Game](https://leetcode.com/problems/divisor-game/)
+- [ ] [1025. Divisor Game](https://leetcode.com/problems/divisor-game/)
+
+**DP - Medium (25 مسألة):**
+
+- [ ] [5. Longest Palindromic Substring](https://leetcode.com/problems/longest-palindromic-substring/) ⭐⭐
+- [ ] [22. Generate Parentheses](https://leetcode.com/problems/generate-parentheses/)
+- [ ] [53. Maximum Subarray](https://leetcode.com/problems/maximum-subarray/) ⭐⭐ (Kadane's)
+- [ ] [62. Unique Paths](https://leetcode.com/problems/unique-paths/) ⭐
+- [ ] [63. Unique Paths II](https://leetcode.com/problems/unique-paths-ii/)
+- [ ] [64. Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum/) ⭐
+- [ ] [91. Decode Ways](https://leetcode.com/problems/decode-ways/) ⭐
+- [ ] [96. Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees/)
+- [ ] [120. Triangle](https://leetcode.com/problems/triangle/)
+- [ ] [139. Word Break](https://leetcode.com/problems/word-break/) ⭐⭐
+- [ ] [152. Maximum Product Subarray](https://leetcode.com/problems/maximum-product-subarray/) ⭐
+- [ ] [198. House Robber](https://leetcode.com/problems/house-robber/) ⭐⭐
+- [ ] [213. House Robber II](https://leetcode.com/problems/house-robber-ii/)
+- [ ] [221. Maximal Square](https://leetcode.com/problems/maximal-square/)
+- [ ] [279. Perfect Squares](https://leetcode.com/problems/perfect-squares/)
+- [ ] [300. Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/) ⭐⭐⭐
+- [ ] [322. Coin Change](https://leetcode.com/problems/coin-change/) ⭐⭐⭐ (مهمة جداً)
+- [ ] [343. Integer Break](https://leetcode.com/problems/integer-break/)
+- [ ] [357. Count Numbers with Unique Digits](https://leetcode.com/problems/count-numbers-with-unique-digits/)
+- [ ] [376. Wiggle Subsequence](https://leetcode.com/problems/wiggle-subsequence/)
+- [ ] [413. Arithmetic Slices](https://leetcode.com/problems/arithmetic-slices/)
+- [ ] [416. Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum/) ⭐ (Knapsack)
+- [ ] [494. Target Sum](https://leetcode.com/problems/target-sum/) ⭐
+- [ ] [516. Longest Palindromic Subsequence](https://leetcode.com/problems/longest-palindromic-subsequence/)
+- [ ] [673. Number of Longest Increasing Subsequence](https://leetcode.com/problems/number-of-longest-increasing-subsequence/)
+
+#### 💡 Tips & Tricks:
+
+```python
+# DP Template العام:
+# 1. Define state: dp[i] يعني إيه؟
+# 2. Find recurrence relation: dp[i] = f(dp[i-1], dp[i-2], ...)
+# 3. Initialize base cases
+# 4. Fill the dp array
+
+# مثال: Fibonacci
+def fib(n):
+    if n <= 1:
+        return n
+    
+    dp = [0] * (n + 1)
+    dp[0], dp[1] = 0, 1
+    
+    for i in range(2, n + 1):
+        dp[i] = dp[i-1] + dp[i-2]
+    
+    return dp[n]
+
+# Kadane's Algorithm (Maximum Subarray):
+def max_subarray(nums):
+    max_sum = current_sum = nums[0]
+    
+    for num in nums[1:]:
+        current_sum = max(num, current_sum + num)
+        max_sum = max(max_sum, current_sum)
+    
+    return max_sum
+
+# 0/1 Knapsack Pattern:
+def knapsack(weights, values, capacity):
+    n = len(weights)
+    dp = [[0] * (capacity + 1) for _ in range(n + 1)]
+    
+    for i in range(1, n + 1):
+        for w in range(1, capacity + 1):
+            if weights[i-1] <= w:
+                dp[i][w] = max(
+                    dp[i-1][w],  # don't take item
+                    dp[i-1][w - weights[i-1]] + values[i-1]  # take item
+                )
+            else:
+                dp[i][w] = dp[i-1][w]
+    
+    return dp[n][capacity]
+
+# Space Optimization (1D DP):
+def climb_stairs(n):
+    if n <= 2:
+        return n
+    
+    prev2, prev1 = 1, 2
+    
+    for i in range(3, n + 1):
+        current = prev1 + prev2
+        prev2, prev1 = prev1, current
+    
+    return prev1
+```
+
+---
+
+### **Week 12-14: Graph Algorithms (50 مسألة)**
+
+#### 🔑 Core Concepts:
+
+- DFS & BFS on Graphs
+- Union Find (Disjoint Set)
+- Topological Sort
+- Shortest Path (Dijkstra, Bellman-Ford)
+
+#### 📝 Must-Solve Problems:
+
+**Graphs - Medium (40 مسائل):**
+
+- [ ] [133. Clone Graph](https://leetcode.com/problems/clone-graph/) ⭐
+- [ ] [200. Number of Islands](https://leetcode.com/problems/number-of-islands/) ⭐⭐⭐ (أهم مسألة Graph)
+- [ ] [207. Course Schedule](https://leetcode.com/problems/course-schedule/) ⭐⭐ (Topological Sort)
+- [ ] [210. Course Schedule II](https://leetcode.com/problems/course-schedule-ii/) ⭐
+- [ ] [261. Graph Valid Tree](https://leetcode.com/problems/graph-valid-tree/) (Premium)
+- [ ] [269. Alien Dictionary](https://leetcode.com/problems/alien-dictionary/) (Premium)
+- [ ] [310. Minimum Height Trees](https://leetcode.com/problems/minimum-height-trees/)
+- [ ] [323. Number of Connected Components](https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/) (Premium)
+- [ ] [332. Reconstruct Itinerary](https://leetcode.com/problems/reconstruct-itinerary/)
+- [ ] [399. Evaluate Division](https://leetcode.com/problems/evaluate-division/)
+- [ ] [417. Pacific Atlantic Water Flow](https://leetcode.com/problems/pacific-atlantic-water-flow/) ⭐
+- [ ] [433. Minimum Genetic Mutation](https://leetcode.com/problems/minimum-genetic-mutation/)
+- [ ] [490. The Maze](https://leetcode.com/problems/the-maze/) (Premium)
+- [ ] [505. The Maze II](https://leetcode.com/problems/the-maze-ii/) (Premium)
+- [ ] [547. Number of Provinces](https://leetcode.com/problems/number-of-provinces/) ⭐
+- [ ] [582. Kill Process](https://leetcode.com/problems/kill-process/) (Premium)
+- [ ] [684. Redundant Connection](https://leetcode.com/problems/redundant-connection/) ⭐ (Union Find)
+- [ ] [685. Redundant Connection II](https://leetcode.com/problems/redundant-connection-ii/)
+- [ ] [695. Max Area of Island](https://leetcode.com/problems/max-area-of-island/) ⭐
+- [ ] [721. Accounts Merge](https://leetcode.com/problems/accounts-merge/) (Union Find)
+- [ ] [743. Network Delay Time](https://leetcode.com/problems/network-delay-time/) ⭐ (Dijkstra)
+- [ ] [752. Open the Lock](https://leetcode.com/problems/open-the-lock/)
+- [ ] [785. Is Graph Bipartite?](https://leetcode.com/problems/is-graph-bipartite/) ⭐
+- [ ] [787. Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops/)
+- [ ] [797. All Paths From Source to Target](https://leetcode.com/problems/all-paths-from-source-to-target/)
+- [ ] [802. Find Eventual Safe States](https://leetcode.com/problems/find-eventual-safe-states/)
+- [ ] [841. Keys and Rooms](https://leetcode.com/problems/keys-and-rooms/)
+- [ ] [863. All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree/)
+- [ ] [886. Possible Bipartition](https://leetcode.com/problems/possible-bipartition/)
+- [ ] [909. Snakes and Ladders](https://leetcode.com/problems/snakes-and-ladders/)
+- [ ] [934. Shortest Bridge](https://leetcode.com/problems/shortest-bridge/)
+- [ ] [947. Most Stones Removed](https://leetcode.com/problems/most-stones-removed-with-same-row-or-column/) (Union Find)
+- [ ] [994. Rotting Oranges](https://leetcode.com/problems/rotting-oranges/) ⭐⭐
+- [ ] [1020. Number of Enclaves](https://leetcode.com/problems/number-of-enclaves/)
+- [ ] [1059. All Paths from Source Lead to Destination](https://leetcode.com/problems/all-paths-from-source-lead-to-destination/) (Premium)
+- [ ] [1091. Shortest Path in Binary Matrix](https://leetcode.com/problems/shortest-path-in-binary-matrix/)
+- [ ] [1129. Shortest Path with Alternating Colors](https://leetcode.com/problems/shortest-path-with-alternating-colors/)
+- [ ] [1197. Minimum Knight Moves](https://leetcode.com/problems/minimum-knight-moves/) (Premium)
+- [ ] [1254. Number of Closed Islands](https://leetcode.com/problems/number-of-closed-islands/)
+- [ ] [1319. Number of Operations to Make Network Connected](https://leetcode.com/problems/number-of-operations-to-make-network-connected/)
+
+**Graphs - Hard (10 مسائل):**
+
+- [ ] [127. Word Ladder](https://leetcode.com/problems/word-ladder/) ⭐⭐
+- [ ] [126. Word Ladder II](https://leetcode.com/problems/word-ladder-ii/)
+- [ ] [675. Cut Off Trees for Golf Event](https://leetcode.com/problems/cut-off-trees-for-golf-event/)
+- [ ] [765. Couples Holding Hands](https://leetcode.com/problems/couples-holding-hands/)
+- [ ] [778. Swim in Rising Water](https://leetcode.com/problems/swim-in-rising-water/)
+- [ ] [815. Bus Routes](https://leetcode.com/problems/bus-routes/)
+- [ ] [827. Making A Large Island](https://leetcode.com/problems/making-a-large-island/)
+- [ ] [1091. Shortest Path in Binary Matrix](https://leetcode.com/problems/shortest-path-in-binary-matrix/)
+- [ ] [1192. Critical Connections in a Network](https://leetcode.com/problems/critical-connections-in-a-network/) ⭐
+- [ ] [1293. Shortest Path in a Grid with Obstacles](https://leetcode.com/problems/shortest-path-in-a-grid-with-obstacles-elimination/)
+
+#### 💡 Tips & Tricks:
+
+```python
+# DFS on Graph (Adjacency List):
+def dfs(node, graph, visited):
+    if node in visited:
+        return
+    
+    visited.add(node)
+    
+    for neighbor in graph[node]:
+        dfs(neighbor, graph, visited)
+
+# BFS on Graph:
+from collections import deque
+
+def bfs(start, graph):
+    queue = deque([start])
+    visited = {start}
+    
+    while queue:
+        node = queue.popleft()
+        
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+
+# Union Find Template:
+class UnionFind:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+    
+    def find(self, x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])  # path compression
+        return self.parent[x]
+    
+    def union(self, x, y):
+        px, py = self.find(x), self.find(y)
+        
+        if px == py:
+            return False
+        
+        # union by rank
+        if self.rank[px] < self.rank[py]:
+            self.parent[px] = py
+        elif self.rank[px] > self.rank[py]:
+            self.parent[py] = px
+        else:
+            self.parent[py] = px
+            self.rank[px] += 1
+        
+        return True
+
+# Topological Sort (Kahn's Algorithm):
+from collections import deque, defaultdict
+
+def topological_sort(n, edges):
+    graph = defaultdict(list)
+    indegree = [0] * n
+    
+    for u, v in edges:
+        graph[u].append(v)
+        indegree[v] += 1
+    
+    queue = deque([i for i in range(n) if indegree[i] == 0])
+    result = []
+    
+    while queue:
+        node = queue.popleft()
+        result.append(node)
+        
+        for neighbor in graph[node]:
+            indegree[neighbor] -= 1
+            if indegree[neighbor] == 0:
+                queue.append(neighbor)
+    
+    return result if len(result) == n else []  # cycle detection
+
+# Dijkstra's Algorithm:
+import heapq
+
+def dijkstra(graph, start):
+    distances = {node: float('inf') for node in graph}
+    distances[start] = 0
+    pq = [(0, start)]  # (distance, node)
+    
+    while pq:
+        current_dist, node = heapq.heappop(pq)
+        
+        if current_dist > distances[node]:
+            continue
+        
+        for neighbor, weight in graph[node]:
+            distance = current_dist + weight
+            
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(pq, (distance, neighbor))
+    
+    return distances
+```
+
+---
+
+### **Week 14: Backtracking & Recursion (30 مسألة)**
+
+#### 📝 Must-Solve Problems:
+
+**Backtracking - Medium (25 مسائل):**
+
+- [ ] [17. Letter Combinations of a Phone Number](https://leetcode.com/problems/letter-combinations-of-a-phone-number/) ⭐
+- [ ] [22. Generate Parentheses](https://leetcode.com/problems/generate-parentheses/) ⭐⭐
+- [ ] [39. Combination Sum](https://leetcode.com/problems/combination-sum/) ⭐⭐
+- [ ] [40. Combination Sum II](https://leetcode.com/problems/combination-sum-ii/)
+- [ ] [46. Permutations](https://leetcode.com/problems/permutations/) ⭐⭐⭐
+- [ ] [47. Permutations II](https://leetcode.com/problems/permutations-ii/)
+- [ ] [78. Subsets](https://leetcode.com/problems/subsets/) ⭐⭐⭐
+- [ ] [90. Subsets II](https://leetcode.com/problems/subsets-ii/)
+- [ ] [77. Combinations](https://leetcode.com/problems/combinations/)
+- [ ] [79. Word Search](https://leetcode.com/problems/word-search/) ⭐⭐
+- [ ] [93. Restore IP Addresses](https://leetcode.com/problems/restore-ip-addresses/)
+- [ ] [131. Palindrome Partitioning](https://leetcode.com/problems/palindrome-partitioning/) ⭐
+- [ ] [216. Combination Sum III](https://leetcode.com/problems/combination-sum-iii/)
+- [ ] [254. Factor Combinations](https://leetcode.com/problems/factor-combinations/) (Premium)
+- [ ] [267. Palindrome Permutation II](https://leetcode.com/problems/palindrome-permutation-ii/) (Premium)
+- [ ] [291. Word Pattern II](https://leetcode.com/problems/word-pattern-ii/) (Premium)
+- [ ] [320. Generalized Abbreviation](https://leetcode.com/problems/generalized-abbreviation/) (Premium)
+- [ ] [351. Android Unlock Patterns](https://leetcode.com/problems/android-unlock-patterns/) (Premium)
+- [ ] [377. Combination Sum IV](https://leetcode.com/problems/combination-sum-iv/)
+- [ ] [401. Binary Watch](https://leetcode.com/problems/binary-watch/)
+- [ ] [473. Matchsticks to Square](https://leetcode.com/problems/matchsticks-to-square/)
+- [ ] [491. Non-decreasing Subsequences](https://leetcode.com/problems/non-decreasing-subsequences/)
+- [ ] [526. Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement/)
+- [ ] [784. Letter Case Permutation](https://leetcode.com/problems/letter-case-permutation/)
+- [ ] [842. Split Array into Fibonacci Sequence](https://leetcode.com/problems/split-array-into-fibonacci-sequence/)
+
+**Backtracking - Hard (5 مسائل):**
+
+- [ ] [37. Sudoku Solver](https://leetcode.com/problems/sudoku-solver/) ⭐⭐
+- [ ] [51. N-Queens](https://leetcode.com/problems/n-queens/) ⭐⭐⭐
+- [ ] [52. N-Queens II](https://leetcode.com/problems/n-queens-ii/)
+- [ ] [212. Word Search II](https://leetcode.com/problems/word-search-ii/) ⭐⭐
+- [ ] [301. Remove Invalid Parentheses](https://leetcode.com/problems/remove-invalid-parentheses/)
+
+#### 💡 Tips & Tricks:
+
+```python
+# Backtracking Template العام:
+def backtrack(path, choices):
+    if is_solution(path):
+        result.append(path[:])  # save a copy
+        return
+    
+    for choice in choices:
+        # Make choice
+        path.append(choice)
+        
+        # Recurse
+        backtrack(path, get_new_choices())
+        
+        # Undo choice (backtrack)
+        path.pop()
+
+# Permutations Template:
+def permute(nums):
+    result = []
+    
+    def backtrack(path):
+        if len(path) == len(nums):
+            result.append(path[:])
+            return
+        
+        for num in nums:
+            if num in path:
+                continue
+            path.append(num)
+            backtrack(path)
+            path.pop()
+    
+    backtrack([])
+    return result
+
+# Subsets Template:
+def subsets(nums):
+    result = []
+    
+    def backtrack(start, path):
+        result.append(path[:])
+        
+        for i in range(start, len(nums)):
+            path.append(nums[i])
+            backtrack(i + 1, path)
+            path.pop()
+    
+    backtrack(0, [])
+    return result
+
+# Combination Sum Template:
+def combination_sum(candidates, target):
+    result = []
+    
+    def backtrack(start, path, current_sum):
+        if current_sum == target:
+            result.append(path[:])
+            return
+        
+        if current_sum > target:
+            return
+        
+        for i in range(start, len(candidates)):
+            path.append(candidates[i])
+            backtrack(i, path, current_sum + candidates[i])  # i للـ reuse
+            path.pop()
+    
+    backtrack(0, [], 0)
+    return result
+```
+
+---
+
+## 🔥 Phase 3: Advanced Topics (Weeks 15-20) - 150 Problems
+
+### **Week 15-16: Advanced DP (40 مسألة)**
+
+**DP - Hard (40 مسائل):**
+
+- [ ] [10. Regular Expression Matching](https://leetcode.com/problems/regular-expression-matching/) ⭐⭐
+- [ ] [32. Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses/) ⭐⭐
+- [ ] [42. Trapping Rain Water](https://leetcode.com/problems/trapping-rain-water/) ⭐⭐⭐
+- [ ] [44. Wildcard Matching](https://leetcode.com/problems/wildcard-matching/)
+- [ ] [72. Edit Distance](https://leetcode.com/problems/edit-distance/) ⭐⭐⭐ (مهمة جداً)
+- [ ] [85. Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle/)
+- [ ] [87. Scramble String](https://leetcode.com/problems/scramble-string/)
+- [ ] [97. Interleaving String](https://leetcode.com/problems/interleaving-string/)
+- [ ] [115. Distinct Subsequences](https://leetcode.com/problems/distinct-subsequences/)
+- [ ] [123. Best Time to Buy and Sell Stock III](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/) ⭐
+- [ ] [124. Binary Tree Maximum Path Sum](https://leetcode.com/problems/binary-tree-maximum-path-sum/) ⭐⭐
+- [ ] [132. Palindrome Partitioning II](https://leetcode.com/problems/palindrome-partitioning-ii/)
+- [ ] [140. Word Break II](https://leetcode.com/problems/word-break-ii/)
+- [ ] [174. Dungeon Game](https://leetcode.com/problems/dungeon-game/)
+- [ ] [188. Best Time to Buy and Sell Stock IV](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iv/) ⭐
+- [ ] [265. Paint House II](https://leetcode.com/problems/paint-house-ii/) (Premium)
+- [ ] [276. Paint Fence](https://leetcode.com/problems/paint-fence/) (Premium)
+- [ ] [312. Burst Balloons](https://leetcode.com/problems/burst-balloons/) ⭐⭐
+- [ ] [321. Create Maximum Number](https://leetcode.com/problems/create-maximum-number/)
+- [ ] [354. Russian Doll Envelopes](https://leetcode.com/problems/russian-doll-envelopes/)
+- [ ] [403. Frog Jump](https://leetcode.com/problems/frog-jump/)
+- [ ] [410. Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum/)
+- [ ] [446. Arithmetic Slices II - Subsequence](https://leetcode.com/problems/arithmetic-slices-ii-subsequence/)
+- [ ] [472. Concatenated Words](https://leetcode.com/problems/concatenated-words/)
+- [ ] [514. Freedom Trail](https://leetcode.com/problems/freedom-trail/)
+- [ ] [517. Super Washing Machines](https://leetcode.com/problems/super-washing-machines/)
+- [ ] [542. 01 Matrix](https://leetcode.com/problems/01-matrix/)
+- [ ] [552. Student Attendance Record II](https://leetcode.com/problems/student-attendance-record-ii/)
+- [ ] [600. Non-negative Integers without Consecutive Ones](https://leetcode.com/problems/non-negative-integers-without-consecutive-ones/)
+- [ ] [629. K Inverse Pairs Array](https://leetcode.com/problems/k-inverse-pairs-array/)
+- [ ] [639. Decode Ways II](https://leetcode.com/problems/decode-ways-ii/)
+- [ ] [656. Coin Path](https://leetcode.com/problems/coin-path/) (Premium)
+- [ ] [664. Strange Printer](https://leetcode.com/problems/strange-printer/)
+- [ ] [689. Maximum Sum of 3 Non-Overlapping Subarrays](https://leetcode.com/problems/maximum-sum-of-3-non-overlapping-subarrays/)
+- [ ] [691. Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word/)
+- [ ] [714. Best Time to Buy and Sell Stock with Transaction Fee](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/)
+- [ ] [730. Count Different Palindromic Subsequences](https://leetcode.com/problems/count-different-palindromic-subsequences/)
+- [ ] [741. Cherry Pickup](https://leetcode.com/problems/cherry-pickup/)
+- [ ] [801. Minimum Swaps To Make Sequences Increasing](https://leetcode.com/problems/minimum-swaps-to-make-sequences-increasing/)
+- [ ] [818. Race Car](https://leetcode.com/problems/race-car/)
+
+---
+
+### **Week 17-18: Binary Search & Two Pointers Advanced (35 مسألة)**
+
+**Binary Search - Medium (20 مسائل):**
+
+- [ ] [33. Search in Rotated Sorted Array](https://leetcode.com/problems/search-in-rotated-sorted-array/) ⭐⭐⭐
+- [ ] [34. Find First and Last Position](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/) ⭐⭐
+- [ ] [74. Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix/) ⭐
+- [ ] [81. Search in Rotated Sorted Array II](https://leetcode.com/problems/search-in-rotated-sorted-array-ii/)
+- [ ] [153. Find Minimum in Rotated Sorted Array](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/) ⭐⭐
+- [ ] [154. Find Minimum in Rotated Sorted Array II](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array-ii/)
+- [ ] [162. Find Peak Element](https://leetcode.com/problems/find-peak-element/) ⭐
+- [ ] [240. Search a 2D Matrix II](https://leetcode.com/problems/search-a-2d-matrix-ii/) ⭐
+- [ ] [275. H-Index II](https://leetcode.com/problems/h-index-ii/)
+- [ ] [278. First Bad Version](https://leetcode.com/problems/first-bad-version/)
+- [ ] [287. Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number/) ⭐⭐
+- [ ] [300. Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/) (Binary Search approach)
+- [ ] [354. Russian Doll Envelopes](https://leetcode.com/problems/russian-doll-envelopes/)
+- [ ] [367. Valid Perfect Square](https://leetcode.com/problems/valid-perfect-square/)
+- [ ] [374. Guess Number Higher or Lower](https://leetcode.com/problems/guess-number-higher-or-lower/)
+- [ ] [378. Kth Smallest Element in a Sorted Matrix](https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/) ⭐
+- [ ] [410. Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum/)
+- [ ] [436. Find Right Interval](https://leetcode.com/problems/find-right-interval/)
+- [ ] [475. Heaters](https://leetcode.com/problems/heaters/)
+- [ ] [528. Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight/)
+
+**Binary Search - Hard (15 مسألة):**
+
+- [ ] [4. Median of Two Sorted Arrays](https://leetcode.com/problems/median-of-two-sorted-arrays/) ⭐⭐⭐
+- [ ] [69. Sqrt(x)](https://leetcode.com/problems/sqrtx/)
+- [ ] [302. Smallest Rectangle Enclosing Black Pixels](https://leetcode.com/problems/smallest-rectangle-enclosing-black-pixels/) (Premium)
+- [ ] [644. Maximum Average Subarray II](https://leetcode.com/problems/maximum-average-subarray-ii/) (Premium)
+- [ ] [668. Kth Smallest Number in Multiplication Table](https://leetcode.com/problems/kth-smallest-number-in-multiplication-table/)
+- [ ] [719. Find K-th Smallest Pair Distance](https://leetcode.com/problems/find-k-th-smallest-pair-distance/) ⭐
+- [ ] [774. Minimize Max Distance to Gas Station](https://leetcode.com/problems/minimize-max-distance-to-gas-station/) (Premium)
+- [ ] [786. K-th Smallest Prime Fraction](https://leetcode.com/problems/k-th-smallest-prime-fraction/)
+- [ ] [793. Preimage Size of Factorial Zeroes Function](https://leetcode.com/problems/preimage-size-of-factorial-zeroes-function/)
+- [ ] [878. Nth Magical Number](https://leetcode.com/problems/nth-magical-number/)
+- [ ] [887. Super Egg Drop](https://leetcode.com/problems/super-egg-drop/) ⭐⭐
+- [ ] [1062. Longest Repeating Substring](https://leetcode.com/problems/longest-repeating-substring/) (Premium)
+- [ ] [1095. Find in Mountain Array](https://leetcode.com/problems/find-in-mountain-array/)
+- [ ] [1201. Ugly Number III](https://leetcode.com/problems/ugly-number-iii/)
+- [ ] [1283. Find the Smallest Divisor](https://leetcode.com/problems/find-the-smallest-divisor-given-a-threshold/)
+
+#### 💡 Binary Search Tips:
+
+```python
+# Binary Search Template (Classical):
+def binary_search(arr, target):
+    left, right = 0, len(arr) - 1
+    
+    while left <= right:
+        mid = left + (right - left) // 2  # avoid overflow
+        
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+```
