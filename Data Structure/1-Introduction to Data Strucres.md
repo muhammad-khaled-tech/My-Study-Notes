@@ -74,9 +74,9 @@ related:
 
 بص للكود ده، بيوريك إزاي "تنظيم" الداتا بيفرق في فهمنا ليها:
 
-C++
 
-```
+
+```C++
 #include <iostream>
 #include <string>
 
