@@ -1,3 +1,19 @@
+---
+title: Double-Ended Queue (Deque)
+created: 2026-01-08
+tags:
+  - data-structures
+  - deque
+  - adt
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[7-Queue]]"
+  - "[[6-Stack]]"
+  - "[[4-Doubly Linked List]]"
+complexity:
+  all_operations: O(1)
+---
+
 يا أهلاً بك يا دكتور في "الجوكر" بتاع هياكل البيانات! إحنا خلصنا الـ Stack (بابه واحد) والـ Queue (باب دخول وباب خروج)، دلوقتي إحنا قدام الـ **Deque** (تنطق "Deck")، وهي اختصار لـ **Double-Ended Queue**.
 
 لو الـ Stack والـ Queue هما آلات متخصصة، فالـ Deque هو "السكينة السويسري"؛ هو الهيكل اللي يقدر يمثل Stack ويقدر يمثل Queue في نفس الوقت، وبمرونة مرعبة.

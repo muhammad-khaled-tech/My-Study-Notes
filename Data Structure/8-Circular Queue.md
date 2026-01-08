@@ -1,3 +1,20 @@
+---
+title: Circular Queue
+created: 2026-01-08
+tags:
+  - data-structures
+  - queue
+  - circular
+  - buffer
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[7-Queue]]"
+  - "[[5-Circular Linked Lists]]"
+complexity:
+  enqueue: O(1)
+  dequeue: O(1)
+---
+
 يا أهلاً بك يا دكتور في واحدة من أذكى "الخدع" الهندسية في تاريخ الـ Computer Science. إحنا المرة اللي فاتت لمسنا الـ Linear Queue، بس النهاردة إحنا قدام الـ **Circular Queue** (الطابور الدائري).
 
 لو كنت فاكر إن الـ Queue العادي في الـ Array كان "مثالي"، فخليني أصدمك وأقولك إن الـ Linear Queue اللي بيعتمد على Array ثابت هو "مُسرف" جداً للميموري. وعشان نحل الإسراف ده، كان لازم المهندسين يفكروا بره الصندوق.. أو بالأصح، يفكروا جوه "الدائرة".

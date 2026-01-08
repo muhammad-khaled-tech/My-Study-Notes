@@ -1,3 +1,17 @@
+---
+title: Binary Tree
+created: 2026-01-08
+tags:
+  - data-structures
+  - trees
+  - binary-tree
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[10-Introduction to trees]]"
+  - "[[12-Binary Search Tree (BST)]]"
+  - "[[15-Heaps]]"
+---
+
 يا أهلاً بك يا دكتور في أول نزهة حقيقية جوه "الغابة" اللي حكينا عنها. إحنا النهاردة هنمسك أول وأشهر نوع من الأشجار، وهو الـ **Binary Tree** (الشجرة الثنائية).
 
 النوع ده هو "اللبنة الأساسية" لكل حاجة معقدة هتشوفها بعدين. لو فهمت الـ Binary Tree صح، الـ AVL والـ Red-Black والـ Heaps هيبقوا بالنسبة لك لعب عيال.
