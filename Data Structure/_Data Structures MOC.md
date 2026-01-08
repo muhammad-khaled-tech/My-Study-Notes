@@ -18,13 +18,13 @@ tags:
 
 ### Linear Structures
 
-| Structure | Access | Search | Insert (Front) | Insert (End) | Delete |
-|-----------|--------|--------|----------------|--------------|--------|
-| [[2-Arrays\|Array]] | O(1) ⚡ | O(n) | O(n) | O(1)* | O(n) |
-| [[3-Linked List\|Linked List]] | O(n) | O(n) | O(1) ⚡ | O(n) | O(1)** |
-| [[4-Doubly Linked List\|Doubly LL]] | O(n) | O(n) | O(1) ⚡ | O(1) ⚡ | O(1) ⚡ |
-| [[6-Stack\|Stack]] | O(n) | O(n) | O(1) ⚡ | - | O(1) ⚡ |
-| [[7-Queue\|Queue]] | O(n) | O(n) | - | O(1) ⚡ | O(1) ⚡ |
+| Structure                           | Access | Search | Insert (Front) | Insert (End) | Delete |
+| ----------------------------------- | ------ | ------ | -------------- | ------------ | ------ |
+| [[2-Arrays\|Array]]                 | O(1) ⚡ | O(n)   | O(n)           | O(1)         | O(n)   |
+| [[3-Linked List\|Linked List]]      | O(n)   | O(n)   | O(1) ⚡         | O(n)         | O(1)   |
+| [[4-Doubly Linked List\|Doubly LL]] | O(n)   | O(n)   | O(1) ⚡         | O(1) ⚡       | O(1) ⚡ |
+| [[6-Stack\|Stack]]                  | O(n)   | O(n)   | O(1) ⚡         | -            | O(1) ⚡ |
+| [[7-Queue\|Queue]]                  | O(n)   | O(n)   | -              | O(1) ⚡       | O(1) ⚡ |
 
 *With dynamic array (amortized)  
 **With pointer to node

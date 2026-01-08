@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Data Structure/15-Heaps.md",
+                "file": "Data Structure/1-Introduction to Data Strucres.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "15-Heaps"
+              "title": "1-Introduction to Data Strucres"
             }
           }
         ]
@@ -217,27 +217,27 @@
   },
   "active": "bf393b4ec9d7f090",
   "lastOpenFiles": [
-    "Data Structure/13-AVL Tree.md",
     "Data Structure/_Data Structures MOC.md",
-    "Algorthims/Algorithm Paradigms.md",
+    "Data Structure/1-Introduction to Data Strucres.md",
     "Algorthims/_Algorithms MOC.md",
+    "Data Structure/7-Queue.md",
+    "Data Structure/5-Circular Linked Lists.md",
+    "Data Structure/4-Doubly Linked List.md",
+    "Data Structure/3-Linked List.md",
+    "Data Structure/2-Arrays.md",
     "Data Structure/14-Red-Black Tree.md",
     "Data Structure/15-Heaps.md",
+    "Data Structure/13-AVL Tree.md",
+    "Algorthims/Algorithm Paradigms.md",
     "Data Structure/13-AVL Tree..md",
     "Data Structure/12-Binary Search Tree (BST).md",
     "Data Structure/11-Binary Tree.md",
     "Data Structure/10-Introduction to trees.md",
     "Data Structure/9-Double-Ended Queue.md",
     "Data Structure/8-Circular Queue.md",
-    "Data Structure/7-Queue.md",
     "Data Structure/6-Stack.md",
     "Data Structures.md",
-    "Data Structure/5-Circular Linked Lists.md",
-    "Data Structure/4-Doubly Linked List.md",
-    "Data Structure/3-Linked List.md",
-    "Data Structure/2-Arrays.md",
     "Algorthims/Quick Sort.md",
-    "Data Structure/1-Introduction to Data Strucres.md",
     "Algorthims/Dictionary.md",
     "Untitled",
     "Algorthims/Hashing.md",
