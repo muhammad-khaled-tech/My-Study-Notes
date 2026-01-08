@@ -1,3 +1,20 @@
+---
+title: Red-Black Tree
+created: 2026-01-08
+tags:
+  - data-structures
+  - trees
+  - red-black
+  - self-balancing
+  - O(logn)
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[12-Binary Search Tree (BST)]]"
+  - "[[13-AVL Tree]]"
+complexity:
+  all_operations: O(log n)
+---
+
 يا أهلاً بك يا دكتور في "المعيار الصناعي" (The Industrial Standard). إحنا دلوقتي في حضرة الـ **Red-Black Tree (RBT)**. لو كانت الـ AVL هي الشجرة "المثالية" اللي بتهتم بمظهرها وتوازنها بالسنتيمتر، فالـ Red-Black هي الشجرة "العملية" اللي بتوازن بين سرعة البحث وسرعة التعديل.
 
 دي الشجرة اللي بتشغل الـ `std::map` والـ `std::set` في لغة C++، وهي اللي بيستخدمها الـ Linux Kernel في جدولة العمليات (Completely Fair Scheduler).

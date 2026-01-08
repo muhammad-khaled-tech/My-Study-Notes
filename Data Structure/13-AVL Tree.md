@@ -1,3 +1,20 @@
+---
+title: AVL Tree
+created: 2026-01-08
+tags:
+  - data-structures
+  - trees
+  - avl
+  - self-balancing
+  - O(logn)
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[12-Binary Search Tree (BST)]]"
+  - "[[14-Red-Black Tree]]"
+complexity:
+  all_operations: O(log n)
+---
+
 يا أهلاً بك يا دكتور في "قسم العناية المركزة" للأشجار. إحنا المرة اللي فاتت سيبنا الـ BST وهي بتعاني من مشكلة "الميل" (Skewness). لو الداتا دخلت مترتبة، الشجرة بتتحول لـ Linked List وبنخسر كل مميزات الـ $O(\log n)$.
 
 في سنة 1962، اتنين علماء روس، **Georgy Adelson-Velsky** و **Evgenii Landis**، قدموا للعالم أول هيكل بيانات بيعرف "يعدل نفسه بنفسه". وسموه على أول حروف من أساميهم: **AVL Tree**.

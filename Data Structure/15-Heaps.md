@@ -1,3 +1,22 @@
+---
+title: Heaps
+created: 2026-01-08
+tags:
+  - data-structures
+  - trees
+  - heap
+  - priority-queue
+  - O(logn)
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[11-Binary Tree]]"
+  - "[[7-Queue]]"
+complexity:
+  peek: O(1)
+  insert: O(log n)
+  delete: O(log n)
+---
+
 يا أهلاً بك يا دكتور في المحطة اللي بنسميها "محطة الأولوية". إحنا سيبنا الأشجار اللي هدفها البحث (Search Trees)، ودخلنا في نوع خاص جداً من الأشجار هدفه "الترتيب حسب الأهمية". النهاردة هنتكلم عن الـ **Heap**.
 
 لو الـ Binary Search Tree كانت "مكتبة"، فالـ Heap هو "غرفة الطوارئ" (Emergency Room) في المستشفى؛ مش مهم نلاقي كل المرضى دلوقتي، المهم إن "أخطر حالة" تكون قدام الدكتور فوراً.
