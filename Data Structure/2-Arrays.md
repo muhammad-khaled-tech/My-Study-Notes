@@ -1,3 +1,20 @@
+---
+title: Arrays
+created: 2026-01-08
+tags:
+  - data-structures
+  - arrays
+  - linear
+  - contiguous-memory
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[3-Linked List]]"
+complexity:
+  access: O(1)
+  search: O(n)
+  insert: O(n)
+---
+
 يا أهلاً بيك يا هندسة في أول خطوة حقيقية جوه الميموري. النهاردة هنشرح "الملك"، الهيكل اللي مفيش لغة برمجة في العالم تقدر تعيش من غيره، وهو الـ **Array**. بس إحنا مش هناخد القشور، إحنا هننزل تحت الجلد ونشوف الـ CPU وهو بيتعامل مع الـ RAM عشان يجيب لك الداتا في لمح البصر.
 
 اربط الحزام، عشان هنفهم النهاردة يعني إيه **Contiguous Memory** وليه الـ Array هو أسرع حاجة ممكن تلمسها في حياتك البرمجية.

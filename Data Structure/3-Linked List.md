@@ -1,3 +1,21 @@
+---
+title: Singly Linked List
+created: 2026-01-08
+tags:
+  - data-structures
+  - linked-list
+  - linear
+  - dynamic
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[2-Arrays]]"
+  - "[[4-Doubly Linked List]]"
+  - "[[6-Stack]]"
+complexity:
+  access: O(n)
+  insert_front: O(1)
+  delete: O(1)
+---
 
 ## المحطة الثانية: القوائم المترابطة - Linked Lists
 

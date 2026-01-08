@@ -1,3 +1,14 @@
+---
+title: Introduction to Data Structures
+created: 2026-01-08
+tags:
+  - data-structures
+  - fundamentals
+  - introduction
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[2-Arrays]]"
+---
 
 
 ## [[Data Structures]]/محطة الصفر: فلسفة وجود هياكل البيانات
