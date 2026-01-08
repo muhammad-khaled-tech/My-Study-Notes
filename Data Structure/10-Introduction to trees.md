@@ -89,11 +89,15 @@ related:
 
 في الشجرة المتوازنة، إنت بتقدر تعمل Search و Insert و Delete، كلهم في وقت قياسي وهو $O(\log n)$. ده اللي خلى الأشجار هي العمود الفقري لـ:
 
-- **Databases (B-Trees):** اللي بتخليك تبحث في وسط مليار سجل في أجزاء من الثانية.
+- **Databases (B-Trees):** 
+- اللي بتخليك تبحث في وسط مليار سجل في أجزاء من الثانية.
     
-- **Network Routing:** جداول التوجيه المعقدة.
-    
-- **AI Decisions:** أشجار اتخاذ القرار (Decision Trees).
+- **Network Routing:**
+- جداول التوجيه المعقدة.
+
+
+- **AI Decisions:** 
+- أشجار اتخاذ القرار (Decision Trees).
     
 
 ---
@@ -102,9 +106,9 @@ related:
 
 في الـ Linked List، الـ Node كانت "أعور"، بتشوف ناحية واحدة بس. في الـ Binary Tree (أشهر أنواع الشجر)، الـ Node بتبقى "ببصر حديد"، بتشوف ناحيتين (Left & Right).
 
-C++
 
-```
+
+```C++
 /* * A typical Binary Tree Node 
  * Notice how it evolved from the Linked List Node
  */
