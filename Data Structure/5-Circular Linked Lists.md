@@ -1,3 +1,18 @@
+---
+title: Circular Linked List
+created: 2026-01-08
+tags:
+  - data-structures
+  - linked-list
+  - circular
+  - round-robin
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[3-Linked List]]"
+  - "[[4-Doubly Linked List]]"
+  - "[[8-Circular Queue]]"
+---
+
 يا أهلاً بك يا هندسة في الحلقة الأخيرة من "ثلاثية الروابط". إحنا النهاردة هنقفل الدائرة حرفياً! بعد ما درسنا الطريق اللي بيمشي لقدام بس (Singly)، والطريق اللي رايح جاي (Doubly)، جه الوقت نشوف الطريق اللي "مبينتهيش"، وهو الـ **Circular Linked List (CLL)**.
 
 ده الهيكل اللي المبرمجين بيستخدموه لما يحبوا الداتا "تلف وتدور" من غير ما تخرج بره الميموري. اربط الحزام، عشان هنعرف ليه الـ `NULL` اختفى من حساباتنا النهاردة.

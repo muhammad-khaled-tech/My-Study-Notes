@@ -1,3 +1,21 @@
+---
+title: Doubly Linked List
+created: 2026-01-08
+tags:
+  - data-structures
+  - linked-list
+  - linear
+  - dynamic
+related:
+  - "[[_Data Structures MOC]]"
+  - "[[3-Linked List]]"
+  - "[[5-Circular Linked Lists]]"
+complexity:
+  insert: O(1)
+  delete: O(1)
+  access: O(n)
+---
+
 أهلاً بك يا بطل في "الشارع اللي بيودي ويجيب". لو كانت الـ Singly Linked List عبارة عن طريق اتجاه واحد (One-way Street)، فأنت النهاردة قدام طريق "رايح جاي" أو الـ **Doubly Linked List (DLL)**. دي المرحلة اللي بنبدأ فيها ندي للبيانات "ذاكرة" للمكان اللي جت منه، مش بس المكان اللي رايحة له.
 
 اربط الحزام، لأننا هنشوف إزاي مؤشر واحد زيادة (Extra Pointer) ممكن يغير قواعد اللعبة تماماً في الـ Performance، وفي نفس الوقت يصدعنا في الـ Memory Management.
