@@ -95,11 +95,11 @@ complexity:
 
 ### 5. الأمثلة العملية (C++ Implementation)
 
-ده كود دسم بيوريك إزاي تبني BST وتعمل فيها Search و Insert، مع الكومنتات بالإنجليزية.
+ده كود دسم بيوريك إزاي تبني BST وتعمل فيها Search و Insert.
 
-C++
 
-```
+
+```C++
 #include <iostream>
 
 using namespace std;
