@@ -17,12 +17,13 @@
     "notes/day-4.md": "rtl",
     "notes/day-5.md": "rtl",
     "notes/day-6.md": "rtl",
-    "notes/day-7.md": "auto"
+    "notes/day-7.md": "auto",
+    "Data Structure/11-Binary Tree.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
   "setNoteTitleDirection": true,
   "setYamlDirection": false,
-  "preventRTLFrontmatter": false,
+  "preventRTLFrontmatter": true,
   "statusBar": true
 }
