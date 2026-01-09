@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Data Structure/Tree lecture code Explanation.md",
+                "file": "Data Structure/12-Binary Search Tree (BST).md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Tree lecture code Explanation"
+              "title": "12-Binary Search Tree (BST)"
             }
           }
         ],
@@ -233,6 +233,7 @@
   "active": "51af13ecd54d00db",
   "lastOpenFiles": [
     "Data Structure/11-Binary Tree.md",
+    "Data Structure/15-Heaps.md",
     "Data Structure/Tree lecture code Explanation.md",
     "Data Structure/12-Binary Search Tree (BST).md",
     "Untitled.md",
@@ -246,7 +247,6 @@
     "Data Structure/4-Doubly Linked List.md",
     "Data Structure/3-Linked List.md",
     "Data Structure/14-Red-Black Tree.md",
-    "Data Structure/15-Heaps.md",
     "Data Structure/13-AVL Tree.md",
     "Algorthims/Algorithm Paradigms.md",
     "Data Structure/13-AVL Tree..md",
