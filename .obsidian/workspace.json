@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Data Structure/12-Binary Search Tree (BST).md",
+                "file": "Data Structure/Tree lecture code Explanation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "12-Binary Search Tree (BST)"
+              "title": "Tree lecture code Explanation"
             }
           }
         ],
@@ -93,8 +93,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -233,10 +232,10 @@
   },
   "active": "51af13ecd54d00db",
   "lastOpenFiles": [
-    "Untitled.md",
     "Data Structure/12-Binary Search Tree (BST).md",
+    "Data Structure/Tree lecture code Explanation.md",
+    "Untitled.md",
     "Data Structure/11-Binary Tree.md",
-    "Data Structure/Untitled.md",
     "Data Structure/10-Introduction to trees.md",
     "Data Structure/2-Arrays.md",
     "Data Structure/1-Introduction to Data Strucres.md",

@@ -19,7 +19,8 @@
     "notes/day-6.md": "rtl",
     "notes/day-7.md": "auto",
     "Data Structure/11-Binary Tree.md": "rtl",
-    "Data Structure/12-Binary Search Tree (BST).md": "rtl"
+    "Data Structure/12-Binary Search Tree (BST).md": "rtl",
+    "Data Structure/Tree lecture code Explanation.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
