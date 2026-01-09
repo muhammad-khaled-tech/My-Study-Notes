@@ -110,46 +110,206 @@ while(current != NULL ){
 ---
 
 
+# Part 2: Searching, Parental Links & Subtree Navigation (Mina's Implementation)
+
+### 1. Preamble & Introduction (التمهيد)
+
+الـ Navigation جوه الـ Binary Search Tree (BST) مش مجرد تدوير عشوائي أو "تخبيط"؛ هو عملية "صناعة قرار" (Decision Making) ذكية ومبنية على منطق رياضي ثابت11. الـ Mental Model اللي لازم يكون عندك هو إنك "مُحقق" ماشي ورا خريطة كنز؛ كل نود بتقابلها بتديك اتجاه إجباري بناءً على قيمتها: "هدفك أكبر مني؟ ارمي كل اللي على شمالي وروح يمين. أصغر؟ ارمي كل اللي على يميني وانزل شمال"2. في الجزء ده من كود بشمهندس مينا، التركيز كله على إزاي نلاقي نود معينة، وإزاي نتحرك "لفوق" (نجيب الـ Parent) مع إن النودز في الـ C++ هنا معندهاش Pointer مباشر للأب3.
+
+### 2. Historical Context (لماذا الـ BST؟)
+
+المشكلة التاريخية في الـ Linked Lists كانت إن الـ Search عملية مكلفة زمنياً لأنك لازم تعدي على العناصر واحد ورا التاني بالترتيب ($O(n)$)44. المهندسين استلهموا فكرة الـ Navigation في الـ BST من "خوارزمية تقسيم المجهود"؛ إنت في كل خطوة بترمى نص الاحتمالات وراك. دالة الـ `getNodeByData` هي المحرك اللي بيعمل الـ Binary Search ده بمرونة عالية جداً5.
+
+### 3. Deep Logic & Mechanics (كيف نتحرك؟)
+
+بشمهندس مينا صمم 3 أدوات (Functions) أساسية للتحرك جوه الشجرة:
+
+- **الـ `getNodeByData` (The Scout):**
+    
+    - بتبدأ رحلتها دايماً من الـ `root` وتستخدم `while` loop للتحرك مادام الـ `current` مش بـ `NULL`
+        
+    - لو القيمة اللي بتدور عليها (`data`) بتساوي النود الحالية، بتبعتها فوراً وترجع العنوان.
+        
+    - لو الداتا أكبر، بنعمل "Jump" للجناح اليمين: `current = current->right`.
+    - 
+    - لو أصغر، بننزل للجناح الشمال: `current = current->left`.
+        
+- **الـ `getParent` (The Detective):**
+    
+    - بما إن النودز معندهاش Pointer للأب، بشمهندس مينا عمل "خدعة" برمجية؛ بيبدأ رحلة بحث جديدة من الـ `root`
+        
+    - وهو ماشي، بيسأل كل نود (`parent`): "هل ابنك اللي على الشمال أو اليمين هو النود اللي أنا ماسكها في إيدي (`current`)؟"
+        
+    - لو لقى العنوان مطابق، بيرجع النود الحالية كـ **Parent**
+        
+- **الـ `getMaxRight` (The Explorer):**
+    
+    - دي وظيفة "جشعة" (Greedy)؛ بتمسك طرف خيط (current node) وتفضل "تكسر يمين" بكل قوتها: `while(current->right != NULL)`.
+        
+    - دي بتجيب لك أكبر قيمة في الـ Subtree دي، ودي معلومة ذهبية هنحتاجها جداً لما نيجي نمسح نود (Removal)
+        
+
+### 4. Visualizing with Mermaid (مسار البحث عن 65)
+
+تخيل لو الشجرة فيها القيم اللي في الـ `main` وإحنا بندور على نود **65**:
+
+
+
+```mermaid
+graph TD
+    50((50 - Root)) --- 40((40))
+    50 --- 60((60))
+    40 --- 30((30))
+    40 --- 45((45))
+    60 --- 70((70))
+    30 --- 25((25))
+    30 --- 35((35))
+    45 --- 47((47))
+    70 --- 65((65))
+    25 --- 20((20))
+    25 --- 27((27))
+    35 --- 34((34))
+    35 --- 37((37))
+    37 --- 39((39))
+
+    %% Path to 65 visualization
+    50 -.-> 60 -.-> 70 -.-> 65
+    style 65 fill:#f96,stroke:#333,stroke-width:4px
+    style 50 fill:#bbf
+```
+
+### 5. Memory & Low-Level Insights (نظرة للميموري والـ Linux)
+
+- **Pointer Comparison:** في دالة الـ `getParent` ، الكود بيقارن "عناوين الميموري" مش القيم:
+- `if(parent->left == current || parent->right == current)`.
+    
+- **Address Accuracy:** دي ممارسة هندسية دقيقة؛ لأن العناوين في الـ Heap مستحيل تتكرر لنودز مختلفة، حتى لو القيم متساوية، وده بيمنع أي لخبطة في الـ Navigation.
+    
+- **Iterative vs Recursive:** كل الدوال دي مكتوبة بشكل Iterative (باستخدام `while` loops).
+    
+- **Stack Space:** ده معناه إنها مبتستهلكش ميموري الـ Stack في الـ Recursion، وده أفضل للأداء في أنظمة Linux لو الشجرة عميقة جداً عشان نتفادى الـ Stack Overflow.
+    
+- **Error Handling:** لاحظ إن الـ `getParentMain` بترجع `-1` لو النود هي الـ `root` 19، وبترجع `-5` لو النود مش موجودة أصلاً.
+    
+
+### 6. Complexity Analysis (تحليل الكفاءة)
+
+- **Time Complexity:** في المتوسط $O(\log n)$ للبحث أو إيجاد الأب2121. في أسوأ الحالات (شجرة مايلة) بتوصل لـ $O(n)$.
+    
+- **Space Complexity:** هو $O(1)$ لأننا بنستخدم Pointers فقط للتنقل (Iterative) ولا نحجز أي مساحات إضافية في الـ Heap أو الـ Stack أثناء البحث22.
     
 
 ---
 
-# Part 3: Node Removal - The Surgical Logic
+### 7. C++ Code Snippets (من كود بشمهندس مينا)
 
-### 1. Preamble & Introduction
+منطق البحث الأساسي (The Search Core):
 
-عملية الـ `removeNode` في كود بشمهندس مينا هي عملية "إعادة هيكلة"2. الـ Mental Model اللي لازم يكون عندك هو "خطة البديل"؛ لو شيلنا مدير (Node)، مين اللي ينفع يمسك مكانه بحيث الموظفين اللي تحته (Children) يفضلوا مترتبين صح؟ الكود هنا بيتعامل مع 3 سيناريوهات جراحية مختلفة3.
+ده الجزء اللي بيحدد اتجاه الحركة بناءً على المقارنة23:
 
-### 2. Historical Context
 
-زمان، كانت الأنظمة بتعاني من الـ **Memory Fragmentation** والـ **Dangling Pointers**. لو مسحت نود من غير ما تضبط الـ Pointers اللي بتشاور عليها، السيستم هيضرب Crash. كود بشمهندس مينا بيطبق "خوارزمية الحذف" الكلاسيكية اللي بتضمن إن الشجرة تفضل "متصلة" دايماً4.
 
-### 3. Deep Logic & Mechanics
+```c++
+// Logic inside getNodeByData
+while(current != NULL ){
+    if(data == current->data){
+        return current; // وصلنا للهدف (Found)
+    }
+    else if(data > current->data){
+        current = current->right; // الهدف أكبر، ارمي الشمال وادخل يمين
+    }
+    else{
+        current = current->left; // الهدف أصغر، ارمي اليمين وادخل شمال
+    }
+}
+```
 
-بشمهندس مينا قسم الـ `removeNode` لجزئين كبار: **التعامل مع الـ Root** و **التعامل مع أي نود تانية**5. وفي الحالتين، إحنا بنواجه 3 حالات فرعية:
+إيجاد الأب عن طريق العناوين (Finding the Parent):
 
-- **الحالة 1: الـ Leaf Node (نود ملهاش ولاد):**
+الذكاء في الربط بين الأب والابن من غير Pointer عكسي24:
+
+
+
+```C++
+// Logic inside getParent
+while (parent != NULL ){
+    // هل الابن الشمال أو اليمين هو اللي بندور عليه؟ (مقارنة عناوين)
+    if(parent->left == current || parent->right == current){
+        return parent; 
+    } else {
+        // لو مش هو، كمل نزول في الشجرة بناءً على القيم
+        if(current->data > parent->data){
+            parent = parent->right;
+        } else {
+            parent = parent->left;
+        }
+    }
+}
+```
+
+---
+
+### 5 Self-Check Questions (اختبر فهمك):
+
+1. ليه دالة الـ `getParent` بتبدأ البحث دايماً من الـ `root` مع إننا ممكن نكون في نص الشجرة؟ 25
     
-    - دي أسهل حالة. بنخلي الـ `parent` يشاور على `NULL` بدل النود دي، وبعدين نمسحها من الميموري6.
-        
-- **الحالة 2: نود ليها إبن واحد (يمين أو شمال):**
+2. إيه الفرق في الـ Return Type بين دالة `checkDataInTree` ودالة `getNodeByData`؟ 26262626
     
-    - هنا بنعمل "تخطي" (Bypass). بنخلي الـ `parent` يشاور مباشرة على "حفيده" (إبن النود اللي هتتمسح)، وبكده النود بقت معزولة وجاهزة للمسح7.
-        
-- **الحالة 3: نود ليها إبنين (الحالة المعقدة):**
+3. في الـ `main` 27، لو ناديت `getMaxRightMain(40)`، إيه النتيجة اللي هتطبع بناءً على الإضافة اللي تمت؟ 28
     
-    - بشمهندس مينا استخدم استراتيجية الـ **In-order Predecessor**8.
-        
-    - بيروح للفرع الشمال (`root->left`)9.
-        
-    - بيدور على أقصى اليمين في الفرع ده باستخدام `getMaxRight`10.
-        
-    - بيخلي أقصى اليمين ده يشاور على "الفرع اليمين" بتاع النود اللي هتتمسح، وبكده بنحافظ على الترتيب11.
-        
+4. ليه دالة `getMaxRight` بتتحرك في اتجاه الـ `right` فقط؟ 29
+    
+5. لو ناديت `getParentMain` على قيمة مش موجودة أصلاً، إيه الـ Error Code اللي هيرجع؟ 30
+    
 
-### 4. Visualizing with Mermaid
+---
 
-تعال نشوف إيه اللي حصل لما مسحنا الـ **50** (الـ Root) في كود بشمهندس مينا:
+يا محمد، ده كان **Part 2** بالتفصيل الممل ومن غير أي Internal Links عشان Obsidian. لو جاهز لـ **Part 3** (عملية الـ Removal الجراحية بالتفصيل)، قولي **Continue**.
+
+هل تريدني أن أستمر في شرح الجزء الثالث (Node Removal Logic)؟
+    
+
+---
+
+# Part 3: Node Removal - The Surgical Logic (Mina's Implementation)
+
+### 1. Preamble & Introduction (التمهيد)
+
+عملية الـ `removeNode` في كود بشمهندس مينا هي عملية "إعادة هيكلة" (Restructuring) كاملة. الـ Mental Model اللي لازم يكون عندك هو "خطة البديل"؛ لو شيلنا مدير (Node)، مين اللي ينفع يمسك مكانه بحيث الموظفين اللي تحته (Children) يفضلوا مترتبين صح ومحدش يتوه؟ الكود هنا بيتعامل مع سيناريوهات جراحية بتبدأ من الـ Root وتوصل لأصغر Leaf.
+
+### 2. Historical Context (إدارة الـ Heap)
+
+في لغات زي C++، مفيش "Garbage Collector" يلم ورانا الميموري اللي مش مستخدمة. المهندسين صمموا عمليات الحذف في الـ BST بحيث تضمن حاجتين: إن الـ Pointers متكونش بتشاور على "سراب" (Dangling Pointers)، وإن كل `new` عملناه في الـ Heap يتمسح بـ `delete` المقابل ليه عشان م يحصلش **Memory Leak**.
+
+### 3. Deep Logic & Mechanics: حالات الحذف الجراحية
+
+بشمهندس مينا قسم الـ `removeNode` لجزئين كبار:
+
+#### أولاً: حذف الـ Root
+
+لو النود اللي هنمسحها هي الـ Root، عندنا حالات:
+
+- **نود وحيدة:** لو الـ Root ملوش ولاد، ببساطة بنخلي الـ `root = NULL`.
+    
+- **ابن واحد فقط:** لو له ابن شمال بس أو يمين بس، الابن ده بيترقى ويبقى هو الـ Root الجديد.
+    
+- **إبنين (الحالة المعقدة):** الكود بيختار الابن الشمال يكون هو الـ Root الجديد، وعشان ميضيعش الفرع اليمين القديم، بيروح يجيب الـ `getMaxRight` بتاع الفرع الشمال الجديد ويوصله بالفرع اليمين بتاع الـ Root القديم.
+    
+
+#### ثانياً: حذف نود مش Root
+
+هنا بنحتاج الـ `getParent` عشان نعرف نربط الأب بالبديل الجديد:
+
+- **الحالة 1 (Leaf Node):** النود ملهاش ولاد، فبنخلي الأب يشاور على `NULL` مكانها.
+    
+- **الحالة 2 (ابن واحد):** بنعمل "تخطي" (Bypass)؛ بنخلي الأب يشاور مباشرة على "حفيده" (ابن النود اللي هتتمسح).
+    
+- **الحالة 3 (إبنين):** بنطبق نفس فكرة الـ Root؛ بنجيب أقصى يمين في الفرع الشمال للنود الممسوحة ونربطه بالفرع اليمين بتاعها، وبعدين نربط الأب بالفرع الشمال ده.
+    
+
+### 4. Visualizing with Mermaid (حذف الـ Root 50)
+
+بناءً على الكود، ده اللي بيحصل لما نمسح نود ليها إبنين زي الـ 50:
 
 Code snippet
 
@@ -162,7 +322,7 @@ graph TD
     C --- E((70))
     end
 
-    subgraph "After Deleting 50 (Surgery)"
+    subgraph "After Deleting 50 (The Surgery)"
     NewRoot((40)) --- B2((30))
     NewRoot --- C2((60))
     C2 --- E2((70))
@@ -170,77 +330,69 @@ graph TD
     end
 ```
 
-### 5. Memory & Low-Level Insights
+### 5. Memory & Low-Level Insights (نظرة للميموري والـ Linux)
 
-- **The `delete` Operator:** الكود بيستخدم `delete current;` في أخر الدالة12. دي خطوة "مقدسة" في الـ C++ عشان ترجع المساحة للـ **Heap** وتمنع الـ **Memory Leak**13.
+- **The `delete` Operator:** الكود بيستخدم `delete current;` في آخر الدالة. في Linux، ده بيبعت إشارة للـ Memory Manager إن المساحة دي في الـ **Heap** بقت فاضية وممكن برنامج تاني يستخدمها.
     
-- **Dangling Pointers:** لاحظ إن بشمهندس مينا قبل ما يعمل `delete` للعنصر، كان بيضبط الـ `parent->right` أو `parent->left` الأول14. لو عكسنا الخطوات دي، هنفقد العنوان وهنحاول نلمس ميموري مش موجودة (Undefined Behavior).
+- **Pointer Reassignment:** لاحظ إن بشمهندس مينا بيضبط الـ Pointers بتاعة الأب (parent->right أو parent->left) **قبل** ما يمسح النود. لو مسحنا الأول، هنفقد العنوان وهنعمل Crash للبرنامج.
     
-- **Null Checking:** الكود بيعمل `if (current == NULL)` في البداية كنوع من الـ Defensive Programming عشان يتأكد إننا مش بنمسح سراب15.
+- **Heap vs Stack:** الـ Pointers (current, parent, child) موجودين في الـ **Stack**، لكن النودز الحقيقية موجودة في الـ **Heap**2222.
     
 
-### 6. Complexity Analysis
+### 6. Complexity Analysis (تحليل الكفاءة)
 
-- **Time Complexity:** عملية الحذف بتاخد $O(H)$ حيث $H$ هو ارتفاع الشجرة16. في المتوسط ده $O(\log n)$17.
+- **Time Complexity:** العملية بتاخد $O(H)$ حيث $H$ هو ارتفاع الشجرة. في المتوسط ده بيبقى $O(\log n)$ 3.
     
-- **Space Complexity:** $O(1)$ لأن الكود شغال Iterative (باستخدام Pointers) مش Recursive18.
+- **Space Complexity:** هو $O(1)$ لأننا شغالين Iterative باستخدام Pointers فقط، ومبنستخدمش الـ Recursion اللي ممكن يملى الـ Call Stack.
     
 
 ---
 
-### 7. Extensive Code Examples (C++)
+### 7. C++ Code Snippets (من كود بشمهندس مينا)
 
-Level 1: Removing a Leaf (The Simple Cut)
+ربط الأب بالبديل الجديد (The Reconnection Logic):
 
-زي حالة مسح رقم 20 في الكود.
+ده الجزء اللي بيقرر الأب هيشاور على مين بعد ما الابن يتمسح:
 
 
 
 ```C++
-// If node is leaf, the child pointer remains NULL
-if(current->right == NULL && current->left == NULL){
-    child = NULL; // Parent will now point to NULL
+// Decide which side of the parent to update
+if(current->data > parent->data ){
+    parent->right = child; // التوصيل بفرع اليمين
 }
+else {
+    parent->left = child;  // التوصيل بفرع الشمال
+}
+// Finally, free the memory
+delete current; 
 ```
 
-Level 2: The "Bypass" (One Child Case)
-
-زي حالة مسح رقم 70 في الكود.
+**تجهيز البديل في حالة الـ Two Children:**
 
 
 
 ```C++
-// If it has only a right child, jump over the node
-else if(current->left == NULL){
-    child = current->right; // Grandparent connects to Grandchild
-}
-```
-
-Level 3: The "Brain Transplant" (Two Children Case)
-
-دي أصعب حتة في كود بشمهندس مينا.
-
-
-
-```C++
-// Case: Root has two children
-Node * newRoot = root->left; // Pick left child
-Node * maxRight = getMaxRight(newRoot); // Find biggest in left branch
-maxRight->right = root->right; // Connect old right branch to it
-root = newRoot; // Promote left child to be the new Root
+Node * newparent = current->left; // البديل هو الابن الشمال
+Node * maxRight = getMaxRight(newparent); // دور على أقصى يمين فيه
+maxRight->right = current->right; // اربط فرع اليمين القديم هنا
+child = newparent; // ده اللي هيتربط في الأب الأصلي
 ```
 
 ---
 
-### 5 Self-Check Questions:
+### 5 Self-Check Questions (اختبر فهمك):
 
-1. في حالة الـ Two Children، ليه بشمهندس مينا اختار الـ `getMaxRight` من الفرع الشمال بالذات؟ 19
+1. ليه بنحتاج نعمل `delete current;` في آخر الدالة حتى لو النود كانت Leaf؟
     
-2. ليه بنحتاج نعمل `delete current;` في أخر الدالة مع إننا غيرنا مسار الـ Pointers؟ 20
+2. في حالة الـ Two Children، ليه بشمهندس مينا اختار الـ `getMaxRight` من الفرع الشمال بالذات؟
     
-3. لو مسحنا نود كانت هي الـ `left child` لأبوها، إزاي الكود بيعرف يضبط الـ `parent->left` مش الـ `parent->right`؟ 21
+3. إيه اللي يحصل لو الـ `root` كان هو النود الوحيدة وعملنا `removeNode`؟
     
-4. إيه اللي يحصل لو الـ `root` كان هو النود الوحيدة في الشجرة وعملنا `removeNode`؟ 22
+4. ليه الكود بيستخدم `current->data > parent->data` عشان يحدد اتجاه الربط؟
     
-5. في كود الـ `main` 23، بعد مسح الـ 50، مين النود اللي بقت هي الـ `root` الجديدة؟ 24
+5. لو ناديت `removeNode` على رقم مش موجود، إزاي الكود بيتعامل مع ده؟
     
+
+---
+
