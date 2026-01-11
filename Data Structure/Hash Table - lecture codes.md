@@ -580,8 +580,8 @@ bool search(int key)
 
 ```mermaid
 graph LR
-    Input((Key: 5)) -- "HashFunction(5)" --> Index[Index: 5]
-    Index -- "Direct Access" --> Bucket5[table[5]]
+    Input((Key: 5)) -- "HashFunction(5)" --> Index["Index: 5"]
+    Index -- "Direct Access" --> Bucket5["table[5]"]
     
     style Index fill:#f96,stroke:#333
     style Bucket5 fill:#f9f,stroke:#333
@@ -596,7 +596,7 @@ graph LR
 - **الكود:** `Node *curr = table[index];`
     
 
-Code snippet
+
 
 ```mermaid
 graph TD
@@ -682,9 +682,6 @@ graph TD
 - **ملاحظة جراحية:** لاحظ إننا مقدرناش نستخدم Binary Search جوه السلسلة دي لأنها Linked List، وإحنا لسه قايلين في التقرير بتاع الـ Lab إن الـ Binary Search سيئ مع الـ Linked List.
     
 
-**كده دالة الـ Search بقت واضحة كصورة في خيالك؟** لو تمام، تحب ندخل في دالة الـ **Remove** ونشوف إزاي الـ `prev` بيلعب دور "المساعد" عشان السلسلة متتكسرش؟
-
-
 ---
 
 ## 6. The Removal Logic (The Surgical Bypass)
@@ -707,17 +704,20 @@ graph TD
 
 ```mermaid
 graph LR
-    subgraph "Before Deleting 5"
-    T[table index] --> N15((15: prev))
-    N15 --> N5((5: curr))
-    N5 --> N20((20: next))
-    end
 
     subgraph "The Surgery: Bypassing 5"
     T2[table index] --> N15_2((15: prev))
     N15_2 -- "prev->next = curr->next" --> N20_2((20))
     N5_2((5: curr)) -- "to be deleted" --> X[X]
     end
+    
+    subgraph "Before Deleting 5"
+    T[table index] --> N15((15: prev))
+    N15 --> N5((5: curr))
+    N5 --> N20((20: next))
+    end
+
+
 
     style N5 fill:#f66,stroke:#333
     style N5_2 fill:#f66,stroke:#333
@@ -758,6 +758,132 @@ void remove(int key)
 }
 ```
 
+## مثال
+
+
+ عملية الحذف (**Remove**) في الـ Hash Table هي "عملية جراحية" دقيقة جداً. ليه؟ لأننا لو مسحنا نود من وسط السلسلة (Chain) من غير ما نربط اللي قبلها باللي بعدها، السلسلة كلها هتتقطع ونخسر بياناتنا.
+
+بشمهندس مينا استخدم استراتيجية **"المُحقق والمُساعد"** (`curr` و `prev`) عشان يضمن إن العملية تتم بنجاح. تعال نتخيل إننا بنمسح الرقم **20** من سلسلة فيها `15 -> 20 -> 25 -> NULL`.
+
+---
+
+### 1. التجهيز للعملية (The Setup)
+
+في البداية، بنوقف الـ `curr` عند أول نود، والـ `prev` بيبدأ من "العدم" (`NULL`).
+
+- **الكود:** `Node *curr = table[index]; Node *prev = NULL;`
+    
+
+
+
+```mermaid
+graph TD
+    Table[table Index] --> N15((15))
+    N15 --> N20((20))
+    N20 --> N25((25))
+    N25 --> NULL[NULL]
+
+    CurrPtr[curr] -- "Target Finder" --> N15
+    PrevPtr[prev] -- "Safety Bridge" --> NullBox[NULL]
+    
+    style CurrPtr fill:#f96,stroke:#333
+    style PrevPtr fill:#bbf,stroke:#333
+```
+
+---
+
+### 2. البحث عن الهدف (The Search Phase)
+
+بنبدأ نتحرك. طالما الـ `curr` مش هو الهدف، الـ `prev` بياخد مكان الـ `curr` القديم، والـ `curr` بيمشي خطوة لقدام.
+
+- **الآن:** `curr` واقف عند **20** (الهدف)، والـ `prev` واقف عند **15**.
+    
+
+
+
+```mermaid
+graph TD
+    Table[table Index] --> N15((15))
+    N15 --> N20((20))
+    N20 --> N25((25))
+
+    PrevPtr[prev] --> N15
+    CurrPtr[curr] -- "MATCH FOUND!" --> N20
+    
+    style N20 fill:#f66,stroke:#333,stroke-width:4px
+    style PrevPtr fill:#bbf,stroke:#333
+    style CurrPtr fill:#f96,stroke:#333
+```
+
+---
+
+### 3. الربط الجراحي (The Bridge/Bypass)
+
+هنا اللحظة الحاسمة. إحنا عاوزين نشيل الـ 20 بس لازم الـ 15 تمسك في الـ 25 الأول.
+
+بما أن الـ prev مش بـ NULL (إحنا مش في أول نود)، بنقول للـ prev: "يا 15، خلي الـ next بتاعك يمسك اللي بعد الـ 20".
+
+- **الكود:** `prev->next = curr->next;`
+    
+
+
+
+```mermaid
+graph TD
+    Table[table Index] --> N15((15))
+    N15 -- "The Bypass Bridge" --> N25((25))
+    N20((20)) -. "Link Broken" .-> N25
+    N25 --> NULL[NULL]
+
+    style N20 fill:#ddd,stroke:#999,stroke-dasharray: 5 5
+    style N15 fill:#4f4,stroke:#333
+```
+
+---
+
+### 4. تنظيف الميموري (The Disposal)
+
+دلوقتي النود **20** بقت "معزولة" تماماً. نقدر نمسحها من الميموري فوراً.
+
+- **الكود:** `delete curr;`
+    
+
+
+
+```mermaid
+graph TD
+    Table[table Index] --> N15((15))
+    N15 --> N25((25))
+    N25 --> NULL[NULL]
+    
+    Deleted[Deleted Node 20] --- X[MEMORY FREED]
+
+    style Deleted fill:#000,stroke:#f00,color:#fff
+```
+
+---
+
+### الحالة الخاصة: حذف أول نود (Removing the Head)
+
+لو كان الرقم اللي بنمسحه هو **15** (أول واحد)، الـ `prev` هيفضل `NULL`. في الحالة دي، بنخلي الـ `table[index]` نفسه يشاور على النود التانية فوراً.
+
+- **الكود:** `if (prev == NULL) { table[index] = curr->next; }`
+    
+
+---
+
+### ملخص العملية الجراحية:
+
+1. **لو الهدف أول نود:** غير عنوان البداية في الجدول (`table[index]`).
+    
+2. **لو الهدف في النص:** خلي اللي قبله (`prev`) يمسك في اللي بعده (`curr->next`).
+    
+3. **في كل الأحوال:** لازم تعمل `delete curr` عشان متسيبش زبالة في الميموري.
+    
+
+يا محمد، إيه رأيك في الـ "Bypass Bridge" ده؟ هل كدة قدرت تتخيل ليه الـ `prev` مهم جداً في عملية الحذف؟
+
+**الخطوة الجاية:** إحنا كدة فصصنا الكود حتة حتة. **هل تحب نجمع كل اللي فهمناه ونشوف إزاي تقدر تكتب الكود ده من الذاكرة (بدون غش)؟** أو لو عندك سؤال في دالة الـ `~HashTable` (الـ Destructor)؟
 ---
 
 ## 7. The Destructor (The Cleaning Service)
