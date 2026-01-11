@@ -160,7 +160,14 @@ int main() {
     return 0;
 }
 ```
+```output
+Index 0: 15 -> 35 -> NULL
+Index 1: NULL
+Index 2: 22 -> 42 -> NULL
+Index 3: NULL
+Index 4: NULL
 
+```
 ### إيه اللي حصل هنا؟
 
 1. في الخانة (Index 0): الـ Vector شال الـ 15 والـ 35 مع بعض.
@@ -169,6 +176,7 @@ int main() {
     
 3. باقي الخانات فضلت فاضية.
     
+
 
 ---
 
