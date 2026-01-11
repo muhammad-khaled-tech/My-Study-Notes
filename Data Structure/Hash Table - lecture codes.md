@@ -518,3 +518,293 @@ void insert(int key)
 إحنا دايماً بنربط **"من الجديد للقديم"** الأول، وبعدين بنحدث **"عنوان البداية"**. ده هو سر الـ $O(1)$ Insertion؛ لأنك مش محتاج تمشي لآخر الطابور عشان تضيف، إنت دايماً بتبني من "قدام".
 
 
+---
+
+## 5. The Search Logic (Finding the Needle)
+
+### **The Problem & Logic**
+
+إحنا مش عاوزين ندور في الجدول كله؛ ده تضييع وقت. المنطق بيقول: "لو الرقم ده موجود، مستحيل يكون في أي حتة تانية غير الـ Index اللي معادلته بتقول عليه".
+
+فإحنا بنحسب الـ Index، وبنروح للخانة دي بالظبط، ونبدأ نتمشى جوه السلسلة الصغيرة اللي هناك بس.
+
+### **The Goal**
+
+التأكد من وجود الـ Key في أسرع وقت ممكن ($O(1)$ في المتوسط).
+
+### **The Code**
+
+
+
+```C++
+bool search(int key)
+{
+    // Step 1: Calculate the exact bucket index
+    int index = HashFunction(key);
+
+    // Step 2: Start a pointer at the head of this bucket's list
+    Node *curr = table[index];
+
+    // Step 3: Traverse the small chain (Linked List)
+    while (curr != NULL)
+    {
+        // If we found it, return true immediately
+        if (curr->key == key)
+        {
+            return true;
+        }
+        // Move to the next person in line
+        curr = curr->next;
+    }
+    // If we finished the list and didn't find it
+    return false;
+}
+```
+
+## مثال:
+
+تخيل إننا بندور على الرقم **5** في جدول حجمه **10**، والـ Index رقم **5** شايل السلسلة دي: `15 -> 5 -> 25 -> NULL`.
+
+---
+
+### الخطوة 1: حساب "الإحداثيات" (Hashing)
+
+أول حاجة، البرنامج مش بيتحرك من مكانه غير لما يعرف هيروح فين بالظبط.
+
+- **المعادلة:** $index = 5 \pmod{10} = 5$.
+    
+- **الهدف:** القفز مباشرة للخانة رقم 5 في المصفوفة.
+    
+
+
+
+```mermaid
+graph LR
+    Input((Key: 5)) -- "HashFunction(5)" --> Index[Index: 5]
+    Index -- "Direct Access" --> Bucket5[table[5]]
+    
+    style Index fill:#f96,stroke:#333
+    style Bucket5 fill:#f9f,stroke:#333
+```
+
+---
+
+### الخطوة 2: وضع "المُحقق" (Pointer Initialization)
+
+بمجرد ما وصلنا للـ Index رقم 5، بنوقف مؤشر اسمه `curr` عند أول نود في السلسلة.
+
+- **الكود:** `Node *curr = table[index];`
+    
+
+Code snippet
+
+```mermaid
+graph TD
+    Table[table Index 5] --> N15((15))
+    N15 --> N5((5))
+    N5 --> N25((25))
+    N25 --> NULL[NULL]
+
+    CurrPtr[curr Pointer] -- "starts here" --> N15
+    
+    style CurrPtr fill:#bbf,stroke:#333
+```
+
+---
+
+### الخطوة 3: التفتيش - الجولة الأولى (Comparison 1)
+
+المحقق `curr` بيسأل النود اللي واقف عندها: "هل الـ Key بتاعك هو 5؟".
+
+- **الحالة:** `15 != 5`.
+    
+- **الأمر:** "اتحرك للي بعدها" -> `curr = curr->next;`.
+    
+
+Code snippet
+
+```mermaid
+graph TD
+    Table[table Index 5] --> N15((15))
+    N15 --> N5((5))
+    N5 --> N25((25))
+    
+    CurrPtr[curr Pointer] -- "Checks 15: No Match" --> N15
+    CurrPtr -. "Moves to next" .-> N5
+
+    style N15 fill:#fff,stroke:#f66
+```
+
+---
+
+### الخطوة 4: التفتيش - الجولة الثانية (Success!)
+
+المحقق `curr` دلوقتي واقف عند النود التانية وبيسأل نفس السؤال: "هل الـ Key بتاعك هو 5؟".
+
+- **الحالة:** `5 == 5`.
+    
+- **النتيجة:** مبروك! لقينا الهدف. البرنامج بيرجع `true` ويوقف بحث فوراً.
+    
+
+Code snippet
+
+```mermaid
+graph TD
+    Table[table Index 5] --> N15((15))
+    N15 --> N5((5))
+    N5 --> N25((25))
+    
+    CurrPtr[curr Pointer] -- "Checks 5: MATCH!" --> N5
+    
+    style N5 fill:#4f4,stroke:#333,stroke-width:4px
+    style CurrPtr fill:#bbf,stroke:#333
+```
+
+---
+
+### ماذا لو لم يكن الرقم موجوداً؟ (The Fail Scenario)
+
+لو كنا بندور على رقم **99**:
+
+1. الـ `index` هيكون $99 \pmod{10} = 9$.
+    
+2. هنروح لـ `table[9]` نلاقيها `NULL` أو نلف في السلسلة بتاعتها لحد ما الـ `curr` يبقى بـ `NULL`.
+    
+3. أول ما الـ `curr == NULL` يخرج من الـ `while` ويرجع `false`.
+    
+
+---
+
+### تحليل الذكاء في هذه العملية:
+
+- **لماذا هي $O(1)$؟** لأنك نطيت للـ Index 5 في خطوة واحدة، والـ Linked List اللي جوه الخانة عادةً بتكون قصيرة جداً (نود أو اتنين).
+    
+- **ملاحظة جراحية:** لاحظ إننا مقدرناش نستخدم Binary Search جوه السلسلة دي لأنها Linked List، وإحنا لسه قايلين في التقرير بتاع الـ Lab إن الـ Binary Search سيئ مع الـ Linked List.
+    
+
+**كده دالة الـ Search بقت واضحة كصورة في خيالك؟** لو تمام، تحب ندخل في دالة الـ **Remove** ونشوف إزاي الـ `prev` بيلعب دور "المساعد" عشان السلسلة متتكسرش؟
+
+
+---
+
+## 6. The Removal Logic (The Surgical Bypass)
+
+### **The Problem & Logic**
+
+الحذف هو أصعب جزء لأننا لو شيلنا نود من نص السلسلة، السلسلة هتتقطع.
+
+المنطق: لازم يكون معانا "اتنين محققين"؛ واحد ماسك النود اللي هنمسحها (curr) وواحد ماسك النود اللي قبلها (prev) عشان لما نشيل الـ curr نربط الـ prev باللي كان بعد الـ curr مباشرة.
+
+### **The Goal**
+
+حذف النود وتحرير مساحتها من الميموري مع الحفاظ على اتصال السلسلة.
+
+### **Mermaid: The Removal Surgery (Case: Middle Node)**
+
+تخيل بنمسح نود **5** اللي موجودة بين **15** و **20**:
+
+
+
+```mermaid
+graph LR
+    subgraph "Before Deleting 5"
+    T[table index] --> N15((15: prev))
+    N15 --> N5((5: curr))
+    N5 --> N20((20: next))
+    end
+
+    subgraph "The Surgery: Bypassing 5"
+    T2[table index] --> N15_2((15: prev))
+    N15_2 -- "prev->next = curr->next" --> N20_2((20))
+    N5_2((5: curr)) -- "to be deleted" --> X[X]
+    end
+
+    style N5 fill:#f66,stroke:#333
+    style N5_2 fill:#f66,stroke:#333
+```
+
+### **The Code**
+
+
+
+```C++
+void remove(int key)
+{
+    int index = HashFunction(key);
+    Node *curr = table[index]; // The node we are checking
+    Node *prev = NULL;         // The node just before 'curr'
+
+    while (curr != NULL)
+    {
+        if (curr->key == key) // We found our target!
+        {
+            // Case 1: Target is the first node (Head)
+            if (prev == NULL)
+            {
+                table[index] = curr->next; // Point the table to the second node
+            }
+            // Case 2: Target is in the middle or end
+            else
+            {
+                prev->next = curr->next; // The bridge: skip 'curr'
+            }
+            delete curr; // Free memory to avoid leaks
+            return;      // Task finished
+        }
+        // Move both pointers forward
+        prev = curr;
+        curr = curr->next;
+    }
+}
+```
+
+---
+
+## 7. The Destructor (The Cleaning Service)
+
+### **The Problem & Logic**
+
+الـ Hash Table دي حاجزة مساحة كبيرة في الـ **Heap** (المصفوفة + كل النودز). لو قفلنا البرنامج من غير ما نمسحهم، الميموري هتتملي زبالة (Memory Leak).
+
+### **The Goal**
+
+مسح كل نود في كل سلسلة، وبعدين مسح المصفوفة نفسها.
+
+### **The Code**
+
+
+
+```C++
+~HashTable()
+{   
+    // Loop through every bucket in the table
+    for (int i = 0; i < size; i++)
+    {
+        Node *curr = table[i];
+        // Delete the entire linked list in this bucket
+        while (curr != NULL)
+        {
+            Node *temp = curr;
+            curr = curr->next;
+            delete temp; // Free each node
+        }
+    }
+    // Finally, delete the array of pointers itself
+    delete[] table; 
+}
+```
+
+---
+
+### **تحدي "الوحش" ليك (Application Challenge):**
+
+بشمهندس مينا استخدم الـ `HashTable` دي عشان يحل مسألة **Linked List Cycle** (يعني يعرف لو الـ List بتلف وترجع لنفسها).
+
+1. في دالة `hasCycle`.. ليه هو عمل `HashTable ht(1000)`؟
+    
+2. إيه اللي بيخزنوه جوه الـ Table عشان يعرفوا إنهم شافوا النود دي قبل كدة؟
+    
+
+**فكر في دي، وكده إنت معاك تشريح كود الـ Hashing بالكامل.** لو فهمت الـ `prev` و الـ `curr` في المسح، يبقى إنت بقيت ملك الـ Pointers!
+
+**هل تريدني أن أشرح لك كيف تم حل مسألة الـ Cycle باستخدام هذا الكود؟**
