@@ -361,9 +361,48 @@ public:
         }
     }
 ```
+### 📊 تتبع التنفيذ
 
+```mermaid
+sequenceDiagram
+    participant Code
+    participant Heap
+    participant Table
+    
+    Code->>Heap: new Node*[5]
+    Heap-->>Code: Address: 0x1000
+    
+    Code->>Table: table[0] = NULL
+    Code->>Table: table[1] = NULL
+    Code->>Table: table[2] = NULL
+    Code->>Table: table[3] = NULL
+    Code->>Table: table[4] = NULL
+    
+    Note over Table: جميع المؤشرات = NULL<br/>تجنب Garbage Values
+```
+
+### 🔍 الحالة بعد Constructor
+
+```mermaid
+graph TD
+    subgraph "After Constructor size=5"
+    T["table (0x1000)"]
+    T --> I0["[0]: NULL"]
+    T --> I1["[1]: NULL"]
+    T --> I2["[2]: NULL"]
+    T --> I3["[3]: NULL"]
+    T --> I4["[4]: NULL"]
+    end
+    
+    style T fill:#4f4,stroke:#333
+```
+
+
+
+> [!warning] لماذا التصفير مهم؟ بدون `table[i] = NULL`، المؤشرات ستحتوي على قيم عشوائية (garbage) قد تشير لمناطق غير صالحة في الذاكرة، مما يسبب **Segmentation Fault**.
 
 ---
+
 
 ## 3. The Hash Function (The Mapping Logic)
 
