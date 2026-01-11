@@ -555,68 +555,44 @@ graph LR
 ### 🎬 Animation كاملة - إضافة 3 عناصر
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e3f2fd', 'secondaryColor': '#fce4ec', 'tertiaryColor': '#fff3e0'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e3f2fd', 'secondaryColor': '#fff3e0', 'tertiaryColor': '#fce4ec'}}}%%
 graph TD
     %% تعريف الستايلات
-    
-    %% ستايل أمر الإدخال
-    classDef cmd fill:#d1c4e9,stroke:#673ab7,stroke-width:2px,rx:5,ry:5,color:black;
-    
-    %% ستايل العملية الحسابية
-    classDef calc fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,shape:hexagon,color:black;
-    
-    %% ستايل رأس السلسلة
-    classDef bucket fill:#ffccbc,stroke:#ff5722,stroke-width:3px,color:black;
-    
-    %% ستايل البيانات
-    classDef node fill:#b3e5fc,stroke:#03a9f4,stroke-width:2px,rx:15,ry:15,color:black;
-    
-    %% ستايل النهاية
-    classDef null fill:#eeeeee,stroke:#9e9e9e,stroke-width:1px,stroke-dasharray: 5 5,color:gray;
+    classDef arraySlot fill:#ffab91,stroke:#e64a19,stroke-width:2px,color:black,font-weight:bold;
+    classDef node fill:#81d4fa,stroke:#0277bd,stroke-width:2px,rx:10,ry:10,color:black;
+    classDef null fill:#eeeeee,stroke:#bdbdbd,stroke-width:1px,stroke-dasharray: 5 5,color:gray;
 
-    %% === الخطوة الأولى ===
-    subgraph S1 [" المرحلة 1: إدخال (10) - البداية "]
-        direction TB
-        Input1(User: insert 10):::cmd --> Calc1{{10 % 10 = Index 0}}:::calc
-        Calc1 -- "المكان فارغ" --> Bucket1[Bucket 0 Head]:::bucket
-        Bucket1 --> Node1(10):::node --> Null1[NULL]:::null
+    %% === الخطوة 1 ===
+    subgraph S1 [" الخطوة 1: insert(10) "]
+        direction LR
+        %% table[0] بيشاور على أول عنصر
+        Slot1["table[0]"]:::arraySlot --> N1(10):::node --> Null1[NULL]:::null
     end
 
-    %% سهم كبير يفصل بين المراحل
-    S1 ==> S2
+    %% === الخطوة 2 ===
+    subgraph S2 [" الخطوة 2: insert(20) "]
+        direction LR
+        %% table[0] ساب الـ 10 ومسك الـ 20
+        Slot2["table[0]"]:::arraySlot --> N2(20):::node
+        N2 --> N1_old(10):::node --> Null2[NULL]:::null
 
-    %% === الخطوة الثانية ===
-    subgraph S2 [" المرحلة 2: إدخال (20) - حدوث تصادم "]
-        direction TB
-        Input2(User: insert 20):::cmd --> Calc2{{20 % 10 = Index 0}}:::calc
-        
-        Calc2 -- "المكان مشغول! أضف في المقدمة" --> Bucket2[Bucket 0 Head]:::bucket
-        Bucket2 --> Node2(20):::node
-        
-        %% توضيح الرابط الجديد
-        Node2 -- "next يشير للقديم" --> Node1_old(10):::node --> Null2[NULL]:::null
-        
-        %% تمييز العنصر الجديد
-        style Node2 stroke:#d50000,stroke-width:3px
+        %% تمييز الجديد
+        style N2 stroke:#d50000,stroke-width:3px
     end
 
-    %% سهم كبير يفصل بين المراحل
-    S2 ==> S3
+    %% === الخطوة 3 ===
+    subgraph S3 [" الخطوة 3: insert(30) "]
+        direction LR
+        %% table[0] ساب الـ 20 ومسك الـ 30
+        Slot3["table[0]"]:::arraySlot --> N3(30):::node
+        N3 --> N2_old(20):::node --> N1_old2(10):::node --> Null3[NULL]:::null
 
-    %% === الخطوة الثالثة ===
-    subgraph S3 [" المرحلة 3: إدخال (30) - السلسلة تكبر "]
-        direction TB
-        Input3(User: insert 30):::cmd --> Calc3{{30 % 10 = Index 0}}:::calc
-        
-        Calc3 -- "أضف في المقدمة مرة أخرى" --> Bucket3[Bucket 0 Head]:::bucket
-        Bucket3 --> Node3(30):::node
-        
-        %% توضيح الروابط
-        Node3 --> Node2_old(20):::node --> Node1_old2(10):::node --> Null3[NULL]:::null
-        
-        %% تمييز العنصر الجديد
-        style Node3 stroke:#d50000,stroke-width:3px
+        %% تمييز الجديد
+        style N3 stroke:#d50000,stroke-width:3px
     end
+
+    %% مسافات بين المراحل
+    S1 ~~~ S2 ~~~ S3
 ```
 
 ### ⚡ لماذا O(1)؟
