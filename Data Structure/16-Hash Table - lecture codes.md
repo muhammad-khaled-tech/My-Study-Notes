@@ -555,27 +555,35 @@ graph LR
 ### 🎬 Animation كاملة - إضافة 3 عناصر
 
 ```mermaid
-%%{init: {'theme':'base'}}%%
-sequenceDiagram
-    participant User
-    participant HT as HashTable
-    participant Index0 as table[0]
-    
-    Note over User,Index0: Initial State: Empty
-    
-    User->>HT: insert(10)
-    HT->>Index0: 10 % 10 = 0
-    Index0->>Index0: 10 → NULL
-    
-    User->>HT: insert(20)
-    HT->>Index0: 20 % 10 = 0
-    Index0->>Index0: 20 → 10 → NULL
-    
-    User->>HT: insert(30)
-    HT->>Index0: 30 % 10 = 0
-    Index0->>Index0: 30 → 20 → 10 → NULL
-    
-    Note over Index0: Final Chain at index 0
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e1f5fe', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#f3e5f5'}}}%%
+graph LR
+    %% ستايل النودز عشان تبقى مدورة وشيك
+    classDef head fill:#ffccbc,stroke:#ff5722,stroke-width:2px;
+    classDef node fill:#b3e5fc,stroke:#03a9f4,stroke-width:2px,rx:10,ry:10;
+    classDef null fill:#eeeeee,stroke:#9e9e9e,stroke-width:1px,stroke-dasharray: 5 5;
+
+    %% اللقطة الأولى
+    subgraph Step1 [" الخطوة 1: insert(10) "]
+        direction LR
+        H1[Index 0]:::head --> N1(10):::node --> Null1[NULL]:::null
+    end
+
+    %% اللقطة الثانية
+    subgraph Step2 [" الخطوة 2: insert(20) "]
+        direction LR
+        H2[Index 0]:::head --> N2(20):::node 
+        N2 --> N1_2(10):::node --> Null2[NULL]:::null
+    end
+
+    %% اللقطة الثالثة
+    subgraph Step3 [" الخطوة 3: insert(30) "]
+        direction LR
+        H3[Index 0]:::head --> N3(30):::node
+        N3 --> N2_2(20):::node --> N1_3(10):::node --> Null3[NULL]:::null
+    end
+
+    %% تظبيط المسافات (اختياري)
+    Step1 ~~~ Step2 ~~~ Step3
 ```
 
 ### ⚡ لماذا O(1)؟
