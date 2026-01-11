@@ -258,7 +258,40 @@ graph TD
 ### **The Goal**
 
 إنشاء هيكل مرن يقدر يتوسع "رأسياً" (عن طريق الـ Linked List) لما يحصل تصادم في البيانات في نفس الخانة.
+### 🏗️ هيكل الـ HashTable
 
+```cpp
+class HashTable {
+    int size;        // عدد الخانات
+    Node **table;    // مصفوفة من المؤشرات
+    
+public:
+    HashTable(int size);
+    int HashFunction(int key);
+    void insert(int key);
+    bool search(int key);
+    void remove(int key);
+    void display();
+    ~HashTable();
+};
+```
+
+```mermaid
+graph LR
+    subgraph "Memory Layout"
+    HT[HashTable Object] --> Size[size: 10]
+    HT --> Table[table: 0x1000]
+    
+    Table --> Array["Node* array[10]"]
+    Array --> P0["[0]: 0x2000"]
+    Array --> P1["[1]: NULL"]
+    Array --> P2["[2]: 0x3000"]
+    
+    P0 --> Chain1["15 → 25 → NULL"]
+    P2 --> Chain2["22 → 42 → NULL"]
+    end
+```
+ هنغوص اولا في النود
 ### **The Code**
 
 
