@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Data Structure/Untitled.md",
+                "file": "Data Structure/ductionary mermaids.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled"
+              "title": "ductionary mermaids"
             }
           }
         ]
@@ -217,10 +217,10 @@
   },
   "active": "51af13ecd54d00db",
   "lastOpenFiles": [
+    "Data Structure/hash table mermaids.md",
     "Data Structure/16-Hash Table - lecture codes.md",
-    "Data Structure/Untitled.md",
     "Data Structure/12-Binary Search Tree (BST).md",
-    "Data Structure/Untitled 1.md",
+    "Data Structure/ductionary mermaids.md",
     "Data Structure/12.5- Tree lecture code Explanation.md",
     "Data Structure/17-HashMap-Dictionary.md",
     "Data Structure/15-Heaps.md",
