@@ -844,4 +844,411 @@ graph LR
     style T0 fill:#4f4,stroke:#333
 ```
 
-### 🎬 المقارنة بين الحال
+### 🎬 المقارنة بين الحالتين
+
+```mermaid
+graph TD
+    subgraph "Case 1: Remove Head"
+    A1[prev == NULL] --> B1[table index = curr->next]
+    B1 --> C1[delete curr]
+    end
+    
+    subgraph "Case 2: Remove Middle/End"
+    A2[prev != NULL] --> B2[prev->next = curr->next]
+    B2 --> C2[delete curr]
+    end
+    
+    style B1 fill:#f96,stroke:#333
+    style B2 fill:#f96,stroke:#333
+```
+
+### 🔄 تتبع كامل بـ Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant RemoveFunc as remove 20
+    participant Table as table[0]
+    participant Chain as 15→5→20→25
+    
+    User->>RemoveFunc: remove(20)
+    RemoveFunc->>RemoveFunc: index = 20 % 10 = 0
+    RemoveFunc->>Table: curr = table[0]
+    Table-->>RemoveFunc: curr = 15
+    
+    Note over RemoveFunc: Loop iteration 1
+    RemoveFunc->>RemoveFunc: 15 != 20, continue
+    RemoveFunc->>RemoveFunc: prev=15, curr=5
+    
+    Note over RemoveFunc: Loop iteration 2
+    RemoveFunc->>RemoveFunc: 5 != 20, continue
+    RemoveFunc->>RemoveFunc: prev=5, curr=20
+    
+    Note over RemoveFunc: Loop iteration 3
+    RemoveFunc->>RemoveFunc: 20 == 20 ✅
+    RemoveFunc->>Chain: prev->next = curr->next
+    Chain-->>RemoveFunc: Bridge created
+    RemoveFunc->>RemoveFunc: delete curr
+    
+    Note over Chain: Final: 15→5→25→NULL
+```
+
+---
+
+## الـ Destructor - تنظيف الذاكرة
+
+### 🎯 المهمة الحيوية
+
+حذف **كل** الـ nodes في **كل** السلاسل، ثم حذف المصفوفة نفسها.
+
+> [!danger] Memory Leak إذا لم نحذف الـ nodes يدوياً، ستبقى في الـ Heap للأبد (حتى بعد انتهاء البرنامج في بعض الأنظمة).
+
+### 🧩 الكود
+
+```cpp
+~HashTable() {
+    // المرحلة 1: حذف جميع السلاسل
+    for (int i = 0; i < size; i++) {
+        Node *curr = table[i];
+        
+        while (curr != NULL) {
+            Node *temp = curr;      // حفظ العنوان
+            curr = curr->next;      // التقدم
+            delete temp;            // الحذف الآمن
+        }
+    }
+    
+    // المرحلة 2: حذف المصفوفة
+    delete[] table;
+}
+```
+
+### 📊 تتبع التنفيذ
+
+#### الحالة الأولية
+
+```mermaid
+graph TD
+    subgraph "Hash Table"
+    T["table"]
+    T --> T0["[0]: 15→25→NULL"]
+    T --> T1["[1]: NULL"]
+    T --> T2["[2]: 22→42→NULL"]
+    T --> T3["[3]: 3→NULL"]
+    T --> T4["[4]: NULL"]
+    end
+```
+
+#### المرحلة 1: حذف السلسلة عند index=0
+
+**Iteration 1:**
+
+```mermaid
+graph LR
+    Curr["curr"] --> N15["15"]
+    Temp["temp"] --> N15
+    N15 --> N25["25"]
+    
+    Note1["delete temp<br/>✅ تم حذف 15"]
+    
+    style N15 fill:#f66,stroke:#333
+```
+
+**Iteration 2:**
+
+```mermaid
+graph LR
+    Curr["curr"] --> N25["25"]
+    Temp["temp"] --> N25
+    N25 --> NULL1[NULL]
+    
+    Note1["delete temp<br/>✅ تم حذف 25"]
+    
+    style N25 fill:#f66,stroke:#333
+```
+
+**النتيجة:** `table[0] = NULL` (تلقائياً لأن curr أصبح NULL)
+
+#### المرحلة 1: حذف السلسلة عند index=2
+
+```mermaid
+sequenceDiagram
+    participant Loop
+    participant Curr
+    participant Memory
+    
+    Loop->>Curr: curr = table[2] (22)
+    
+    Note over Loop: Iteration 1
+    Loop->>Memory: temp = 22
+    Loop->>Curr: curr = curr->next (42)
+    Loop->>Memory: delete 22 ❌
+    
+    Note over Loop: Iteration 2
+    Loop->>Memory: temp = 42
+    Loop->>Curr: curr = curr->next (NULL)
+    Loop->>Memory: delete 42 ❌
+    
+    Note over Loop: curr == NULL, exit
+```
+
+#### المرحلة 2: حذف المصفوفة
+
+```cpp
+delete[] table;
+```
+
+```mermaid
+graph TD
+    Before["قبل: table يشير لمصفوفة<br/>في الـ Heap"] -->|delete[]| After["بعد: الذاكرة محررة<br/>table أصبح dangling pointer"]
+    
+    style Before fill:#f96,stroke:#333
+    style After fill:#4f4,stroke:#333
+```
+
+### ⚠️ الترتيب مهم جداً!
+
+> [!warning] لو عكست الترتيب
+> 
+> ```cpp
+> delete[] table;  // ❌ حذف المصفوفة أولاً
+> // الآن table[i] غير صالح!
+> for (int i = 0; i < size; i++) {
+>     // ❌ Segmentation Fault!
+> }
+> ```
+
+---
+
+## حالة عملية - Detect Cycle in Linked List
+
+> [!example] LeetCode 141 اكتشف إذا كانت الـ Linked List تحتوي على دورة (Cycle).
+
+### 🧩 المشكلة
+
+```mermaid
+graph LR
+    N1((1)) --> N2((2))
+    N2 --> N3((3))
+    N3 --> N4((4))
+    N4 -.->|Cycle!| N2
+    
+    style N2 fill:#f96,stroke:#333
+```
+
+### 💡 الفكرة باستخدام Hash Table
+
+> [!tip] الاستراتيجية نسجل كل node نمر عليها. لو صادفنا node **مسجلة مسبقاً**، معناها عدنا لنفس المكان = **Cycle**!
+
+### 🧩 الكود
+
+```cpp
+bool hasCycle(Node *head) {
+    if (head == NULL || head->next == NULL)
+        return false;
+    
+    HashTable ht(1000);  // دفتر التسجيل
+    Node *curr = head;
+    
+    while (curr != NULL) {
+        // هل زرنا هذه الـ node من قبل؟
+        if (ht.search(curr->key)) {
+            return true;  // نعم! وجدنا cycle
+        }
+        
+        // تسجيل الزيارة
+        ht.insert(curr->key);
+        curr = curr->next;
+    }
+    
+    return false;  // لا يوجد cycle
+}
+```
+
+### 📊 تتبع التنفيذ
+
+**السيناريو:** `1 → 2 → 3 → 4 → 2` (cycle)
+
+```mermaid
+%%{init: {'theme':'base'}}%%
+sequenceDiagram
+    participant Func as hasCycle
+    participant HT as HashTable
+    participant List as Linked List
+    
+    Note over Func,List: Start: curr = 1
+    
+    Func->>HT: search(1)?
+    HT-->>Func: false
+    Func->>HT: insert(1)
+    Note over HT: {1}
+    
+    Func->>List: curr = 2
+    Func->>HT: search(2)?
+    HT-->>Func: false
+    Func->>HT: insert(2)
+    Note over HT: {1, 2}
+    
+    Func->>List: curr = 3
+    Func->>HT: search(3)?
+    HT-->>Func: false
+    Func->>HT: insert(3)
+    Note over HT: {1, 2, 3}
+    
+    Func->>List: curr = 4
+    Func->>HT: search(4)?
+    HT-->>Func: false
+    Func->>HT: insert(4)
+    Note over HT: {1, 2, 3, 4}
+    
+    Func->>List: curr = 2 (CYCLE!)
+    Func->>HT: search(2)?
+    HT-->>Func: TRUE ✅
+    
+    Note over Func: return true<br/>Cycle Detected!
+```
+
+### 🎯 الحالات المختلفة
+
+```mermaid
+graph TD
+    Start{بداية الفحص}
+    Start --> Check1{head == NULL?}
+    Check1 -->|Yes| ReturnFalse1[return false]
+    Check1 -->|No| Check2{head->next == NULL?}
+    Check2 -->|Yes| ReturnFalse2[return false]
+    Check2 -->|No| Loop[بدء الحلقة]
+    
+    Loop --> Search{search curr->key}
+    Search -->|Found| ReturnTrue[return true ✅<br/>Cycle!]
+    Search -->|Not Found| Insert[insert curr->key]
+    Insert --> Next{curr->next != NULL?}
+    Next -->|Yes| Loop
+    Next -->|No| ReturnFalse3[return false<br/>No Cycle]
+    
+    style ReturnTrue fill:#4f4,stroke:#333
+    style ReturnFalse1 fill:#f96,stroke:#333
+    style ReturnFalse2 fill:#f96,stroke:#333
+    style ReturnFalse3 fill:#f96,stroke:#333
+```
+
+### ⚠️ تحذير مهم
+
+> [!bug] مشكلة في الكود الحالي الكود يخزن `curr->key` (القيمة)، لكن ماذا لو كان هناك:
+> 
+> ```
+> 5 → 6 → 5  (no cycle, just duplicate value)
+> ```
+> 
+> سيظن الكود أن هناك cycle خطأً!
+
+**الحل الاحترافي:**
+
+```cpp
+// بدلاً من تخزين القيمة:
+ht.insert(curr->key);  // ❌
+
+// خزن العنوان (Address):
+ht.insert(reinterpret_cast<int>(curr));  // ✅
+```
+
+---
+
+## التعقيد الزمني والمكاني
+
+### ⏱️ تحليل الوقت
+
+|**Operation**|**Best Case**|**Average Case**|**Worst Case**|
+|---|---|---|---|
+|**Insert**|O(1)|O(1)|O(n)*|
+|**Search**|O(1)|O(1)|O(n)*|
+|**Delete**|O(1)|O(1)|O(n)*|
+
+**Worst Case:** يحدث عندما تكون كل العناصر في نفس الـ index (سلسلة واحدة طويلة).
+
+### 📊 العوامل المؤثرة
+
+```mermaid
+graph TD
+    Performance[أداء Hash Table] --> LF[Load Factor α]
+    Performance --> HQ[جودة Hash Function]
+    Performance --> TS[حجم الجدول]
+    
+    LF --> Good["α < 0.75<br/>✅ أداء ممتاز"]
+    LF --> Bad["α > 1.0<br/>❌ أداء سيء"]
+    
+    HQ --> Uniform[توزيع متساوي<br/>✅]
+    HQ --> Clustered[تكتل في خانات<br/>❌]
+    
+    style Good fill:#4f4,stroke:#333
+    style Bad fill:#f66,stroke:#333
+```
+
+### 💾 تحليل المساحة
+
+$\text{Space} = O(n + m)$
+
+حيث:
+
+- **n:** عدد العناصر المخزنة
+- **m:** حجم الجدول (عدد الخانات)
+
+```mermaid
+pie title توزيع الذاكرة
+    "Nodes (n)" : 60
+    "Table Array (m)" : 30
+    "Pointers Overhead" : 10
+```
+
+---
+
+## 🎓 الخلاصة والنصائح
+
+### ✅ متى تستخدم Hash Table؟
+
+```mermaid
+graph LR
+    A[Use Hash Table] --> B[البحث السريع مطلوب]
+    A --> C[الترتيب غير مهم]
+    A --> D[العمليات: Insert/Search/Delete]
+    A --> E[الذاكرة متاحة]
+    
+    style A fill:#4f4,stroke:#333
+```
+
+### ❌ متى تتجنب Hash Table؟
+
+```mermaid
+graph LR
+    A[Avoid Hash Table] --> B[تحتاج ترتيب البيانات]
+    A --> C[تحتاج Min/Max بكفاءة]
+    A --> D[الذاكرة محدودة جداً]
+    A --> E[تحتاج Range Queries]
+    
+    style A fill:#f66,stroke:#333
+```
+
+### 🔧 نصائح للتحسين
+
+> [!tip] Best Practices
+> 
+> 1. **اختر حجم جدول prime number:** يحسن التوزيع
+> 2. **راقب الـ Load Factor:** أعد بناء الجدول عند α > 0.75
+> 3. **استخدم hash function جيدة:** تجنب التصادمات
+> 4. **للبيانات الحساسة:** استخدم العنوان بدلاً من القيمة
+
+---
+
+## 📚 مراجع إضافية
+
+- [[Data Structures - Overview]]
+- [[Linked Lists - Deep Dive]]
+- [[Time Complexity Analysis]]
+- [[Memory Management in C++]]
+
+---
+
+> [!quote] كلمة أخيرة "Hash Table هو السحر الذي يحول O(n) إلى O(1) - لكن السحر يحتاج فهم عميق ليعمل بكفاءة." — مينا ناجي
+
+**Last Updated:** 2025-01-11  
+**Tags:** #DataStructures #HashTable #Hashing #CPlusPlus #Algorithms
