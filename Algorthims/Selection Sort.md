@@ -119,9 +119,9 @@ complexity:
 
 ده كود كامل، Runnable، ومعاه شرح لكل سطر بالبلدي:
 
-C++
 
-```
+
+```C++
 #include <iostream>
 #include <vector>
 #include <algorithm> // عشان خاطر swap
