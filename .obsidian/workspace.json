@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Algorthims/Insertion Sort.md",
-                "mode": "source",
+                "file": "problem solving/problem solving road map.md",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Insertion Sort"
+              "title": "problem solving road map"
             }
           }
         ]
@@ -217,6 +217,7 @@
   },
   "active": "51af13ecd54d00db",
   "lastOpenFiles": [
+    "Algorthims/Insertion Sort.md",
     "Algorthims/Selection Sort.md",
     "Algorthims/Bubble Sort.md",
     "Algorthims/Hashing.md",
@@ -242,7 +243,6 @@
     "Untitled.md",
     "Data Structure/1-Introduction to Data Strucres.md",
     "Data Structure/_Data Structures MOC.md",
-    "Algorthims/_Algorithms MOC.md",
     "Untitled",
     "Untitled.base",
     "Algorthims",
