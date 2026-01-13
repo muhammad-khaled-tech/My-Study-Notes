@@ -104,7 +104,7 @@ current_week: 1
 
 **Arrays - Easy (15 مسائل):**
 
-- [ ] [1. Two Sum](https://leetcode.com/problems/two-sum/) ⭐ (أهم مسألة للمبتدئين)
+- [x] [1. Two Sum](https://leetcode.com/problems/two-sum/) ⭐ (أهم مسألة للمبتدئين)
 - [ ] [26. Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/)
 - [ ] [27. Remove Element](https://leetcode.com/problems/remove-element/)
 - [ ] [66. Plus One](https://leetcode.com/problems/plus-one/)
