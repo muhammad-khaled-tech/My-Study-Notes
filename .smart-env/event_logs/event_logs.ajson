@@ -21,3 +21,7 @@
 "event_logs:collection:load_halted": {"key":"collection:load_halted","ct":33,"first_at":1767705443303,"last_at":1768475460482,"class_name":"EventLog"},
 "event_logs:sources:imported": {"key":"sources:imported","ct":1234,"first_at":1767705443972,"last_at":1768475460839,"class_name":"EventLog"},
 "event_logs:blocks:cleaned": {"key":"blocks:cleaned","ct":16,"first_at":1767705768591,"last_at":1768475462145,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":38,"first_at":1767705772065,"last_at":1768475467304,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":39,"first_at":1767705772065,"last_at":1768486263924,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":40,"first_at":1767705772065,"last_at":1768507863243,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":41,"first_at":1767705772065,"last_at":1768518664077,"class_name":"EventLog"},
