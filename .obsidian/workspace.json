@@ -34,9 +34,23 @@
               "icon": "lucide-file",
               "title": "Untitled 1"
             }
+          },
+          {
+            "id": "e8dee8d97ff17b50",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Untitled 2.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Untitled 2"
+            }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -230,10 +244,12 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "595a759b4cbfc714",
+  "active": "e8dee8d97ff17b50",
   "lastOpenFiles": [
-    "xml/complete_lecture_notes.md",
     "Untitled 1.md",
+    "Untitled 2.md",
+    "Untitled 1",
+    "xml/complete_lecture_notes.md",
     "xml/Java_JSON_Tutorial_Part2.md",
     "xml/discussion_preparation.md",
     "xml/json_basics_explained.md",
@@ -258,7 +274,6 @@
     "Data Structure/6-Stack.md",
     "Data Structure/5-Circular Linked Lists.md",
     "Data Structure/3-Linked List.md",
-    "Data Structure/2-Arrays.md",
     "Untitled",
     "Untitled.base",
     "Algorthims",
@@ -272,7 +287,6 @@
     "scripts/BinaryTree_Anim/Downloaded/Mindmap format.svg",
     "scripts/BinaryTree_Anim/Downloaded",
     "scripts/BinaryTree_Anim",
-    "Excalidraw",
-    "scripts"
+    "Excalidraw"
   ]
 }
