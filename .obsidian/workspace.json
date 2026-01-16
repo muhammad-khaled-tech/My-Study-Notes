@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "4df5cee57687460b",
+        "id": "49d8df9aee4ab3cf",
         "type": "tabs",
         "children": [
           {
-            "id": "51af13ecd54d00db",
+            "id": "593fb679089822cb",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -215,10 +215,11 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "51af13ecd54d00db",
+  "active": "593fb679089822cb",
   "lastOpenFiles": [
-    "xml/complete_lecture_notes (2).md",
     "xml/Java_JSON_Tutorial_Part1.md",
+    "xml/Java_JSON_Tutorial_Part2.md",
+    "xml/complete_lecture_notes (2).md",
     "xml/complete_lecture_notes.md",
     "xml/Mastering_XML_JSON_Java.md",
     "xml/why_xml_and_json.md",
@@ -243,7 +244,6 @@
     "Data Structure/ductionary mermaids.md",
     "Data Structure/hash table mermaids.md",
     "Data Structure/16-Hash Table - lecture codes.md",
-    "Data Structure/12-Binary Search Tree (BST).md",
     "Untitled",
     "Untitled.base",
     "Algorthims",
