@@ -572,9 +572,11 @@ JsonReader مش بيعرف ياخد من الزجاجة مباشرة، لازم 
 هل هي عاصمة؟ true
 ```
 
-<details>
-<summary>💡 الحل (اضغط هنا)</summary>
 
+
+
+> [!Success] Solution
+> 
 ```java
 import jakarta.json.*;
 import java.io.*;
@@ -604,7 +606,8 @@ public class CityExample {
 }
 ```
 
-</details>
+
+
 
 ---
 
