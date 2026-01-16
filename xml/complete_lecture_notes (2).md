@@ -492,7 +492,8 @@ XML هي لغة ترميز تم تطويرها بواسطة **W3C** (World Wide 
 </person>
 ```
 
-Douglas Crockford قال: "ليه منستخدمش syntax الـ JavaScript Objects مباشرة؟"
+Douglas Crockford:
+دوجلاس كروكفولد قال: "ليه منستخدمش syntax الـ JavaScript Objects مباشرة؟"
 
 ```json
 {
