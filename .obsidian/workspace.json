@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "xml/complete_lecture_notes.md",
+                "file": "xml/Mastering_XML_JSON_Java.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "complete_lecture_notes"
+              "title": "Mastering_XML_JSON_Java"
             }
           }
         ]
@@ -217,8 +217,9 @@
   },
   "active": "51af13ecd54d00db",
   "lastOpenFiles": [
-    "xml/why_xml_and_json.md",
     "xml/complete_lecture_notes.md",
+    "xml/Mastering_XML_JSON_Java.md",
+    "xml/why_xml_and_json.md",
     "xml/json_basics_explained.md",
     "problem solving/problem solving road map.md",
     "xml/discussion_preparation.md",
@@ -243,7 +244,6 @@
     "Data Structure/12-Binary Search Tree (BST).md",
     "Data Structure/12.5- Tree lecture code Explanation.md",
     "Data Structure/17-HashMap-Dictionary.md",
-    "Data Structure/15-Heaps.md",
     "Untitled",
     "Untitled.base",
     "Algorthims",
