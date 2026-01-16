@@ -152,7 +152,7 @@ A 2D top-down Egyptian pyramid maze game where an archaeologist explores ancient
 
 ## 🖥️ Technical Architecture (Initial Thoughts)
 
-### File Structure (proposed):
+### File Structure (proposed)---> you can purpose a better one after discussion:
 
 mazer/
 
@@ -164,7 +164,7 @@ mazer/
 
 │   ├── game.css        (game canvas styles)
 
-│   └── responsive.css  (mobile adaptation)
+│   └── responsive.css  (mobile adaptation) ---- > tell me if the time will help us to hava a mobile adabtion ,i think it is hard to do , waiting for our disscussion?
 
 ├── js/
 
@@ -206,7 +206,7 @@ mazer/
 
 ---
 
-## 📱 Responsiveness Requirements
+## 📱 Responsiveness Requirements ----> discuss with me your ideas
 
 ### Target Devices:
 
@@ -268,6 +268,7 @@ Before creating the plan, I need your input on:
 - Should we simplify any features? (e.g., only 1 enemy type is fine?)
 - Are the story videos essential or "nice-to-have"?
 
+
 ### 2. Technical Decisions:
 
 - Should we use ES6 modules or keep everything in global scope for simplicity?
@@ -278,6 +279,8 @@ Before creating the plan, I need your input on:
 
 - Should we generate ALL assets with AI, or mix with free resources?
 - What's the best prompt structure for Nanobana to ensure consistency?
+- how to train and use the sprites also ? 
+- 
 - Backup plan if Nanobana doesn't produce usable sprites?
 
 ### 4. Team Coordination:
@@ -295,6 +298,7 @@ Before creating the plan, I need your input on:
 
 - Who handles cross-browser testing?
 - When should we start testing (continuous vs. final phase)?
+- how to test also ?
 
 ---
 
@@ -303,7 +307,7 @@ Before creating the plan, I need your input on:
 ### Phase 1: Discussion (Now)
 
 1. **Review** our concept and requirements
-2. **Ask** clarifying questions about anything unclear
+2. **Ask** aclarifying  questions about anything unclear
 3. **Challenge** our assumptions (too ambitious? missing something?)
 4. **Suggest** improvements, alternatives, or simplifications
 5. **Validate** our technical choices or recommend better approaches
@@ -351,7 +355,7 @@ Only create these AFTER we've discussed and refined:
     - Breakpoints
     - Canvas scaling formula
     - UI adaptation rules
-
+note: try not to elemenate my tokens :)
 ---
 
 ## 🚨 Important Notes
