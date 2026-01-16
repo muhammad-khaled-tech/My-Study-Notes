@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "problem solving/problem solving road map.md",
+                "file": "xml/json_basics_explained.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "problem solving road map"
+              "title": "json_basics_explained"
             }
           }
         ]
@@ -217,6 +217,10 @@
   },
   "active": "51af13ecd54d00db",
   "lastOpenFiles": [
+    "problem solving/problem solving road map.md",
+    "xml/json_basics_explained.md",
+    "xml/discussion_preparation.md",
+    "xml",
     "Algorthims/Insertion Sort.md",
     "Algorthims/Selection Sort.md",
     "Algorthims/Bubble Sort.md",
@@ -240,9 +244,6 @@
     "Data Structure/15-Heaps.md",
     "Data Structure/14-Red-Black Tree.md",
     "Data Structure/11-Binary Tree.md",
-    "Untitled.md",
-    "Data Structure/1-Introduction to Data Strucres.md",
-    "Data Structure/_Data Structures MOC.md",
     "Untitled",
     "Untitled.base",
     "Algorthims",
@@ -257,7 +258,6 @@
     "scripts/BinaryTree_Anim/Downloaded",
     "scripts/BinaryTree_Anim",
     "Excalidraw",
-    "scripts",
-    "Git"
+    "scripts"
   ]
 }
