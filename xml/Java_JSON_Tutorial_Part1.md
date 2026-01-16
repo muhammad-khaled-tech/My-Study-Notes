@@ -572,11 +572,9 @@ JsonReader مش بيعرف ياخد من الزجاجة مباشرة، لازم 
 هل هي عاصمة؟ true
 ```
 
+<details>
+<summary>💡 الحل (اضغط هنا)</summary>
 
-
-
-> [!Success] Solution
-> 
 ```java
 import jakarta.json.*;
 import java.io.*;
@@ -606,8 +604,7 @@ public class CityExample {
 }
 ```
 
-
-
+</details>
 
 ---
 
@@ -754,7 +751,8 @@ JsonObject person = Json.createObjectBuilder()
 }
 ```
 
-
+<details>
+<summary>💡 الحل</summary>
 
 ```java
 import jakarta.json.*;
@@ -781,7 +779,10 @@ public class ProductExample {
 }
 ```
 
-
+</details>
 
 ---
 
+**يتبع في الملف التالي...** (هكمل باقي الأجزاء في ملفات منفصلة عشان ميبقاش طويل أوي)
+
+**بالتوفيق! 🚀**
