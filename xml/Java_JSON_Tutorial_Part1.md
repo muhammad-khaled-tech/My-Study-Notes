@@ -754,8 +754,7 @@ JsonObject person = Json.createObjectBuilder()
 }
 ```
 
-<details>
-<summary>💡 الحل</summary>
+
 
 ```java
 import jakarta.json.*;
@@ -782,10 +781,7 @@ public class ProductExample {
 }
 ```
 
-</details>
+
 
 ---
 
-**يتبع في الملف التالي...** (هكمل باقي الأجزاء في ملفات منفصلة عشان ميبقاش طويل أوي)
-
-**بالتوفيق! 🚀**
