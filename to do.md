@@ -6,7 +6,7 @@ enemy sprite ----مايكل جاكسون mooon walk
 
 flag on maze ----- setTimeOut()-or setTimeinterval() ,
 
-logic of enemies (moving - static)-----------> traps / or moving mummy  
+logic of enemies (moving - static)-----------> traps / or moving mummy  (lvl 1 - trap , lvl 2 - mummy , lvl3-both)
 
 win screen --- gate close ---> (win screen ----> exit and save(edge casse : last level) -- or menu  )
 
