@@ -62,9 +62,23 @@
               "icon": "lucide-file",
               "title": "Untitled 6"
             }
+          },
+          {
+            "id": "860e97be8f106ffc",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Untitled 7.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Untitled 7"
+            }
           }
         ],
-        "currentTab": 3
+        "currentTab": 4
       }
     ],
     "direction": "vertical"
@@ -258,8 +272,9 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "cd4e0ff5d1d0281f",
+  "active": "860e97be8f106ffc",
   "lastOpenFiles": [
+    "Untitled 7.md",
     "Untitled 6.md",
     "Untitled 5.md",
     "Untitled 4.md",
@@ -287,7 +302,6 @@
     "Algorthims/Hashing.md",
     "Algorthims/Binary Search.md",
     "Algorthims/Algorithm Paradigms.md",
-    "Data Structure/10-Introduction to trees.md",
     "Untitled",
     "Untitled.base",
     "Algorthims",
