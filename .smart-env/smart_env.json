@@ -28,7 +28,8 @@
     "muted": {
       "done_import": true,
       "embedding_progress": true,
-      "embedding_complete": true
+      "embedding_complete": true,
+      "new_version_available": true
     }
   },
   "smart_view_filter": {

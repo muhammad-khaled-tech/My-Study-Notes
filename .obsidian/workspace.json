@@ -48,9 +48,23 @@
               "icon": "lucide-file",
               "title": "Untitled 5"
             }
+          },
+          {
+            "id": "cd4e0ff5d1d0281f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Untitled 6.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Untitled 6"
+            }
           }
         ],
-        "currentTab": 2
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -107,8 +121,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -245,8 +258,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "8cc7655bca999915",
+  "active": "cd4e0ff5d1d0281f",
   "lastOpenFiles": [
+    "Untitled 6.md",
+    "Untitled 5.md",
     "Untitled 4.md",
     "to do.md",
     "Untitled 3.md",
@@ -254,7 +269,6 @@
     "mazer.md",
     "Untitled 1.md",
     "xml/complete_lecture_notes.md",
-    "Untitled 5.md",
     "Untitled 1",
     "xml/Java_JSON_Tutorial_Part2.md",
     "xml/discussion_preparation.md",
@@ -274,7 +288,6 @@
     "Algorthims/Binary Search.md",
     "Algorthims/Algorithm Paradigms.md",
     "Data Structure/10-Introduction to trees.md",
-    "Data Structure/9-Double-Ended Queue.md",
     "Untitled",
     "Untitled.base",
     "Algorthims",
