@@ -1,639 +1,492 @@
-# 🐧 مشروع تدريبي Linux System Administration
-## من Zero إلى System Admin محترف
+# 🐧 Linux Essentials Training Project
+## Mastering the Command Line (Local System Focus)
 
 ---
 
-## 📚 المستوى 1: أساسيات التعامل مع النظام
+## 📂 Part 1: Navigation & Shell Basics (The Foundation)
 
-### السؤال 1: معرفة معلومات النظام
-**المطلوب:** اعرض اسم النظام والإصدار
-**Hint:** أمر اسم النظام
-**الأمر المتعلق:** `uname -a`
+### Q1: Where am I?
+* **Task:** Display the full path of the directory you are currently in.
+* **Command:** `pwd`
+* **Educational Detail:** `pwd` stands for **P**rint **W**orking **D**irectory. It prevents you from getting lost in the filesystem tree.
 
----
-
-### السؤال 2: معرفة المستخدم الحالي
-**المطلوب:** اعرف إنت مسجل دخول باسم مين
-**Hint:** أمر "من أنا"
-**الأمر المتعلق:** `whoami`
-
----
-
-### السؤال 3: عرض المستخدمين المتصلين
-**المطلوب:** شوف مين متصل بالسيرفر دلوقتي
-**Hint:** أمر "من"
-**الأمر المتعلق:** `who` أو `w`
-
----
-
-### السؤال 4: معرفة وقت التشغيل
-**المطلوب:** اعرف السيرفر شغال من امتى والـ load average
-**Hint:** أمر "وقت التشغيل"
-**الأمر المتعلق:** `uptime`
-
----
-
-### السؤال 5: عرض استخدام الذاكرة
-**المطلوب:** شوف الـ RAM المستخدم والمتاح
-**Hint:** أمر "حر/مجاني"
-**الأمر المتعلق:** `free -h`
-
----
-
-## 💾 المستوى 2: إدارة الملفات والمجلدات
-
-### السؤال 6: إنشاء مجلد للمشروع
-**المطلوب:** أنشئ مجلد `/opt/myapp` (محتاج root)
-**Hint:** استخدم `sudo` مع أمر إنشاء المجلدات
-**الأمر المتعلق:** `sudo mkdir -p`
-
----
-
-### السؤال 7: تغيير الصلاحيات
-**المطلوب:** اديله صلاحيات 755 (rwxr-xr-x)
-**Hint:** أمر تغيير الوضع
-**الأمر المتعلق:** `chmod 755`
-
----
-
-### السؤال 8: تغيير المالك
-**المطلوب:** غيّر مالك المجلد لمستخدم `www-data`
-**Hint:** أمر تغيير المالك
-**الأمر المتعلق:** `chown www-data:www-data`
-
----
-
-### السؤال 9: إنشاء Symbolic Link
-**المطلوب:** اعمل symbolic link من `/opt/myapp` إلى `/var/www/myapp`
-**Hint:** أمر الربط مع flag للـ symbolic
-**الأمر المتعلق:** `ln -s`
-
----
-
-### السؤال 10: البحث عن ملفات
-**المطلوب:** دوّر على كل ملفات `.log` في `/var/log`
-**Hint:** أمر البحث
-**الأمر المتعلق:** `find /var/log -name "*.log"`
-
----
-
-## 👥 المستوى 3: إدارة المستخدمين والصلاحيات
-
-### السؤال 11: إنشاء مستخدم جديد
-**المطلوب:** أنشئ مستخدم اسمه `ahmed`
-**Hint:** أمر إضافة مستخدم
-**الأمر المتعلق:** `sudo useradd` أو `adduser`
-
----
-
-### السؤال 12: تعيين كلمة مرور
-**المطلوب:** حط password للمستخدم `ahmed`
-**Hint:** أمر كلمة المرور
-**الأمر المتعلق:** `sudo passwd ahmed`
-
----
-
-### السؤال 13: إضافة مستخدم لمجموعة
-**المطلوب:** ضيف `ahmed` لمجموعة `sudo`
-**Hint:** أمر تعديل المستخدم مع flag للمجموعات
-**الأمر المتعلق:** `sudo usermod -aG sudo ahmed`
-
----
-
-### السؤال 14: عرض المجموعات
-**المطلوب:** اعرض كل المجموعات اللي `ahmed` منضم ليها
-**Hint:** أمر المجموعات أو id
-**الأمر المتعلق:** `groups ahmed` أو `id ahmed`
-
----
-
-### السؤال 15: حذف مستخدم
-**المطلوب:** احذف مستخدم اسمه `testuser` مع الـ home directory بتاعه
-**Hint:** أمر حذف المستخدم مع flag للـ home
-**الأمر المتعلق:** `sudo userdel -r testuser`
-
----
-
-## 📦 المستوى 4: إدارة الحزم (Package Management)
-
-### السؤال 16: تحديث قائمة الحزم
-**المطلوب:** حدّث قائمة الـ packages المتاحة (Ubuntu/Debian)
-**Hint:** أمر apt مع update
-**الأمر المتعلق:** `sudo apt update`
-
----
-
-### السؤال 17: ترقية النظام
-**المطلوب:** رقّي كل الـ packages المثبتة
-**Hint:** أمر apt مع upgrade
-**الأمر المتعلق:** `sudo apt upgrade -y`
-
----
-
-### السؤال 18: تثبيت حزمة
-**المطلوب:** ثبّت `nginx` و `curl` و `vim`
-**Hint:** أمر apt مع install
-**الأمر المتعلق:** `sudo apt install nginx curl vim -y`
-
----
-
-### السؤال 19: البحث عن حزمة
-**المطلوب:** دوّر على حزم فيها كلمة "python"
-**Hint:** أمر apt مع search
-**الأمر المتعلق:** `apt search python`
-
----
-
-### السؤال 20: إزالة حزمة
-**المطلوب:** احذف `apache2` مع ملفات الإعدادات
-**Hint:** أمر apt مع purge
-**الأمر المتعلق:** `sudo apt purge apache2 -y`
-
----
-
-## 🔧 المستوى 5: إدارة العمليات (Process Management)
-
-### السؤال 21: عرض العمليات الجارية
-**المطلوب:** اعرض كل العمليات اللي شغالة دلوقتي
-**Hint:** أمر العمليات (تفاعلي)
-**الأمر المتعلق:** `top` أو `htop`
-
----
-
-### السؤال 22: عرض عمليات معينة
-**المطلوب:** اعرض كل العمليات المتعلقة بـ `nginx`
-**Hint:** أمر ps مع grep
-**الأمر المتعلق:** `ps aux | grep nginx`
-
----
-
-### السؤال 23: قتل عملية
-**المطلوب:** اقتل العملية رقم 1234
-**Hint:** أمر القتل
-**الأمر المتعلق:** `kill 1234` أو `sudo kill -9 1234`
+### Q2: Listing Contents (Detailed)
+* **Task:** List all files, including hidden ones, showing file sizes and permissions.
+* **Command:** `ls -la`
+* **Educational Detail:**
+    * `-l` (long): Shows permissions, owner, size, and modification date.
+    * `-a` (all): Shows hidden files (files starting with a dot `.`).
 
----
-
-### السؤال 24: قتل عمليات بالاسم
-**المطلوب:** اقتل كل العمليات اسمها `firefox`
-**Hint:** أمر قتل الكل
-**الأمر المتعلق:** `pkill firefox` أو `killall firefox`
-
----
-
-### السؤال 25: تشغيل عملية في الخلفية
-**المطلوب:** شغّل سكريبت في الـ background
-**Hint:** استخدم `&` في آخر الأمر
-**الأمر المتعلق:** `./script.sh &`
-
----
-
-## 🌐 المستوى 6: إدارة الشبكات (Networking Basics)
-
-### السؤال 26: عرض الـ IP Address
-**المطلوب:** اعرض عناوين IP لكل الـ interfaces
-**Hint:** أمر معلومات الـ IP
-**الأمر المتعلق:** `ip addr` أو `ifconfig`
-
----
-
-### السؤال 27: Ping لموقع
-**المطلوب:** اعمل ping لـ `google.com` (5 مرات بس)
-**Hint:** أمر الـ ping مع عدد المحاولات
-**الأمر المتعلق:** `ping -c 5 google.com`
-
----
-
-### السؤال 28: عرض المنافذ المفتوحة
-**المطلوب:** شوف كل الـ ports اللي شغالة ومين مستخدمها
-**Hint:** أمر netstat أو ss
-**الأمر المتعلق:** `sudo netstat -tulpn` أو `sudo ss -tulpn`
-
----
+### Q3: Human Readable Sizes
+* **Task:** List files with sizes displayed in KB, MB, or GB instead of bytes.
+* **Command:** `ls -lh`
+* **Educational Detail:** Reading "4096" bytes is hard; reading "4.0K" is easy. Always use `-h` for clarity.
 
-### السؤال 29: اختبار اتصال بمنفذ
-**المطلوب:** اختبر إذا المنفذ 80 مفتوح على `example.com`
-**Hint:** أمر telnet أو nc
-**الأمر المتعلق:** `telnet example.com 80` أو `nc -zv example.com 80`
+### Q4: Moving Around
+* **Task:** Navigate into `/var/log` and then return to your home directory using a shortcut.
+* **Command:** `cd /var/log` then `cd ~` (or just `cd`)
+* **Educational Detail:** `~` (tilde) is the universal shortcut for "My Home Directory". `cd -` will take you back to the *previous* directory you were in.
 
----
-
-### السؤال 30: تحميل ملف من الإنترنت
-**المطلوب:** حمّل ملف من URL معين
-**Hint:** أمر wget أو curl
-**الأمر المتعلق:** `wget <url>` أو `curl -O <url>`
+### Q5: Directory Tree
+* **Task:** Visualize the directory structure of the current folder.
+* **Command:** `tree` (might need install) or `ls -R`
+* **Educational Detail:** `ls -R` recursively lists subdirectories. It helps you understand how files are nested.
 
 ---
-
-## 🔐 المستوى 7: إدارة الخدمات (Services & Systemd)
-
-### السؤال 31: بدء خدمة
-**المطلوب:** شغّل خدمة `nginx`
-**Hint:** أمر systemctl مع start
-**الأمر المتعلق:** `sudo systemctl start nginx`
 
----
+## 📝 Part 2: File Creation & Viewing
 
-### السؤال 32: إيقاف خدمة
-**المطلوب:** وقّف خدمة `apache2`
-**Hint:** أمر systemctl مع stop
-**الأمر المتعلق:** `sudo systemctl stop apache2`
+### Q6: Creating Empty Files
+* **Task:** Create three empty files named `file1.txt`, `file2.txt`, and `file3.txt` at once.
+* **Command:** `touch file1.txt file2.txt file3.txt`
+* **Educational Detail:** `touch` updates the timestamp of a file if it exists, or creates an empty one if it doesn't.
 
----
+### Q7: Viewing Content (Small Files)
+* **Task:** Display the contents of `/etc/os-release`.
+* **Command:** `cat /etc/os-release`
+* **Educational Detail:** `cat` (concatenate) dumps the whole file to the screen. Good for small files, bad for huge logs.
 
-### السؤال 33: إعادة تشغيل خدمة
-**المطلوب:** اعمل restart لـ `ssh`
-**Hint:** أمر systemctl مع restart
-**الأمر المتعلق:** `sudo systemctl restart ssh`
+### Q8: Viewing Content (Large Files)
+* **Task:** View the contents of `/var/log/syslog` page by page.
+* **Command:** `less /var/log/syslog`
+* **Educational Detail:** `less` is safer than `cat`. You can scroll up/down with arrows. Press `q` to quit.
 
----
+### Q9: The Beginning of a File
+* **Task:** View only the first 5 lines of a file.
+* **Command:** `head -n 5 /etc/passwd`
+* **Educational Detail:** Useful to check the format of a file (like headers) without opening the whole thing.
 
-### السؤال 34: تفعيل خدمة عند البدء
-**المطلوق:** فعّل `nginx` عشان يشتغل تلقائياً عند البوت
-**Hint:** أمر systemctl مع enable
-**الأمر المتعلق:** `sudo systemctl enable nginx`
+### Q10: The End of a File
+* **Task:** View the last 10 lines of a file.
+* **Command:** `tail /var/log/syslog`
+* **Educational Detail:** By default, `tail` shows 10 lines. Crucial for checking the most recent events in a log file.
 
 ---
 
-### السؤال 35: عرض حالة خدمة
-**المطلوب:** شوف حالة وتفاصيل خدمة `mysql`
-**Hint:** أمر systemctl مع status
-**الأمر المتعلق:** `sudo systemctl status mysql`
+## ✂️ Part 3: Advanced File Management
 
----
+### Q11: Copying Files
+* **Task:** Copy `file1.txt` to `file1_backup.txt`.
+* **Command:** `cp file1.txt file1_backup.txt`
+* **Educational Detail:** `cp` creates a duplicate. The original remains untouched.
 
-### السؤال 36: عرض logs الخدمة
-**المطلوب:** اعرض آخر 50 سطر من logs خدمة `nginx`
-**Hint:** أمر journalctl
-**الأمر المتعلق:** `sudo journalctl -u nginx -n 50`
+### Q12: Moving & Renaming
+* **Task:** Rename `file2.txt` to `notes.txt`.
+* **Command:** `mv file2.txt notes.txt`
+* **Educational Detail:** Linux doesn't have a "rename" command. You "move" a file from its old name to a new name.
 
----
+### Q13: Interactive Deletion
+* **Task:** Delete `file3.txt` but ask for confirmation first.
+* **Command:** `rm -i file3.txt`
+* **Educational Detail:** `-i` (interactive) saves you from accidental deletions. Once a file is `rm`'d in Linux, it is gone forever (no Recycle Bin!).
 
-## 💿 المستوى 8: إدارة الأقراص والتخزين
+### Q14: Creating Directories
+* **Task:** Create a directory structure `project/code/src` in one command.
+* **Command:** `mkdir -p project/code/src`
+* **Educational Detail:** Without `-p` (parents), you would get an error because the parent folders don't exist yet.
 
-### السؤال 37: عرض مساحة الأقراص
-**المطلوب:** اعرض مساحة كل الأقراص بشكل مقروء
-**Hint:** أمر disk free
-**الأمر المتعلق:** `df -h`
+### Q15: Removing Directories
+* **Task:** Delete the `project` directory and everything inside it.
+* **Command:** `rm -rf project`
+* **Educational Detail:**
+    * `-r` (recursive): Go into folders and delete contents.
+    * `-f` (force): Don't ask questions. **Danger:** Use carefully!
 
 ---
 
-### السؤال 38: عرض حجم مجلد
-**المطلوب:** اعرف حجم مجلد `/var/log`
-**Hint:** أمر disk usage
-**الأمر المتعلق:** `du -sh /var/log`
+## 🔍 Part 4: The Power of Wildcards (Globbing)
 
----
-
-### السؤال 39: عرض أكبر 10 ملفات
-**المطلوب:** اعرض أكبر 10 ملفات في `/home`
-**Hint:** استخدم du مع sort و head
-**الأمر المتعلق:** `sudo du -ah /home | sort -rh | head -10`
+### Q16: Matching Characters
+* **Task:** List all files that start with `f` and end with `.txt`.
+* **Command:** `ls f*.txt`
+* **Educational Detail:** `*` matches *any number* of characters.
 
----
+### Q17: Single Character Match
+* **Task:** List files named `file1.txt`, `fileA.txt`, but not `file10.txt`.
+* **Command:** `ls file?.txt`
+* **Educational Detail:** `?` matches exactly *one* character.
 
-### السؤال 40: عرض الأقراص المتصلة
-**المطلوب:** اعرض كل الأقراص والـ partitions
-**Hint:** أمر list block devices
-**الأمر المتعلق:** `lsblk`
+### Q18: Character Classes
+* **Task:** List files named `file1.txt`, `file2.txt`, or `file3.txt` only.
+* **Command:** `ls file[1-3].txt`
+* **Educational Detail:** `[]` defines a range or specific list of allowed characters.
 
 ---
 
-### السؤال 41: Mount قرص
-**المطلوب:** اعمل mount لـ partition `/dev/sdb1` على `/mnt/data`
-**Hint:** أمر التركيب
-**الأمر المتعلق:** `sudo mount /dev/sdb1 /mnt/data`
+## 🔗 Part 5: Hard vs. Soft Links (Crucial Concept)
 
----
+### Q19: Creating a Soft Link (Shortcut)
+* **Task:** Create a shortcut named `mylog` pointing to `/var/log/syslog`.
+* **Command:** `ln -s /var/log/syslog mylog`
+* **Educational Detail:** If you delete the original file, the soft link becomes "broken" (useless). It points to the *path*.
 
-### السؤال 42: Unmount قرص
-**المطلوب:** اعمل unmount للمجلد `/mnt/data`
-**Hint:** أمر إلغاء التركيب
-**الأمر المتعلق:** `sudo umount /mnt/data`
+### Q20: Creating a Hard Link
+* **Task:** Create a hard link named `important_data` for `file1.txt`.
+* **Command:** `ln file1.txt important_data`
+* **Educational Detail:** A hard link points to the actual data on the disk (inode). If you delete `file1.txt`, `important_data` **still has the content**.
 
 ---
 
-## 📝 المستوى 9: إدارة Logs والمراقبة
+## 📜 Part 6: I/O Redirection & Pipes (The Linux Superpower)
 
-### السؤال 43: عرض System Logs
-**المطلوب:** اعرض آخر 100 سطر من system logs
-**Hint:** أمر journalctl مع عدد الأسطر
-**الأمر المتعلق:** `sudo journalctl -n 100`
+### Q21: Standard Output to File
+* **Task:** Save the list of files in `/etc` to a file named `config_list.txt`.
+* **Command:** `ls /etc > config_list.txt`
+* **Educational Detail:** `>` overwrites the file. If `config_list.txt` had data, it's gone now.
 
----
-
-### السؤال 44: متابعة Log في الوقت الفعلي
-**المطلوب:** تابع ملف `/var/log/syslog` live
-**Hint:** أمر tail مع follow
-**الأمر المتعلق:** `sudo tail -f /var/log/syslog`
+### Q22: Appending to File
+* **Task:** Add the date to the end of `config_list.txt` without deleting the existing content.
+* **Command:** `date >> config_list.txt`
+* **Educational Detail:** `>>` appends (adds to the bottom).
 
----
+### Q23: The Pipe
+* **Task:** Count how many files are in `/etc`.
+* **Command:** `ls /etc | wc -l`
+* **Educational Detail:** `|` takes the output of `ls` and feeds it into `wc` (word count). `-l` counts lines.
 
-### السؤال 45: البحث في Logs
-**المطلوب:** دوّر على كلمة "error" في كل logs
-**Hint:** استخدم grep بشكل متكرر
-**الأمر المتعلق:** `sudo grep -r "error" /var/log/`
-
----
+### Q24: Redirecting Errors
+* **Task:** Try to list a non-existent folder and save the error message to `errors.log`.
+* **Command:** `ls /fakefolder 2> errors.log`
+* **Educational Detail:**
+    * `1>` is Standard Output (Success).
+    * `2>` is Standard Error (Failures).
 
-### السؤال 46: عرض Logs بتاريخ معين
-**المطلوب:** اعرض logs من ساعة 10 صباحاً لـ 2 ظهراً
-**Hint:** journalctl مع since و until
-**الأمر المتعلق:** `sudo journalctl --since "10:00" --until "14:00"`
+### Q25: The "Black Hole"
+* **Task:** Run a command but discard all output and errors.
+* **Command:** `command > /dev/null 2>&1`
+* **Educational Detail:** `/dev/null` is a special device that deletes whatever you send to it. Useful for silencing noisy scripts.
 
 ---
 
-## 🔥 المستوى 10: Firewall والأمان (Security Basics)
+## 🧠 Part 7: Text Processing Filters (Data Science on CLI)
 
-### السؤال 47: تفعيل Firewall
-**المطلوب:** فعّل UFW firewall
-**Hint:** أمر ufw مع enable
-**الأمر المتعلق:** `sudo ufw enable`
+### Q26: Sorting Data
+* **Task:** Sort the content of `config_list.txt` alphabetically.
+* **Command:** `sort config_list.txt`
+* **Educational Detail:** Adds `-r` to sort in reverse. Does not change the file, just prints sorted output.
 
----
+### Q27: Finding Duplicate Lines
+* **Task:** Find unique lines in a file.
+* **Command:** `sort file.txt | uniq`
+* **Educational Detail:** `uniq` only detects duplicates if they are adjacent. You almost *always* `sort` before you `uniq`.
 
-### السؤال 48: السماح بمنفذ
-**المطلوب:** اسمح بالاتصالات على المنفذ 80 و 443
-**Hint:** أمر ufw مع allow
-**الأمر المتعلق:** `sudo ufw allow 80/tcp` و `sudo ufw allow 443/tcp`
+### Q28: Extracting Columns
+* **Task:** Extract only the usernames (first column) from `/etc/passwd`.
+* **Command:** `cut -d: -f1 /etc/passwd`
+* **Educational Detail:**
+    * `-d:`: Delimiter (the separator is a colon).
+    * `-f1`: Field 1 (the first column).
 
----
+### Q29: Searching Text (Grep)
+* **Task:** Find all lines in `config_list.txt` that contain "conf".
+* **Command:** `grep "conf" config_list.txt`
+* **Educational Detail:** `grep` is the most used search tool. It prints every line that matches the pattern.
 
-### السؤال 49: حظر IP معين
-**المطلوب:** احظر الـ IP `192.168.1.100`
-**Hint:** أمر ufw مع deny
-**الأمر المتعلق:** `sudo ufw deny from 192.168.1.100`
+### Q30: Case Insensitive Search
+* **Task:** Search for "error" regardless of Case (Error, ERROR, error).
+* **Command:** `grep -i "error" logfile.txt`
+* **Educational Detail:** `-i` ignores case sensitivity.
 
----
+### Q31: Invert Match
+* **Task:** Show lines that do **NOT** contain the word "pass".
+* **Command:** `grep -v "pass" file.txt`
+* **Educational Detail:** `-v` inverts the search. Useful for filtering out noise.
 
-### السؤال 50: عرض قواعد Firewall
-**المطلوب:** اعرض كل قواعد UFW الحالية
-**Hint:** أمر ufw مع status
-**الأمر المتعلق:** `sudo ufw status verbose`
+### Q32: Replacing Text
+* **Task:** Display a file but replace all "Hello" with "Hi".
+* **Command:** `sed 's/Hello/Hi/g' file.txt`
+* **Educational Detail:** `sed` is a Stream Editor. `s` = substitute, `g` = global (all occurrences in the line).
 
 ---
-
-## 🚀 المستوى 11: Cron Jobs والمهام المجدولة
 
-### السؤال 51: فتح محرر Crontab
-**المطلوب:** افتح crontab للتعديل
-**Hint:** أمر crontab مع edit
-**الأمر المتعلق:** `crontab -e`
+## 🕵️ Part 8: Finding Files System-Wide
 
----
-
-### السؤال 52: إضافة مهمة يومية
-**المطلوب:** اضبط مهمة تشتغل كل يوم الساعة 3 صباحاً
-**Hint:** صيغة Cron: `0 3 * * * /path/to/script.sh`
-**الأمر المتعلق:** يدوي في crontab
+### Q33: Find by Name
+* **Task:** Find a file named `host.conf` anywhere on the system.
+* **Command:** `sudo find / -name "host.conf"`
+* **Educational Detail:** `find` searches the real disk. It's slower but perfectly accurate.
 
----
+### Q34: Find by Size
+* **Task:** Find all files larger than 100MB in `/home`.
+* **Command:** `find /home -size +100M`
+* **Educational Detail:** Great for cleaning up disk space.
 
-### السؤال 53: عرض Cron Jobs
-**المطلوب:** اعرض كل الـ cron jobs للمستخدم الحالي
-**Hint:** أمر crontab مع list
-**الأمر المتعلق:** `crontab -l`
+### Q35: Find by Time
+* **Task:** Find files modified in the last 24 hours.
+* **Command:** `find . -mtime -1`
+* **Educational Detail:** `-mtime` uses days. `-1` means less than 1 day ago.
 
----
+### Q36: Quick Search (Locate)
+* **Task:** Quickly find where `python` files are.
+* **Command:** `locate python`
+* **Educational Detail:** `locate` searches a database (index), so it's instant. However, if the file was just created, `locate` won't find it until the database updates (`sudo updatedb`).
 
-### السؤال 54: حذف كل Cron Jobs
-**المطلوب:** احذف كل الـ cron jobs
-**Hint:** أمر crontab مع remove
-**الأمر المتعلق:** `crontab -r`
+### Q37: Command Location
+* **Task:** Find exactly which executable runs when you type `ls`.
+* **Command:** `which ls`
+* **Educational Detail:** Tells you if you are running `/bin/ls` or a different version.
 
 ---
 
-## 🔄 المستوى 12: Backup والأرشفة
+## 👥 Part 9: User & Group Management (Local)
 
-### السؤال 55: إنشاء Tar Archive
-**المطلوب:** اعمل archive لمجلد `/var/www` في ملف `backup.tar.gz`
-**Hint:** أمر tar مع compress
-**الأمر المتعلق:** `tar -czf backup.tar.gz /var/www`
+### Q38: Who is logged in?
+* **Task:** See details about your current user (UID, GID).
+* **Command:** `id`
+* **Educational Detail:** UID 0 is always Root. UID 1000+ is usually the first normal user.
 
----
-
-### السؤال 56: استخراج Archive
-**المطلوب:** فك ضغط ملف `backup.tar.gz`
-**Hint:** أمر tar مع extract
-**الأمر المتعلق:** `tar -xzf backup.tar.gz`
+### Q39: Create User
+* **Task:** Create a new user named `student`.
+* **Command:** `sudo useradd -m student`
+* **Educational Detail:** `-m` ensures they get a home folder `/home/student`. Without it, the user exists but has nowhere to save files.
 
----
+### Q40: Lock Account
+* **Task:** Lock the `student` account so they cannot login.
+* **Command:** `sudo passwd -l student`
+* **Educational Detail:** Does not delete the user, just disables the password. Useful for temporary suspension.
 
-### السؤال 57: Backup باستخدام rsync
-**المطلوب:** اعمل sync لمجلد `/data` إلى `/backup/data`
-**Hint:** أمر rsync
-**الأمر المتعلق:** `rsync -av /data/ /backup/data/`
+### Q41: User History
+* **Task:** See who logged into the system recently.
+* **Command:** `last`
+* **Educational Detail:** Reads from `/var/log/wtmp`. Good for security auditing.
 
 ---
 
-### السؤال 58: Backup لسيرفر بعيد
-**المطلوب:** انقل ملفات لسيرفر آخر عن طريق SSH
-**Hint:** rsync مع SSH
-**الأمر المتعلق:** `rsync -avz -e ssh /local/path user@remote:/remote/path`
+## 🔐 Part 10: File Permissions & Ownership
 
----
+### Q42: Understanding rwx
+* **Task:** Read the permission `-rw-r--r--`.
+* **Answer:**
+    * **User:** Read/Write
+    * **Group:** Read Only
+    * **Others:** Read Only
 
-## ⚙️ المستوى 13: Shell Scripting (Admin Level 1)
+### Q43: Make Script Executable
+* **Task:** Allow `script.sh` to be executed.
+* **Command:** `chmod +x script.sh`
+* **Educational Detail:** `+x` adds execute permission. Without this, you cannot run `./script.sh`.
 
-### السؤال 59: إنشاء سكريبت بسيط
-**المطلوب:** اكتب سكريبت يطبع "Hello Admin" واديله صلاحيات تنفيذ
-**Hint:** استخدم `#!/bin/bash` و `echo` و `chmod +x`
-**الأوامر المتعلقة:** `nano`, `chmod`
+### Q44: Restrict File
+* **Task:** Make `secret.txt` readable ONLY by the owner.
+* **Command:** `chmod 600 secret.txt`
+* **Educational Detail:** 6 (rw-) for owner, 0 (---) for everyone else.
 
----
+### Q45: Change Group Ownership
+* **Task:** Change the group of a file to `staff`.
+* **Command:** `chgrp staff filename`
+* **Educational Detail:** Sometimes you don't need `chown`, just changing the group is enough to share files.
 
-### السؤال 60: سكريبت بمتغيرات
-**المطلوب:** اكتب سكريبت ياخد اسم كـ argument ويطبعه
-**Hint:** استخدم `$1` للـ argument الأول
-**الأمر المتعلق:** Bash scripting
+### Q46: Default Permissions (Umask)
+* **Task:** Check the current umask value.
+* **Command:** `umask`
+* **Educational Detail:** Umask determines the *default* permissions of new files. `0022` usually results in `755` for directories and `644` for files.
 
 ---
 
-### السؤال 61: سكريبت مع If condition
-**المطلوب:** اكتب سكريبت يتحقق إذا ملف موجود أو لا
-**Hint:** استخدم `if [ -f "file" ]`
-**الأمر المتعلق:** Bash conditionals
+## ⚡ Part 11: Process Management (Local)
 
----
+### Q47: Dynamic View
+* **Task:** Monitor system processes, CPU, and RAM in real-time.
+* **Command:** `top` (or `htop`)
+* **Educational Detail:** Press `q` to exit. `top` is the Task Manager of Linux.
 
-### السؤال 62: سكريبت Loop
-**المطلوب:** اكتب سكريبت يعمل loop على الأرقام من 1 لـ 10
-**Hint:** استخدم `for i in {1..10}`
-**الأمر المتعلق:** Bash loops
+### Q48: Snapshot View
+* **Task:** Take a snapshot of current processes for the current user only.
+* **Command:** `ps` or `ps -u`
+* **Educational Detail:** `ps` is static. It shows what happened the moment you ran the command.
 
----
+### Q49: Background a Job
+* **Task:** Pause a running foreground command (like `top`).
+* **Command:** `Ctrl + Z`
+* **Educational Detail:** This "Stops" the process and sends it to the background.
 
-## 🌐 المستوى 14: SSH وإدارة Remote Servers
+### Q50: Resume in Foreground
+* **Task:** Bring the paused job back to the screen.
+* **Command:** `fg`
+* **Educational Detail:** "Foreground". Use `bg` to make it run in the background instead.
 
-### السؤال 63: الاتصال بسيرفر
-**المطلوب:** اتصل بسيرفر عن طريق SSH
-**Hint:** أمر ssh مع username و IP
-**الأمر المتعلق:** `ssh user@192.168.1.100`
+### Q51: Kill Unresponsive App
+* **Task:** Force close a program named `vlc`.
+* **Command:** `killall vlc`
+* **Educational Detail:** Easier than finding the PID if you want to stop all instances of an app.
 
 ---
 
-### السؤال 64: نسخ ملف عبر SCP
-**المطلوب:** انسخ ملف لسيرفر بعيد
-**Hint:** أمر secure copy
-**الأمر المتعلق:** `scp file.txt user@remote:/path/`
+## 📦 Part 12: Package Management (Software)
 
----
+### Q52: Update Cache (Debian/Ubuntu)
+* **Task:** Refresh the software sources list.
+* **Command:** `sudo apt update`
+* **Educational Detail:** Does not install updates, just checks what is available.
 
-### السؤال 65: إنشاء SSH Key
-**المطلوب:** اعمل SSH key pair
-**Hint:** أمر ssh-keygen
-**الأمر المتعلق:** `ssh-keygen -t rsa -b 4096`
+### Q53: Install Tool
+* **Task:** Install the `git` package.
+* **Command:** `sudo apt install git`
+* **Educational Detail:** Apt handles dependencies (it installs needed libraries automatically).
 
----
+### Q54: Remove Tool
+* **Task:** Remove `git` but keep its configuration files.
+* **Command:** `sudo apt remove git`
+* **Educational Detail:** Use `purge` if you want to delete configs too.
 
-### السؤال 66: نسخ SSH Key للسيرفر
-**المطلوب:** انسخ الـ public key للسيرفر البعيد
-**Hint:** أمر ssh-copy-id
-**الأمر المتعلق:** `ssh-copy-id user@remote`
+### Q55: Clean Up
+* **Task:** Remove unneeded dependencies (orphaned packages).
+* **Command:** `sudo apt autoremove`
+* **Educational Detail:** Keeps your system lean by removing libraries that no installed program uses anymore.
 
 ---
 
-## 🐳 المستوى 15: أساسيات Docker (Admin Level 2)
+## 🗜️ Part 13: Archiving & Compression
 
-### السؤال 67: تثبيت Docker
-**المطلوب:** ثبّت Docker على Ubuntu
-**Hint:** استخدم apt و official repository
-**الأوامر المتعلقة:** `apt install`, `systemctl`
+### Q56: Zip a Folder
+* **Task:** Compress the `work` folder into `work.zip`.
+* **Command:** `zip -r work.zip work/`
+* **Educational Detail:** `-r` is needed to include files inside the folder.
 
----
-
-### السؤال 68: تشغيل Container بسيط
-**المطلوب:** شغّل container من image `nginx`
-**Hint:** أمر docker run
-**الأمر المتعلق:** `docker run -d -p 80:80 nginx`
-
----
+### Q57: Unzip
+* **Task:** Extract `work.zip`.
+* **Command:** `unzip work.zip`
+* **Educational Detail:** Standard tool for `.zip` files.
 
-### السؤال 69: عرض Containers الشغالة
-**المطلوب:** اعرض كل الـ containers اللي شغالة
-**Hint:** أمر docker ps
-**الأمر المتعلق:** `docker ps`
+### Q58: Tar (Combine)
+* **Task:** Combine files into a `.tar` file (no compression).
+* **Command:** `tar -cvf archive.tar file1 file2`
+* **Educational Detail:** Good for grouping files together for backup before compressing.
 
----
+### Q59: Gzip (Compress)
+* **Task:** Compress the `.tar` file to reduce size.
+* **Command:** `gzip archive.tar` (creates `archive.tar.gz`)
+* **Educational Detail:** `gzip` is a standard Linux compression tool.
 
-### السؤال 70: إيقاف Container
-**المطلوب:** وقّف container معين
-**Hint:** أمر docker stop
-**الأمر المتعلق:** `docker stop <container_id>`
+### Q60: The All-in-One Command
+* **Task:** Create a compressed archive (`.tar.gz`) in one step.
+* **Command:** `tar -czf backup.tar.gz folder/`
+* **Educational Detail:** `z` tells tar to use gzip automatically.
 
 ---
-
-## 📊 المستوى 16: Performance Monitoring (Admin Level 2)
 
-### السؤال 71: مراقبة الـ CPU
-**المطلوب:** اعرض استخدام الـ CPU لكل process
-**Hint:** أمر top مع ترتيب حسب CPU
-**الأمر المتعلق:** `top` (اضغط P)
+## 🛠️ Part 14: Environment Variables
 
----
+### Q61: View Variables
+* **Task:** Print the value of your generic PATH.
+* **Command:** `echo $PATH`
+* **Educational Detail:** The `$PATH` variable tells the shell which folders to look in for commands.
 
-### السؤال 72: مراقبة الـ I/O
-**المطلوب:** شوف إحصائيات القراءة والكتابة للأقراص
-**Hint:** أمر iostat
-**الأمر المتعلق:** `iostat -x 1`
-
----
+### Q62: Create Variable
+* **Task:** Create a variable `MYNAME="LinuxUser"`.
+* **Command:** `export MYNAME="LinuxUser"`
+* **Educational Detail:** `export` makes the variable available to child processes (programs you run from the shell).
 
-### السؤال 73: مراقبة الشبكة
-**المطلوب:** شوف استخدام الـ bandwidth في الوقت الفعلي
-**Hint:** أمر iftop أو nethogs
-**الأمر المتعلق:** `sudo iftop` أو `sudo nethogs`
+### Q63: Alias (Shortcuts)
+* **Task:** Create a temporary shortcut `c` for `clear`.
+* **Command:** `alias c='clear'`
+* **Educational Detail:** Aliases save typing. To make it permanent, add it to `.bashrc`.
 
 ---
 
-### السؤال 74: استخدام SAR
-**المطلوب:** اعرض تقرير استخدام النظام من أمس
-**Hint:** أمر System Activity Reporter
-**الأمر المتعلق:** `sar -A`
+## 💾 Part 15: Disk & Filesystem (Local)
 
----
+### Q64: Check Free Space
+* **Task:** Check free disk space on your computer.
+* **Command:** `df -h`
+* **Educational Detail:** Look at the "Use%" column.
 
-## 🔧 المستوى 17: Troubleshooting المتقدم
+### Q65: Check Directory Size
+* **Task:** How big is your home folder?
+* **Command:** `du -sh ~`
+* **Educational Detail:** `-s` sums it up into one number.
 
-### السؤال 75: فحص Kernel Messages
-**المطلوب:** اعرض رسائل الـ kernel الأخيرة
-**Hint:** أمر dmesg
-**الأمر المتعلق:** `dmesg | tail -50`
+### Q66: Mounting USB
+* **Task:** (Concept) Where do USB drives usually appear?
+* **Answer:** Usually under `/media/username/` or `/mnt`.
+* **Educational Detail:** In modern Linux Desktop, this is automatic. In servers/essentials, you might need to use `mount`.
 
 ---
 
-### السؤال 76: تتبع System Calls
-**المطلوب:** تتبع الـ system calls لعملية معينة
-**Hint:** أمر strace
-**الأمر المتعلق:** `strace -p <PID>`
+## 📝 Part 16: Basic Shell Scripting (Automation)
 
----
+### Q67: The Shebang
+* **Task:** What must be the first line of a bash script?
+* **Answer:** `#!/bin/bash`
+* **Educational Detail:** Tells the system "Use the Bash program to run this text file".
 
-### السؤال 77: فحص Open Files
-**المطلوب:** شوف كل الملفات المفتوحة من process معين
-**Hint:** أمر list open files
-**الأمر المتعلق:** `lsof -p <PID>`
+### Q68: Variables in Script
+* **Task:** Write a script that defines `NAME="John"` and prints "Hello John".
+* **Code:**
+    ```bash
+    NAME="John"
+    echo "Hello $NAME"
+    ```
 
----
+### Q69: User Input
+* **Task:** Write a script that asks the user for their age.
+* **Code:**
+    ```bash
+    read -p "Enter your age: " AGE
+    echo "You are $AGE years old"
+    ```
+* **Educational Detail:** `read` pauses the script and waits for keyboard input.
 
-### السؤال 78: تحليل Network Traffic
-**المطلوب:** اعمل capture للـ packets على port 80
-**Hint:** أمر tcpdump
-**الأمر المتعلق:** `sudo tcpdump -i eth0 port 80`
+### Q70: Simple Loop
+* **Task:** Print "Linux is great" 5 times.
+* **Code:**
+    ```bash
+    for i in {1..5}
+    do
+       echo "Linux is great"
+    done
+    ```
 
 ---
 
-## 🔐 المستوى 18: Security المتقدم (Admin Level 2)
+## 🔧 Part 17: Text Editors (Nano/Vim)
 
-### السؤال 79: فحص Failed Login Attempts
-**المطلوب:** شوف محاولات تسجيل الدخول الفاشلة
-**Hint:** ابحث في auth.log
-**الأمر المتعلق:** `sudo grep "Failed password" /var/log/auth.log`
+### Q71: Open Nano
+* **Task:** Open a new file with Nano editor.
+* **Command:** `nano newfile.txt`
+* **Educational Detail:** Nano is the most beginner-friendly terminal editor.
 
----
+### Q72: Save in Nano
+* **Task:** How do you save in Nano?
+* **Answer:** `Ctrl + O` (Write Out), then Enter.
 
-### السؤال 80: تثبيت Fail2ban
-**المطلوب:** ثبّت وفعّل Fail2ban
-**Hint:** استخدم apt و systemctl
-**الأوامر المتعلقة:** `apt install fail2ban`, `systemctl enable`
+### Q73: Exit Nano
+* **Task:** How do you exit Nano?
+* **Answer:** `Ctrl + X`.
 
----
+### Q74: Open Vim
+* **Task:** Open file with Vim.
+* **Command:** `vim newfile.txt`
+* **Educational Detail:** Vim is powerful but uses "Modes". You start in Normal mode (cannot type text yet).
 
-### السؤال 81: فحص Open Ports
-**المطلوب:** اعمل scan للـ ports المفتوحة
-**Hint:** أمر nmap
-**الأمر المتعلق:** `nmap -sT localhost`
+### Q75: Insert Mode (Vim)
+* **Task:** How to start typing in Vim?
+* **Answer:** Press `i`.
+* **Educational Detail:** You will see "-- INSERT --" at the bottom.
 
----
+### Q76: Save & Quit (Vim)
+* **Task:** Save and exit Vim.
+* **Answer:** Press `Esc` (to leave Insert mode), then type `:wq` and Enter.
 
-### السؤال 82: تشفير Partition
-**المطلوب:** اعمل encrypt لـ partition باستخدام LUKS
-**Hint:** أمر cryptsetup (متقدم جداً!)
-**الأمر المتعلق:** `cryptsetup luksFormat /dev/sdX`
+### Q77: Quit without Saving (Vim)
+* **Task:** You made a mistake and want to exit Vim without saving.
+* **Answer:** Press `Esc`, then type `:q!` and Enter.
 
 ---
 
-## 🎯 المشروع النهائي: سيناريو واقعي
+## 🧠 Part 18: Troubleshooting & Help
 
-### السؤال 83-90: بناء Web Server كامل
-**المطلوب:** 
-1. ثبّت وفعّل Nginx
-2. أنشئ مستخدم `webadmin` وضيفه لـ sudo
-3. اعمل virtual host للموقع
-4. اضبط SSL Certificate (Let's Encrypt)
-5. اعمل firewall rules مناسبة
-6. اضبط automatic backup يومي
-7. اعمل monitoring للخدمة
-8. اكتب سكريبت يفحص صحة الموقع كل 5 دقايق
-
-**Hint:** هتستخدم كل اللي اتعلمته! 🔥
-
----
+### Q78: The Manual
+* **Task:** Read the manual for the `ls` command.
+* **Command:** `man ls`
+* **Educational Detail:** The ultimate source of truth. Press `q` to quit.
 
-## 📌 ملاحظات مهمة:
-- الأسئلة مرتبة من السهل للصعب
-- كل سؤال بيبني على المهارات السابقة
-- في أسئلة محتاجة `sudo` - خلي بالك!
-- بعض الأوامر ممكن تختلف حسب الـ Distribution
+### Q79: Quick Help
+* **Task:** Get a short summary of how to use `grep`.
+* **Command:** `grep --help`
+* **Educational Detail:** Faster than `man` if you just forgot a specific flag.
 
-**جاهز تبدأ رحلة الـ Sysadmin؟ ابدأ من السؤال 1! 🚀**
+### Q80: Command History
+* **Task:** Run the same command you ran 5 minutes ago without typing it.
+* **Command:** `history` (then `!number`) or `Ctrl + R` (search).
+* **Educational Detail:** `Ctrl + R` allows you to search your past commands. A huge time saver!
