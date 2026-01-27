@@ -22,7 +22,7 @@
 - [x] [Two Sum](https://leetcode.com/problems/two-sum/) - Easy - Use HashMap for O(n)
 - [x] [Valid Palindrome](https://leetcode.com/problems/valid-palindrome/) - Easy - Two pointers technique
 - [x] [Container With Most Water](https://leetcode.com/problems/container-with-most-water/) - Medium - Move pointer at shorter height
-- [ ] [3Sum](https://leetcode.com/problems/3sum/) - Medium - Sort + two pointers, skip duplicates
+- [x] [3Sum](https://leetcode.com/problems/3sum/) - Medium - Sort + two pointers, skip duplicates
 - [x] [Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/) - Easy - In-place with slow/fast pointers
 
 **Key Takeaway:** Two pointers avoid nested loops, reducing O(n²) to O(n)
