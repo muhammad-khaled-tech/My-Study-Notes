@@ -19,7 +19,7 @@
 - Remember: `s.charAt(i)` in Java, `s[i]` in C++
 
 **Problems to Solve:**
-- [ ] [Two Sum](https://leetcode.com/problems/two-sum/) - Easy - Use HashMap for O(n)
+- [x] [Two Sum](https://leetcode.com/problems/two-sum/) - Easy - Use HashMap for O(n)
 - [ ] [Valid Palindrome](https://leetcode.com/problems/valid-palindrome/) - Easy - Two pointers technique
 - [ ] [Container With Most Water](https://leetcode.com/problems/container-with-most-water/) - Medium - Move pointer at shorter height
 - [ ] [3Sum](https://leetcode.com/problems/3sum/) - Medium - Sort + two pointers, skip duplicates
