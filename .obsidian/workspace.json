@@ -83,12 +83,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Linux Essentials/linux_sysadmin_training.md",
+                "file": "problem solving/interview_prep_plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "linux_sysadmin_training"
+              "title": "interview_prep_plan"
             }
           },
           {
@@ -302,6 +302,13 @@
   },
   "active": "53b95b40d050e04f",
   "lastOpenFiles": [
+    "problem solving/problem solving road map.md",
+    "problem solving/interview_prep_plan.md",
+    "problem solving/Unconfirmed 502362.crdownload",
+    "agent-instructions.md",
+    "_connection-map.md",
+    "Data Structures.md",
+    "Linux Essentials/linux_sysadmin_training.md",
     "Untitled 8.md",
     "Untitled 9.md",
     "Untitled 7.md",
@@ -323,13 +330,7 @@
     "xml/Java_JSON_Tutorial_Part3.md",
     "xml/Java_JSON_Tutorial_Part1.md",
     "xml/Mastering_XML_JSON_Java.md",
-    "xml/why_xml_and_json.md",
-    "problem solving/problem solving road map.md",
     "xml",
-    "Algorthims/Insertion Sort.md",
-    "Algorthims/Selection Sort.md",
-    "Algorthims/Bubble Sort.md",
-    "Algorthims/Hashing.md",
     "Untitled",
     "Untitled.base",
     "Algorthims",
@@ -342,7 +343,6 @@
     "scripts/BinaryTree_Anim/Downloaded/Mindmap connector.svg",
     "scripts/BinaryTree_Anim/Downloaded/Mindmap format.svg",
     "scripts/BinaryTree_Anim/Downloaded",
-    "scripts/BinaryTree_Anim",
-    "Excalidraw"
+    "scripts/BinaryTree_Anim"
   ]
 }
