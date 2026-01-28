@@ -44,9 +44,9 @@
 
 **Problems to Solve:**
 - [x] [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/) - Easy - Master both iterative & recursive
-- [ ] [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/) - Easy - Use dummy node
-- [ ] [Linked List Cycle](https://leetcode.com/problems/linked-list-cycle/) - Easy - Fast/slow pointer
-- [ ] [Middle of Linked List](https://leetcode.com/problems/middle-of-the-linked-list/) - Easy - Fast/slow pointer
+- [x] [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/) - Easy - Use dummy node
+- [x] [Linked List Cycle](https://leetcode.com/problems/linked-list-cycle/) - Easy - Fast/slow pointer
+- [x] [Middle of Linked List](https://leetcode.com/problems/middle-of-the-linked-list/) - Easy - Fast/slow pointer
 - [ ] [Remove Nth Node From End](https://leetcode.com/problems/remove-nth-node-from-end-of-list/) - Medium - Two pointers with gap
 
 **Key Takeaway:** Dummy nodes prevent special cases for head modifications
