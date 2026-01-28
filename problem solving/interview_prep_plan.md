@@ -43,7 +43,7 @@
 - Watch for null pointer exceptions: `if (node != null) node.next`
 
 **Problems to Solve:**
-- [ ] [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/) - Easy - Master both iterative & recursive
+- [x] [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/) - Easy - Master both iterative & recursive
 - [ ] [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists/) - Easy - Use dummy node
 - [ ] [Linked List Cycle](https://leetcode.com/problems/linked-list-cycle/) - Easy - Fast/slow pointer
 - [ ] [Middle of Linked List](https://leetcode.com/problems/middle-of-the-linked-list/) - Easy - Fast/slow pointer
