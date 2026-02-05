@@ -202,7 +202,112 @@ graph TD
 
 ---
 
+يا أهلاً بيك يا بطل في مملكة الـ **BOM (Browser Object Model)**. هنا إحنا خرجنا بره حدود الورقة والقلم (الـ DOM) وبدأنا نتحكم في "البرواز" نفسه اللي هو المتصفح (Chrome, Firefox, etc).
 
+بصفتي خبير بقالي 20 سنة، هقولك إن الـ **BOM** ده هو اللي بيخلي الـ Web App بتاعك يحس بالمتصفح، بس فيه "تكات" تقيلة أوي لو مخدتش بالك منها هتعمل **Bugs** غريبة.
+
+---
+
+### 1. الـ **Window Object** (كبير العيلة)
+
+الـ `window` هو الـ **Global Object**. أي حاجة بتعرفها بـ `var` أو أي `function` بتكتبها في الـ Global Scope، بتبقى فعلياً "ابن" من أبناء الـ `window`.
+
+---
+
+### 2. التحكم في النوافذ (`open` & `close`)
+
+في الكود بتاعك أنت بتفتح نافذة جديدة وبتحفظها في متغير اسمه `newWind`.
+
+- **القاعدة الذهبية:** الـ `open` بترجع **Reference** (مرجع) للنافذة الجديدة. من خلال المرجع ده، تقدر تتحكم فيها من النافذة الأم (الـ Parent).
+    
+- **الفخ (Security Trap):** المتصفحات الحديثة بتمنع الـ `window.open()` إلا لو كانت نتيجة **User Action** (يعني لازم المستخدم يدوس على Button). لو جربت تفتحها أوتوماتيك أول ما الصفحة تفتح، الـ **Pop-up Blocker** هيقتلها فوراً.
+    
+- **الـ `close()`:** أنت مقدرش تقفل نافذة المتصفح الحالية بالـ JavaScript إلا لو كنت أنت اللي فاتحها أصلاً بالـ `script`. يعني لو دخلت على Facebook وجربت تكتب في الكونسول `window.close()` مش هيحصل حاجة، ودي حماية للمستخدم.
+    
+
+---
+
+### 3. رحلة عبر الزمن (`history` object)
+
+الـ `history` ده هو السجل بتاع الـ Tab دي بالذات.
+
+- `back()`: كأنك دوست على زرار السهم لورا في المتصفح.
+    
+- `forward()`: كأنك دوست على السهم لقدام.
+    
+- `go(n)`: دي "الجوكر". لو بعت لها `-3` هترجع 3 خطوات لورا، لو بعت `1` هتقدم خطوة.
+    
+
+---
+
+### 4. التحكم في المكان (`location` object)
+
+أنت استخدمت `location.replace("page2.html")`. دي بقى حتة للمحترفين:
+
+- **الفرق بين `replace` و `assign` (أو تغيير الـ `href`):**
+    
+    - `assign` أو `location.href`: بتروح للصفحة الجديدة وبتسيب "أثر" في الـ **History**. يعني لو المستخدم داس Back هيرجع للصفحة القديمة.
+        
+    - `replace`: دي بتمسح الصفحة الحالية من الـ **History** وتحط الجديدة مكانها. يعني لو المستخدم داس Back **مش هيعرف يرجع** للصفحة اللي كان فيها. (بنستخدمها كتير في صفحات الـ Login عشان المستخدم بعد ما يدخل ميرجعش لصفحة الـ Login تاني بالصدفة).
+        
+
+---
+
+### 5. الـ Mermaid Diagram (رسمة الـ BOM)
+
+عشان تتخيل الهيكل التنظيمي اللي أنت شغال جواه:
+
+Code snippet
+
+```mermaid
+graph TD
+    Window[window - Global Object]
+    Window --> DOM[document - HTML/CSS]
+    Window --> Navigator[navigator - Browser Info]
+    Window --> Screen[screen - Monitor Info]
+    Window --> History[history - Browsing Record]
+    Window --> Location[location - URL Info]
+    
+    subgraph History_Methods
+    History --> back[back]
+    History --> forward[forward]
+    History --> go[go]
+    end
+    
+    subgraph Location_Methods
+    Location --> replace[replace - No History]
+    Location --> assign[assign - With History]
+    end
+```
+
+---
+
+### 6. أسئلة إنترفيو "للتنانين" 🐉
+
+**س1: إيه الفرق بين `window` و `document`؟**
+
+- **الإجابة:** الـ `window` هو الحاوية الكبيرة (المتصفح نفسه)، أما الـ `document` هو المحتوى اللي جوه الصفحة (الـ HTML). الـ `document` هو جزء من الـ `window`.
+    
+
+**س2: لو عملت `window.open()` وفتحت صفحة من Domain تاني (مثلاً https://www.google.com/search?q=google.com)، هل تقدر تعدل في الـ HTML بتاعها من عندك؟**
+
+- **الإجابة:** لأ طبعاً! ده اسمه **Same-Origin Policy**. الـ JavaScript بتمنعك تدخل في خصوصية المواقع التانية حتى لو أنت اللي فاتح النافذة، عشان الـ Security.
+    
+
+**س3: إيه اللي هيحصل لو ناديت `history.back()` وأنا في أول صفحة فتحتها في الـ Tab؟**
+
+- **الإجابة:** مش هيحصل حاجة، والـ JavaScript مش هتطلع Error. هي ببساطة هتلاقي الـ History فاضي وهتتجاهل الأمر.
+    
+
+**س4: متى نستخدم `location.replace()` بدلاً من `location.href`؟**
+
+- **الإجابة:** في السيناريوهات اللي مش عايز المستخدم يرجع فيها لورا (Back button)، زي صفحات الـ Redirect بعد الـ Payment، أو بعد الـ Logout، أو صفحة الـ Login الناجحة.
+    
+
+
+دايماً وأنت بتتعامل مع الـ `window.open` والـ `window.close` خلي بالك من الـ **Cross-browser compatibility**. المتصفحات (خصوصاً Safari و Chrome) ليهم سياسات صارمة جداً في الـ Pop-ups، فدايماً اختبر الكود بتاعك في كذا مكان.
+
+---
 
 ---
 ## bom
