@@ -62,21 +62,9 @@
               "icon": "lucide-file",
               "title": "ENV Variables"
             }
-          },
-          {
-            "id": "3163d7eba73e8225",
-            "type": "leaf",
-            "state": {
-              "type": "excalidraw",
-              "state": {
-                "file": "Excalidraw/Drawing 2026-02-14 21.27.51.excalidraw.md"
-              },
-              "icon": "excalidraw-icon",
-              "title": "Drawing 2026-02-14 21.27.51.excalidraw"
-            }
           }
         ],
-        "currentTab": 4
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -270,10 +258,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "3163d7eba73e8225",
+  "active": "322ee560bfc1b28e",
   "lastOpenFiles": [
-    "Nodejs/ENV Variables.md",
     "Excalidraw/Drawing 2026-02-14 21.27.51.excalidraw.md",
+    "Nodejs/ENV Variables.md",
     "Excalidraw",
     "agent-instructions.md",
     "Nodejs",
