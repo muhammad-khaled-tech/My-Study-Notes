@@ -55,12 +55,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Untitled 1.md",
+                "file": "Nodejs/ENV Variables.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 1"
+              "title": "ENV Variables"
             }
           }
         ],
@@ -260,16 +260,18 @@
   },
   "active": "322ee560bfc1b28e",
   "lastOpenFiles": [
-    "JavaScript/Day-4 lecture  codes.md",
-    "Untitled 1.md",
+    "agent-instructions.md",
+    "Nodejs/ENV Variables.md",
+    "Nodejs",
     "Pasted image 20260205044303.png",
     "Pasted image 20260205044047.png",
-    "Linux Essentials/linux_sysadmin_training.md",
     "Untitled.md",
+    "Untitled 1.md",
+    "JavaScript/Day-4 lecture  codes.md",
+    "Linux Essentials/linux_sysadmin_training.md",
     "problem solving/interview_prep_plan.md",
     "problem solving/problem solving road map.md",
     "problem solving/Unconfirmed 502362.crdownload",
-    "agent-instructions.md",
     "_connection-map.md",
     "Data Structures.md",
     "Untitled 8.md",
@@ -289,9 +291,7 @@
     "xml/json_basics_explained.md",
     "xml/complete_lecture_notes (2).md",
     "xml/Java_JSON_Tutorial_Part4_Gson.md",
-    "xml/Java_JSON_Tutorial_Part3.md",
     "xml",
-    "Untitled",
     "Untitled.base",
     "Algorthims",
     "problem solving",
