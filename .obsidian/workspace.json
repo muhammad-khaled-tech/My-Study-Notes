@@ -4,67 +4,20 @@
     "type": "split",
     "children": [
       {
-        "id": "49d8df9aee4ab3cf",
+        "id": "0ee386b1eb719bfe",
         "type": "tabs",
         "children": [
           {
-            "id": "53b95b40d050e04f",
+            "id": "50ac27a21c5e19dd",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "problem solving/interview_prep_plan.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "interview_prep_plan"
-            }
-          },
-          {
-            "id": "e0d2c98ee8753355",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Untitled.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Untitled"
-            }
-          },
-          {
-            "id": "11906ea5ede7b635",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "JavaScript/Day-4 lecture  codes.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Day-4 lecture  codes"
-            }
-          },
-          {
-            "id": "322ee560bfc1b28e",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Nodejs/ENV Variables.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "ENV Variables"
+              "title": "New tab"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "vertical"
@@ -258,10 +211,11 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "322ee560bfc1b28e",
+  "active": "a4263eb0ef45c795",
   "lastOpenFiles": [
-    "Excalidraw/Drawing 2026-02-14 21.27.51.excalidraw.md",
+    "C-C++/Day-1.md",
     "Nodejs/ENV Variables.md",
+    "Excalidraw/Drawing 2026-02-14 21.27.51.excalidraw.md",
     "Excalidraw",
     "agent-instructions.md",
     "Nodejs",
@@ -291,7 +245,6 @@
     "xml/Java_JSON_Tutorial_Part2.md",
     "xml/discussion_preparation.md",
     "xml/json_basics_explained.md",
-    "xml/complete_lecture_notes (2).md",
     "xml",
     "Untitled.base",
     "Algorthims",
