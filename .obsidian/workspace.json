@@ -20,26 +20,8 @@
               "icon": "lucide-file",
               "title": "bookstore-obsidian"
             }
-          },
-          {
-            "id": "4a09584d1d0379fd",
-            "type": "leaf",
-            "state": {
-              "type": "canvas",
-              "state": {
-                "file": "Untitled.canvas",
-                "viewState": {
-                  "x": 0,
-                  "y": 0,
-                  "zoom": 0
-                }
-              },
-              "icon": "lucide-layout-dashboard",
-              "title": "Untitled"
-            }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -253,11 +235,12 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "4a09584d1d0379fd",
+  "active": "a4263eb0ef45c795",
   "lastOpenFiles": [
+    "Untitled.canvas",
+    "Untitled 1.md",
     "Untitled.md",
     "mean/bookstore-obsidian.md",
-    "Untitled.canvas",
     "mean",
     "C-C++/Day-1.md",
     "Nodejs/ENV Variables.md",
@@ -267,7 +250,6 @@
     "Nodejs",
     "Pasted image 20260205044303.png",
     "Pasted image 20260205044047.png",
-    "Untitled 1.md",
     "JavaScript/Day-4 lecture  codes.md",
     "Linux Essentials/linux_sysadmin_training.md",
     "problem solving/interview_prep_plan.md",
