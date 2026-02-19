@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "mean/bookstore-obsidian.md",
+                "file": "mean/bookstore-8day-plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "bookstore-obsidian"
+              "title": "bookstore-8day-plan"
             }
           }
         ]
@@ -235,14 +235,15 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "a4263eb0ef45c795",
+  "active": "50ac27a21c5e19dd",
   "lastOpenFiles": [
+    "mean/bookstore-obsidian.md",
+    "mean/bookstore-8day-plan.md",
     "mean/MEAN_Bookstore_10Day_MasterPlan 1.docx",
     "mean/MEAN_Bookstore_10Day_MasterPlan.docx",
     "Untitled.canvas",
     "Untitled 1.md",
     "Untitled.md",
-    "mean/bookstore-obsidian.md",
     "mean",
     "C-C++/Day-1.md",
     "Nodejs/ENV Variables.md",
@@ -275,7 +276,6 @@
     "xml",
     "Untitled.base",
     "Algorthims",
-    "problem solving",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
     "scripts/BinaryTree_Anim/Downloaded/Split Ellipse.svg",
