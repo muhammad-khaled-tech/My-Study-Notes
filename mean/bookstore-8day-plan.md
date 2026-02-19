@@ -4,9 +4,9 @@
 
 ## 👥 Team Assignments
 
-| | Person 1 | Person 2 | Person 3 | Person 4 |
-|---|---|---|---|---|
-| **Backend** | Auth routes + middleware + error handling + utilities | Books + Categories routes and schemas | Cart + Orders routes, schemas, and utilities | Authors + Reviews + Upload routes and schemas |
+|              | khaled                                                                   | rana                                                                                       | salma                                                                       | john                                               |
+| ------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------- |
+| **Backend**  | Auth routes + middleware + error handling + utilities                    | Books + Categories routes and schemas                                                      | Cart + Orders routes, schemas, and utilities                                | Authors + Reviews + Upload routes and schemas      |
 | **Frontend** | Core infrastructure + Login + Register + Profile + all TypeScript models | BookService + Home + Book List + Book Detail + BookCard + StarRating + Frontend deployment | CartService + Navbar + Cart + Checkout + Order History + Backend deployment | AdminService + All Admin tables + Review component |
 
 ---
