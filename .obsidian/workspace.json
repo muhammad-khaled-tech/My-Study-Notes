@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "mean/khaled-guide.md",
+                "file": "mean/bookstore-8day-plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "khaled-guide"
+              "title": "bookstore-8day-plan"
             }
           }
         ]
@@ -238,9 +238,9 @@
   "active": "50ac27a21c5e19dd",
   "lastOpenFiles": [
     "mean/bookstore-8day-plan (1).md",
+    "mean/khaled-guide.md",
     "mean/bookstore-8day-plan.md",
     "mean/bookstore-obsidian.md",
-    "mean/khaled-guide.md",
     "mean/Unconfirmed 301696.crdownload",
     "mean/Unconfirmed 592445.crdownload",
     "mean/MEAN_Bookstore_10Day_MasterPlan 1.docx",
