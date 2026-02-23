@@ -114,7 +114,8 @@ mindmap
 **How to check if a command is built-in:**
 ```bash
 type cd       # cd is a shell builtin
-type ls       # ls is /bin/ls  ← NOT built-in
+type ls       #ls is an alias for lsd
+type lsd      #lsd is /usr/bin/lsd
 ```
 
 ---
