@@ -13,15 +13,30 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "bash/Shell_Scripting_Day2_Guide.md",
+                "file": "mean/khaled-guide.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Shell_Scripting_Day2_Guide"
+              "title": "khaled-guide"
+            }
+          },
+          {
+            "id": "7ed4e2c7ffc1c5c4",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Untitled.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Untitled"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -78,8 +93,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -236,26 +250,26 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "50ac27a21c5e19dd",
+  "active": "7ed4e2c7ffc1c5c4",
   "lastOpenFiles": [
+    "mean/khaled-guide.md",
+    "Untitled.md",
+    "mean/bookstore-obsidian.md",
+    "mean/bookstore-8day-plan.md",
+    "bash/Shell_Scripting_Day2_Guide.md",
     "bash/Shell_Scripting_Day2.excalidraw",
     "bash/Shell_Scripting_Day2 (1).excalidraw",
     "bash/Shell_Scripting_Day1_Guide (1).md",
-    "bash/Shell_Scripting_Day2_Guide.md",
     "bash/Unconfirmed 71497.crdownload",
     "bash/Unconfirmed 708368.crdownload",
     "bash/Unconfirmed 795386.crdownload",
-    "mean/bookstore-8day-plan.md",
     "mean/bookstore-8day-plan (1).md",
-    "mean/khaled-guide.md",
-    "mean/bookstore-obsidian.md",
     "mean/Unconfirmed 301696.crdownload",
     "mean/Unconfirmed 592445.crdownload",
     "mean/MEAN_Bookstore_10Day_MasterPlan 1.docx",
     "mean/MEAN_Bookstore_10Day_MasterPlan.docx",
     "Untitled.canvas",
     "Untitled 1.md",
-    "Untitled.md",
     "mean",
     "C-C++/Day-1.md",
     "Nodejs/ENV Variables.md",
