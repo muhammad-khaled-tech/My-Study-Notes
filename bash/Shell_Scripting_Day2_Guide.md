@@ -294,6 +294,111 @@ No chmod needed"]
 > **Key Difference:** With sourcing (`. ./script.sh`), variables set inside the script stay in your shell after it finishes. With `./script.sh`, they vanish when the script ends.
 ---
 
+## 📦 Variables
+
+> 🧒 **Variables are like labeled boxes.** You put a value in, give it a name, and peek inside anytime using `$boxname`.
+
+### Three Types of Variables
+
+```mermaid
+flowchart LR
+    subgraph LOCAL["🏠 Local Variables
+Only in current shell"]
+        L1["name=Ahmed
+color=blue"]
+    end
+
+    subgraph ENV["🌍 Environment Variables
+Shell + all child shells"]
+        E1["export PATH=...
+HOME, LOGNAME
+PS1, PS2, SHELL"]
+    end
+
+    subgraph PRE["⚙️ Predefined Variables
+Set by shell automatically"]
+        P1["$0 = script name
+$1 $2 = arguments
+$# = arg count
+$* = all args
+$? = exit code"]
+    end
+
+    LOCAL -->|"export"| ENV
+```
+
+### Local Variables — Examples
+
+```bash
+# Set a variable (NO spaces around =)
+state=Cairo
+echo $state           # Output: Cairo
+
+name="Ahmed Mohamed"  # Use quotes for spaces
+echo $name            # Output: Ahmed Mohamed
+
+x=                    # Empty variable
+echo $x               # Output: (nothing)
+
+# Curly braces prevent ambiguity
+echo ${state}City     # Output: CairoCity
+echo $stateCity       # Output: (nothing — wrong variable name!)
+```
+
+> ⚠️ **Golden Rule:** No spaces around `=` when setting variables!
+> - ✅ `name=Ahmed`
+> - ❌ `name = Ahmed` (bash thinks `name` is a command — ERROR!)
+
+### Predefined (Special) Variables
+
+```bash
+# Running: ./myscript.sh arg1 arg2 arg3
+echo $0    # myscript.sh     (script name)
+echo $1    # arg1            (1st argument)
+echo $2    # arg2            (2nd argument)
+echo $#    # 3               (number of arguments)
+echo $*    # arg1 arg2 arg3  (ALL arguments as string)
+echo $?    # 0               (exit code of last command)
+```
+
+
+### How `export` Works
+
+```mermaid
+sequenceDiagram
+    participant P as Parent Shell
+    participant C as Child Script
+
+    P->>P: x=5 (local only)
+    P->>C: ./child.sh
+    C->>C: echo $x → (empty — cannot see it!)
+
+    P->>P: export y=10
+    P->>C: ./child.sh
+    C->>C: echo $y → 10 ✅
+```
+
+```bash
+# Without export — child cannot see it
+x=5
+./child.sh           # child sees $x as empty
+
+# With export — child inherits it
+export y=10
+./child.sh           # child sees $y = 10
+
+# Unset a variable
+unset y
+echo $y              # Output: (nothing)
+
+# See all variables
+env                  # environment variables
+set                  # all variables including local
+```
+
+
+---
+
 ## 2. 📤 How `export` Works — Variable Scope
 
 > 🧒 **Analogy:** Imagine variables are **sticky notes** on your desk (your shell).
@@ -536,111 +641,6 @@ jobs                # list background jobs in current shell
 
 ---
 
-_Add this to your Day 2 notes — these three topics are the foundation for everything in Lab 2!_
-
----
-
-## 📦 Variables
-
-> 🧒 **Variables are like labeled boxes.** You put a value in, give it a name, and peek inside anytime using `$boxname`.
-
-### Three Types of Variables
-
-```mermaid
-flowchart LR
-    subgraph LOCAL["🏠 Local Variables
-Only in current shell"]
-        L1["name=Ahmed
-color=blue"]
-    end
-
-    subgraph ENV["🌍 Environment Variables
-Shell + all child shells"]
-        E1["export PATH=...
-HOME, LOGNAME
-PS1, PS2, SHELL"]
-    end
-
-    subgraph PRE["⚙️ Predefined Variables
-Set by shell automatically"]
-        P1["$0 = script name
-$1 $2 = arguments
-$# = arg count
-$* = all args
-$? = exit code"]
-    end
-
-    LOCAL -->|"export"| ENV
-```
-
-### Local Variables — Examples
-
-```bash
-# Set a variable (NO spaces around =)
-state=Cairo
-echo $state           # Output: Cairo
-
-name="Ahmed Mohamed"  # Use quotes for spaces
-echo $name            # Output: Ahmed Mohamed
-
-x=                    # Empty variable
-echo $x               # Output: (nothing)
-
-# Curly braces prevent ambiguity
-echo ${state}City     # Output: CairoCity
-echo $stateCity       # Output: (nothing — wrong variable name!)
-```
-
-> ⚠️ **Golden Rule:** No spaces around `=` when setting variables!
-> - ✅ `name=Ahmed`
-> - ❌ `name = Ahmed` (bash thinks `name` is a command — ERROR!)
-
-### How `export` Works
-
-```mermaid
-sequenceDiagram
-    participant P as Parent Shell
-    participant C as Child Script
-
-    P->>P: x=5 (local only)
-    P->>C: ./child.sh
-    C->>C: echo $x → (empty — cannot see it!)
-
-    P->>P: export y=10
-    P->>C: ./child.sh
-    C->>C: echo $y → 10 ✅
-```
-
-```bash
-# Without export — child cannot see it
-x=5
-./child.sh           # child sees $x as empty
-
-# With export — child inherits it
-export y=10
-./child.sh           # child sees $y = 10
-
-# Unset a variable
-unset y
-echo $y              # Output: (nothing)
-
-# See all variables
-env                  # environment variables
-set                  # all variables including local
-```
-
-### Predefined (Special) Variables
-
-```bash
-# Running: ./myscript.sh arg1 arg2 arg3
-echo $0    # myscript.sh     (script name)
-echo $1    # arg1            (1st argument)
-echo $2    # arg2            (2nd argument)
-echo $#    # 3               (number of arguments)
-echo $*    # arg1 arg2 arg3  (ALL arguments as string)
-echo $?    # 0               (exit code of last command)
-```
-
 ### Quoting — The Three Types
 
 ```mermaid
@@ -678,6 +678,10 @@ echo "\$SHELL"           # Output: $SHELL  (literal)
 echo "Today is `date`"          # Today is Sun Feb 22 2026
 echo "You are in $(pwd)"        # You are in /home/ahmed
 ```
+
+
+---
+
 
 ---
 
