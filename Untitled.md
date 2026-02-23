@@ -10,7 +10,7 @@
 - [x] 3 - install angular cli
 - [x] 4 - create application angular
 - [x] 7 - CSR VS SSR
-- [ ] 8 - component based arch
+- [x] 8 - component based arch
 - [ ] 9 - modules vs standalone
 - [ ] 10 - recap
 - [ ] 13 - create component without cli
