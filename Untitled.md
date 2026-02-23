@@ -11,7 +11,7 @@
 - [x] 4 - create application angular
 - [x] 7 - CSR VS SSR
 - [x] 8 - component based arch
-- [ ] 9 - modules vs standalone
+- [x] 9 - modules vs standalone
 - [ ] 10 - recap
 - [ ] 13 - create component without cli
 - [ ] 14 - component details

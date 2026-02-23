@@ -128,7 +128,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "متفرقات/Untitled.md",
+                "file": "Untitled.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -181,26 +181,6 @@
             }
           },
           {
-            "id": "6d980fd7e891c79b",
-            "type": "leaf",
-            "state": {
-              "type": "smart-connections-view",
-              "state": {},
-              "icon": "lucide-ghost",
-              "title": "smart-connections-view"
-            }
-          },
-          {
-            "id": "a810d618a7695718",
-            "type": "leaf",
-            "state": {
-              "type": "antigravity-debugger-view",
-              "state": {},
-              "icon": "lucide-ghost",
-              "title": "antigravity-debugger-view"
-            }
-          },
-          {
             "id": "43aff94e836f1d7e",
             "type": "leaf",
             "state": {
@@ -208,6 +188,16 @@
               "state": {},
               "icon": "git-pull-request",
               "title": "Source Control"
+            }
+          },
+          {
+            "id": "6d980fd7e891c79b",
+            "type": "leaf",
+            "state": {
+              "type": "smart-connections-view",
+              "state": {},
+              "icon": "smart-connections",
+              "title": "Connections"
             }
           },
           {
@@ -219,9 +209,19 @@
               "icon": "message-square",
               "title": "Copilot"
             }
+          },
+          {
+            "id": "a810d618a7695718",
+            "type": "leaf",
+            "state": {
+              "type": "antigravity-debugger-view",
+              "state": {},
+              "icon": "bug",
+              "title": "AntiGravity Debugger"
+            }
           }
         ],
-        "currentTab": 8
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
