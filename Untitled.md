@@ -6,9 +6,9 @@
 
 > Week 1 / s-1 (intro angular) — watch on 2x
 
-- [ ] 2 - intro to angular
-- [ ] 3 - install angular cli
-- [ ] 4 - create application angular
+- [x] 2 - intro to angular
+- [x] 3 - install angular cli
+- [x] 4 - create application angular
 - [ ] 7 - CSR VS SSR
 - [ ] 8 - component based arch
 - [ ] 9 - modules vs standalone
