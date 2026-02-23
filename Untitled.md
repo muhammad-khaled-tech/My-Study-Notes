@@ -9,7 +9,7 @@
 - [x] 2 - intro to angular
 - [x] 3 - install angular cli
 - [x] 4 - create application angular
-- [ ] 7 - CSR VS SSR
+- [x] 7 - CSR VS SSR
 - [ ] 8 - component based arch
 - [ ] 9 - modules vs standalone
 - [ ] 10 - recap
