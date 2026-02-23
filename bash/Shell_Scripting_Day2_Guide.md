@@ -343,6 +343,7 @@ pwd               # /home  ✅ — cd ran in YOUR shell so it worked
 ```
 
 That's the whole difference. **`./script`** = new temporary shell that disappears. **`. ./script`** = runs right where you are.
+
 ---
 
 ## 📦 Variables
@@ -450,7 +451,7 @@ set                  # all variables including local
 
 ---
 
-## 2. 📤 How `export` Works — Variable Scope
+##  📤 How `export` Works — Variable Scope
 
 > 🧒 **Analogy:** Imagine variables are **sticky notes** on your desk (your shell).
 > 
