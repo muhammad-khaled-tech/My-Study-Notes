@@ -299,24 +299,28 @@ echo $?    # 0               (exit code of last command)
 
 ```mermaid
 flowchart TD
-    Q["Quoting Types"]
+    Q["Quoting Types in Shell"]
 
-    Q --> SQ["Single Quotes
-Ignore ALL special characters
-What you type = what you get"]
-    Q --> DQ["Double Quotes
-Ignore MOST special chars
-BUT: dollar backtick backslash still work"]
-    Q --> BS["Backslash
-Escape ONE character only
-Next char loses special meaning"]
+    Q --> SQ["Single Quotes (' ')
+    Ignore ALL special characters
+    What you type = what you get"]
+    
+    Q --> DQ["Double Quotes (&#34; &#34;)
+    Ignore MOST special chars
+    BUT: $, &#96;, and \ still work"]
+    
+    Q --> BS["Backslash (\)
+    Escape ONE character only
+    Next char loses special meaning"]
 
     SQ --> SE["echo '$HOME'
-Output: $HOME (literal text)"]
-    DQ --> DE["echo \"$HOME\"
-Output: /home/ahmed (expanded!)"]
-    BS --> BE["echo \"\\$HOME\"
-Output: $HOME (literal text)"]
+    Output: $HOME (literal text)"]
+    
+    DQ --> DE["echo &#34;$HOME&#34;
+    Output: /home/user (expanded!)"]
+    
+    BS --> BE["echo &#34;\\$HOME&#34;
+    Output: $HOME (literal text)"]
 ```
 
 ```bash
