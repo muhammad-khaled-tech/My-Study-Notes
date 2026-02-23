@@ -169,6 +169,106 @@ chmod +x greeting.sh
 # Output: Hello, World!
 ```
 
+---
+## 🏃 Two Ways to Run a Script — What Actually Happens
+
+> 🧒 **Analogy:** Imagine your shell is a **room** where you work. When you run a script, the question is: does the script work _in your room_, or does it go to a **separate new room** to work?
+
+---
+
+### Way 1 — `./script.sh` (Execute in a child shell)
+
+```bash
+chmod +x script.sh   # make it executable first
+./script.sh          # run it
+```
+
+**What happens step by step:**
+
+```
+Your Shell (parent)
+│
+│   x=5                  ← you set a variable
+│
+├──► BASH CREATES A NEW CHILD SHELL
+│         │
+│         │   runs all commands in script.sh
+│         │   x=5 is NOT visible here (never exported)
+│         │   child sets its own variables
+│         │
+│         └── child shell EXITS and DISAPPEARS
+│                  all its variables are gone forever
+│
+│   echo $x              ← still 5, child didn't touch it
+```
+
+**Proof:**
+
+```bash
+# script.sh contains:
+#!/usr/bin/bash
+city=Cairo
+echo "Inside script: city = $city"
+
+# In your terminal:
+./script.sh
+# Output: Inside script: city = Cairo
+
+echo $city
+# Output:          <-- EMPTY! city died with the child shell
+```
+
+---
+
+### Way 2 — `. ./script.sh` (Source — run in current shell)
+
+```bash
+. ./script.sh        # the dot at the start is the source command
+# or equivalently:
+source script.sh
+```
+
+**What happens step by step:**
+
+```
+Your Shell (parent)
+│
+│   x=5                  ← you set a variable
+│
+│   NO new shell created!
+│   script commands run RIGHT HERE in your shell
+│   as if you typed them yourself line by line
+│
+│   city=Cairo            ← script set this, now YOU have it
+│
+│   echo $city            ← Cairo ✅  it's still here!
+```
+
+**Proof:**
+
+```bash
+# same script.sh
+. ./script.sh
+# Output: Inside script: city = Cairo
+
+echo $city
+# Output: Cairo   ✅  variable survived because no child was created
+```
+
+---
+
+### Side-by-Side Summary
+
+|`./script.sh`|`. ./script.sh` (source)|
+|---|---|---|
+|New shell created?|✅ Yes (child shell)|❌ No|
+|Variables survive after?|❌ No — they die|✅ Yes — they stay|
+|Needs `chmod +x`?|✅ Yes|❌ No|
+|When to use?|Most scripts|When script must change YOUR environment (e.g. `mycd`)|
+
+> ⚠️ **This is why `mycd` must be sourced!** `cd` changes directory only inside the shell it runs in. If you run `./mycd`, the `cd` happens inside the child shell — which immediately dies. Your terminal never moved. You source it so the `cd` runs _in your own shell_.
+
+---
 ### Two Ways to Run a Script
 
 ```mermaid
@@ -192,6 +292,251 @@ No chmod needed"]
 ```
 
 > **Key Difference:** With sourcing (`. ./script.sh`), variables set inside the script stay in your shell after it finishes. With `./script.sh`, they vanish when the script ends.
+---
+
+## 2. 📤 How `export` Works — Variable Scope
+
+> 🧒 **Analogy:** Imagine variables are **sticky notes** on your desk (your shell).
+> 
+> - A **local variable** is a sticky note only YOU can see.
+> - An **exported variable** is pinned to a **notice board** — any child who enters the room can read it.
+> - But children cannot pin things back onto YOUR board. Changes go one way only.
+
+---
+
+### The Problem Without Export
+
+```bash
+# In your terminal:
+name=Ahmed
+./child_script.sh
+
+# Inside child_script.sh:
+echo $name
+# Output:          ← EMPTY! name was a local sticky note
+```
+
+The child shell starts **fresh** — it doesn't inherit local variables.
+
+---
+
+### The Fix — Export Makes it Visible to Children
+
+```bash
+# In your terminal:
+export name=Ahmed       # pin it to the notice board
+./child_script.sh
+
+# Inside child_script.sh:
+echo $name
+# Output: Ahmed    ✅  child can read the notice board
+```
+
+---
+
+### The One-Way Street Rule
+
+Children **read** exported variables, but they **cannot change** the parent's copy:
+
+```bash
+# terminal:
+export city=Cairo
+./test.sh
+
+# inside test.sh:
+echo $city          # Cairo  ✅ can read it
+city=Alexandria     # changes it... but only in the child
+echo $city          # Alexandria (inside child)
+
+# back in terminal after script ends:
+echo $city          # Cairo  ← unchanged! child's change died with it
+```
+
+```
+Parent Shell
+│   city = Cairo  (exported — on notice board)
+│
+├──► Child Shell
+│         │   reads city → "Cairo" ✅
+│         │   city = Alexandria  ← changes its OWN local copy
+│         │   echo $city → "Alexandria"
+│         └── child exits — its copy is gone
+│
+│   echo $city → "Cairo"  ← parent's copy never changed
+```
+
+---
+
+### Export in s1/s2 (Lab 2 Exercise)
+
+```bash
+# s1.sh
+#!/usr/bin/bash
+x=5
+
+# Way 1: pass as argument — wrap it in $( ) to send the VALUE
+./s2.sh $x          # sends the number 5 as $1
+
+# Way 2: export — child reads $x directly
+export x
+./s2.sh             # child can now echo $x on its own
+```
+
+```bash
+# s2.sh
+#!/usr/bin/bash
+
+# Way 1 — reading the argument
+echo "Via argument: $1"
+
+# Way 2 — reading the exported variable
+echo "Via export:   $x"
+```
+
+**Running it:**
+
+```
+$ ./s1.sh
+Via argument: 5
+Via export:   5
+```
+
+---
+
+### Quick Cheatsheet
+
+```bash
+x=5                 # local — only this shell sees it
+export x            # now children can see it too
+export y=10         # set AND export in one line
+unset x             # delete variable completely
+
+env                 # show all exported variables
+set                 # show ALL variables (local + exported)
+```
+
+---
+
+## 3. 🔍 Checking Processes — Command Reference
+
+> 🧒 **Analogy:** Processes are like **workers in a factory**. Each has an ID badge (PID), a job title (command), and a manager (parent process). These commands let you see who's working.
+
+---
+
+### The Main Commands
+
+#### `ps` — Snapshot of current processes
+
+```bash
+ps                  # just YOUR processes in this terminal
+ps -f               # full format (more details)
+ps -u ahmed         # all processes by user "ahmed"
+ps -e               # EVERY process on the whole system
+ps -ef              # every process, full details (most useful!)
+ps aux              # BSD style — same idea, very common
+```
+
+**What the columns mean (`ps -f`):**
+
+```
+UID    PID   PPID  C  STIME  TTY   TIME    CMD
+ahmed  1234  1200  0  10:00  pts/0 00:00   bash
+ahmed  1456  1234  0  10:05  pts/0 00:00   ./myscript.sh
+ahmed  1500  1456  0  10:05  pts/0 00:00   ps -f
+```
+
+|Column|Meaning|
+|---|---|
+|UID|User who owns the process|
+|PID|Process ID — unique number for this process|
+|PPID|Parent Process ID — who launched this process|
+|STIME|When it started|
+|TTY|Which terminal it's running in|
+|CMD|The actual command|
+
+> 💡 Notice: bash (PID 1234) launched myscript.sh (PPID 1234). That's the parent-child relationship!
+
+---
+
+#### `pgrep` — Find a process by name
+
+```bash
+pgrep bash          # shows PID of all bash processes
+pgrep -l bash       # shows PID + name
+pgrep -u ahmed      # all PIDs belonging to user ahmed
+```
+
+---
+
+#### `top` — Live updating process monitor
+
+```bash
+top                 # interactive, updates every 3 seconds
+# Press q to quit
+# Press k then type a PID to kill a process
+```
+
+---
+
+#### `kill` — Stop a process
+
+```bash
+kill 1234           # politely ask process 1234 to stop
+kill -9 1234        # force kill (no questions asked)
+kill -l             # list all signal names
+```
+
+---
+
+### For Lab 2 — Exercise 8 (myinfo script)
+
+This is the command to get a user's current processes:
+
+```bash
+# Get all processes for a specific user:
+ps -u "$logname" -f
+
+# Example output for user "ahmed":
+ps -u ahmed -f
+```
+
+**What it looks like:**
+
+```
+UID    PID   PPID CMD
+ahmed  1100  1099 -bash
+ahmed  1234  1100 vim notes.txt
+ahmed  1299  1100 ./myscript.sh
+```
+
+**If `ps -u` doesn't work, use this fallback:**
+
+```bash
+ps aux | grep "^$logname"
+```
+
+---
+
+### Full Process Commands Cheatsheet
+
+```bash
+ps                  # my processes, basic
+ps -f               # my processes, full detail
+ps -ef              # ALL processes on system, full detail
+ps -u username      # all processes for one user
+ps aux              # all processes, BSD style
+pgrep bash          # find PID of process by name
+pgrep -l bash       # find PID + name
+top                 # live process monitor (q to quit)
+kill PID            # send stop signal to process
+kill -9 PID         # force kill immediately
+kill -l             # list all signals
+jobs                # list background jobs in current shell
+```
+
+---
+
+_Add this to your Day 2 notes — these three topics are the foundation for everything in Lab 2!_
 
 ---
 
