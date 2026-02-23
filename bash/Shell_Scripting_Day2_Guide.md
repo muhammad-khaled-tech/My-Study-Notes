@@ -292,6 +292,57 @@ No chmod needed"]
 ```
 
 > **Key Difference:** With sourcing (`. ./script.sh`), variables set inside the script stay in your shell after it finishes. With `./script.sh`, they vanish when the script ends.
+
+
+**Imagine you write this script called `test.sh`:**
+
+```bash
+#!/usr/bin/bash
+city=Cairo
+echo "inside script: city is $city"
+```
+
+---
+
+### Way 1 — `./test.sh`
+
+```bash
+./test.sh
+# inside script: city is Cairo   ✅
+
+echo $city
+# (nothing)  ❌
+```
+
+**Why?** Bash created a brand new temporary shell just to run the script. That shell set `city=Cairo`, printed it, then **that shell closed and took `city` with it**. Your terminal never had it.
+
+---
+
+### Way 2 — `. ./test.sh`
+
+```bash
+. ./test.sh
+# inside script: city is Cairo   ✅
+
+echo $city
+# Cairo   ✅
+```
+
+**Why?** No new shell was created. The commands ran **directly in YOUR terminal** — as if you had typed `city=Cairo` yourself. So after the script finished, `city` was still sitting in your terminal.
+
+---
+
+### The one situation this actually matters — `mycd` from Lab 2
+
+```bash
+./mycd /home      # you run it...
+pwd               # still in same place ❌ — cd happened in child shell that died
+
+. ./mycd /home    # you source it...
+pwd               # /home  ✅ — cd ran in YOUR shell so it worked
+```
+
+That's the whole difference. **`./script`** = new temporary shell that disappears. **`. ./script`** = runs right where you are.
 ---
 
 ## 📦 Variables
