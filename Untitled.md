@@ -12,7 +12,7 @@
 - [x] 7 - CSR VS SSR
 - [x] 8 - component based arch
 - [x] 9 - modules vs standalone
-- [ ] 10 - recap
+- [x] 10 - recap
 - [ ] 13 - create component without cli
 - [ ] 14 - component details
 - [ ] 15 - create component with cli
