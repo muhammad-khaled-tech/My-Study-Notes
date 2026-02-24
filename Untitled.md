@@ -82,3 +82,10 @@
 
 
 template varible refrence  #on the element 
+template varible refrence needs and action or ement to be snt as a pramater to ts to be acted on
+
+![[Pasted image 20260224214153.png]] 
+
+
+any decorator staarts with @ and capital 
+@ViewChild('el)
