@@ -89,4 +89,4 @@ template varible refrence needs and action or ement to be snt as a pramater to t
 
 any decorator staarts with @ and capital 
 @ViewChild('el )
-![[Pasted image 20260224214557.png]]
+![[Pasted image 20260224214557.png]]![[Pasted image 20260224215033.png]]
