@@ -23,15 +23,15 @@
 
 > Week 1 / s-2 (TypeScript) — watch on 2x
 
-- [ ] 2 - intro to ts
-- [ ] 4 - datatypes (string...)
-- [ ] 5 - union, type literal, tuple
-- [ ] 6 - custom type, any
-- [ ] 7 - array
-- [ ] 8 - function
-- [ ] 10 - interface
-- [ ] 11 - interface with class
-- [ ] 14 - generics
+- [x] 2 - intro to ts
+- [x] 4 - datatypes (string...)
+- [x] 5 - union, type literal, tuple
+- [x] 6 - custom type, any
+- [x] 7 - array
+- [x] 8 - function
+- [x] 10 - interface
+- [x] 11 - interface with class
+- [x] 14 - generics
 
 ---
 
