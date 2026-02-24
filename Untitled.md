@@ -15,7 +15,7 @@
 - [x] 10 - recap
 - [x] 13 - create component without cli
 - [x] 14 - component details
-- [ ] 15 - create component with cli
+- [x] 15 - create component with cli
 
 ---
 
