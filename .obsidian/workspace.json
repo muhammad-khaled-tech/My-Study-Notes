@@ -93,7 +93,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -252,6 +253,12 @@
   },
   "active": "7ed4e2c7ffc1c5c4",
   "lastOpenFiles": [
+    "mean/angular-guide-part3.md",
+    "mean/Unconfirmed 489955.crdownload",
+    "mean/angular-guide-part2.md",
+    "mean/Unconfirmed 378147.crdownload",
+    "mean/angular-guide-part1.md",
+    "mean/Unconfirmed 534109.crdownload",
     "mean/implementation_plan.md",
     "mean/Unconfirmed 41353.crdownload",
     "mean/khaled-frontend-guide.md",
@@ -269,10 +276,7 @@
     "services.excalidraw",
     "dependency injection.excalidraw",
     "Unconfirmed 397571.crdownload",
-    "Unconfirmed 262346.crdownload",
     "components life cycle .png",
-    "Unconfirmed 990777.crdownload",
-    "components life cycle .excalidraw",
     "Pasted image 20260224215033.png",
     "Pasted image 20260224214557.png",
     "Pasted image 20260224214153.png",
@@ -293,8 +297,6 @@
     "_connection-map.md",
     "Data Structures.md",
     "Untitled 8.md",
-    "Untitled 9.md",
-    "Untitled 7.md",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
     "scripts/BinaryTree_Anim/Downloaded/Split Ellipse.svg"
