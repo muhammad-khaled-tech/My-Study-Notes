@@ -1183,21 +1183,21 @@ export class Navbar implements OnInit, OnDestroy {
 
 ## ✅ Summary Checklist
 
-| # | Task | Status |
-|---|------|--------|
-| 1 | Add missing models (User, Cart, Order, Review, ApiResponse) | 🔲 |
-| 2 | Build AuthService | 🔲 |
-| 3 | Build Token Interceptor | 🔲 |
-| 4 | Build Error Interceptor | 🔲 |
-| 5 | Build Auth Guard | 🔲 |
-| 6 | Build Admin Guard | 🔲 |
-| 7 | Wire interceptors into [app.config.ts](file:///home/mkhaled/Desktop/mohamed%20khaled%20/ITI%20open%20source%20applications%20devolpment/Bookstore/bookstore-frontend/src/app/app.config.ts) | 🔲 |
-| 8 | Add guards to [app.routes.ts](file:///home/mkhaled/Desktop/mohamed%20khaled%20/ITI%20open%20source%20applications%20devolpment/Bookstore/bookstore-frontend/src/app/app.routes.ts) | 🔲 |
-| 9 | Build Login Page (TS + HTML) | 🔲 |
-| 10 | Finish Register Page (TS + HTML) | 🔲 |
-| 11 | Build Profile Page (TS + HTML) | 🔲 |
-| 12 | Build Not-Found Page (TS + HTML) | 🔲 |
-| 13 | Connect Navbar to AuthService | 🔲 |
+| #   | Task                                                                                                                                                                                        | Status |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1   | Add missing models (User, Cart, Order, Review, ApiResponse)                                                                                                                                 | 🔲     |
+| 2   | Build AuthService                                                                                                                                                                           | 🔲     |
+| 3   | Build Token Interceptor                                                                                                                                                                     | 🔲     |
+| 4   | Build Error Interceptor                                                                                                                                                                     | 🔲     |
+| 5   | Build Auth Guard                                                                                                                                                                            | 🔲     |
+| 6   | Build Admin Guard                                                                                                                                                                           | 🔲     |
+| 7   | Wire interceptors into [app.config.ts](file:///home/mkhaled/Desktop/mohamed%20khaled%20/ITI%20open%20source%20applications%20devolpment/Bookstore/bookstore-frontend/src/app/app.config.ts) | 🔲     |
+| 8   | Add guards to [app.routes.ts](file:///home/mkhaled/Desktop/mohamed%20khaled%20/ITI%20open%20source%20applications%20devolpment/Bookstore/bookstore-frontend/src/app/app.routes.ts)          | 🔲     |
+| 9   | Build Login Page (TS + HTML)                                                                                                                                                                | 🔲     |
+| 10  | Finish Register Page (TS + HTML)                                                                                                                                                            | 🔲     |
+| 11  | Build Profile Page (TS + HTML)                                                                                                                                                              | 🔲     |
+| 12  | Build Not-Found Page (TS + HTML)                                                                                                                                                            | 🔲     |
+| 13  | Connect Navbar to AuthService                                                                                                                                                               | 🔲     |
 
 ---
 
