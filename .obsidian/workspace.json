@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "http-client-notes.md",
+                "file": "mean/implementation_plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "http-client-notes"
+              "title": "implementation_plan"
             }
           }
         ],
@@ -252,6 +252,14 @@
   },
   "active": "7ed4e2c7ffc1c5c4",
   "lastOpenFiles": [
+    "mean/khaled-guide.md",
+    "mean/implementation_plan.md",
+    "mean/bookstore-8day-plan.md",
+    "mean/bookstore-8day-plan (1).md",
+    "mean/bookstore-obsidian.md",
+    "mean/button-sprite2.png",
+    "mean/implementation_plan.md.resolved",
+    "http-client-notes.md",
     "http client.excalidraw",
     "Untitled.md",
     "Shell_Scripting_Day1_Guide.md",
@@ -266,15 +274,9 @@
     "Pasted image 20260224215033.png",
     "Pasted image 20260224214557.png",
     "Pasted image 20260224214153.png",
-    "mean/khaled-guide.md",
-    "mean/bookstore-obsidian.md",
-    "mean/bookstore-8day-plan.md",
     "bash/Shell_Scripting_Day2_Guide.md",
     "bash/Shell_Scripting_Day2.excalidraw",
-    "bash/Shell_Scripting_Day2 (1).excalidraw",
     "bash/Shell_Scripting_Day1_Guide (1).md",
-    "bash/Unconfirmed 71497.crdownload",
-    "mean/bookstore-8day-plan (1).md",
     "Untitled.canvas",
     "Untitled 1.md",
     "C-C++/Day-1.md",
@@ -294,10 +296,8 @@
     "Untitled 7.md",
     "Untitled 6.md",
     "Untitled 5.md",
-    "Untitled 4.md",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
-    "scripts/BinaryTree_Anim/Downloaded/Split Ellipse.svg",
-    "scripts/BinaryTree_Anim/Downloaded/Image Occlusion.svg"
+    "scripts/BinaryTree_Anim/Downloaded/Split Ellipse.svg"
   ]
 }
