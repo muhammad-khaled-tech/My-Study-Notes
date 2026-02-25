@@ -128,7 +128,7 @@ export interface Review {
   _id: string;
   user: { _id: string; firstName: string; lastName: string };
   book: string;
-  rating: number;       // 1 to 5
+  rating: number;       // 1 to 5 
   comment?: string;     // optional — the ? means it might be missing
   createdAt: string;
 }
