@@ -27,30 +27,16 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "mean/angular-guide-part2.md",
+                "file": "mean/Untitled.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "angular-guide-part2"
-            }
-          },
-          {
-            "id": "bc4603357b3b86fe",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Untitled 1.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Untitled 1"
+              "title": "Untitled"
             }
           }
         ],
-        "currentTab": 2
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -264,9 +250,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "bc4603357b3b86fe",
+  "active": "7ed4e2c7ffc1c5c4",
   "lastOpenFiles": [
     "mean/angular-guide-part2.md",
+    "mean/Untitled.md",
     "Untitled 1.md",
     "mean/angular-guide-part1.md",
     "mean/bookstore-8day-plan.md",
@@ -309,7 +296,6 @@
     "problem solving/problem solving road map.md",
     "_connection-map.md",
     "Data Structures.md",
-    "Untitled 8.md",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
     "scripts/BinaryTree_Anim/Downloaded/Split Ellipse.svg"
