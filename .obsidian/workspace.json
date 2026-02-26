@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "mean/khaled-frontend-guide.md",
+                "file": "mean/angular-guide-part1.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "khaled-frontend-guide"
+              "title": "angular-guide-part1"
             }
           }
         ],
@@ -93,8 +93,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -253,18 +252,18 @@
   },
   "active": "7ed4e2c7ffc1c5c4",
   "lastOpenFiles": [
-    "mean/angular-guide-part3.md",
-    "mean/Unconfirmed 489955.crdownload",
+    "mean/bookstore-8day-plan.md",
     "mean/angular-guide-part2.md",
-    "mean/Unconfirmed 378147.crdownload",
+    "mean/angular-guide-part3.md",
+    "mean/khaled-frontend-guide.md",
+    "mean/khaled-guide.md",
     "mean/angular-guide-part1.md",
+    "mean/Unconfirmed 489955.crdownload",
+    "mean/Unconfirmed 378147.crdownload",
     "mean/Unconfirmed 534109.crdownload",
     "mean/implementation_plan.md",
     "mean/Unconfirmed 41353.crdownload",
-    "mean/khaled-frontend-guide.md",
     "mean/Unconfirmed 830577.crdownload",
-    "mean/khaled-guide.md",
-    "mean/bookstore-8day-plan.md",
     "mean/bookstore-8day-plan (1).md",
     "mean/bookstore-obsidian.md",
     "mean/button-sprite2.png",
