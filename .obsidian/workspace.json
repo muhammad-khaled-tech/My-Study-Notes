@@ -11,14 +11,12 @@
             "id": "50ac27a21c5e19dd",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "excalidraw",
               "state": {
-                "file": "admin2/RHSA2_Deep_Study_Guide.md",
-                "mode": "source",
-                "source": false
+                "file": "admin2/RHSA1_CommandMap.excalidraw"
               },
-              "icon": "lucide-file",
-              "title": "RHSA2_Deep_Study_Guide"
+              "icon": "excalidraw-icon",
+              "title": "RHSA1_CommandMap"
             }
           }
         ]
@@ -237,9 +235,12 @@
   },
   "active": "50ac27a21c5e19dd",
   "lastOpenFiles": [
+    "admin2/RHSA1_Revision_Notes.md",
+    "admin2/RHSA1_CommandMap.excalidraw",
+    "admin2/Unconfirmed 161357.crdownload",
+    "admin2/RHSA2_Deep_Study_Guide.md",
     "admin2/drive-download-20260301T143823Z-1-001.zip",
     "admin2/Unconfirmed 870437.crdownload",
-    "admin2/RHSA1_Revision_Notes.md",
     "mean/bookstore-8day-plan.md",
     "mean/angular-guide-part2.md",
     "mean/bookstore-8day-plan (1).md",
@@ -261,9 +262,6 @@
     "mean/angular-guide-part1.md",
     "mean/angular-guide-part3.md",
     "mean/Unconfirmed 489955.crdownload",
-    "mean/Unconfirmed 378147.crdownload",
-    "mean/Unconfirmed 534109.crdownload",
-    "mean/Unconfirmed 41353.crdownload",
     "mean/button-sprite2.png",
     "http-client-notes.md",
     "Untitled.md",
@@ -280,7 +278,6 @@
     "Pasted image 20260205044303.png",
     "Pasted image 20260205044047.png",
     "JavaScript/Day-4 lecture  codes.md",
-    "Linux Essentials/linux_sysadmin_training.md",
     "scripts/Downloaded/Slideshow.svg",
     "scripts/BinaryTree_Anim/Downloaded/Set Text Alignment.svg",
     "scripts/BinaryTree_Anim/Downloaded/Split Ellipse.svg"
