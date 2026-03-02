@@ -12,12 +12,12 @@
 
 خليني أكسرها كلمة كلمة:
 
-|Term|What it ACTUALLY means|
-|---|---|
-|**On-Demand**|أنا عايز server دلوقتي — AWS بتديهولي في ثواني، مش بعد 3 أشهر من الـ procurement|
-|**IT Resources**|Compute (CPU/RAM) + Storage + Databases + Networking + AI/ML + وكل حاجة تانية|
-|**Over the Internet**|مش محتاج أمشي للـ data center — كل حاجة من الـ browser أو CLI|
-|**Pay-as-you-go**|بتدفع على اللي بتستخدمه بالضبط — زي عداد الكهرباء، مش إيجار ثابت|
+| Term                  | What it ACTUALLY means                                                           |
+| --------------------- | -------------------------------------------------------------------------------- |
+| **On-Demand**         | أنا عايز server دلوقتي — AWS بتديهولي في ثواني، مش بعد 3 أشهر من الـ procurement |
+| **IT Resources**      | Compute (CPU/RAM) + Storage + Databases + Networking + AI/ML + وكل حاجة تانية    |
+| **Over the Internet** | مش محتاج أمشي للـ data center — كل حاجة من الـ browser أو CLI                    |
+| **Pay-as-you-go**     | بتدفع على اللي بتستخدمه بالضبط — زي عداد الكهرباء، مش إيجار ثابت                 |
 
 ---
 
@@ -62,13 +62,13 @@ _"عايزين نعمل campaign في رمضان، متوقعين 10x زيادة
 
 ### 3.1 CapEx vs OpEx — فاهمها صح
 
-||CapEx (Capital Expenditure)|OpEx (Operational Expenditure)|
-|---|---|---|
-|**تعريف**|دفع مقدم لأصول ثابتة|دفع دوري لخدمات جارية|
-|**مثال**|شراء server بـ $50,000|دفع $500/شهر على EC2|
-|**On-Premises**|✅ CapEx ثقيل|+ OpEx للـ maintenance|
-|**Cloud**|❌ لا يوجد CapEx|✅ OpEx فقط|
-|**الخطر**|لو الـ business فشل — الأصول عندك|لو الـ business فشل — بتوقف الدفع|
+|                 | CapEx (Capital Expenditure)       | OpEx (Operational Expenditure)    |
+| --------------- | --------------------------------- | --------------------------------- |
+| **تعريف**       | دفع مقدم لأصول ثابتة              | دفع دوري لخدمات جارية             |
+| **مثال**        | شراء server بـ $50,000            | دفع $500/شهر على EC2              |
+| **On-Premises** | ✅ CapEx ثقيل                      | + OpEx للـ maintenance            |
+| **Cloud**       | ❌ لا يوجد CapEx                   | ✅ OpEx فقط                        |
+| **الخطر**       | لو الـ business فشل — الأصول عندك | لو الـ business فشل — بتوقف الدفع |
 
 > 🎯 **Exam Keyword:** عندما السؤال يقول _"reduce upfront costs"_ أو _"convert capital expenditure to operational expenditure"_ — الإجابة دايماً **Cloud Computing**.
 
@@ -265,4 +265,3 @@ AWS بتديك:
 
 ---
 
-_Study Guide by: Senior AWS Architect Persona | CLF-C02 Prep_
