@@ -122,7 +122,8 @@
 
 الـ Six Advantages هي الحجج الرسمية اللي AWS بتقدمها. كل واحدة فيها بتحل مشكلة من المشاكل اللي اتكلمنا عنها في أول الحكاية.
 
-أول ميزة وأهمها للـ Business هي **تحويل CAPEX لـ OPEX**. الـ CAPEX (Capital Expenditure) هو الإنفاق الرأسمالي — بتشتري Servers بفلوس كتير دفعة واحدة. الـ OPEX (Operational Expenditure) هو الإنفاق التشغيلي — بتدفع كل شهر على قد ما بتستخدم. مع AWS، مفيش CAPEX — بتدفع OPEX بس. وده بيخفض الـ TCO (Total Cost of Ownership) بشكل كبير.
+أول ميزة وأهمها للـ Business هي **تحويل CAPEX لـ OPEX**. الـ CAPEX (Capital Expenditure) هو الإنفاق الرأسمالي — بتشتري Servers بفلوس كتير دفعة واحدة. الـ OPEX (Operational Expenditure) هو الإنفاق التشغيلي — بتدفع كل شهر على قد ما بتستخدم. مع AWS، مفيش CAPEX — بتدفع OPEX بس. 
+وده بيخفض الـ TCO (Total Cost of Ownership) بشكل كبير.
 
 التانية هي **الاستفادة من Economies of Scale**. AWS بتشتري ملايين الـ Servers سنوياً — بتاخد discounts هايلة من الـ Manufacturers. الـ Savings دي بتنعكس على أسعارك إنت. مستحيل تحقق نفس السعر لو اشتريت Infrastructure لوحدك.
 
