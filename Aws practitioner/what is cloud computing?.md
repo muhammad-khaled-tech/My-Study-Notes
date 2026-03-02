@@ -203,38 +203,51 @@ AWS مسؤولة عن: كل الـ Physical Infrastructure — المباني، 
 
 ## 🎯 فخاخ الـ Exam — اللي بيوقع فيه الناس
 
-**الـ Trap الأول — Data Transfer:** "كام تكلفة رفع بيانات لـ AWS؟" — الإجابة: صفر. مجاناً. اللي بيكلف هو الـ Transfer OUT فقط.
+**الـ Trap الأول — Data Transfer:** 
+"كام تكلفة رفع بيانات لـ AWS؟"
+— الإجابة: صفر. مجاناً. اللي بيكلف هو الـ Transfer OUT فقط.
 
-**الـ Trap التاني — Shared Responsibility:** "مين مسؤول عن تحديث الـ OS على EC2؟" — إنت، مش AWS. هي بتدير الـ Hardware فقط.
+**الـ Trap التاني — Shared Responsibility:
+** "مين مسؤول عن تحديث الـ OS على EC2؟"
+— إنت، مش AWS. هي بتدير الـ Hardware فقط.
 
-**الـ Trap التالت — Global vs Regional:** "IAM هو Global أم Regional؟" — Global. كمان Route 53، CloudFront، WAF = Global. EC2، S3، RDS = Regional.
+**الـ Trap التالت — Global vs Regional:** 
+"IAM هو Global أم Regional؟"
+— Global. كمان Route 53، CloudFront، WAF = Global. EC2، S3، RDS = Regional.
 
-**الـ Trap الرابع — Elasticity vs Scalability:** Scalability = تقدر تكبر. Elasticity = بتكبر وبتصغر **تلقائياً** حسب الـ Demand.
+**الـ Trap الرابع — Elasticity vs Scalability:** 
+Scalability = تقدر تكبر. Elasticity = بتكبر وبتصغر **تلقائياً** حسب الـ Demand.
 
-**الـ Trap الخامس — Region Selection:** لو السؤال قال "data must remain within the country" — الإجابة دايماً **Compliance** كأول عامل في اختيار الـ Region.
+**الـ Trap الخامس — Region Selection:**
+لو السؤال قال "data must remain within the country" — 
+الإجابة دايماً **Compliance** كأول عامل في اختيار الـ Region.
 
-**الـ Trap السادس — IaaS/PaaS/SaaS:** "Which service lets you deploy without managing infrastructure?" = PaaS = Elastic Beanstalk. "Which gives highest flexibility?" = IaaS = EC2.
+**الـ Trap السادس — IaaS/PaaS/SaaS:
+ "Which service lets you deploy without managing infrastructure?"
+= PaaS = Elastic Beanstalk.
+"Which gives highest flexibility?" 
+= IaaS = EC2.
 
 ---
 
 ## 📊 ملخص نهائي — الـ Cheat Sheet
 
-|السؤال|الإجابة|
-|---|---|
-|تعريف Cloud Computing|On-demand delivery + Pay-as-you-go|
-|أول 3 AWS Services (2006)|SQS + S3 + EC2|
-|EC2 = نوع الخدمة|IaaS|
-|Elastic Beanstalk = نوع الخدمة|PaaS|
-|Gmail / Rekognition = نوع الخدمة|SaaS|
-|Global Services|IAM, Route 53, CloudFront, WAF|
-|Data Transfer IN|مجاناً (FREE)|
-|Data Transfer OUT|بيكلف|
-|الـ AZs per Region|Min 3 — Max 6|
-|أهم عامل في اختيار الـ Region|Compliance|
-|مسؤولية الـ OS على EC2|Customer (أنت)|
-|مسؤولية الـ Physical Hardware|AWS|
-|Elasticity vs Scalability|Elasticity = تلقائي / Scalability = يدوي|
-|Hybrid Cloud = لما|بيانات حساسة On-Prem + Cloud للباقي|
+| السؤال                           | الإجابة                                  |
+| -------------------------------- | ---------------------------------------- |
+| تعريف Cloud Computing            | On-demand delivery + Pay-as-you-go       |
+| أول 3 AWS Services (2006)        | SQS + S3 + EC2                           |
+| EC2 = نوع الخدمة                 | IaaS                                     |
+| Elastic Beanstalk = نوع الخدمة   | PaaS                                     |
+| Gmail / Rekognition = نوع الخدمة | SaaS                                     |
+| Global Services                  | IAM, Route 53, CloudFront, WAF           |
+| Data Transfer IN                 | مجاناً (FREE)                            |
+| Data Transfer OUT                | بيكلف                                    |
+| الـ AZs per Region               | Min 3 — Max 6                            |
+| أهم عامل في اختيار الـ Region    | Compliance                               |
+| مسؤولية الـ OS على EC2           | Customer (أنت)                           |
+| مسؤولية الـ Physical Hardware    | AWS                                      |
+| Elasticity vs Scalability        | Elasticity = تلقائي / Scalability = يدوي |
+| Hybrid Cloud = لما               | بيانات حساسة On-Prem + Cloud للباقي      |
 
 ---
 
