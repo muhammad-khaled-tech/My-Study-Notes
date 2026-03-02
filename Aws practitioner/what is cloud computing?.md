@@ -141,11 +141,13 @@
 
 لما تتعامل مع الـ Cloud، فيه ثلاث مستويات للخدمة. الفرق بينهم هو **مين مسؤول عن إيه**.
 
-تخيل الـ IT Stack كعمارة من تسع طوابق: من تحت للفوق — Networking، Storage، Servers، Virtualization، OS، Middleware، Runtime، Data، Applications.
+تخيل الـ IT Stack كعمارة من تسع طوابق: من تحت للفوق —
+Networking، Storage، Servers، Virtualization، OS، Middleware، Runtime، Data، Applications.
 
 في **On-Premises** التقليدي: إنت مسؤول عن الـ 9 طوابق كلهم.
 
-في **IaaS (Infrastructure as a Service)** — المثال الأبرز هو **Amazon EC2** — AWS بتدير الطوابق التحتانية الأربعة (الـ Physical Infrastructure)، وإنت مسؤول عن الـ 5 الفوقانية. يعني إنت بتختار الـ OS وبتركّب الـ Software وبتدير الـ Security. أعلى مستوى من الـ Flexibility ومعاه أعلى مستوى من المسؤولية.
+في **IaaS (Infrastructure as a Service)** — المثال الأبرز هو **Amazon EC2** 
+— AWS بتدير الطوابق التحتانية الأربعة (الـ Physical Infrastructure)، وإنت مسؤول عن الـ 5 الفوقانية. يعني إنت بتختار الـ OS وبتركّب الـ Software وبتدير الـ Security. أعلى مستوى من الـ Flexibility ومعاه أعلى مستوى من المسؤولية.
 
 في **PaaS (Platform as a Service)** — المثال هو **AWS Elastic Beanstalk** — AWS بتدير 7 طوابق من الـ 9، وإنت مسؤول بس عن الـ Data والـ Application اللي بتكتبها. بتحط الـ Code وElastic Beanstalk بيدير كل حاجة تانية تلقائياً.
 
