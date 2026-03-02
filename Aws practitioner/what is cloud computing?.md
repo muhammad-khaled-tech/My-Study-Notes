@@ -146,10 +146,11 @@ Networking، Storage، Servers، Virtualization، OS، Middleware، Runtime، Da
 
 في **On-Premises** التقليدي: إنت مسؤول عن الـ 9 طوابق كلهم.
 
-في **IaaS (Infrastructure as a Service)** — المثال الأبرز هو **Amazon EC2** 
-— AWS بتدير الطوابق التحتانية الأربعة (الـ Physical Infrastructure)، وإنت مسؤول عن الـ 5 الفوقانية. يعني إنت بتختار الـ OS وبتركّب الـ Software وبتدير الـ Security. أعلى مستوى من الـ Flexibility ومعاه أعلى مستوى من المسؤولية.
+في **IaaS (Infrastructure as a Service)** — المثال الأبرز هو **Amazon EC2** — 
+AWS بتدير الطوابق التحتانية الأربعة (الـ Physical Infrastructure)، وإنت مسؤول عن الـ 5 الفوقانية. يعني إنت بتختار الـ OS وبتركّب الـ Software وبتدير الـ Security. أعلى مستوى من الـ Flexibility ومعاه أعلى مستوى من المسؤولية.
 
-في **PaaS (Platform as a Service)** — المثال هو **AWS Elastic Beanstalk** — AWS بتدير 7 طوابق من الـ 9، وإنت مسؤول بس عن الـ Data والـ Application اللي بتكتبها. بتحط الـ Code وElastic Beanstalk بيدير كل حاجة تانية تلقائياً.
+في **PaaS (Platform as a Service)** — المثال هو **AWS Elastic Beanstalk** — 
+AWS بتدير 7 طوابق من الـ 9، وإنت مسؤول بس عن الـ Data والـ Application اللي بتكتبها. بتحط الـ Code وElastic Beanstalk بيدير كل حاجة تانية تلقائياً.
 
 في **SaaS (Software as a Service)** — المثال هو **Gmail** أو **AWS Rekognition** — الـ Provider مسؤول عن كل الـ 9 طوابق. إنت بس بتستخدم الـ Software جاهز من غير ما تفكر في أي حاجة تقنية.
 
