@@ -155,6 +155,8 @@ Networking، Storage، Servers، Virtualization، OS، Middleware، Runtime، Da
 
 الـ Trade-off واضح: كل ما روحت من IaaS لـ SaaS، قلّت مسؤوليتك وقلّت كمان مرونتك في التخصيص.
 
+![[Pasted image 20260302213105.png]]
+
 ---
 
 ## 💰 التسعير — ثلاث فواتير بس
