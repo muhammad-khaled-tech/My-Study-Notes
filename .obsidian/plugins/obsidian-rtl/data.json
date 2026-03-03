@@ -24,7 +24,7 @@
     "xml/Java_JSON_Tutorial_Part1.md": "auto",
     "Nodejs/ENV Variables.md": "rtl",
     "Aws practitioner/what is cloud computing?.md": "rtl",
-    "Aws practitioner/02_IAM_Identity_and_Access_Management.md": "auto"
+    "Aws practitioner/02_IAM_Identity_and_Access_Management.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,

@@ -145,7 +145,7 @@ Alice في الـ Developers وفي الـ Audit في نفس الوقت — بت
 
 المعادلة:
 
-$$\text{MFA} = \underbrace{\text{شيء بتعرفه}}_{\text{الباسورد}} + \underbrace{\text{شيء بتمتلكه}}_{\text{Device أو App}}$$
+$$\text{MFA} = \underbrace{\text{somthing you know}}_{\text{password}} + \underbrace{\text{something you own}}_{\text{Device أو App}}$$
 
 حتى لو حد سرق الباسورد — مش هيقدر يكمل لأنه مش عنده الـ Device. الـ Hacker بيحتاج الاتنين مع بعض.
 
