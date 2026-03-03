@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/what is cloud computing?.md",
+                "file": "problem solving/problem solving road map.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "what is cloud computing?"
+              "title": "problem solving road map"
             }
           }
         ]
@@ -237,15 +237,16 @@
   },
   "active": "50ac27a21c5e19dd",
   "lastOpenFiles": [
+    "problem solving/interview_prep_plan.md",
+    "admin2/RHSA2_CentOS_Lab_Solutions.md",
+    "Aws practitioner/what is cloud computing?.md",
     "Aws practitioner/02_IAM_Identity_and_Access_Management.md",
     "Aws practitioner/Unconfirmed 302823.crdownload",
     "Pasted image 20260302213105.png",
     "admin2/RHSA2_Deep_Study_Guide.md",
-    "Aws practitioner/what is cloud computing?.md",
     "Untitled 3.md",
     "Untitled 2.md",
     "Aws practitioner",
-    "admin2/RHSA2_CentOS_Lab_Solutions.md",
     "admin2/RHSA1_Revision_Notes.md",
     "admin2/RHSA1_CommandMap.excalidraw",
     "admin2/Unconfirmed 969933.crdownload",
@@ -279,7 +280,6 @@
     "Pasted image 20260224214557.png",
     "Pasted image 20260224214153.png",
     "Untitled.canvas",
-    "C-C++/Day-1.md",
     "Pasted image 20260205044303.png",
     "Pasted image 20260205044047.png",
     "scripts/Downloaded/Slideshow.svg",

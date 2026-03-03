@@ -105,8 +105,8 @@ current_week: 1
 **Arrays - Easy (15 مسائل):**
 
 - [x] [1. Two Sum](https://leetcode.com/problems/two-sum/) ⭐ (أهم مسألة للمبتدئين)
-- [ ] [26. Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/)
-- [ ] [27. Remove Element](https://leetcode.com/problems/remove-element/)
+- [x] [26. Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/)
+- [x] [27. Remove Element](https://leetcode.com/problems/remove-element/)
 - [ ] [66. Plus One](https://leetcode.com/problems/plus-one/)
 - [ ] [88. Merge Sorted Array](https://leetcode.com/problems/merge-sorted-array/)
 - [ ] [121. Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) ⭐
