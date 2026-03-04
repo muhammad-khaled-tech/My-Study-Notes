@@ -799,6 +799,8 @@ export const guestGuard: CanActivateFn = () => {
 > ✅ Logic is correct. Small thing: the redirect goes to `['/feed']` hardcoded. Consider a `APP_ROUTES` constant file with all route strings — then if `/feed` ever becomes `/home`, you change one file not ten.
 
 ## GitHub Tasks
+```
+
 Issue:  [Phase 1] Authentication Pages
 Commits (spread across your work):
   feat(auth): add login page with reactive form
@@ -814,7 +816,7 @@ PR: feature/phase-01-auth → develop
 - [ ] Logged-in user visiting `/auth/login` is redirected to `/feed`
 - [ ] Pages look good on mobile (375px) AND desktop
 - [ ] Dark mode manually works (add `dark` class to `<html>` and check)
-
+```
 ---
 
 ---
@@ -972,7 +974,6 @@ Commits:
   feat(routing): configure lazy-loaded routes for all pages
   style(layout): mobile-first responsive layout adjustments
 PR: feature/phase-02-shell → develop
-```
 
 ## Definition of Done
 - [ ] Navigating to `/` when logged in shows the shell with sidebar
@@ -1204,8 +1205,6 @@ Commits:
   feat(pipes): add TimeAgo pipe
   style(post): style PostCard with Tailwind (mobile-first)
 PR: feature/phase-03-feed → develop
-```
-
 ## Definition of Done
 - [ ] Feed page shows a vertical list of PostCard components
 - [ ] PostCard displays: image, username, avatar, caption, likes count, time ago
@@ -1599,8 +1598,6 @@ Commits:
   feat(profile): add follow/unfollow toggle with optimistic update
   feat(profile): differentiate own profile vs others
 PR: feature/phase-04-profile → develop
-```
-
 ## Definition of Done
 - [ ] `/profile/khaled.dev` loads and shows a profile
 - [ ] Posts appear in a 3-column grid
