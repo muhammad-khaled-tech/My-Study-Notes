@@ -806,8 +806,6 @@ Commits (spread across your work):
   feat(auth): add guest guard for auth routes
   style(auth): polish login/register with Tailwind
 PR: feature/phase-01-auth → develop
-```
-
 ## Definition of Done
 - [ ] `/auth/login` and `/auth/register` routes work
 - [ ] Forms validate correctly — show errors when touched
