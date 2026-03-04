@@ -724,7 +724,7 @@ ifconfig enp0s3
 ifconfig enp0s3 | grep ether
 ```
 
----
+
 
 ## Q18 — Display network settings of all ACTIVE interfaces
 
