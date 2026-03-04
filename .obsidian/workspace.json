@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "angular/snapgrid-project-plan.md",
+                "file": "angular/snapgrid-obsidian.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "snapgrid-project-plan"
+              "title": "snapgrid-obsidian"
             }
           }
         ]
@@ -237,10 +237,12 @@
   },
   "active": "50ac27a21c5e19dd",
   "lastOpenFiles": [
-    "angular/angular-guide-part7.md",
-    "angular/snapgrid-project-plan.md",
     "admin2/RHSA2_CentOS_Lab_Solutions.md",
+    "angular/snapgrid-obsidian.md",
+    "angular/Unconfirmed 762265.crdownload",
     "admin2/RHSA2_Deep_Study_Guide.md",
+    "angular/snapgrid-project-plan.md",
+    "angular/angular-guide-part7.md",
     "Aws practitioner/what is cloud computing?.md",
     "Aws practitioner/02_IAM_Identity_and_Access_Management.md",
     "angular/angular-guide-part9.md",
@@ -272,8 +274,6 @@
     "admin2/RHSA1_CommandMap.excalidraw",
     "admin2/Unconfirmed 969933.crdownload",
     "admin2/Unconfirmed 379350.crdownload",
-    "admin2/Unconfirmed 106531.crdownload",
-    "mean/bookstore-8day-plan.md",
     "mean/button-sprite2.png",
     "components life cycle .png",
     "Pasted image 20260224215033.png",
