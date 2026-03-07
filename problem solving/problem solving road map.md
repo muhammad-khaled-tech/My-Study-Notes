@@ -112,7 +112,7 @@ current_week: 1
 - [x] [121. Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) ⭐
 - [x] [122. Best Time to Buy and Sell Stock II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/)
 - [x] [217. Contains Duplicate](https://leetcode.com/problems/contains-duplicate/)
-- [ ] [268. Missing Number](https://leetcode.com/problems/missing-number/)
+- [x] [268. Missing Number](https://leetcode.com/problems/missing-number/)
 - [ ] [283. Move Zeroes](https://leetcode.com/problems/move-zeroes/)
 - [ ] [448. Find All Numbers Disappeared in an Array](https://leetcode.com/problems/find-all-numbers-disappeared-in-an-array/)
 - [ ] [485. Max Consecutive Ones](https://leetcode.com/problems/max-consecutive-ones/)
