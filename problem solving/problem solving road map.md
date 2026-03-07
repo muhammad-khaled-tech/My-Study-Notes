@@ -107,7 +107,7 @@ current_week: 1
 - [x] [1. Two Sum](https://leetcode.com/problems/two-sum/) ⭐ (أهم مسألة للمبتدئين)
 - [x] [26. Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/)
 - [x] [27. Remove Element](https://leetcode.com/problems/remove-element/)
-- [ ] [66. Plus One](https://leetcode.com/problems/plus-one/)
+- [x] [66. Plus One](https://leetcode.com/problems/plus-one/)
 - [ ] [88. Merge Sorted Array](https://leetcode.com/problems/merge-sorted-array/)
 - [ ] [121. Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) ⭐
 - [ ] [122. Best Time to Buy and Sell Stock II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/)
