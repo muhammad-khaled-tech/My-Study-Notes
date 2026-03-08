@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "0ee386b1eb719bfe",
+        "id": "557220b900bbad1c",
         "type": "tabs",
         "children": [
           {
-            "id": "50ac27a21c5e19dd",
+            "id": "5bfa0189fd1a889f",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "problem solving/problem solving road map.md",
+                "file": "bash/DBMS_Project_Plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "problem solving road map"
+              "title": "DBMS_Project_Plan"
             }
           }
         ]
@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 251.5
+    "width": 251.5,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -235,8 +236,11 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "50ac27a21c5e19dd",
+  "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "bash/DBMS_BigPicture.excalidraw",
+    "bash/DBMS_Project_Plan.md",
+    "problem solving/problem solving road map.md",
     "admin2/RHSA2_CentOS9_Lab_Solutions.md",
     "admin2/RHSA2_Deep_Study_Guide.md",
     "angular/angular-guide-part5.md",
@@ -265,15 +269,11 @@
     "angular/files.zip",
     "angular/Unconfirmed 699865.crdownload",
     "angular",
-    "problem solving/problem solving road map.md",
     "problem solving/interview_prep_plan.md",
     "Aws practitioner/Unconfirmed 302823.crdownload",
     "Pasted image 20260302213105.png",
-    "Untitled 3.md",
-    "Untitled 2.md",
     "Aws practitioner",
     "admin2/RHSA1_CommandMap.excalidraw",
-    "admin2/Unconfirmed 969933.crdownload",
     "mean/button-sprite2.png",
     "components life cycle .png",
     "Pasted image 20260224215033.png",
