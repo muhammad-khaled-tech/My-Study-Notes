@@ -41,7 +41,7 @@ sum(L, R) = prefix[R] - prefix[L - 1]
 ## التشخيص وإمتى نستخدمه — Pattern Recognition
 
 ### 🔑 الكلمات اللي تلوح في وشك وتقول "هات الـ Prefix Sum"
-
+****
 عندما تقرأ المسألة وتشوف:
 
 - **"sum of subarray"** / "sum between indices L and R"
