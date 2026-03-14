@@ -461,9 +461,9 @@ int subarraySum(vector<int>& nums, int k) {
 }
 ```
 
----
 
-دلوقتي واضح ولا في حاجة لسه مش واضحة؟ 🙂
+
+
 ---
 
 ## مخططات الذاكرة — Mermaid Diagrams
