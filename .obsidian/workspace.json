@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "problem solving/two_pointers_tutorial.md",
+                "file": "problem solving/prefix_sum_tutorial.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "two_pointers_tutorial"
+              "title": "prefix_sum_tutorial"
             }
           }
         ]
@@ -237,10 +237,11 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "problem solving/two_pointers_tutorial.md",
+    "problem solving/Unconfirmed 915506.crdownload",
     "problem solving/prefix_sum_tutorial.md",
     "problem solving/binary_search_on_answer_tutorial.md",
     "problem solving/Unconfirmed 579027.crdownload",
-    "problem solving/two_pointers_tutorial.md",
     "problem solving/Unconfirmed 658154.crdownload",
     "problem solving/hashing_tutorial.md",
     "problem solving/DSA_Zero_to_Hero.md",
@@ -268,11 +269,9 @@
     "angular/angular-guide-part9.md",
     "angular/angular-guide-part8.md",
     "angular/angular-guide-part6.md",
-    "angular/angular-guide-part4.md",
     "angular/files",
     "angular/files.zip",
     "angular/Unconfirmed 699865.crdownload",
-    "angular",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",
