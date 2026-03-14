@@ -184,20 +184,15 @@ int main() {
     vector<int> arr = {2, 4, 1, 3, 5};
     int n = arr.size();
 
-    // ابني الـ prefix
     vector<int> prefix(n + 1, 0);
     for (int i = 1; i <= n; i++) {
         prefix[i] = prefix[i - 1] + arr[i - 1];
     }
 
-    // اسأل queries
-    auto query = [&](int L, int R) {
-        return prefix[R + 1] - prefix[L];
-    };
 
-    cout << query(1, 3) << "\n";  // 8
-    cout << query(0, 4) << "\n";  // 15  (كل الـ array)
-    cout << query(2, 2) << "\n";  // 1   (عنصر واحد بس)
+    int L = 1, R = 3;
+    int sum = prefix[R + 1] - prefix[L];
+    cout << sum << "\n";  // 8
 }
 ```
 
