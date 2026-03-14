@@ -286,95 +286,184 @@ public:
 
 **[LeetCode 560 — Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/)**
 
-**المشكلة:** كام subarray مجموعه = k؟
+---
+
+## الفكرة الأساسية الأول
+
+عندنا:
 
 ```
-arr = [1, 2, 3], k = 3
-الإجابة = 2  ← [1,2] و [3]
+arr = [1, 2, 3],  k = 3
 ```
+
+المطلوب: **كام subarray مجموعه = 3؟**
+
+الإجابة = 2 ← اللي هما `[1,2]` و `[3]`
 
 ---
 
-**الفكرة — خطوة بخطوة:**
-
-لو عارفين الـ prefix sum عند index `j` هو `P`، ودي عايزين نلاقي subarray ينتهي عند `j` مجموعه = k:
-
-```
-P[j] - P[i] = k
-∴ P[i] = P[j] - k
-```
-
-يعني بدل ما ندور، نسأل: **"كام مرة شوفنا prefix sum قيمتها `P[j] - k` قبل كده؟"**
-
-كل مرة شفناها = subarray صح.
-
----
-
-**التتبع على المثال:**
-
-```
-arr = [1, 2, 3], k = 3
-```
-
-بنشيل HashMap فيه `{prefix_sum → عدد المرات اللي شفناه}`.
-
-نبدأ بـ `{0: 1}` — الـ prefix الصفري موجود مرة (الـ sentinel).
-
-```
-i=0: curr = 1
-     target = 1 - 3 = -2
-     freq[-2]? → مش موجود → count = 0
-     freq = {0:1, 1:1}
-
-i=1: curr = 3
-     target = 3 - 3 = 0
-     freq[0]? → موجود! → count = 1
-     freq = {0:1, 1:1, 3:1}
-
-i=2: curr = 6
-     target = 6 - 3 = 3
-     freq[3]? → موجود! → count = 2
-     freq = {0:1, 1:1, 3:1, 6:1}
-
-الإجابة = 2 ✅
-```
-
----
-
-**الكود:**
+## طريقة Brute Force الأول — عشان نفهم
 
 ```cpp
-class Solution {
-public:
-    int subarraySum(vector<int>& nums, int k) {
-        unordered_map<int, int> freq;
-        freq[0] = 1;  // الـ sentinel
-
-        int curr  = 0;
-        int count = 0;
-
-        for (int num : nums) {
-            curr += num;
-
-            int target = curr - k;
-            if (freq.count(target)) {
-                count += freq[target];
-            }
-
-            freq[curr]++;
-        }
-
-        return count;
+int count = 0;
+for (int i = 0; i < n; i++) {
+    int sum = 0;
+    for (int j = i; j < n; j++) {
+        sum += arr[j];
+        if (sum == k) count++;
     }
-};
+}
 ```
 
-**Complexity:**
+دي شغالة بس بطيئة — $O(N^2)$.
 
-| | Time | Space |
-|---|---|---|
-| Solution | $O(N)$ | $O(N)$ |
+---
 
+## نفهم الـ Prefix Sum الأول
+
+```
+arr    = [1, 2, 3]
+prefix = [0, 1, 3, 6]
+```
+
+**الملاحظة المهمة:**
+
+مجموع الـ subarray من index `i` لـ `j` = `prefix[j+1] - prefix[i]`
+
+مثلاً: مجموع `[1, 2]` = `prefix[2] - prefix[0]` = 3 - 0 = 3 ✅
+
+---
+
+## السؤال اللي هيغير كل حاجة
+
+بدل ما أجمع من `i` لـ `j` وأشوف هل = k...
+
+**أقول:** أنا واقف عند `j` وعارف إن `prefix[j]` = قيمة معينة.
+
+عايز ألاقي `i` قبلي عشان:
+
+```
+prefix[j] - prefix[i] = k
+```
+
+يعني:
+
+```
+prefix[i] = prefix[j] - k
+```
+
+**بمعنى أبسط:** أنا مش بدور على subarray — أنا بسأل سؤال واحد بس:
+
+> **"هل فيه prefix sum رأيته قبل كده قيمته = `prefix[j] - k`؟"**
+
+لو آه → في subarray صح ينتهي عندي.
+
+---
+
+## التتبع بالتفصيل
+
+```
+arr = [1, 2, 3],  k = 3
+```
+
+بنمشي على الـ array ونحسب الـ prefix وهو بيمشي.
+
+بنحتاج **HashMap** نحط فيه كل prefix شفناه وكام مرة.
+
+نبدأ بـ `{0: 1}` ← الصفر موجود مرة قبل ما نبدأ.
+
+---
+
+**الخطوة الأولى — عند index 0، القيمة = 1:**
+
+```
+curr = 0 + 1 = 1
+```
+
+بسأل: هل `curr - k` = `1 - 3` = **-2** موجود في الـ map؟ الـ map = `{0:1}` ← **لأ**
+
+بضيف الـ curr للـ map:
+
+```
+map = {0:1, 1:1}
+count = 0
+```
+
+---
+
+**الخطوة التانية — عند index 1، القيمة = 2:**
+
+```
+curr = 1 + 2 = 3
+```
+
+بسأل: هل `curr - k` = `3 - 3` = **0** موجود في الـ map؟ الـ map = `{0:1, 1:1}` ← **آه! موجود مرة واحدة**
+
+```
+count = 0 + 1 = 1
+```
+
+بضيف الـ curr للـ map:
+
+```
+map = {0:1, 1:1, 3:1}
+```
+
+---
+
+**الخطوة التالتة — عند index 2، القيمة = 3:**
+
+```
+curr = 3 + 3 = 6
+```
+
+بسأل: هل `curr - k` = `6 - 3` = **3** موجود في الـ map؟ الـ map = `{0:1, 1:1, 3:1}` ← **آه! موجود مرة واحدة**
+
+```
+count = 1 + 1 = 2
+```
+
+بضيف الـ curr للـ map:
+
+```
+map = {0:1, 1:1, 3:1, 6:1}
+```
+
+---
+
+**النتيجة = 2 ✅**
+
+---
+
+## الكود
+
+```cpp
+int subarraySum(vector<int>& nums, int k) {
+    unordered_map<int, int> freq;
+    freq[0] = 1;
+
+    int curr  = 0;
+    int count = 0;
+
+    for (int i = 0; i < nums.size(); i++) {
+        curr = curr + nums[i];
+
+        int target = curr - k;
+
+        if (freq.count(target) > 0) {
+            count = count + freq[target];
+        }
+
+        freq[curr] = freq[curr] + 1;
+    }
+
+    return count;
+}
+```
+
+---
+
+دلوقتي واضح ولا في حاجة لسه مش واضحة؟ 🙂
 ---
 
 ## مخططات الذاكرة — Mermaid Diagrams
