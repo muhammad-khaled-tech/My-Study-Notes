@@ -194,9 +194,11 @@ graph LR
 
 في لغة C++، عندنا نوعين من الكشكول ده، وكل واحد مبني بـ Architecture مختلف تماماً:
 
-1. **`std::map`**: مبني من جوه على حاجة اسمها Red-Black Tree. بيخزن المفاتيح "مترتبة"، بس عملية البحث جواه بتاخد $\mathcal{O}(\log N)$.
+1. **`std::map`**: 
+مبني من جوه على حاجة اسمها Red-Black Tree. بيخزن المفاتيح "مترتبة"، بس عملية البحث جواه بتاخد $\mathcal{O}(\log N)$.
     
-2. **`std::unordered_map`**: ده الـ Hash Map الحقيقي! مبني على Hash Table. مش بيرتب المفاتيح، بس البحث والإضافة جواه بياخدوا $\mathcal{O}(1)$ (Average Case). وده اللي الشركات بتدور عليه في الانترفيوهات عشان الـ Performance.
+2. **`std::unordered_map`**: 
+ده الـ Hash Map الحقيقي! مبني على Hash Table. مش بيرتب المفاتيح، بس البحث والإضافة جواه بياخدوا $\mathcal{O}(1)$ (Average Case). وده اللي الشركات بتدور عليه في الانترفيوهات عشان الـ Performance.
     
 
 
@@ -305,23 +307,29 @@ graph TD
 
 - [ ] **[LeetCode 724 — Find Pivot Index](https://leetcode.com/problems/find-pivot-index/)** `Easy`
     
-    — 🟢 **Hint:** الـ pivot هو الإندكس اللي `left_sum == right_sum`. الحسبة ببساطة: `right_sum = total - left_sum - arr[i]`.
+    — 🟢 **Hint:** 
+    الـ pivot هو الإندكس اللي `left_sum == right_sum`. الحسبة ببساطة:
+     `right_sum = total - left_sum - arr[i]`.
     
 - [ ] **[LeetCode 303 — Range Sum Query - Immutable](https://leetcode.com/problems/range-sum-query-immutable/)** `Easy`
     
-    — 🟢 **Hint:** تطبيق مباشر على الجزء الأول. ابني الكشكول في الـ constructor وجاوب في $\mathcal{O}(1)$.
+    — 🟢 **Hint:**
+     تطبيق مباشر على الجزء الأول. ابني الكشكول في الـ constructor وجاوب في $\mathcal{O}(1)$.
     
 - [ ] **[LeetCode 560 — Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/)** `Medium`
     
-    — 🟡 **Hint:** تطبيق مباشر على القالب السحري بتاع الجزء التاني (Hash Map).
+    — 🟡 **Hint:** 
+    تطبيق مباشر على القالب السحري بتاع الجزء التاني (Hash Map).
     
 - [ ] **[LeetCode 525 — Contiguous Array](https://leetcode.com/problems/contiguous-array/)** `Medium`
     
-    — 🟡 **Hint:** تريكة هندسية: حوّل الـ 0s لـ -1s، واستخدم الهاش ماب عشان تدور على شريحة مجموعها = 0!
+    — 🟡 **Hint:**
+     تريكة هندسية: حوّل الـ 0s لـ -1s، واستخدم الهاش ماب عشان تدور على شريحة مجموعها = 0!
     
 - [ ] **[LeetCode 974 — Subarray Sums Divisible by K](https://leetcode.com/problems/subarray-sums-divisible-by-k/)** `Medium`
     
-    — 🔴 **Hint:** بدل ما تدور على `currSum - k`، هتدور على باقي القسمة (Modulo).
+    — 🔴 **Hint:** 
+    بدل ما تدور على `currSum - k`، هتدور على باقي القسمة (Modulo).
     
 
 ---
