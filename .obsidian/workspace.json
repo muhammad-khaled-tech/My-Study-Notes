@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/02_IAM.md",
+                "file": "Aws practitioner/02_IAM (1).md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "02_IAM"
+              "title": "02_IAM (1)"
             }
           }
         ]
@@ -237,8 +237,10 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
-    "Aws practitioner/02_IAM_Identity_and_Access_Management.md",
     "Aws practitioner/02_IAM.md",
+    "Aws practitioner/02_IAM (1).md",
+    "Aws practitioner/Unconfirmed 178584.crdownload",
+    "Aws practitioner/02_IAM_Identity_and_Access_Management.md",
     "Aws practitioner/Unconfirmed 994212.crdownload",
     "problem solving/prefix_sum_tutorial.md",
     "problem solving/problem solving road map.md",
@@ -270,9 +272,7 @@
     "Aws practitioner/what is cloud computing?.md",
     "angular/angular-guide-part9.md",
     "angular/angular-guide-part8.md",
-    "angular/angular-guide-part6.md",
     "angular/files",
-    "angular/files.zip",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",
