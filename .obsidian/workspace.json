@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/02_IAM (1).md",
+                "file": "problem solving/prefix_sum_tutorial.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "02_IAM (1)"
+              "title": "prefix_sum_tutorial"
             }
           }
         ]
@@ -237,14 +237,14 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
-    "Aws practitioner/02_IAM.md",
+    "problem solving/two_pointers_tutorial.md",
+    "problem solving/problem solving road map.md",
+    "problem solving/prefix_sum_tutorial.md",
     "Aws practitioner/02_IAM (1).md",
+    "Aws practitioner/02_IAM.md",
     "Aws practitioner/Unconfirmed 178584.crdownload",
     "Aws practitioner/02_IAM_Identity_and_Access_Management.md",
     "Aws practitioner/Unconfirmed 994212.crdownload",
-    "problem solving/prefix_sum_tutorial.md",
-    "problem solving/problem solving road map.md",
-    "problem solving/two_pointers_tutorial.md",
     "problem solving/Unconfirmed 915506.crdownload",
     "problem solving/binary_search_on_answer_tutorial.md",
     "problem solving/Unconfirmed 579027.crdownload",

@@ -1,9 +1,3 @@
-# 🧮 Prefix Sum — فهرس كشري التحرير
-
-> **Author:** Senior Staff SWE @ FAANG | Cairo → San Francisco
-> **Target:** Khaled — Junior Engineer
-> **Level:** Beginner → Intermediate
-> **Tags:** `#prefix-sum` `#arrays` `#range-queries` `#cpp` `#interview-prep`
 
 ---
 
@@ -527,16 +521,16 @@ stateDiagram-v2
 
 ## تطبيقات عملية — Obsidian Practice Checklist
 
-- [ ] **[LeetCode 1480 — Running Sum of 1D Array](https://leetcode.com/problems/running-sum-of-1d-array/)** `Easy`
+- [x] **[LeetCode 1480 — Running Sum of 1D Array](https://leetcode.com/problems/running-sum-of-1d-array/)** `Easy`
   — 🟢 **Hint:** أسهل مسألة في الموضوع. الـ output هو الـ prefix array نفسه.
 
-- [ ] **[LeetCode 724 — Find Pivot Index](https://leetcode.com/problems/find-pivot-index/)** `Easy`
+- [x] **[LeetCode 724 — Find Pivot Index](https://leetcode.com/problems/find-pivot-index/)** `Easy`
   — 🟢 **Hint:** الـ pivot هو الـ index اللي `left_sum == right_sum`. `right_sum = total - left_sum - arr[i]`.
 
-- [ ] **[LeetCode 303 — Range Sum Query - Immutable](https://leetcode.com/problems/range-sum-query-immutable/)** `Easy`
+- [x] **[LeetCode 303 — Range Sum Query - Immutable](https://leetcode.com/problems/range-sum-query-immutable/)** `Easy`
   — 🟢 **Hint:** نفس المثال اللي اتشرح. ابني في الـ constructor، جاوب في $O(1)$.
 
-- [ ] **[LeetCode 560 — Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/)** `Medium`
+- [x] **[LeetCode 560 — Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/)** `Medium`
   — 🟡 **Hint:** `curr - k` في الـ HashMap. ابدأ بـ `freq[0] = 1` (الـ sentinel).
 
 - [ ] **[LeetCode 525 — Contiguous Array](https://leetcode.com/problems/contiguous-array/)** `Medium`
