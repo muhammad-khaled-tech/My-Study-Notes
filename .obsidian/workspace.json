@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/02_IAM_Identity_and_Access_Management.md",
+                "file": "Aws practitioner/02_IAM.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "02_IAM_Identity_and_Access_Management"
+              "title": "02_IAM"
             }
           }
         ]
@@ -237,6 +237,9 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "Aws practitioner/02_IAM_Identity_and_Access_Management.md",
+    "Aws practitioner/02_IAM.md",
+    "Aws practitioner/Unconfirmed 994212.crdownload",
     "problem solving/prefix_sum_tutorial.md",
     "problem solving/problem solving road map.md",
     "problem solving/two_pointers_tutorial.md",
@@ -265,13 +268,11 @@
     "angular/snapgrid-project-plan.md",
     "angular/angular-guide-part7.md",
     "Aws practitioner/what is cloud computing?.md",
-    "Aws practitioner/02_IAM_Identity_and_Access_Management.md",
     "angular/angular-guide-part9.md",
     "angular/angular-guide-part8.md",
     "angular/angular-guide-part6.md",
     "angular/files",
     "angular/files.zip",
-    "angular/Unconfirmed 699865.crdownload",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",
