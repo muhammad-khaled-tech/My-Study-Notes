@@ -533,7 +533,7 @@ stateDiagram-v2
 - [x] **[LeetCode 560 — Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/)** `Medium`
   — 🟡 **Hint:** `curr - k` في الـ HashMap. ابدأ بـ `freq[0] = 1` (الـ sentinel).
 
-- [ ] **[LeetCode 525 — Contiguous Array](https://leetcode.com/problems/contiguous-array/)** `Medium`
+- [x] **[LeetCode 525 — Contiguous Array](https://leetcode.com/problems/contiguous-array/)** `Medium`
   — 🟡 **Hint:** حوّل الـ 0s لـ -1s. لو `prefix[i] == prefix[j]` ده subarray متوازن بين `i` و `j`.
 
 - [ ] **[LeetCode 974 — Subarray Sums Divisible by K](https://leetcode.com/problems/subarray-sums-divisible-by-k/)** `Medium`
