@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "problem solving/hashing_tutorial.md",
+                "file": "Nodejs/node internals.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "hashing_tutorial"
+              "title": "node internals"
             }
           }
         ]
@@ -237,10 +237,13 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "Nodejs/Node.js_Interview_Prep_Arabic.md",
+    "Nodejs/node internals.md",
+    "Untitled 4.md",
+    "problem solving/hashing_tutorial.md",
     "problem solving/prefix_sum_tutorial.md",
     "problem solving/problem solving road map.md",
     "problem solving/two_pointers_tutorial.md",
-    "problem solving/hashing_tutorial.md",
     "problem solving/DSA_Zero_to_Hero.md",
     "problem solving/interview_prep_plan.md",
     "Aws practitioner/02_IAM.md",
@@ -270,8 +273,6 @@
     "angular/Unconfirmed 762265.crdownload",
     "angular/snapgrid-project-plan.md",
     "angular/angular-guide-part7.md",
-    "Aws practitioner/what is cloud computing?.md",
-    "angular/angular-guide-part9.md",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",
