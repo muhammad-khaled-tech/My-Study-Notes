@@ -447,4 +447,131 @@ module.exports.subTask = () => "Sub Task";
 5. **الـ `exports`:** مجرد اختصار (Reference)، إياك تعمل له Reassign.
     
 
+
+---
+
+## الجزء الأول: أسئلة الـ Senior Interview (Scenario-based)
+
+الأسئلة دي مش "ما هو الـ Wrapper"، دي أسئلة مواقف برمجية حقيقية:
+
+### السؤال الأول: "لغز الـ `this` والـ Arrow Function"
+
+**المحاور:** "يا خالد، لو أنا عرفت موديول بستخدم فيه Arrow Function في الـ top-level، وحاولت أستخدم `this.x = 10` عشان أعمل export، هل الكود ده هيشتغل؟ وليه؟"
+
+- **الإجابة المتوقعة:** "آه هيشتغل. لأن الـ Arrow function في الـ top-level بتاع الموديول بتاخد الـ `this` من الـ Lexical Scope بتاعها، وهو هنا الـ Wrapper function. وبما إن نود نادى الـ Wrapper بـ `.call(module.exports)`، فالـ `this` هتكون هي الـ `module.exports` فعلاً."
+    
+
+### السؤال الثاني: "كارثة الـ `exports` الضائع"
+
+**المحاور:** "بص على الكود ده وقولي الـ `require` هترجع إيه؟"
+
+JavaScript
+
+```
+// user.js
+exports.name = "Khaled";
+module.exports = { job: "Senior Dev" };
+```
+
+- **الإجابة المتوقعة:** "هترجع `{ job: "Senior Dev" }` بس. لأن السطر التاني عمل Overwrite (إعادة تعيين) لـ `module.exports` بأوبجكت جديد خالص، والـ `exports` القديم اللي ضفنا فيه الـ `name` فضل بيشاور على الأوبجكت القديم اللي نود أهمله."
+    
+
+### السؤال الثالث: "فخ الـ `require.cache`"
+
+**المحاور:** "عندي ملف `config.json`. غيرت فيه يدوي على الهارد ديسك والأبلكيشن شغال. لما عملت `require` تانية لنفس الملف، نود قرأ الداتا القديمة. إزاي أجبر نود يقرأ الداتا الجديدة من غير ما أرستر السيرفر؟"
+
+- **الإجابة المتوقعة:** "لازم أمسح الـ Cache يدوياً. هجيب الـ Absolute path بتاع الملف بـ `require.resolve('./config.json')` وبعدين أعمل `delete require.cache[path]`. كدة نود المرة الجاية هيضطر يروح للهارد ديسك ويقرأه من جديد."
+    
+
+---
+
+## الجزء الثاني: مختبر نود (التجارب العملية)
+
+افتح الـ VS Code يا خالد، واعمل فولدر جديد وجرب الـ 4 تجارب دول "بالترتيب":
+
+### التجربة (1): كشف الـ Wrapper (الممنوع من العرض)
+
+عشان تصدق إن كودك محشور جوه فانكشن، نادِ الـ `arguments` بتاعة الفانكشن دي:
+
+JavaScript
+
+```
+// lab1.js
+console.log("هل فعلاً أنا جوه فانكشن؟");
+console.log("عدد الـ arguments اللي نود بعتهم لي:", arguments.length); // هيطبع 5
+console.log("شكل الـ Wrapper من جوه:\n", arguments.callee.toString()); 
+```
+
+> **الملاحظة:** `arguments.callee.toString()` هتطبعلك الكود بتاع الـ Wrapper نفسه اللي نود لافه حوالين ملفك!
+
+---
+
+### التجربة (2): جريمة قتل الـ Reference
+
+هنا هنشوف إزاي الـ `exports` بيبوظ لما تساويه بقيمة جديدة:
+
+JavaScript
+
+```
+// lab2_module.js
+exports.work = "Fine"; 
+exports = { work: "Broken" }; // ❌ قتلنا الـ reference هنا
+
+// lab2_main.js
+const test = require('./lab2_module');
+console.log(test); // هيطبع { work: "Fine" } .. الـ Broken اختفت!
+```
+
+---
+
+### التجربة (3): إثبات الـ Singleton (الـ Cache)
+
+JavaScript
+
+```
+// lab3_db.js
+console.log("--- جاري الاتصال بقاعدة البيانات (مرة واحدة بس) ---");
+module.exports = { connectionId: Math.random() };
+
+// lab3_main.js
+const db1 = require('./lab3_db');
+const db2 = require('./lab3_db');
+
+console.log("ID 1:", db1.connectionId);
+console.log("ID 2:", db2.connectionId);
+console.log("هل هما نفس الأوبجكت؟", db1 === db2); // true
+```
+
+---
+
+### التجربة (4): الـ Script vs Module (تريك السينيورز)
+
+JavaScript
+
+```
+// lab4.js
+function mainTask() {
+    console.log("أنا شغال كـ Script أساسي دلوقتي!");
+}
+
+if (require.main === module) {
+    mainTask();
+} else {
+    console.log("أنا شغال كـ موديول غلبان حد ناداني بـ require");
+}
+```
+
+**جرب تشغلها بطريقتين:**
+
+1. اكتب `node lab4.js` -> هيطبع "أنا شغال كـ Script".
+    
+2. اعمل ملف تاني واعمل فيه `require('./lab4')` وشغله -> هيطبع "أنا شغال كـ موديول".
+    
+
+---
+
+### التجربة (5): الـ Circular Dependency (الخناقة)
+
+اعمل ملفين `a.js` و `b.js` زي ما شرحناهم في الرسالة اللي فاتت وشغل `node a.js` وشوف الـ `undefined` وهي بتظهر قدام عينك.
+
 ---
