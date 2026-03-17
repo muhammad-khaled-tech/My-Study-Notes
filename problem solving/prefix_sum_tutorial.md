@@ -536,7 +536,7 @@ stateDiagram-v2
 - [x] **[LeetCode 525 — Contiguous Array](https://leetcode.com/problems/contiguous-array/)** `Medium`
   — 🟡 **Hint:** حوّل الـ 0s لـ -1s. لو `prefix[i] == prefix[j]` ده subarray متوازن بين `i` و `j`.
 
-- [ ] **[LeetCode 974 — Subarray Sums Divisible by K](https://leetcode.com/problems/subarray-sums-divisible-by-k/)** `Medium`
+- [x] **[LeetCode 974 — Subarray Sums Divisible by K](https://leetcode.com/problems/subarray-sums-divisible-by-k/)** `Medium`
   — 🔴 **Hint:** بدل ما تدور على `curr - k`، دور على `curr % k` في الـ HashMap. لو اتنين عندهم نفس الـ remainder، الـ subarray بينهم قسمته على k = صفر.
 
 ---

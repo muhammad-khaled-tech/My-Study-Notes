@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "problem solving/prefix_sum_tutorial.md",
+                "file": "problem solving/hashing_tutorial.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "prefix_sum_tutorial"
+              "title": "hashing_tutorial"
             }
           }
         ]
@@ -237,12 +237,12 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "problem solving/prefix_sum_tutorial.md",
     "problem solving/problem solving road map.md",
     "problem solving/two_pointers_tutorial.md",
     "problem solving/hashing_tutorial.md",
     "problem solving/DSA_Zero_to_Hero.md",
     "problem solving/interview_prep_plan.md",
-    "problem solving/prefix_sum_tutorial.md",
     "Aws practitioner/02_IAM.md",
     "Aws practitioner/02_IAM_Identity_and_Access_Management.md",
     "Aws practitioner/Unconfirmed 637060.crdownload",

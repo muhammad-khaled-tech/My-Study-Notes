@@ -1,9 +1,4 @@
-# 🗂️ Hashing — فهرس موقف المكروباص
 
-> **Author:** Senior Staff SWE @ FAANG | Cairo → San Francisco
-> **Target:** Khaled — Junior Engineer, الواد اللي بيفهم بسرعة
-> **Level:** Intermediate → Advanced
-> **Tags:** `#hashing` `#hashmap` `#hashset` `#cpp` `#interview-prep` `#data-structures`
 
 ---
 
