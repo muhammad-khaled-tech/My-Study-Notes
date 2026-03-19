@@ -4316,8 +4316,2270 @@ app.get('/api/v1/client-only', protect, restrictTo('client'), (req, res) => {
 
 ---
 
-> **جاهز للـ Sprint 8؟**
+# 📋 Sprint 8 — Projects CRUD : أول Resource حقيقي
+
+---
+
+## 🇪🇬 إيه اللي هنبنيه؟
+
+في FreelanceFlow، الـ Project هو أساس كل حاجة. الـ Client بيخلق Project وبيحدد:
+
+- عنوان ووصف
+- Budget (min وmax)
+- Skills مطلوبة
+- Deadline
+
+الـ Freelancer بيشوف الـ Projects المفتوحة ويبعت proposals.
+
+Sprint 8 هيبني الـ CRUD الكامل للـ Projects:
+
+```mermaid
+flowchart LR
+    subgraph crud["Project CRUD"]
+        C["POST /projects\nCreate — client فقط"]
+        R1["GET /projects\nRead All — أي logged-in user"]
+        R2["GET /projects/:id\nRead One — أي logged-in user"]
+        U["PATCH /projects/:id\nUpdate — client صاحب الـ project"]
+        D["DELETE /projects/:id\nDelete — client صاحب الـ project\nSoft Delete"]
+    end
+
+    style C fill:#276749,color:#fff
+    style R1 fill:#2b6cb0,color:#fff
+    style R2 fill:#2b6cb0,color:#fff
+    style U fill:#744210,color:#fff
+    style D fill:#742a2a,color:#fff
+```
+
+---
+
+## 🇪🇬 الـ Soft Delete — إيه ده؟
+
+لما بنـ "Delete" project — مش هنمسحه من الـ DB فعلاً. هنغير الـ `status` بتاعه لـ `cancelled`.
+
+**ليه Soft Delete؟**
+
+```mermaid
+flowchart TD
+    subgraph hard["Hard Delete — المسح الحقيقي"]
+        H1["db.projects.deleteOne(id)"]
+        H1 --> H2["Project راح نهائياً"]
+        H2 --> H3["لو الـ freelancer عنده proposal\nعلى الـ project ده — orphan data"]
+        H3 --> H4["لو محتاجت تـ audit\nمش هتلاقي حاجة"]
+    end
+
+    subgraph soft["Soft Delete — تغيير الـ status"]
+        S1["project.status = 'cancelled'\nproject.save()"]
+        S1 --> S2["Project لسه موجود في الـ DB"]
+        S2 --> S3["بس مش بيظهر في الـ results العادية"]
+        S3 --> S4["الـ proposals والـ relations سليمة ✅"]
+        S4 --> S5["ممكن تـ restore لو محتاج ✅"]
+    end
+
+    style hard fill:#4a1212,color:#fff
+    style soft fill:#1a4731,color:#fff
+```
+
+---
+
+## 🇪🇬 الـ Project Lifecycle — State Machine
+
+الـ Project مش بيبقى في حالة واحدة طول عمره. بيمر بـ states:
+
+```mermaid
+stateDiagram-v2
+    [*] --> open : Client خلق Project
+    open --> in_progress : Client قبل Proposal
+    open --> cancelled : Client حذف Project
+    in_progress --> completed : Client أكد الإتمام
+    in_progress --> cancelled : في حالات خاصة
+    cancelled --> [*]
+    completed --> [*]
+```
+
+الـ transitions دي بتتحكم فيها الـ business logic — مش أي حد يقدر يغير الـ status لأي حاجة.
+
+---
+
+## 🇪🇬 ليه `client: req.user._id` مش `client: req.body.client`؟
+
+ده concept مهم جداً في الـ security.
+
+تخيل السيناريو ده:
+
+```json
+POST /api/v1/projects
+{
+  "title": "Build a website",
+  "client": "64abc999"
+}
+```
+
+لو صدقنا الـ `client` من الـ `req.body` — ممكن حد يخلق project باسم حد تاني.
+
+```mermaid
+flowchart TD
+    subgraph wrong["❌ الثقة في req.body"]
+        W1["Hacker بعت:\nclient: '64abc999' — ID حد تاني"]
+        W1 --> W2["Server حفظ Project\nbا client: '64abc999'"]
+        W2 --> W3["Project اتحط على حساب حد تاني 🔴"]
+    end
+
+    subgraph correct["✅ نأخذ من req.user"]
+        C1["Hacker بعت:\nclient: '64abc999'"]
+        C1 --> C2["Server تجاهل الـ client من الـ body\nاستخدم req.user._id"]
+        C2 --> C3["Project اتحط على الـ logged-in user ✅"]
+    end
+
+    style wrong fill:#4a1212,color:#fff
+    style correct fill:#1a4731,color:#fff
+```
+
+**القاعدة:** أي data تثبت هوية الـ user — لازم تيجي من `req.user` اللي الـ `protect` middleware بيحطه، مش من الـ `req.body` اللي الـ client بيبعته.
+
+---
+
+## 💻 خطوة 1 — اعمل `src/models/Project.model.js`
+
+```javascript
+const mongoose = require('mongoose');
+
+const projectSchema = new mongoose.Schema(
+  {
+    title: {
+      type:      String,
+      required:  [true, 'A project must have a title'],
+      trim:      true,
+      maxlength: [100, 'Title cannot exceed 100 characters'],
+    },
+
+    description: {
+      type:      String,
+      required:  [true, 'A project must have a description'],
+      minlength: [20, 'Description must be at least 20 characters'],
+    },
+
+    // Nested object — budget فيه min وmax
+    budget: {
+      min: {
+        type:     Number,
+        required: [true, 'Please provide a minimum budget'],
+      },
+      max: {
+        type:     Number,
+        required: [true, 'Please provide a maximum budget'],
+      },
+    },
+
+    // Array of strings
+    skillsRequired: {
+      type:     [String],
+      validate: {
+        validator: (val) => val.length > 0,
+        message:   'A project must require at least one skill',
+      },
+    },
+
+    deadline: {
+      type:     Date,
+      required: [true, 'A project must have a deadline'],
+      validate: {
+        // 'this' هنا = الـ document — function عادية مش arrow
+        validator: function (val) {
+          return val > Date.now();
+        },
+        message: 'Deadline must be in the future',
+      },
+    },
+
+    status: {
+      type:    String,
+      enum:    ['open', 'in_progress', 'completed', 'cancelled'],
+      default: 'open',
+    },
+
+    // Reference للـ User Model
+    client: {
+      type:     mongoose.Schema.Types.ObjectId,
+      ref:      'User',
+      required: [true, 'A project must have a client'],
+    },
+
+    // هيتملى لما proposal يتقبل — Sprint 9
+    acceptedFreelancer: {
+      type:    mongoose.Schema.Types.ObjectId,
+      ref:     'User',
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+    toJSON:     { virtuals: true },
+    toObject:   { virtuals: true },
+  }
+);
+
+// ══════════════════════════════════════════════════════
+// Cross-field Validation — budget.max > budget.min
+// ══════════════════════════════════════════════════════
+projectSchema.pre('save', function (next) {
+  if (this.budget.max <= this.budget.min) {
+    return next(
+      new Error('Maximum budget must be greater than minimum budget')
+    );
+  }
+  next();
+});
+
+// ══════════════════════════════════════════════════════
+// Index — بيسرّع الـ queries الشائعة
+// ══════════════════════════════════════════════════════
+projectSchema.index({ status: 1 });
+projectSchema.index({ client: 1 });
+
+const Project = mongoose.model('Project', projectSchema);
+module.exports = Project;
+```
+
+---
+
+## 🇪🇬 شرح `mongoose.Schema.Types.ObjectId` والـ `ref`
+
+```javascript
+client: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref:  'User',
+}
+```
+
+**`mongoose.Schema.Types.ObjectId`** — نوع خاص في MongoDB. كل document بيتخلق تلقائياً بـ `_id` من النوع ده. شبه الـ `INT AUTO_INCREMENT` في SQL — بس بدل رقم تسلسلي، ده hex string من 24 حرف.
+
+**`ref: 'User'`** — بيقول لـ Mongoose: "الـ ObjectId ده بيشاور على document في الـ User collection."
+
+ده اللي بيعمله الـ `.populate()` ممكن بعدين — بيستبدل الـ ID بالـ document الكامل.
+
+```mermaid
+flowchart LR
+    subgraph before["قبل populate"]
+        P1["Project Document:\n{\n  title: 'Build App',\n  client: '64abc123'\n}"]
+    end
+
+    subgraph after["بعد .populate('client')"]
+        P2["Project Document:\n{\n  title: 'Build App',\n  client: {\n    _id: '64abc123',\n    name: 'Mohamed',\n    email: 'mo@test.com'\n  }\n}"]
+    end
+
+    before -->|.populate| after
+
+    style before fill:#4a5568,color:#fff
+    style after fill:#276749,color:#fff
+```
+
+---
+
+## 🇪🇬 إيه الـ Index وليه مهم؟
+
+```javascript
+projectSchema.index({ status: 1 });
+```
+
+تخيل كتاب بدون فهرس — لو عايز تلاقي كلمة، لازم تقرأ من الصفحة الأولى لآخر صفحة.
+
+الـ Index زي الفهرس — بيعمل data structure منفصلة بتسمح لـ MongoDB يلاقي الـ documents بسرعة من غير ما يقرأ الـ collection كلها.
+
+```mermaid
+flowchart TD
+    subgraph no_index["بدون Index"]
+        Q1["Project.find({ status: 'open' })"]
+        Q1 --> S1["MongoDB بيقرأ كل document\n1, 2, 3 ... 10000"]
+        S1 --> R1["بيرجع اللي عنده status = open\nبطيء جداً مع بيانات كبيرة"]
+    end
+
+    subgraph with_index["مع Index"]
+        Q2["Project.find({ status: 'open' })"]
+        Q2 --> S2["MongoDB بيروح للـ Index\nمباشرة للـ open projects"]
+        S2 --> R2["سريع جداً ✅"]
+    end
+
+    style no_index fill:#4a1212,color:#fff
+    style with_index fill:#1a4731,color:#fff
+```
+
+`{ status: 1 }` — الـ `1` يعني ascending order. `-1` يعني descending.
+
+---
+
+## 💻 خطوة 2 — اعمل `src/controllers/project.controller.js`
+
+```javascript
+const Project    = require('../models/Project.model');
+const AppError   = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+
+// ══════════════════════════════════════════════════════
+// CREATE PROJECT
+// POST /api/v1/projects
+// ══════════════════════════════════════════════════════
+exports.createProject = catchAsync(async (req, res, next) => {
+  // بنأخذ الـ client من req.user مش من req.body
+  const project = await Project.create({
+    title:          req.body.title,
+    description:    req.body.description,
+    budget:         req.body.budget,
+    skillsRequired: req.body.skillsRequired,
+    deadline:       req.body.deadline,
+    client:         req.user._id,  // ← من الـ protect middleware
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data:   { project },
+  });
+});
+
+// ══════════════════════════════════════════════════════
+// GET ALL PROJECTS
+// GET /api/v1/projects
+// ══════════════════════════════════════════════════════
+exports.getAllProjects = catchAsync(async (req, res, next) => {
+  // بنجيب بس الـ projects المفتوحة
+  const projects = await Project.find({ status: 'open' })
+    .populate('client', 'name email') // بدل ID — نجيب name وemail بس
+    .sort('-createdAt');              // الأحدث أول
+
+  res.status(200).json({
+    status:  'success',
+    results: projects.length,
+    data:    { projects },
+  });
+});
+
+// ══════════════════════════════════════════════════════
+// GET ONE PROJECT
+// GET /api/v1/projects/:id
+// ══════════════════════════════════════════════════════
+exports.getProject = catchAsync(async (req, res, next) => {
+  const project = await Project.findById(req.params.id)
+    .populate('client', 'name email');
+
+  if (!project) {
+    return next(new AppError('No project found with that ID', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data:   { project },
+  });
+});
+
+// ══════════════════════════════════════════════════════
+// UPDATE PROJECT
+// PATCH /api/v1/projects/:id
+// ══════════════════════════════════════════════════════
+exports.updateProject = catchAsync(async (req, res, next) => {
+  // Step 1: جيب الـ project الأول
+  const project = await Project.findById(req.params.id);
+
+  if (!project) {
+    return next(new AppError('No project found with that ID', 404));
+  }
+
+  // Step 2: تأكد إن الـ user ده هو صاحب الـ project
+  // .toString() عشان ObjectId مش string عادي
+  if (project.client.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError('You are not authorized to update this project', 403)
+    );
+  }
+
+  // Step 3: منع الـ user من تغيير الـ status أو الـ client مباشرة
+  const { status, client, acceptedFreelancer, ...allowedUpdates } = req.body;
+
+  // Step 4: عمل الـ update
+  const updatedProject = await Project.findByIdAndUpdate(
+    req.params.id,
+    allowedUpdates,
+    {
+      new:            true,  // ارجع الـ document بعد الـ update مش قبله
+      runValidators:  true,  // شغّل الـ schema validators على الـ update
+    }
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data:   { project: updatedProject },
+  });
+});
+
+// ══════════════════════════════════════════════════════
+// DELETE PROJECT (SOFT DELETE)
+// DELETE /api/v1/projects/:id
+// ══════════════════════════════════════════════════════
+exports.deleteProject = catchAsync(async (req, res, next) => {
+  const project = await Project.findById(req.params.id);
+
+  if (!project) {
+    return next(new AppError('No project found with that ID', 404));
+  }
+
+  // تأكد إن الـ user هو صاحب الـ project
+  if (project.client.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError('You are not authorized to delete this project', 403)
+    );
+  }
+
+  // منع حذف project لو فيه freelancer شغّال عليه
+  if (project.status === 'in_progress') {
+    return next(
+      new AppError('Cannot cancel a project that is already in progress', 400)
+    );
+  }
+
+  // Soft Delete — غيّر الـ status بدل ما تمسح
+  project.status = 'cancelled';
+  await project.save();
+
+  // 204 No Content — نجح بس مفيش حاجة ترجعها
+  res.status(204).json({
+    status: 'success',
+    data:   null,
+  });
+});
+```
+
+---
+
+## 🇪🇬 شرح `findByIdAndUpdate` vs `.save()` — فرق مهم
+
+```mermaid
+flowchart TD
+    subgraph save["doc.save()"]
+        S1["بيشغّل pre-save hooks ✅"]
+        S2["بيشغّل post-save hooks ✅"]
+        S3["بيعمل validation ✅"]
+        S4["أبطأ شوية\nلأنه بيجيب الـ doc الأول"]
+    end
+
+    subgraph findUpdate["findByIdAndUpdate()"]
+        F1["مش بيشغّل pre-save hooks ❌"]
+        F2["مش بيشغّل post-save hooks ❌"]
+        F3["بيعمل validation بس لو قلتله\nrunValidators: true"]
+        F4["أسرع\nDB operation واحدة"]
+    end
+
+    style save fill:#1a4731,color:#fff
+    style findUpdate fill:#1a365d,color:#fff
+```
+
+**متى نستخدم إيه؟**
+
+`project.save()` — لما محتاجين الـ hooks تشتغل. مثلاً في الـ Soft Delete — لو ضفنا hook على الـ `save` بعدين.
+
+`findByIdAndUpdate()` — لما بنعمل update بسيط ومش محتاجين hooks. أسرع وأنظف.
+
+في الـ `updateProject` استخدمنا `findByIdAndUpdate` — مش محتاجين hooks هنا. في الـ `deleteProject` استخدمنا `project.save()` — عشان ممكن نضيف hooks بعدين.
+
+---
+
+## 🇪🇬 شرح `{ status, client, acceptedFreelancer, ...allowedUpdates }`
+
+```javascript
+const { status, client, acceptedFreelancer, ...allowedUpdates } = req.body;
+```
+
+ده **Object Destructuring** مع **Rest operator**.
+
+بنقول: "خد `status` و`client` و`acceptedFreelancer` وحطهم في variables — والباقي حطه في `allowedUpdates`."
+
+بعدين بنعمل update بـ `allowedUpdates` بس — من غير الـ fields الحساسة.
+
+```mermaid
+flowchart TD
+    A["req.body = {\n  title: 'New Title',\n  budget: { min: 100, max: 500 },\n  status: 'completed',\n  client: '64hacker'\n}"] --> B["Destructuring"]
+
+    B --> C["status = 'completed' ← بنتجاهله"]
+    B --> D["client = '64hacker' ← بنتجاهله"]
+    B --> E["allowedUpdates = {\n  title: 'New Title',\n  budget: { min: 100, max: 500 }\n}"]
+
+    E --> F["findByIdAndUpdate(id, allowedUpdates)"]
+
+    style C fill:#742a2a,color:#fff
+    style D fill:#742a2a,color:#fff
+    style E fill:#276749,color:#fff
+```
+
+---
+
+## 🇪🇬 شرح `.populate('client', 'name email')`
+
+```javascript
+const project = await Project.findById(id).populate('client', 'name email');
+```
+
+الـ `client` في الـ DB بيتحفظ كـ ObjectId بس.
+
+`.populate('client', 'name email')` بيقول:
+
+- "روح في الـ User collection"
+- "جيب الـ document اللي `_id` بتاعه = الـ `client` field ده"
+- "بس جيب `name` و`email` بس — مش كل الـ fields"
+
+```mermaid
+sequenceDiagram
+    participant CT as Controller
+    participant MG as Mongoose
+    participant DB as MongoDB
+
+    CT->>MG: Project.findById(id).populate('client', 'name email')
+    MG->>DB: Query 1: db.projects.findOne({_id: id})
+    DB-->>MG: { title: '...', client: ObjectId('64abc') }
+    MG->>DB: Query 2: db.users.findOne({_id: '64abc'}, {name:1, email:1})
+    DB-->>MG: { name: 'Mohamed', email: 'mo@test.com' }
+    MG->>MG: Replace ObjectId with user document
+    MG-->>CT: { title: '...', client: { name: 'Mohamed', email: '...' } }
+```
+
+**ملاحظة:** `.populate()` بتعمل query تانية على الـ DB. مش مجاني. استخدمه لما محتاجه فعلاً.
+
+---
+
+## 💻 خطوة 3 — اعمل `src/routes/project.routes.js`
+
+```javascript
+const express = require('express');
+const {
+  createProject,
+  getAllProjects,
+  getProject,
+  updateProject,
+  deleteProject,
+} = require('../controllers/project.controller');
+
+const { protect, restrictTo } = require('../middlewares/auth.middleware');
+
+const router = express.Router();
+
+// كل الـ routes دي محتاجة login
+router.use(protect);
+
+router
+  .route('/')
+  .get(getAllProjects)
+  .post(restrictTo('client'), createProject); // بس الـ client
+
+router
+  .route('/:id')
+  .get(getProject)
+  .patch(restrictTo('client'), updateProject) // بس الـ client
+  .delete(restrictTo('client'), deleteProject); // بس الـ client
+
+module.exports = router;
+```
+
+---
+
+## 🇪🇬 شرح `router.use(protect)` — طريقة ذكية
+
+```javascript
+// ❌ الطريقة الطويلة — بتكرر protect في كل route
+router.get('/', protect, getAllProjects);
+router.post('/', protect, restrictTo('client'), createProject);
+router.get('/:id', protect, getProject);
+// ...
+
+// ✅ الطريقة الذكية — protect مرة واحدة لكل routes تحته
+router.use(protect);
+router.get('/', getAllProjects);
+router.post('/', restrictTo('client'), createProject);
+```
+
+`router.use(protect)` بيقول: "كل route جاي بعد السطر ده — شغّل `protect` عليه الأول."
+
+---
+
+## 🇪🇬 شرح `.route('/')` — الـ Method Chaining
+
+```javascript
+router
+  .route('/')
+  .get(getAllProjects)
+  .post(restrictTo('client'), createProject);
+```
+
+بدل ما تكتب:
+
+```javascript
+router.get('/', getAllProjects);
+router.post('/', restrictTo('client'), createProject);
+```
+
+الـ `.route('/')` بيقول "على الـ path ده" — وبعدين بتحدد كل HTTP method على حده.
+
+أنظف وأوضح لما عندك نفس الـ path بأكتر من method.
+
+---
+
+## 💻 خطوة 4 — اربط الـ Routes في `app.js`
+
+افتح `app.js` وضيف:
+
+```javascript
+const express            = require('express');
+const AppError           = require('./src/utils/AppError');
+const globalErrorHandler = require('./src/middlewares/errorHandler');
+
+const authRoutes    = require('./src/routes/auth.routes');
+const projectRoutes = require('./src/routes/project.routes'); // ← جديد
+
+const app = express();
+
+app.use(express.json());
+
+app.use('/api/v1/auth',     authRoutes);
+app.use('/api/v1/projects', projectRoutes); // ← جديد
+
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+app.use(globalErrorHandler);
+
+module.exports = app;
+```
+
+---
+
+## 🇪🇬 الـ Full Request Flow للـ Project Create
+
+```mermaid
+sequenceDiagram
+    participant C as Client (Postman)
+    participant AP as app.js
+    participant MW as protect middleware
+    participant RT as project.routes.js
+    participant CT as project.controller.js
+    participant MD as Project.model.js
+    participant DB as MongoDB
+
+    C->>AP: POST /api/v1/projects\nAuthorization: Bearer token\nBody: { title, budget, ... }
+
+    AP->>MW: protect middleware
+    MW->>MW: jwt.verify(token)
+    MW->>DB: User.findById(decoded.id)
+    DB-->>MW: currentUser
+    MW->>MW: req.user = currentUser
+    MW->>RT: next()
+
+    RT->>RT: restrictTo('client')\nreq.user.role === 'client'? ✅
+    RT->>CT: createProject
+
+    CT->>CT: { ...req.body, client: req.user._id }
+    CT->>MD: Project.create(data)
+    MD->>MD: pre-save hook\nvalidate budget.max > budget.min
+    MD->>DB: INSERT project
+    DB-->>MD: project saved
+    MD-->>CT: return project
+    CT-->>C: 201 { project }
+```
+
+---
+
+## ✅ Checkpoint
+
+أول حاجة — اعمل users للتجربة:
+
+```json
+// User 1 — client
+{ "name": "Ali Client", "email": "client@test.com", "password": "password123", "role": "client" }
+
+// User 2 — freelancer
+{ "name": "Sara Freelancer", "email": "freelancer@test.com", "password": "password123", "role": "freelancer" }
+```
+
+**Test 1 — Create Project كـ client:**
+
+> **Method:** `POST` **URL:** `http://localhost:5000/api/v1/projects` **Header:** `Authorization: Bearer <client token>` **Body:**
 > 
-> Sprint 8 هو **Projects CRUD** — أول resource حقيقي في المشروع. هنبني الـ Project model، وهنشرح concept مهم جداً: ليه بنحط `client: req.user._id` في الـ controller ومش بنثق في الـ body. وهنشوف إزاي الـ routes بتتربط بالـ protect والـ restrictTo.
+> ```json
+> {
+>   "title": "Build a React Dashboard",
+>   "description": "Need an experienced developer to build a modern React dashboard with charts and real-time data.",
+>   "budget": { "min": 500, "max": 2000 },
+>   "skillsRequired": ["React", "Node.js", "MongoDB"],
+>   "deadline": "2025-12-31"
+> }
+> ```
 > 
-> قول "كمّل" لما تشوف `req.user` بيرجع في الـ `/api/v1/me` route بنفسك.
+> **Expected:** `201` + project object بـ `client: "64abc..."` (الـ ID بتاعك)
+
+**Test 2 — Create Project كـ freelancer:**
+
+> نفس الـ request بس بـ freelancer token
+> 
+> **Expected:** `403 Forbidden`
+
+**Test 3 — Create Project من غير token:**
+
+> من غير Authorization header
+> 
+> **Expected:** `401 Unauthorized`
+
+**Test 4 — Get All Projects:**
+
+> **Method:** `GET` **URL:** `http://localhost:5000/api/v1/projects` **Header:** `Authorization: Bearer <أي token>`
+> 
+> **Expected:** قائمة بالـ projects — client field فيه `name` و`email` مش ID بس
+
+**Test 5 — Budget Validation:**
+
+> **Body:** نفس الـ request بس `budget: { "min": 2000, "max": 500 }`
+> 
+> **Expected:** `400` — "Maximum budget must be greater than minimum budget"
+
+**Test 6 — Update Project:**
+
+> **Method:** `PATCH` **URL:** `http://localhost:5000/api/v1/projects/<project_id>` **Header:** `Authorization: Bearer <client token>` **Body:** `{ "title": "Updated Title" }`
+> 
+> **Expected:** `200` + project بالـ title الجديد
+
+**Test 7 — Update Project بـ user تاني:**
+
+> نفس الـ request بس بـ freelancer token (أو client تاني)
+> 
+> **Expected:** `403 Forbidden`
+
+**Test 8 — Delete Project (Soft Delete):**
+
+> **Method:** `DELETE` **URL:** `http://localhost:5000/api/v1/projects/<project_id>` **Header:** `Authorization: Bearer <client token>`
+> 
+> **Expected:** `204 No Content`
+
+> بعدين جرّب `GET /api/v1/projects` تاني — المفروض الـ project مش بيظهر لأن status بتاعه `cancelled`. بس لو فتحت MongoDB Compass — هتلاقيه لسه موجود في الـ DB.
+
+---
+
+## 🇪🇬 ملخص Sprint 8
+
+اللي اتعلمته:
+
+- **Soft Delete** — بنغيير الـ status مش بنمسح — للمحافظة على البيانات والـ relations
+- **State Machine** — الـ project بيمر بـ states محددة، مش أي status أي وقت
+- **`client: req.user._id`** مش `client: req.body.client` — الـ security principle
+- **`mongoose.Schema.Types.ObjectId` + `ref`** — الـ foreign key في MongoDB
+- **`.populate()`** — بيستبدل الـ ObjectId بالـ document الكامل (query تانية)
+- **Indexes** — بيسرّعوا الـ queries الشائعة
+- **`findByIdAndUpdate` vs `.save()`** — الأول أسرع والتاني بيشغّل الـ hooks
+- **`router.use(protect)`** — بدل تكرار الـ middleware في كل route
+- **`.route('/').get().post()`** — method chaining للـ routes
+
+---
+
+> **جاهز للـ Sprint 9؟**
+> 
+> Sprint 9 هو **Proposals + الـ Cascade Hook** — أعقد وأهم جزء في المشروع. هنبني نظام الـ proposals وهنشرح الـ `post('save')` hook اللي بيعمل cascade تلقائياً: لما proposal يتقبل — كل الـ proposals التانية على نفس الـ project بتترفض تلقائياً والـ project status بيتغير. ده من أكتر الـ concepts اللي بيتسأل عنها في الـ interviews.
+> 
+> قول "كمّل" لما تجرب الـ 8 tests وتشوف الـ soft delete بنفسك في الـ DB.
+
+---
+
+---
+
+# 🔗 Sprint 9 — Proposals + الـ Cascade Hook : أهم Concept في المشروع
+
+---
+
+## 🇪🇬 إيه اللي هنبنيه؟
+
+الـ Proposal هو "عرض" الـ Freelancer على الـ Project. بيقول:
+
+- "أنا قادر أعمل ده"
+- "مقابل كذا فلوس"
+- "وده الـ cover letter بتاعي"
+
+```mermaid
+flowchart LR
+    subgraph flow["Proposal Lifecycle"]
+        C["Client ينشر Project\nstatus: open"]
+        F1["Freelancer 1 يبعت Proposal\nstatus: pending"]
+        F2["Freelancer 2 يبعت Proposal\nstatus: pending"]
+        F3["Freelancer 3 يبعت Proposal\nstatus: pending"]
+        C --> F1
+        C --> F2
+        C --> F3
+        ACC["Client يقبل Proposal 2"]
+        F1 --> ACC
+        F2 --> ACC
+        F3 --> ACC
+        R1["Proposal 1 → rejected\nتلقائياً 🤖"]
+        R3["Proposal 3 → rejected\nتلقائياً 🤖"]
+        PROJ["Project → in_progress\nتلقائياً 🤖"]
+        ACC --> R1
+        ACC --> R3
+        ACC --> PROJ
+    end
+
+    style C fill:#2b6cb0,color:#fff
+    style F1 fill:#553c9a,color:#fff
+    style F2 fill:#276749,color:#fff
+    style F3 fill:#553c9a,color:#fff
+    style ACC fill:#276749,color:#fff
+    style R1 fill:#742a2a,color:#fff
+    style R3 fill:#742a2a,color:#fff
+    style PROJ fill:#744210,color:#fff
+```
+
+الجزء المهم هو الـ "تلقائياً 🤖" — ده اللي بيعمله الـ `post('save')` Hook.
+
+---
+
+## 🇪🇬 ليه الـ Cascade Logic مش في الـ Controller؟
+
+ممكن تفكر: "ليه ما بكتبش في الـ controller إنه يعمل update على باقي الـ proposals والـ project؟"
+
+```javascript
+// ❌ لو حطيناه في الـ Controller
+exports.acceptProposal = catchAsync(async (req, res, next) => {
+  proposal.status = 'accepted';
+  await proposal.save();
+
+  // وبعدين نكتب الـ cascade يدوياً
+  await Proposal.updateMany({ project: proposal.project, _id: { $ne: proposal._id } }, { status: 'rejected' });
+  await Project.findByIdAndUpdate(proposal.project, { status: 'in_progress' });
+
+  res.json({ ... });
+});
+```
+
+المشكلة:
+
+```mermaid
+flowchart TD
+    subgraph problem["المشكلة مع Controller Cascade"]
+        P1["acceptProposal controller\nبيعمل cascade ✅"]
+        P2["Admin script\nيقبل proposal مباشرة ❌\nمش بيعمل cascade"]
+        P3["Background job\nيقبل proposal ❌\nمش بيعمل cascade"]
+        P4["Test code\n❌\nمش بيعمل cascade"]
+    end
+
+    subgraph solution["الحل — Hook في الـ Model"]
+        H["post-save Hook\nعلى الـ Proposal Model"]
+        H --> A1["أي كود يعمل proposal.save()"]
+        H --> A2["من أي مكان"]
+        H --> A3["الـ cascade بيحصل تلقائياً 🤖"]
+    end
+
+    style problem fill:#4a1212,color:#fff
+    style solution fill:#1a4731,color:#fff
+```
+
+الـ Hook في الـ Model بيضمن إن الـ business rule دي بتشتغل في أي scenario — مش بس لما الـ API route بتشتغل.
+
+---
+
+## 🇪🇬 الـ `post('save')` Hook — إزاي بيشتغل؟
+
+```mermaid
+sequenceDiagram
+    participant CT as Controller
+    participant MD as Proposal Model
+    participant HK as post-save Hook
+    participant PM as Proposal Collection
+    participant PJ as Project Collection
+
+    CT->>MD: proposal.status = 'accepted'
+    CT->>MD: proposal.save()
+    MD->>MD: Validation ✅
+    MD->>MD: pre-save hooks (لو في)
+    MD->>PM: INSERT/UPDATE to DB
+    PM-->>MD: Saved ✅
+    MD->>HK: شغّل post-save hook
+    HK->>HK: doc.status === 'accepted'? ✅
+    HK->>PM: updateMany — reject all others
+    PM-->>HK: Done ✅
+    HK->>PJ: findByIdAndUpdate — status: in_progress
+    PJ-->>HK: Done ✅
+    HK-->>MD: Hook finished
+    MD-->>CT: return proposal
+    CT-->>CT: res.json(proposal)
+```
+
+الـ Controller مش شايف أي حاجة من الـ cascade — بس بيعمل `proposal.save()` والباقي بيحصل تلقائياً.
+
+---
+
+## 💻 خطوة 1 — اعمل `src/models/Proposal.model.js`
+
+```javascript
+const mongoose = require('mongoose');
+
+const proposalSchema = new mongoose.Schema(
+  {
+    project: {
+      type:     mongoose.Schema.Types.ObjectId,
+      ref:      'Project',
+      required: [true, 'Proposal must belong to a project'],
+    },
+
+    freelancer: {
+      type:     mongoose.Schema.Types.ObjectId,
+      ref:      'User',
+      required: [true, 'Proposal must belong to a freelancer'],
+    },
+
+    coverLetter: {
+      type:      String,
+      required:  [true, 'Please provide a cover letter'],
+      minlength: [50, 'Cover letter must be at least 50 characters'],
+    },
+
+    bidAmount: {
+      type:     Number,
+      required: [true, 'Please provide your bid amount'],
+      min:      [1,    'Bid amount must be positive'],
+    },
+
+    status: {
+      type:    String,
+      enum:    ['pending', 'accepted', 'rejected'],
+      default: 'pending',
+    },
+  },
+  { timestamps: true }
+);
+
+// ══════════════════════════════════════════════════════
+// COMPOUND INDEX
+// Freelancer واحد يقدر يبعت proposal واحد بس لكل project
+// ══════════════════════════════════════════════════════
+proposalSchema.index(
+  { project: 1, freelancer: 1 },
+  { unique: true }
+);
+
+// ══════════════════════════════════════════════════════
+// THE CASCADE HOOK
+// بيشتغل بعد ما الـ proposal يتحفظ
+// ══════════════════════════════════════════════════════
+proposalSchema.post('save', async function (doc) {
+
+  // بنفحص status الـ doc اللي اتحفظ
+  // لو مش accepted — مش محتاجين نعمل حاجة
+  if (doc.status !== 'accepted') return;
+
+  // الـ Cascade Step 1:
+  // ارفض كل الـ proposals التانية على نفس الـ project
+  await mongoose.model('Proposal').updateMany(
+    {
+      project:  doc.project,           // نفس الـ project
+      _id:      { $ne: doc._id },      // ليس هذا الـ proposal ($ne = not equal)
+      status:   'pending',             // بس اللي لسه pending
+    },
+    { status: 'rejected' }
+  );
+
+  // الـ Cascade Step 2:
+  // غيّر الـ project status وسجّل الـ freelancer المقبول
+  await mongoose.model('Project').findByIdAndUpdate(
+    doc.project,
+    {
+      status:              'in_progress',
+      acceptedFreelancer:  doc.freelancer,
+    }
+  );
+});
+
+const Proposal = mongoose.model('Proposal', proposalSchema);
+module.exports = Proposal;
+```
+
+---
+
+## 🇪🇬 شرح الـ Compound Index
+
+```javascript
+proposalSchema.index(
+  { project: 1, freelancer: 1 },
+  { unique: true }
+);
+```
+
+ده مش index على field واحد — ده index على **combination** من اتنين fields.
+
+```mermaid
+flowchart TD
+    subgraph allowed["مسموح ✅"]
+        A1["Freelancer A + Project 1 ← أول proposal"]
+        A2["Freelancer A + Project 2 ← project مختلف ✅"]
+        A3["Freelancer B + Project 1 ← freelancer مختلف ✅"]
+    end
+
+    subgraph blocked["ممنوع ❌"]
+        B1["Freelancer A + Project 1 ← تاني مرة"]
+        B1 --> B2["MongoDB: Duplicate Key Error code 11000"]
+    end
+
+    style allowed fill:#1a4731,color:#fff
+    style blocked fill:#4a1212,color:#fff
+```
+
+نفس الـ Freelancer يقدر يبعت proposals على projects مختلفة — بس مش ينفع يبعت اتنين على نفس الـ project.
+
+---
+
+## 🇪🇬 `mongoose.model('Proposal')` vs `require('../models/Proposal.model')`
+
+```javascript
+// جوا الـ Hook بنستخدم:
+await mongoose.model('Proposal').updateMany(...)
+await mongoose.model('Project').findByIdAndUpdate(...)
+
+// مش:
+const Proposal = require('../models/Proposal.model');
+const Project  = require('../models/Project.model');
+```
+
+**ليه؟**
+
+لو عملنا `require` في الملف — هيحصل **Circular Dependency**:
+
+```mermaid
+flowchart LR
+    subgraph circular["Circular Dependency — مشكلة"]
+        PM["Proposal.model.js\nrequire Project.model"]
+        PJ["Project.model.js"]
+        PM --> PJ
+        PJ -.->|لو Project يحتاج Proposal| PM
+    end
+
+    subgraph solution["الحل — Mongoose Registry"]
+        MG["mongoose.model('Project')\nبيجيب من الـ Mongoose registry"]
+        MG --> PJ2["Project Model\nمسجّل مسبقاً"]
+    end
+
+    style circular fill:#4a1212,color:#fff
+    style solution fill:#1a4731,color:#fff
+```
+
+Mongoose بيحتفظ بـ registry داخلي لكل الـ Models. `mongoose.model('Name')` بيجيب الـ Model من الـ registry ده من غير ما يعمل require.
+
+---
+
+## 💻 خطوة 2 — اعمل `src/controllers/proposal.controller.js`
+
+```javascript
+const Proposal   = require('../models/Proposal.model');
+const Project    = require('../models/Project.model');
+const AppError   = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+
+// ══════════════════════════════════════════════════════
+// SUBMIT PROPOSAL
+// POST /api/v1/projects/:projectId/proposals
+// ══════════════════════════════════════════════════════
+exports.submitProposal = catchAsync(async (req, res, next) => {
+
+  // Step 1: جيب الـ project وتحقق إنه موجود ومفتوح
+  const project = await Project.findById(req.params.projectId);
+
+  if (!project) {
+    return next(new AppError('No project found with that ID', 404));
+  }
+
+  if (project.status !== 'open') {
+    return next(new AppError('This project is no longer accepting proposals', 400));
+  }
+
+  // Step 2: تحقق إن الـ freelancer ده ما بعتش proposal قبل كده
+  // الـ compound index هيمسك ده كمان — بس نعمل check صريح لرسالة أحسن
+  const existingProposal = await Proposal.findOne({
+    project:    req.params.projectId,
+    freelancer: req.user._id,
+  });
+
+  if (existingProposal) {
+    return next(
+      new AppError('You have already submitted a proposal for this project', 400)
+    );
+  }
+
+  // Step 3: اخلق الـ proposal
+  const proposal = await Proposal.create({
+    project:     req.params.projectId,
+    freelancer:  req.user._id,       // ← من req.user مش req.body
+    coverLetter: req.body.coverLetter,
+    bidAmount:   req.body.bidAmount,
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data:   { proposal },
+  });
+});
+
+// ══════════════════════════════════════════════════════
+// GET ALL PROPOSALS FOR A PROJECT
+// GET /api/v1/projects/:projectId/proposals
+// بس الـ client صاحب الـ project يقدر يشوف
+// ══════════════════════════════════════════════════════
+exports.getProjectProposals = catchAsync(async (req, res, next) => {
+
+  const project = await Project.findById(req.params.projectId);
+
+  if (!project) {
+    return next(new AppError('No project found with that ID', 404));
+  }
+
+  // تحقق إن الـ user ده هو صاحب الـ project
+  if (project.client.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError('You are not authorized to view these proposals', 403)
+    );
+  }
+
+  const proposals = await Proposal.find({ project: req.params.projectId })
+    .populate('freelancer', 'name email')
+    .sort('-createdAt');
+
+  res.status(200).json({
+    status:  'success',
+    results: proposals.length,
+    data:    { proposals },
+  });
+});
+
+// ══════════════════════════════════════════════════════
+// ACCEPT PROPOSAL
+// PATCH /api/v1/proposals/:id/accept
+// ══════════════════════════════════════════════════════
+exports.acceptProposal = catchAsync(async (req, res, next) => {
+
+  // جيب الـ proposal مع الـ project الخاص بيه (populate)
+  const proposal = await Proposal.findById(req.params.id)
+    .populate('project');
+
+  if (!proposal) {
+    return next(new AppError('No proposal found with that ID', 404));
+  }
+
+  // تحقق إن الـ user ده هو صاحب الـ project
+  if (proposal.project.client.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError('You are not authorized to accept this proposal', 403)
+    );
+  }
+
+  // تحقق إن الـ project لسه open
+  if (proposal.project.status !== 'open') {
+    return next(
+      new AppError('This project already has an accepted proposal', 400)
+    );
+  }
+
+  // غيّر الـ status — الـ CASCADE HOOK هيشتغل تلقائياً بعد الـ save
+  proposal.status = 'accepted';
+  await proposal.save(); // ← هنا الـ hook بيشتغل
+
+  res.status(200).json({
+    status: 'success',
+    data:   { proposal },
+  });
+});
+```
+
+---
+
+## 🇪🇬 شرح `.populate('project')` في `acceptProposal`
+
+```javascript
+const proposal = await Proposal.findById(req.params.id).populate('project');
+```
+
+محتاجين نعمل populate لأننا عايزين نوصل لـ `proposal.project.client` — يعني الـ client بتاع الـ project.
+
+من غير populate:
+
+```javascript
+proposal.project          // = ObjectId('64abc...')
+proposal.project.client   // = undefined ❌
+```
+
+مع populate:
+
+```javascript
+proposal.project          // = { _id, title, client: ObjectId, status, ... }
+proposal.project.client   // = ObjectId('64xyz...') ✅
+```
+
+---
+
+## 💻 خطوة 3 — اعمل `src/routes/proposal.routes.js`
+
+```javascript
+const express = require('express');
+const {
+  acceptProposal,
+} = require('../controllers/proposal.controller');
+const { protect, restrictTo } = require('../middlewares/auth.middleware');
+
+const router = express.Router();
+
+router.use(protect);
+
+// PATCH /api/v1/proposals/:id/accept
+router.patch('/:id/accept', restrictTo('client'), acceptProposal);
+
+module.exports = router;
+```
+
+---
+
+## 💻 خطوة 4 — ضيف الـ Nested Routes في `project.routes.js`
+
+الـ proposals مرتبطة بـ project — منطقياً المفروض الـ URL يكون:
+
+`/api/v1/projects/:projectId/proposals`
+
+```javascript
+const express = require('express');
+const {
+  createProject,
+  getAllProjects,
+  getProject,
+  updateProject,
+  deleteProject,
+} = require('../controllers/project.controller');
+
+const {
+  submitProposal,
+  getProjectProposals,
+} = require('../controllers/proposal.controller');
+
+const { protect, restrictTo } = require('../middlewares/auth.middleware');
+
+const router = express.Router();
+
+router.use(protect);
+
+router
+  .route('/')
+  .get(getAllProjects)
+  .post(restrictTo('client'), createProject);
+
+router
+  .route('/:id')
+  .get(getProject)
+  .patch(restrictTo('client'), updateProject)
+  .delete(restrictTo('client'), deleteProject);
+
+// Nested routes — proposals تحت project
+router
+  .route('/:projectId/proposals')
+  .get(restrictTo('client'),     getProjectProposals)
+  .post(restrictTo('freelancer'), submitProposal);
+
+module.exports = router;
+```
+
+---
+
+## 💻 خطوة 5 — ربط الـ Routes في `app.js`
+
+```javascript
+const express            = require('express');
+const AppError           = require('./src/utils/AppError');
+const globalErrorHandler = require('./src/middlewares/errorHandler');
+
+const authRoutes     = require('./src/routes/auth.routes');
+const projectRoutes  = require('./src/routes/project.routes');
+const proposalRoutes = require('./src/routes/proposal.routes'); // ← جديد
+
+const app = express();
+
+app.use(express.json());
+
+app.use('/api/v1/auth',      authRoutes);
+app.use('/api/v1/projects',  projectRoutes);
+app.use('/api/v1/proposals', proposalRoutes); // ← جديد
+
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+app.use(globalErrorHandler);
+
+module.exports = app;
+```
+
+---
+
+## 🇪🇬 الـ URL Structure الكاملة دلوقتي
+
+```mermaid
+flowchart TD
+    subgraph auth["/api/v1/auth"]
+        A1["POST /register"]
+        A2["POST /login"]
+    end
+
+    subgraph projects["/api/v1/projects"]
+        P1["GET / — كل الـ projects"]
+        P2["POST / — خلق project (client)"]
+        P3["GET /:id — project واحد"]
+        P4["PATCH /:id — update (client owner)"]
+        P5["DELETE /:id — soft delete (client owner)"]
+        P6["POST /:projectId/proposals — بعت proposal (freelancer)"]
+        P7["GET /:projectId/proposals — شوف proposals (client owner)"]
+    end
+
+    subgraph proposals["/api/v1/proposals"]
+        PR1["PATCH /:id/accept — قبول proposal (client owner)"]
+    end
+
+    style auth fill:#2b6cb0,color:#fff
+    style projects fill:#276749,color:#fff
+    style proposals fill:#553c9a,color:#fff
+```
+
+---
+
+## ✅ Checkpoint — الـ Cascade بعينك
+
+ده أهم checkpoint في المشروع كله. هتشوف الـ cascade بنفسك.
+
+**الإعداد:**
+
+اعمل register لـ 3 users:
+
+```json
+// Client
+{ "name": "Ali", "email": "ali@test.com", "password": "password123", "role": "client" }
+
+// Freelancer 1
+{ "name": "Sara", "email": "sara@test.com", "password": "password123", "role": "freelancer" }
+
+// Freelancer 2
+{ "name": "Omar", "email": "omar@test.com", "password": "password123", "role": "freelancer" }
+```
+
+**Test 1 — خلق Project:**
+
+> سجّل دخول بالـ client وخد الـ token. **POST** `/api/v1/projects` بالـ client token
+
+**Test 2 — بعت Proposal من Freelancer 1:**
+
+> سجّل دخول بـ Sara وخد الـ token.
+> 
+> **Method:** `POST` **URL:** `http://localhost:5000/api/v1/projects/<project_id>/proposals` **Header:** `Authorization: Bearer <Sara token>` **Body:**
+> 
+> ```json
+> {
+>   "coverLetter": "I am an experienced developer with 5 years of React experience. I have built similar dashboards before and can deliver within your deadline. My portfolio includes...",
+>   "bidAmount": 1200
+> }
+> ```
+> 
+> **Expected:** `201` + proposal بـ `status: "pending"`
+
+**Test 3 — بعت Proposal من Freelancer 2:**
+
+> سجّل دخول بـ Omar وخد الـ token. نفس الـ request على نفس الـ project.
+
+**Test 4 — حاول تبعت Proposal تاني من نفس الـ Freelancer:**
+
+> بعت تاني بـ Sara token على نفس الـ project.
+> 
+> **Expected:** `400 — You have already submitted a proposal for this project`
+
+**Test 5 — شوف الـ Proposals كـ Client:**
+
+> **Method:** `GET` **URL:** `http://localhost:5000/api/v1/projects/<project_id>/proposals` **Header:** `Authorization: Bearer <Ali client token>`
+> 
+> **Expected:** قائمة بالـ proposals مع بيانات الـ freelancers
+
+**Test 6 — شوف الـ Proposals بـ Freelancer Token:**
+
+> نفس الـ request بـ Sara token.
+> 
+> **Expected:** `403 Forbidden`
+
+**Test 7 — ⭐ اقبل Proposal Sara:**
+
+> **Method:** `PATCH` **URL:** `http://localhost:5000/api/v1/proposals/<sara_proposal_id>/accept` **Header:** `Authorization: Bearer <Ali client token>`
+> 
+> **Expected:** `200` + proposal بـ `status: "accepted"`
+
+**Test 8 — ⭐⭐ تحقق من الـ Cascade:**
+
+بعد الـ accept — روح على MongoDB Compass أو شغّل:
+
+```bash
+db.proposals.find({ project: ObjectId('<project_id>') })
+```
+
+هتشوف:
+
+- Sara's proposal: `status: "accepted"` ✅
+- Omar's proposal: `status: "rejected"` 🤖 تلقائياً
+
+```bash
+db.projects.findOne({ _id: ObjectId('<project_id>') })
+```
+
+هتشوف:
+
+- `status: "in_progress"` 🤖 تلقائياً
+- `acceptedFreelancer: ObjectId('<sara_id>')` 🤖 تلقائياً
+
+**ده الـ Cascade Hook شغّال.**
+
+**Test 9 — حاول تبعت Proposal على Project في_progress:**
+
+> اعمل proposal جديد على نفس الـ project.
+> 
+> **Expected:** `400 — This project is no longer accepting proposals`
+
+---
+
+## 🇪🇬 ملخص Sprint 9
+
+اللي اتعلمته:
+
+- الـ `post('save')` Hook بيشتغل **بعد** ما الـ document يتحفظ في الـ DB
+- الـ Cascade مكانه في الـ **Model** مش الـ Controller — عشان يشتغل في أي scenario
+- الـ **Compound Index** `{ project, freelancer }` بيمنع duplicate proposals على مستوى الـ DB
+- `mongoose.model('Name')` بتجيب من الـ Mongoose registry من غير circular dependency
+- `.populate('project')` في الـ `acceptProposal` ضروري عشان توصل لـ `proposal.project.client`
+- الـ **Nested Routes** `/:projectId/proposals` بيخلي الـ URL semantically صح
+- لما Proposal يتقبل — 3 حاجات بتحصلوا تلقائياً: الـ proposal بيبقى accepted، الباقيين rejected، والـ project بيتحول لـ in_progress
+
+---
+
+> **جاهز للـ Sprint 10؟**
+> 
+> Sprint 10 هو **Reviews + Aggregation Pipeline** — آخر feature في المشروع. هنبني نظام التقييم والـ Dashboard Stats باستخدام الـ MongoDB Aggregation Pipeline. وهنشرح الـ static method وإزاي الـ `avgRating` بيتحسب تلقائياً بعد كل review.
+> 
+> قول "كمّل" لما تشوف الـ cascade بنفسك في MongoDB Compass.
+
+---
+
+---
+
+# ⭐ Sprint 10 — Reviews + Aggregation Pipeline
+
+---
+
+## 🇪🇬 إيه اللي هنبنيه؟
+
+بعد ما الـ project يخلص — الـ client يقدر يقيّم الـ freelancer. التقييم ده بيأثر على الـ `avgRating` بتاع الـ freelancer.
+
+المشكلة: الـ `avgRating` مش field ثابت — بيتغير كل ما review يتضاف أو يتحذف. محتاجين نحسبه من الـ reviews كلها وندّيه على الـ User document.
+
+الحل: **Static Method + Hooks**
+
+```mermaid
+flowchart TD
+    subgraph trigger["Events بتشغّل الـ Recalculation"]
+        E1["Review جديد اتضاف\npost-save hook"]
+        E2["Review اتحذف\npost findOneAndDelete hook"]
+    end
+
+    subgraph calc["Static Method: calcAverageRating"]
+        C1["Aggregate كل الـ reviews\nللـ freelancer ده"]
+        C2["احسب المتوسط\nوالعدد"]
+        C3["حدّث الـ User document\nبالـ avgRating الجديد"]
+    end
+
+    E1 --> calc
+    E2 --> calc
+
+    style trigger fill:#2b6cb0,color:#fff
+    style calc fill:#276749,color:#fff
+```
+
+---
+
+## 🇪🇬 الـ MongoDB Aggregation Pipeline — إيه ده؟
+
+الـ Aggregation Pipeline هو طريقة تشغّل عمليات حسابية على الـ database من غير ما تجيب الـ documents كلها لـ Node.js.
+
+تخيله زي خط تجميع في مصنع — كل stage بياخد الـ input من اللي قبله ويطلع output للـ stage الجاي:
+
+```mermaid
+flowchart LR
+    D["كل الـ Reviews\nفي الـ DB"]
+    D --> S1
+
+    subgraph S1["Stage 1: $match"]
+        M["فلتر — خد بس\nالـ reviews بتاعت\nالـ freelancer ده"]
+    end
+
+    S1 --> S2
+
+    subgraph S2["Stage 2: $group"]
+        G["اجمع — احسب\nالمتوسط والعدد"]
+    end
+
+    S2 --> R["النتيجة:\n{ avgRating: 4.5, numRatings: 12 }"]
+
+    style D fill:#2d3748,color:#fff
+    style S1 fill:#2b6cb0,color:#fff
+    style S2 fill:#553c9a,color:#fff
+    style R fill:#276749,color:#fff
+```
+
+**ليه مش بنجيب الـ reviews ونحسب في Node.js؟**
+
+```mermaid
+flowchart TD
+    subgraph bad["❌ الطريقة البطيئة"]
+        B1["جيب كل الـ reviews من الـ DB"]
+        B1 --> B2["1000 review — كلهم في الـ RAM"]
+        B2 --> B3["احسب المتوسط في JavaScript"]
+        B3 --> B4["كتير على الـ network وبطيء"]
+    end
+
+    subgraph good["✅ الـ Aggregation Pipeline"]
+        G1["MongoDB يحسب داخلياً"]
+        G1 --> G2["بيرجع نتيجة واحدة بس"]
+        G2 --> G3["سريع جداً — بغض النظر عن عدد الـ reviews"]
+    end
+
+    style bad fill:#4a1212,color:#fff
+    style good fill:#1a4731,color:#fff
+```
+
+---
+
+## 🇪🇬 الـ Static Method — إيه ده وفين مكانه؟
+
+الـ **Static Method** هو function على الـ **Model نفسه** — مش على الـ document.
+
+```mermaid
+flowchart LR
+    subgraph instance["Instance Method\nعلى الـ document"]
+        IM["user.correctPassword()\nthis = الـ user document"]
+    end
+
+    subgraph static["Static Method\nعلى الـ Model"]
+        SM["Review.calcAverageRating(id)\nthis = الـ Review Model"]
+    end
+
+    style instance fill:#2b6cb0,color:#fff
+    style static fill:#553c9a,color:#fff
+```
+
+بنستخدم static method هنا لأن الـ operation ده بيخص الـ collection كلها — مش document واحد.
+
+---
+
+## 💻 خطوة 1 — أضف `avgRating` و`ratingsCount` على الـ User Schema
+
+افتح `src/models/User.model.js` وضيف الـ fields دي:
+
+```javascript
+avgRating: {
+  type:    Number,
+  default: 0,
+  min:     [0, 'Rating must be at least 0'],
+  max:     [5, 'Rating cannot exceed 5'],
+},
+
+ratingsCount: {
+  type:    Number,
+  default: 0,
+},
+```
+
+---
+
+## 💻 خطوة 2 — اعمل `src/models/Review.model.js`
+
+```javascript
+const mongoose = require('mongoose');
+
+const reviewSchema = new mongoose.Schema(
+  {
+    project: {
+      type:     mongoose.Schema.Types.ObjectId,
+      ref:      'Project',
+      required: [true, 'Review must belong to a project'],
+    },
+
+    reviewer: {
+      type:     mongoose.Schema.Types.ObjectId,
+      ref:      'User',
+      required: [true, 'Review must have a reviewer'],
+    },
+
+    freelancer: {
+      type:     mongoose.Schema.Types.ObjectId,
+      ref:      'User',
+      required: [true, 'Review must have a freelancer'],
+    },
+
+    rating: {
+      type:     Number,
+      required: [true, 'Please provide a rating'],
+      min:      [1, 'Rating must be at least 1'],
+      max:      [5, 'Rating cannot exceed 5'],
+    },
+
+    comment: {
+      type:      String,
+      required:  [true, 'Please provide a comment'],
+      minlength: [10, 'Comment must be at least 10 characters'],
+    },
+  },
+  { timestamps: true }
+);
+
+// كل client يقدر يقيّم مرة واحدة بس لكل project
+reviewSchema.index({ project: 1, reviewer: 1 }, { unique: true });
+
+// ══════════════════════════════════════════════════════
+// STATIC METHOD — بيشتغل على الـ Model مش الـ document
+// ══════════════════════════════════════════════════════
+reviewSchema.statics.calcAverageRating = async function (freelancerId) {
+  // 'this' هنا = الـ Review Model
+
+  const stats = await this.aggregate([
+    // Stage 1: خد بس الـ reviews اللي للـ freelancer ده
+    {
+      $match: { freelancer: freelancerId },
+    },
+
+    // Stage 2: احسب المتوسط والعدد
+    {
+      $group: {
+        _id:          '$freelancer',    // اجمع حسب الـ freelancer
+        numRatings:   { $sum: 1 },      // عدد الـ reviews
+        avgRating:    { $avg: '$rating' }, // متوسط الـ rating
+      },
+    },
+  ]);
+
+  // لو في reviews — حدّث الـ User
+  if (stats.length > 0) {
+    await mongoose.model('User').findByIdAndUpdate(freelancerId, {
+      ratingsCount: stats[0].numRatings,
+      avgRating:    Math.round(stats[0].avgRating * 10) / 10, // round to 1 decimal
+    });
+  } else {
+    // لو مفيش reviews — reset للـ defaults
+    await mongoose.model('User').findByIdAndUpdate(freelancerId, {
+      ratingsCount: 0,
+      avgRating:    0,
+    });
+  }
+};
+
+// ══════════════════════════════════════════════════════
+// HOOK 1: بعد إضافة review — احسب الـ average
+// ══════════════════════════════════════════════════════
+reviewSchema.post('save', function () {
+  // 'this' = الـ review document
+  // 'this.constructor' = الـ Review Model
+  this.constructor.calcAverageRating(this.freelancer);
+});
+
+// ══════════════════════════════════════════════════════
+// HOOK 2: بعد حذف review — احسب الـ average تاني
+// الـ findOneAndDelete مش بيشغّل post('save')
+// محتاجين workaround خاص
+// ══════════════════════════════════════════════════════
+reviewSchema.pre(/^findOneAnd/, async function (next) {
+  // قبل الـ delete — جيب الـ document وحفظه على الـ query object
+  // لأن بعد الـ delete مش هنلاقيه في الـ DB
+  this.reviewDoc = await this.model.findOne(this.getQuery());
+  next();
+});
+
+reviewSchema.post(/^findOneAnd/, async function () {
+  // بعد الـ delete — استخدم الـ document اللي حفظناه
+  if (this.reviewDoc) {
+    await this.reviewDoc.constructor.calcAverageRating(
+      this.reviewDoc.freelancer
+    );
+  }
+});
+
+const Review = mongoose.model('Review', reviewSchema);
+module.exports = Review;
+```
+
+---
+
+## 🇪🇬 شرح `this.constructor.calcAverageRating()`
+
+```javascript
+reviewSchema.post('save', function () {
+  this.constructor.calcAverageRating(this.freelancer);
+});
+```
+
+`this` جوا الـ `post('save')` = الـ review document.
+
+`this.constructor` = الـ Class اللي الـ document ده instance منها — يعني الـ Review Model.
+
+يعني `this.constructor.calcAverageRating(...)` = `Review.calcAverageRating(...)`.
+
+**ليه مش كتبنا `Review.calcAverageRating()` مباشرة؟**
+
+```mermaid
+flowchart TD
+    subgraph problem["المشكلة لو كتبنا Review مباشرة"]
+        P1["reviewSchema.post('save', function() {"]
+        P2["  Review.calcAverageRating(...)"]
+        P3["Review مش معرّف لسه وقت تعريف الـ schema!"]
+        P4["const Review = mongoose.model('Review', reviewSchema)"]
+        P5["التعريف بييجي بعد"]
+    end
+
+    subgraph solution["الحل — this.constructor"]
+        S1["this.constructor بيتحسب\nوقت تشغيل الـ hook"]
+        S2["مش وقت تعريف الـ schema"]
+        S3["Review بيكون معرّف بالفعل ✅"]
+    end
+
+    style problem fill:#4a1212,color:#fff
+    style solution fill:#1a4731,color:#fff
+```
+
+---
+
+## 🇪🇬 شرح الـ `pre/post findOneAnd` Workaround
+
+ده من أصعب الـ concepts في Mongoose — بس مهم تفهمه.
+
+**المشكلة:**
+
+```mermaid
+sequenceDiagram
+    participant CT as Controller
+    participant MG as Mongoose
+    participant DB as MongoDB
+    participant HK as post-save hook
+
+    CT->>MG: Review.findOneAndDelete({ _id: id })
+    MG->>DB: DELETE document
+    DB-->>MG: Deleted ✅
+    MG-->>HK: post-save hook؟
+    Note over HK: ❌ مش بيشتغل!\nfindOneAndDelete مش بيشغّل post-save
+```
+
+**الـ Solution — pre + post query middleware:**
+
+```mermaid
+sequenceDiagram
+    participant CT as Controller
+    participant MG as Mongoose
+    participant DB as MongoDB
+
+    CT->>MG: Review.findOneAndDelete({ _id: id })
+
+    Note over MG: pre /^findOneAnd/ hook بيشتغل
+    MG->>DB: findOne({ _id: id }) — جيب الـ doc قبل الحذف
+    DB-->>MG: review document
+    MG->>MG: this.reviewDoc = review document
+
+    MG->>DB: DELETE document
+    DB-->>MG: Deleted ✅
+
+    Note over MG: post /^findOneAnd/ hook بيشتغل
+    MG->>MG: this.reviewDoc.constructor.calcAverageRating(...)
+    MG->>DB: Update User avgRating
+```
+
+`/^findOneAnd/` هو regex بيطابق `findOneAndDelete` و`findOneAndUpdate` وكل حاجة تبدأ بـ `findOneAnd`.
+
+---
+
+## 💻 خطوة 3 — اعمل `src/controllers/review.controller.js`
+
+```javascript
+const Review     = require('../models/Review.model');
+const Project    = require('../models/Project.model');
+const AppError   = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+
+// ══════════════════════════════════════════════════════
+// CREATE REVIEW
+// POST /api/v1/reviews
+// ══════════════════════════════════════════════════════
+exports.createReview = catchAsync(async (req, res, next) => {
+
+  // Step 1: جيب الـ project وتحقق إنه completed
+  const project = await Project.findById(req.body.projectId);
+
+  if (!project) {
+    return next(new AppError('No project found with that ID', 404));
+  }
+
+  if (project.status !== 'completed') {
+    return next(
+      new AppError('You can only review completed projects', 400)
+    );
+  }
+
+  // Step 2: تحقق إن الـ reviewer هو صاحب الـ project
+  if (project.client.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError('You can only review projects you own', 403)
+    );
+  }
+
+  // Step 3: تحقق إن الـ freelancer ده فعلاً اشتغل على الـ project
+  if (project.acceptedFreelancer.toString() !== req.body.freelancerId) {
+    return next(
+      new AppError('This freelancer did not work on this project', 400)
+    );
+  }
+
+  // Step 4: اخلق الـ review
+  const review = await Review.create({
+    project:    req.body.projectId,
+    reviewer:   req.user._id,
+    freelancer: req.body.freelancerId,
+    rating:     req.body.rating,
+    comment:    req.body.comment,
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data:   { review },
+  });
+});
+
+// ══════════════════════════════════════════════════════
+// GET FREELANCER STATS (Dashboard)
+// GET /api/v1/reviews/stats/:freelancerId
+// ══════════════════════════════════════════════════════
+exports.getFreelancerStats = catchAsync(async (req, res, next) => {
+  const mongoose = require('mongoose');
+
+  const freelancerId = new mongoose.Types.ObjectId(req.params.freelancerId);
+
+  // Aggregation Pipeline 1 — Proposal stats
+  const proposalStats = await mongoose.model('Proposal').aggregate([
+    {
+      $match: { freelancer: freelancerId },
+    },
+    {
+      $group: {
+        _id:   '$status',   // اجمع حسب الـ status
+        count: { $sum: 1 }, // عدد الـ proposals في كل status
+      },
+    },
+  ]);
+
+  // Aggregation Pipeline 2 — Review stats
+  const reviewStats = await Review.aggregate([
+    {
+      $match: { freelancer: freelancerId },
+    },
+    {
+      $group: {
+        _id:          null,              // مش محتاجين نجمع حسب حاجة
+        avgRating:    { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+        minRating:    { $min: '$rating' },
+        maxRating:    { $max: '$rating' },
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      proposals: proposalStats,
+      reviews:   reviewStats[0] || { avgRating: 0, totalReviews: 0 },
+    },
+  });
+});
+```
+
+---
+
+## 🇪🇬 شرح الـ Aggregation Pipeline بالتفصيل
+
+```javascript
+const proposalStats = await Proposal.aggregate([
+  { $match: { freelancer: freelancerId } },
+  { $group: { _id: '$status', count: { $sum: 1 } } },
+]);
+```
+
+**`$match`** — زي الـ `WHERE` في SQL. بيفلتر الـ documents.
+
+**`$group`** — زي الـ `GROUP BY` في SQL.
+
+`_id: '$status'` — اجمع حسب الـ status field. الـ `$` قبل `status` يعني "قيمة الـ field ده".
+
+`count: { $sum: 1 }` — لكل document في الـ group، ضيف 1 للـ count.
+
+**النتيجة:**
+
+```json
+[
+  { "_id": "pending",  "count": 3 },
+  { "_id": "accepted", "count": 1 },
+  { "_id": "rejected", "count": 2 }
+]
+```
+
+```mermaid
+flowchart TD
+    subgraph input["Input — كل Proposals للـ freelancer"]
+        I1["pending"]
+        I2["accepted"]
+        I3["pending"]
+        I4["rejected"]
+        I5["pending"]
+        I6["rejected"]
+    end
+
+    subgraph stage1["$match — فلتر بالـ freelancerId"]
+        M["بس proposals الـ freelancer ده"]
+    end
+
+    subgraph stage2["$group — اجمع حسب status"]
+        G1["pending: 3"]
+        G2["accepted: 1"]
+        G3["rejected: 2"]
+    end
+
+    input --> stage1 --> stage2
+
+    style input fill:#2d3748,color:#fff
+    style stage1 fill:#2b6cb0,color:#fff
+    style stage2 fill:#276749,color:#fff
+```
+
+---
+
+## 💻 خطوة 4 — اعمل `src/routes/review.routes.js`
+
+```javascript
+const express = require('express');
+const {
+  createReview,
+  getFreelancerStats,
+} = require('../controllers/review.controller');
+const { protect, restrictTo } = require('../middlewares/auth.middleware');
+
+const router = express.Router();
+
+router.use(protect);
+
+router.post('/',                           restrictTo('client'), createReview);
+router.get('/stats/:freelancerId',         getFreelancerStats);
+
+module.exports = router;
+```
+
+---
+
+## 💻 خطوة 5 — ربط في `app.js`
+
+```javascript
+const reviewRoutes = require('./src/routes/review.routes');
+
+app.use('/api/v1/reviews', reviewRoutes);
+```
+
+---
+
+## 🇪🇬 خطوة مهمة — Project يتكمّل
+
+لاحظ إن الـ `createReview` بيشترط إن الـ project بـ `status: 'completed'`. لكن مفيش route بتحول الـ project لـ completed حتى دلوقتي.
+
+ضيف route بسيطة في الـ project controller:
+
+```javascript
+// في project.controller.js
+exports.completeProject = catchAsync(async (req, res, next) => {
+  const project = await Project.findById(req.params.id);
+
+  if (!project) return next(new AppError('No project found', 404));
+
+  if (project.client.toString() !== req.user._id.toString()) {
+    return next(new AppError('Not authorized', 403));
+  }
+
+  if (project.status !== 'in_progress') {
+    return next(new AppError('Project must be in_progress to complete', 400));
+  }
+
+  project.status = 'completed';
+  await project.save();
+
+  res.status(200).json({ status: 'success', data: { project } });
+});
+```
+
+وفي `project.routes.js`:
+
+```javascript
+const { ..., completeProject } = require('../controllers/project.controller');
+
+router.patch('/:id/complete', restrictTo('client'), completeProject);
+```
+
+---
+
+## ✅ Checkpoint
+
+**Test 1 — أكمل الـ Project:**
+
+> **Method:** `PATCH` **URL:** `http://localhost:5000/api/v1/projects/<project_id>/complete` **Header:** `Authorization: Bearer <client token>`
+> 
+> **Expected:** `200` + project بـ `status: "completed"`
+
+**Test 2 — اعمل Review:**
+
+> **Method:** `POST` **URL:** `http://localhost:5000/api/v1/reviews` **Header:** `Authorization: Bearer <client token>` **Body:**
+> 
+> ```json
+> {
+>   "projectId":    "<project_id>",
+>   "freelancerId": "<sara_id>",
+>   "rating":       5,
+>   "comment":      "Excellent work! Sara delivered the project on time and the quality was outstanding."
+> }
+> ```
+> 
+> **Expected:** `201` + review object
+
+**Test 3 — تحقق إن الـ avgRating اتحدّث:**
+
+```bash
+db.users.findOne({ email: 'sara@test.com' })
+```
+
+> هتشوف `avgRating: 5` و`ratingsCount: 1` — اتضافوا تلقائياً بالـ static method.
+
+**Test 4 — اعمل Review تاني على project تاني:**
+
+> اعمل project جديد، خليه يخلص، وبعدين review بـ rating مختلف. روح شوف الـ `avgRating` اتحسب تاني.
+
+**Test 5 — Dashboard Stats:**
+
+> **Method:** `GET` **URL:** `http://localhost:5000/api/v1/reviews/stats/<sara_id>` **Header:** `Authorization: Bearer <أي token>`
+> 
+> **Expected:**
+> 
+> ```json
+> {
+>   "status": "success",
+>   "data": {
+>     "proposals": [
+>       { "_id": "accepted", "count": 1 },
+>       { "_id": "rejected", "count": 1 }
+>     ],
+>     "reviews": {
+>       "avgRating": 4.5,
+>       "totalReviews": 2,
+>       "minRating": 4,
+>       "maxRating": 5
+>     }
+>   }
+> }
+> ```
+
+---
+
+## 🇪🇬 ملخص Sprint 10
+
+اللي اتعلمته:
+
+- **Aggregation Pipeline** — بيحسب على الـ DB مش في Node.js — أسرع بكتير مع data كبيرة
+- **`$match`** زي `WHERE` — **`$group`** زي `GROUP BY` في SQL
+- **Static Method** — على الـ Model مش الـ document — `this` = الـ Model
+- **`this.constructor`** — بيجيب الـ Model من الـ document بدون circular dependency
+- الـ **`pre/post findOneAnd` workaround** — عشان تشغّل logic بعد delete أو update بـ query middleware
+- الـ **Business Rules في الـ Review** — بس completed projects، بس الـ client صاحبه، بس الـ freelancer اللي اشتغل عليه
+
+---
+
+---
+
+# 🎯 Sprint 11 — Interview Survival Kit
+
+---
+
+## 🇪🇬 اللي هنعمله هنا
+
+مش كود — ده مراجعة نهائية. كل سؤال ممكن يتسألك في الـ interview مع الإجابة بالظبط بالطريقة اللي المفروض تقولها.
+
+---
+
+## ❓ الأسئلة المتوقعة وإجاباتها
+
+---
+
+### "فرّق بين Authentication وAuthorization"
+
+> **Authentication** — "مين أنت؟" — بنتحقق من هوية الـ user عن طريق الـ JWT. الـ `protect` middleware بيعمل ده.
+> 
+> **Authorization** — "مسموحلك تعمل ده؟" — بنتحقق من الـ role بعد ما عرفنا مين الـ user. الـ `restrictTo` middleware بيعمل ده.
+> 
+> الاتنين بيشتغلوا على الترتيب — `protect` الأول عشان يعرف مين الـ user، وبعدين `restrictTo` يشوف هل ينفع يعمل ده.
+
+---
+
+### "إيه هو الـ JWT وإزاي بيشتغل؟"
+
+> الـ JWT فيه 3 أجزاء: **Header** (algorithm) + **Payload** (data زي user ID) + **Signature** (HMAC hash للـ header والـ payload بالـ secret key).
+> 
+> لما السيرفر بيستقبله، بيعمل الـ signature من الأول باستخدام الـ secret key. لو الـ signature اللي عمله مطابق للـ signature في الـ token — الـ token صح. لو الـ payload اتغيّر — الـ signature مش هيتطابق والسيرفر يرفضه.
+> 
+> الـ JWT **Stateless** — السيرفر مش بيحفظ حاجة. كل المعلومات في الـ token نفسه.
+
+---
+
+### "ليه bcrypt وليه مش encryption؟"
+
+> الـ Encryption قابل للعكس — لو حد سرق الـ key يقدر يفك كل الـ passwords. الـ Hashing مش قابل للعكس خالص.
+> 
+> `bcrypt` بالذات مصمم يكون **بطيء** عن قصد عشان يصعّب الـ brute force attacks. وبيضيف **salt** تلقائياً — يعني نفس الـ password بيدي hash مختلف لكل user، فمش ممكن تعمل rainbow table attack.
+> 
+> وقت الـ login مش بنفك الـ hash — بنعمل hash للـ password الجديد ونقارن الـ hashes.
+
+---
+
+### "إيه هو الـ Mongoose Middleware (Hooks)؟"
+
+> في نوعين أساسيين:
+> 
+> **Document Middleware** — زي `pre('save')` وـ`post('save')`. `this` جوّاه = الـ document. بيشتغل مع `.save()` وـ`.create()` **بس**.
+> 
+> **Query Middleware** — زي `pre(/^find/)`. `this` جوّاه = الـ query. بيشتغل مع `.find()` وـ`.findOne()` وغيرهم.
+> 
+> **المشكلة المهمة:** `findByIdAndUpdate` **مش** بيشغّل document middleware. لو عندك hook مهم زي password hashing — لازم تستخدم `.save()` مش `findByIdAndUpdate`.
+
+---
+
+### "إيه الفرق بين `.save()` وـ`findByIdAndUpdate()`؟"
+
+> `save()` بيمر بـ الـ Mongoose lifecycle كامل — validation، pre-save hooks، post-save hooks.
+> 
+> `findByIdAndUpdate()` بيتكلم MongoDB مباشرة — أسرع، بس بيتجاوز الـ hooks والـ validators (إلا لو ضفت `{ runValidators: true }`).
+> 
+> القاعدة: لو في hook مهم لازم يشتغل — استخدم `.save()`. لو update بسيط ومفيش hooks مهمة — `findByIdAndUpdate()` أسرع وأنظف.
+
+---
+
+### "إيه هو الـ `catchAsync` وليه بنستخدمه؟"
+
+> هو higher-order function — بتاخد async function وبترجع function جديدة. الـ function الجديدة بتشغّل الـ original وبتعمل `.catch(next)` على أي rejection.
+> 
+> من غيره، لو promise رُفضت في async route handler — Express مش بيعرف يمسك الـ error دي بدون `try/catch`. معاه، أي error بتروح تلقائياً للـ global error handler.
+> 
+> النتيجة: مفيش `try/catch` في أي controller.
+
+---
+
+### "إيه الـ `isOperational` flag في `AppError`؟"
+
+> بيفرق بين نوعين من الـ errors:
+> 
+> **Operational Errors** — أنا عملتها عن قصد. زي "User not found" أو "Invalid credentials". آمن أبعت الـ message للـ client.
+> 
+> **Programming Errors** — bugs غير متوقعة. زي null reference أو typo. خطر أبعت التفاصيل للـ client — ممكن يكشف الـ architecture.
+> 
+> الـ global error handler بيشوف `isOperational` — لو `true` يبعت الـ message. لو `false` يبعت "Something went wrong" ويـ log الـ error داخلياً.
+
+---
+
+### "إيه الـ Cascade Hook وليه مكانه في الـ Model؟"
+
+> الـ Cascade هو الـ `post('save')` hook على الـ Proposal model. لما proposal يتحفظ بـ `status: 'accepted'` — بيرفض كل الـ proposals التانية على نفس الـ project ويحول الـ project لـ `in_progress` تلقائياً.
+> 
+> مكانه في الـ Model لأن الـ business rule دي مرتبطة بالـ data نفسها — مش بـ API endpoint معين. لو حطيناها في الـ controller، أي كود تاني يعمل `proposal.save()` من غير الـ API هيـ bypass الـ logic.
+
+---
+
+### "إيه هو الـ Aggregation Pipeline؟"
+
+> هو طريقة تعمل calculations معقدة على الـ MongoDB server نفسه بدل ما تجيب الـ data لـ Node.js وتحسب فيها.
+> 
+> بيمر بـ stages: `$match` (زي WHERE) ← `$group` (زي GROUP BY + aggregates) ← `$sort` ← `$project`.
+> 
+> أسرع بكتير مع data كبيرة لأن الحساب بيحصل على الـ DB server مش في الـ RAM بتاع الـ application.
+
+---
+
+### "إيه الفرق بين 401 و403؟"
+
+> **401 Unauthorized** — "مش عارف مين أنت". مفيش token أو الـ token باظ. الـ solution: اعمل login.
+> 
+> **403 Forbidden** — "عارف مين أنت، بس مش مسموحلك". عامل login، بس الـ role بتاعك مش ليه permission على الـ action ده.
+
+---
+
+## 🚨 أكتر الأخطاء اللي الناس بتعملها
+
+```mermaid
+flowchart TD
+    subgraph mistakes["أخطاء شائعة"]
+        M1["❌ استخدام arrow function في الـ Mongoose hooks\nبيخلي 'this' = undefined"]
+        M2["❌ نسيان next() في الـ middleware\nبيخلي الـ request تعلق"]
+        M3["❌ حط الـ error handler قبل الـ routes\nمش هيشتغل"]
+        M4["❌ الثقة في req.body للـ sensitive fields\nزي client أو role"]
+        M5["❌ استخدام findByIdAndUpdate مع fields فيها hooks\nزي password"]
+        M6["❌ مش إضافة runValidators: true\nمع findByIdAndUpdate"]
+        M7["❌ return next() من غير return\nبيبعت response اتنين"]
+    end
+
+    style mistakes fill:#4a1212,color:#fff
+```
+
+---
+
+## ✅ الـ Checklist النهائي قبل الـ Interview
+
+```
+الـ Server والـ Setup
+  ✅ express.json() موجود قبل الـ routes
+  ✅ Global error handler آخر حاجة في app.js
+  ✅ dotenv.config() أول سطر في server.js
+  ✅ process.on uncaughtException وunhandledRejection موجودين
+
+الـ Authentication
+  ✅ password عنده select: false في الـ Schema
+  ✅ pre-save hook بيعمل hash للـ password فقط لما isModified
+  ✅ function عادية في الـ hooks مش arrow function
+  ✅ JWT_SECRET في .env مش في الكود
+  ✅ تحقق من user وpassword في شرط واحد في الـ login
+
+الـ Authorization
+  ✅ protect قبل restrictTo دايماً
+  ✅ تحقق من .toString() لما بتقارن ObjectIds
+
+الـ Business Logic
+  ✅ client: req.user._id مش req.body.client
+  ✅ freelancer: req.user._id مش req.body.freelancer
+  ✅ Cascade Hook في الـ Model مش الـ Controller
+  ✅ mongoose.model() في الـ hooks مش require
+
+الـ Error Handling
+  ✅ next(new AppError(...)) مش throw
+  ✅ return next(...) عشان ما تبعتش response اتنين
+  ✅ catchAsync على كل async controller
+```
+
+---
+
+## 🇪🇬 كلمة الأخير
+
+اللي بنيته ده مش بس project — ده الـ foundations اللي كل production Node.js API بتتبنى عليها.
+
+لما المحاور يسألك في الـ interview — مش المهم تحفظ الكود. المهم تشرح **ليه**:
+
+- ليه الـ hash في الـ Model مش الـ Controller
+- ليه `next(err)` مش `throw`
+- ليه `protect` قبل `restrictTo`
+- ليه الـ Cascade في الـ Hook مش في الـ Controller
+
+الـ "ليه" هو اللي بيفرق بين Junior وMid-level developer.
+
+**بالتوفيق يا Mohamed 🚀**
