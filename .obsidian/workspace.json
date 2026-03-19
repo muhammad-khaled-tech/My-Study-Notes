@@ -14,7 +14,7 @@
               "type": "markdown",
               "state": {
                 "file": "Nodejs/FreelanceFlow_Learning_Journey.md",
-                "mode": "preview",
+                "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
@@ -237,6 +237,7 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "Nodejs/Unconfirmed 414583.crdownload",
     "Nodejs/ENV Variables.md",
     "Nodejs/FreelanceFlow_Learning_Journey.md",
     "Nodejs/Unconfirmed 451337.crdownload",
