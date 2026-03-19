@@ -2076,3 +2076,1166 @@ Server running on port 5000
 > هنشوف ليه الـ `password: "pass1234"` اللي بيتحفظ دلوقتي خطر جداً، وهنفهم إيه الـ hashing وليه مختلف عن الـ encryption، وهنبني الـ `pre('save')` hook اللي بيعمل hash للـ password تلقائياً قبل ما يتحفظ في الـ DB.
 >
 > قول "كمّل" لما تكون شفت الـ user اتحفظ في الـ DB بنفسك وجربت الـ 4 tests.
+
+---
+
+---
+
+# 🔐 Sprint 4 — Password Hashing : ليه الـ Password Plain Text خطر جداً؟
+
+---
+
+## 🇪🇬 المشكلة — شوف الـ Database دلوقتي
+
+افتح MongoDB Compass أو شغّل في الـ terminal:
+
+```bash
+mongosh
+use freelanceflow
+db.users.find()
+```
+
+هتشوف حاجة زي دي:
+
+```json
+{
+  "_id": "64abc...",
+  "name": "Mohamed",
+  "email": "mo@test.com",
+  "password": "pass1234",
+  "role": "client"
+}
+```
+
+**الـ password محفوظ كـ plain text.**
+
+تخيل السيناريو ده: هاكر اخترق الـ database بتاعتك. مش بس عرف كل بيانات الـ users — عرف كل الـ passwords بتاعتهم. ولأن معظم الناس بيستخدموا نفس الـ password في أكتر من موقع — الهاكر دلوقتي يقدر يدخل على Gmail، Facebook، وبنوكهم.
+
+```mermaid
+flowchart TD
+    H["هاكر اخترق الـ DB"] --> DB["وجد passwords كـ plain text"]
+    DB --> A["pass1234 → جرّب على Gmail ✓"]
+    DB --> B["pass1234 → جرّب على Facebook ✓"]
+    DB --> C["pass1234 → جرّب على البنك ✓"]
+
+    style H fill:#742a2a,color:#fff
+    style DB fill:#742a2a,color:#fff
+    style A fill:#742a2a,color:#fff
+    style B fill:#742a2a,color:#fff
+    style C fill:#742a2a,color:#fff
+```
+
+**الـ solution مش إنك تعمل الـ database أأمن.** لو الـ database اتاخد — خسرت. الـ solution إنك تخلي الـ passwords نفسها مش مفيدة حتى لو حد شافها.
+
+---
+
+## 🇪🇬 الفرق بين Encryption وHashing — مفهوم مهم جداً
+
+ناس كتير بتفكر إن الـ solution هو إنك "تشفّر" الـ password. بس في فرق أساسي.
+
+**Encryption — قابل للعكس:**
+
+الـ encryption بتحول الـ plain text لـ cipher text — بس ممكن ترجعه تاني باستخدام مفتاح سري.
+
+```mermaid
+flowchart LR
+    A["pass1234"] -->|encrypt بـ key| B["xK9#mP2$"]
+    B -->|decrypt بنفس الـ key| A
+
+    style A fill:#276749,color:#fff
+    style B fill:#2b6cb0,color:#fff
+```
+
+المشكلة: لو الهاكر سرق الـ key — يقدر يفك تشفير كل الـ passwords.
+
+**Hashing — مش قابل للعكس:**
+
+الـ hashing بيحول الـ plain text لـ string عشوائي — ومفيش طريقة ترجع منه للـ plain text الأصلي.
+
+```mermaid
+flowchart LR
+    A["pass1234"] -->|hash| B["$2b$12$xK9mP...8characters"]
+    B -->|مفيش طريقة ترجع| X["❌ مستحيل"]
+
+    style A fill:#276749,color:#fff
+    style B fill:#553c9a,color:#fff
+    style X fill:#742a2a,color:#fff
+```
+
+بس لو مفيش طريقة ترجع — إزاي السيرفر يتأكد إن الـ user بعت الـ password الصح وقت الـ login؟
+
+الإجابة: **مش بنفك الـ hash — بنعمل hash للـ password الجديد ونقارن الـ hashes.**
+
+```mermaid
+flowchart TD
+    subgraph register["وقت الـ Register"]
+        R1["User بعت: pass1234"] --> R2["bcrypt.hash(pass1234)"]
+        R2 --> R3["بنحفظ: $2b$12$xK9mP..."]
+    end
+
+    subgraph login["وقت الـ Login"]
+        L1["User بعت: pass1234"] --> L2["bcrypt.hash(pass1234)"]
+        L2 --> L3["$2b$12$xK9mP... ← نفس الـ hash!"]
+        L3 --> L4["قارن مع اللي في الـ DB ✅"]
+    end
+
+    subgraph hacker["الهاكر شاف الـ DB"]
+        HK1["وجد: $2b$12$xK9mP..."] --> HK2["محدش عنده plain text"]
+        HK2 --> HK3["مش قادر يسجّل دخول ❌"]
+    end
+
+    style register fill:#1a4731,color:#fff
+    style login fill:#1a365d,color:#fff
+    style hacker fill:#4a1212,color:#fff
+```
+
+---
+
+## 🇪🇬 bcrypt — ليه هو تحديداً؟
+
+في algorithms كتير للـ hashing. زي `MD5`، `SHA-256`. بس الـ developers اكتشفوا إن الـ algorithms دي سريعة جداً — وده مشكلة.
+
+**ليه السرعة مشكلة في الـ hashing؟**
+
+لو الـ algorithm سريع — الهاكر يقدر يجرّب مليار password في الثانية (Brute Force Attack).
+
+`bcrypt` بالذات مصمم عشان يكون **بطيء** — بياخد وقت معقول (مش ثانية كاملة، بس مش microseconds). ده مقصود.
+
+كمان `bcrypt` بيضيف **Salt** — كلمة عشوائية بتتضاف للـ password قبل الـ hash. يعني حتى لو اتنين users عندهم نفس الـ password — الـ hash بتاع كل واحد هيبقى مختلف.
+
+```mermaid
+flowchart TD
+    subgraph nosalt["بدون Salt — خطر"]
+        NS1["User A: pass1234 → $2b$ABC123"]
+        NS2["User B: pass1234 → $2b$ABC123"]
+        NS3["الهاكر شاف: الاتنين نفس الـ hash\nيعني نفس الـ password!"]
+    end
+
+    subgraph withsalt["مع Salt — آمن"]
+        WS1["User A: pass1234 + salt1 → $2b$XYZ789"]
+        WS2["User B: pass1234 + salt2 → $2b$KLM456"]
+        WS3["الهاكر شاف: hashين مختلفين\nمش عارف نفس الـ password"]
+    end
+
+    style nosalt fill:#4a1212,color:#fff
+    style withsalt fill:#1a4731,color:#fff
+```
+
+الـ `cost factor` أو `rounds` بيتحكم في بطء الـ algorithm. القيمة الـ standard هي `12` — بتاخد حوالي 300ms. مش محسوسة للـ user، بس صعبة جداً على الـ brute force.
+
+---
+
+## 🇪🇬 الـ `pre('save')` Hook — السحر اللي هنستخدمه
+
+دلوقتي عارفين إن محتاجين نعمل hash للـ password. السؤال: **فين نحطه؟**
+
+**Option 1 — نحطه في الـ Controller:**
+
+```javascript
+// في auth.controller.js
+exports.register = async (req, res) => {
+  const hashedPassword = await bcrypt.hash(req.body.password, 12);
+  const user = await User.create({ ...req.body, password: hashedPassword });
+  // ...
+};
+```
+
+**المشكلة:**
+
+```mermaid
+flowchart TD
+    subgraph problem["مشكلة وضع الـ hash في الـ Controller"]
+        C1["auth.controller.js\nبيعمل hash ✅"] 
+        C2["admin.controller.js\nنسي يعمل hash ❌"]
+        C3["seed.js script\nنسي يعمل hash ❌"]
+        C4["test.js\nنسي يعمل hash ❌"]
+        
+        C1 --> DB["Database"]
+        C2 --> DB
+        C3 --> DB
+        C4 --> DB
+    end
+
+    style problem fill:#4a1212,color:#fff
+    style DB fill:#553c9a,color:#fff
+```
+
+كل كود بيعمل `User.create()` لازم يتذكر يعمل hash. لو نسي واحد — passwords بتتحفظ plain text من غير ما تعرف.
+
+**Option 2 — نحطه في الـ Model (الصح):**
+
+```mermaid
+flowchart TD
+    subgraph correct["الحل الصح — في الـ Model"]
+        C1["auth.controller.js"]
+        C2["admin.controller.js"]
+        C3["seed.js script"]
+        C4["أي كود تاني"]
+
+        C1 --> Save["User.save()"]
+        C2 --> Save
+        C3 --> Save
+        C4 --> Save
+
+        Save --> Hook["pre-save Hook\nيعمل hash تلقائياً 🔒"]
+        Hook --> DB["Database\nدايماً hashed ✅"]
+    end
+
+    style correct fill:#1a4731,color:#fff
+    style Hook fill:#553c9a,color:#fff
+    style DB fill:#276749,color:#fff
+```
+
+الـ hook في الـ Model شغّال زي حارس على الباب. أي document بيحاول يتحفظ — بيعدي على الحارس ده الأول. مش ممكن تتجاوزه.
+
+ده اللي بيسميه الناس **"Fat Model, Thin Controller"** — الـ business logic بتكون في الـ Model، والـ Controller بيفضل خفيف.
+
+---
+
+## 🇪🇬 إيه هو الـ Hook بالتفصيل؟
+
+الـ Hook في Mongoose هو function بتقول لـ Mongoose: "قبل ما تعمل [operation معينة] — شغّل الكود ده الأول."
+
+في `pre('save')` — يعني: "قبل ما تحفظ أي document — شغّل الكود ده."
+
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant M as Mongoose
+    participant H as pre-save Hook
+    participant DB as MongoDB
+
+    C->>M: User.create(data)
+    M->>M: Run Validation
+    M->>H: شغّل pre-save hook
+    H->>H: bcrypt.hash(password, 12)
+    H->>H: this.password = hashedPassword
+    H->>M: next() — خلاص جاهز
+    M->>DB: INSERT document
+    DB-->>M: Saved ✅
+    M-->>C: return user
+```
+
+الـ Controller مش عارف أي حاجة عن الـ hash. بياخد البيانات، بيبعتها لـ Mongoose، وبيستنى. الـ hash بيحصل تلقائياً في الـ middle.
+
+---
+
+## 💻 خطوة 1 — Install bcryptjs
+
+```bash
+npm install bcryptjs
+```
+
+> **ليه `bcryptjs` مش `bcrypt`؟**
+> `bcrypt` بيحتاج compiling على الـ machine — ممكن يسبب مشاكل في بعض الـ environments.
+> `bcryptjs` مكتوب pure JavaScript — بيشتغل في أي مكان بدون مشاكل.
+
+---
+
+## 💻 خطوة 2 — أضف الـ Hook على الـ User Schema
+
+افتح `src/models/User.model.js` وعدّله يبقى كده:
+
+```javascript
+const mongoose = require('mongoose');
+const bcrypt   = require('bcryptjs');
+
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type:     String,
+      required: [true, 'Please provide your name'],
+      trim:     true,
+    },
+    email: {
+      type:      String,
+      required:  [true, 'Please provide your email'],
+      unique:    true,
+      lowercase: true,
+    },
+    password: {
+      type:      String,
+      required:  [true, 'Please provide a password'],
+      minlength: [8, 'Password must be at least 8 characters'],
+      select:    false,    // ← جديد: مش هيرجع في أي query تلقائياً
+    },
+    role: {
+      type:    String,
+      enum:    ['client', 'freelancer'],
+      default: 'freelancer',
+    },
+  },
+  { timestamps: true }
+);
+
+// ══════════════════════════════════════════════════════
+// THE HOOK: شغّل قبل أي save
+// ══════════════════════════════════════════════════════
+userSchema.pre('save', async function (next) {
+
+  // السطر ده مهم جداً — هنشرحه بالتفصيل تحت
+  if (!this.isModified('password')) return next();
+
+  // عمل hash للـ password برقم 12 round
+  this.password = await bcrypt.hash(this.password, 12);
+
+  // قول لـ Mongoose "خلاص كمّل"
+  next();
+});
+
+const User = mongoose.model('User', userSchema);
+module.exports = User;
+```
+
+---
+
+## 🇪🇬 شرح كل سطر في الـ Hook — بالتفصيل الكامل
+
+### `userSchema.pre('save', async function(next) { ... })`
+
+**`userSchema.pre`** — بتقول لـ Mongoose: "قبل كده."
+
+**`'save'`** — قبل أي `save` operation. يشتغل مع `User.create()` ومع `user.save()`.
+
+**`async function`** — لازم يكون `async` لأن `bcrypt.hash()` بياخد وقت ومحتاج `await`.
+
+**لازم تستخدم `function` العادية مش arrow function:**
+
+```javascript
+// ✅ صح — function عادية
+userSchema.pre('save', async function(next) {
+  console.log(this); // 'this' = الـ document نفسه
+});
+
+// ❌ غلط — arrow function
+userSchema.pre('save', async (next) => {
+  console.log(this); // 'this' = undefined أو الـ global scope
+});
+```
+
+Arrow functions مش بتعمل `this` خاص بيها — بتورث الـ `this` من الـ scope اللي فوقيها. في الـ Mongoose hooks — `this` المفروض يبقى الـ document الحالي. لو استخدمت arrow function — `this` مش هيبقى الـ document.
+
+---
+
+### `this` — إيه ده بالظبط؟
+
+```javascript
+userSchema.pre('save', async function(next) {
+  console.log(this.name);     // اسم الـ user اللي بيتحفظ دلوقتي
+  console.log(this.email);    // الـ email بتاعه
+  console.log(this.password); // الـ password — plain text لسه
+});
+```
+
+`this` جوا الـ Mongoose hook هو **الـ document نفسه** اللي بيتحفظ.
+
+```mermaid
+flowchart TD
+    subgraph document["الـ Document اللي بيتحفظ"]
+        D1["this.name = 'Mohamed'"]
+        D2["this.email = 'mo@test.com'"]
+        D3["this.password = 'pass1234' ← هنغيّره"]
+        D4["this.role = 'client'"]
+    end
+
+    H["pre-save hook\nبيشتغل هنا\nوعنده access على كل ده"] --> document
+
+    style document fill:#1a365d,color:#fff
+    style H fill:#553c9a,color:#fff
+```
+
+لما بنكتب `this.password = hashedPassword` — بنغيّر الـ password في الـ document قبل ما يتحفظ في الـ DB.
+
+---
+
+### `if (!this.isModified('password')) return next();`
+
+ده من أهم الأسطر في الـ hook. خليني أشرح ليه موجود.
+
+**السيناريو:** User عنده اسمه ومسح الاسم وغيّره. بعت `user.save()` عشان يحفظ التغيير ده.
+
+لو مش عندنا الـ check ده — الـ hook هيشتغل وهيعمل hash للـ password تاني حتى لو الـ password ما اتغيرش!
+
+```mermaid
+flowchart TD
+    subgraph without_check["❌ بدون isModified check"]
+        WC1["User غيّر اسمه بس"] --> WC2["user.save() اتشغل"]
+        WC2 --> WC3["Hook بيعمل hash للـ password تاني"]
+        WC3 --> WC4["الـ password اتغيّر في الـ DB\nحتى لو ما اتغيرش!"]
+    end
+
+    subgraph with_check["✅ مع isModified check"]
+        WH1["User غيّر اسمه بس"] --> WH2["user.save() اتشغل"]
+        WH2 --> WH3["isModified('password')?"]
+        WH3 -->|No — الـ password ما اتغيرش| WH4["next() — روح للحفظ مباشرة"]
+        WH3 -->|Yes — الـ password اتغيّر| WH5["bcrypt.hash وبعدين next()"]
+    end
+
+    style without_check fill:#4a1212,color:#fff
+    style with_check fill:#1a4731,color:#fff
+```
+
+`this.isModified('password')` — بيسأل Mongoose: "هل الـ `password` field في الـ document ده اتغيّر من آخر مرة اتحفظ؟"
+
+لو الـ user بيسجّل لأول مرة — `isModified('password')` بيرجع `true` لأن كل حاجة جديدة.
+
+لو الـ user بيغيّر اسمه بس — بيرجع `false` لأن الـ password ما اتلمسش.
+
+`return next()` — الـ `return` هنا مهم. بيوقف تنفيذ بقية الـ hook ومش بيكمل للـ `bcrypt.hash`.
+
+---
+
+### `this.password = await bcrypt.hash(this.password, 12);`
+
+**`bcrypt.hash(data, saltRounds)`**
+
+- `data` — النص اللي هنعمل له hash. في حالتنا `this.password`.
+- `saltRounds` أو `cost factor` — عدد مرات الـ hashing. `12` هو الـ standard.
+
+```mermaid
+flowchart LR
+    A["'pass1234'"] --> B["bcrypt.hash\ncost=12"]
+    B --> C["$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"]
+
+    style A fill:#276749,color:#fff
+    style B fill:#553c9a,color:#fff
+    style C fill:#2b6cb0,color:#fff
+```
+
+الـ output ده بيحتوي على كل حاجة محتاجها للتحقق بعدين:
+- `$2b$` — version الـ algorithm
+- `12$` — الـ cost factor
+- باقي الـ string — الـ salt + الـ hash مع بعض
+
+**`await`** — لأن `bcrypt.hash` بياخد وقت. بنستنى ينتهي قبل ما نكمل.
+
+بعد السطر ده — `this.password` مش بقاله قيمة `'pass1234'`. بقت القيمة الـ hashed string. ولما Mongoose يحفظ الـ document — هيحفظ الـ hashed string.
+
+---
+
+### `select: false` على الـ password field
+
+```javascript
+password: {
+  type:   String,
+  select: false,   // ← جديد
+}
+```
+
+`select: false` يعني: "مش هيترجع في أي query عادية."
+
+```mermaid
+flowchart TD
+    subgraph without_select["بدون select: false"]
+        WS["User.find()"] --> WR["{ name, email, password: '$2b$12$...' }"]
+        WR --> WD["الـ hash ظاهر في كل response ❌"]
+    end
+
+    subgraph with_select["مع select: false"]
+        WH["User.find()"] --> WHR["{ name, email }"]
+        WHR --> WHD["الـ password مش موجود في الـ response ✅"]
+        
+        WH2["User.findOne().select('+password')"] --> WH2R["{ name, email, password: '$2b$12$...' }"]
+        WH2R --> WH2D["بس لما تطلبه صراحة ✅"]
+    end
+
+    style without_select fill:#4a1212,color:#fff
+    style with_select fill:#1a4731,color:#fff
+```
+
+الـ hash مش plain text — بس في الـ best practice مش نرجع الـ password field خالص حتى وهو hashed. لما نحتاجه (وقت الـ login) هنطلبه صراحة بـ `.select('+password')`.
+
+---
+
+### `next()` — ليه في آخر الـ Hook؟
+
+```javascript
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  next(); // ← لازم نقول "خلاص كمّلت"
+});
+```
+
+الـ `next` في الـ Mongoose hook زي الـ `next` في الـ Express middleware. لو ما قلتش `next()` — Mongoose هيفضل واقف مستني، والـ document مش هيتحفظ أبداً.
+
+---
+
+## ✅ Checkpoint
+
+**Test 1 — اخلق User جديد:**
+
+> **Method:** `POST`
+> **URL:** `http://localhost:5000/test-user`
+> **Body:**
+> ```json
+> { "name": "Mohamed", "email": "mo2@test.com", "password": "pass1234", "role": "client" }
+> ```
+>
+> شوف الـ response — المفروض تلاقي:
+> - الـ `password` **مش موجود** في الـ response خالص (بسبب `select: false`)
+> - الـ user اتخلق بنجاح
+
+**Test 2 — تأكد في الـ Database:**
+
+في MongoDB Compass أو `mongosh`:
+
+```bash
+db.users.find({ email: 'mo2@test.com' })
+```
+
+هتشوف الـ password محفوظ كـ hash:
+
+```json
+{
+  "password": "$2b$12$N9qo8uLOickgx2ZMR..."
+}
+```
+
+مش `pass1234` — الـ hashing اشتغل.
+
+**Test 3 — بعت password أقل من 8 حروف:**
+
+> **Body:** `{ "name": "Test", "email": "test@test.com", "password": "123" }`
+>
+> **Expected:** ValidationError — "Password must be at least 8 characters"
+
+**Test 4 — تأكد إن نفس الـ password بيدي hash مختلف:**
+
+ابعت نفس الـ request مرتين بـ email مختلف بس نفس الـ password.
+
+```bash
+db.users.find({}, { password: 1 })
+```
+
+هتشوف إن الاتنين عندهم passwords hashed مختلفين — رغم إنهم نفس الـ password الأصلي. ده الـ salt شغّال.
+
+---
+
+## 🇪🇬 ملخص Sprint 4
+
+اللي اتعلمته:
+
+- Plain text passwords خطر كارثي لو الـ DB اتاخد
+- الـ Hashing مختلف عن الـ Encryption — مش قابل للعكس
+- `bcrypt` بطيء عن قصد — عشان يصعّب الـ brute force
+- الـ Salt بيخلي نفس الـ password يدي hash مختلف لكل user
+- الـ `pre('save')` hook بيشتغل تلقائياً قبل أي save
+- `this` جوا الـ hook هو الـ document — لازم `function` عادية مش arrow
+- `isModified('password')` بيمنع إنك تعمل hash للـ password لو ما اتغيرش
+- `select: false` على الـ password بيمنع إنه يظهر في الـ responses
+
+---
+
+> **جاهز للـ Sprint 5؟**
+>
+> Sprint 5 هو أول sprint عملي كامل في الـ Project — بنبني الـ **Register flow** بالكامل.
+>
+> هنعمل Controller حقيقي وRoute حقيقي. هنتعلم إزاي نقسّم الكود لملفات منظمة بدل ما يبقى كله في `server.js`. وهنشرح ليه بنبعت `201 Created` مش `200 OK` لما نخلق user جديد.
+>
+> قول "كمّل" لما تكون شفت الـ password محفوظ كـ hash في الـ DB بنفسك.
+
+
+---
+
+# 👤 Sprint 5 — Register : أول Endpoint حقيقي
+
+---
+
+## 🇪🇬 المشكلة — الكود كله في `server.js`
+
+دلوقتي كل حاجة في ملف واحد. كلما ضفنا route ضفناه في `server.js`. لو كملنا كده — الملف هيبقى 500 سطر وصعب تلاقي أي حاجة.
+
+في production apps بنقسّم الكود على ملفات حسب مسؤولياتهم.
+
+```mermaid
+flowchart TD
+    subgraph before["❌ قبل — كل حاجة في server.js"]
+        S["server.js\n500+ سطر\nفيه routes وlogic وconnection وكل حاجة"]
+    end
+
+    subgraph after["✅ بعد — مقسّم صح"]
+        SV["server.js\nبس connection وapp.listen"]
+        AP["app.js\nMiddlewares وRoutes mounting"]
+        AR["auth.routes.js\nRoute definitions"]
+        AC["auth.controller.js\nBusiness logic"]
+        UM["User.model.js\nDatabase schema"]
+    end
+
+    style before fill:#4a1212,color:#fff
+    style after fill:#1a4731,color:#fff
+```
+
+---
+
+## 🇪🇬 الـ MVC Pattern — إيه ده؟
+
+MVC اختصار لـ Model-View-Controller. ده pattern لتنظيم الكود.
+
+في الـ API بتاعتنا مفيش View (مفيش HTML). بس عندنا:
+
+```mermaid
+flowchart LR
+    subgraph MVC["MVC في الـ API"]
+        M["Model\nUser.model.js\nشكل الداتا\nوقواعدها\nوهooksها"]
+        C["Controller\nauth.controller.js\nالـ logic\nبياخد request\nبيكلم Model\nبيبعت response"]
+        R["Routes\nauth.routes.js\nبيربط URLs\nبالـ Controllers"]
+    end
+
+    REQ["Request"] --> R
+    R --> C
+    C --> M
+    M --> C
+    C --> RES["Response"]
+
+    style M fill:#276749,color:#fff
+    style C fill:#2b6cb0,color:#fff
+    style R fill:#553c9a,color:#fff
+    style REQ fill:#2d3748,color:#fff
+    style RES fill:#2d3748,color:#fff
+```
+
+كل طبقة عندها **مسؤولية واحدة بس:**
+
+- **Model** — يعرف شكل الداتا وقواعدها. مش شغلته يعرف إيه الـ HTTP status code.
+- **Controller** — يعرف يستقبل request ويرد response. مش شغلته يعرف تفاصيل الـ database.
+- **Route** — يعرف يوصّل URL بـ Controller. مش شغلته يعرف الـ logic.
+
+---
+
+## 🇪🇬 إيه الـ `catchAsync` ولازم نعمله ليه؟
+
+في كل controller هنكتب `async/await`. وكل `async` ممكن يـ throw error.
+
+دلوقتي بنكتب كده في كل route:
+
+```javascript
+app.post('/test-user', async (req, res, next) => {
+  try {
+    const user = await User.create(req.body);
+    res.json({ user });
+  } catch (err) {
+    next(err); // ← بنكرر ده في كل controller
+  }
+});
+```
+
+لو عندنا 20 controller — هنكتب نفس الـ `try/catch` 20 مرة.
+
+الحل: بنعمل **wrapper function** بتلف أي async function وبتمسك أي error تلقائياً:
+
+```mermaid
+flowchart TD
+    subgraph without["❌ بدون catchAsync"]
+        W1["controller 1\ntry catch next err"]
+        W2["controller 2\ntry catch next err"]
+        W3["controller 3\ntry catch next err"]
+    end
+
+    subgraph with["✅ مع catchAsync"]
+        WA["catchAsync\nواحدة بس\nbتمسك كل الـ errors"]
+        WA --> C1["controller 1\nنظيف بدون try catch"]
+        WA --> C2["controller 2\nنظيف بدون try catch"]
+        WA --> C3["controller 3\nنظيف بدون try catch"]
+    end
+
+    style without fill:#4a1212,color:#fff
+    style with fill:#1a4731,color:#fff
+```
+
+---
+
+## 💻 خطوة 1 — الـ Folder Structure الجديدة
+
+اعمل الـ folders دي:
+
+```bash
+mkdir src/controllers
+mkdir src/routes
+```
+
+الـ structure هتبقى كده:
+
+```
+freelance-flow/
+├── src/
+│   ├── controllers/
+│   │   └── auth.controller.js    ← جديد
+│   ├── middlewares/
+│   │   └── errorHandler.js
+│   ├── models/
+│   │   └── User.model.js
+│   ├── routes/
+│   │   └── auth.routes.js        ← جديد
+│   └── utils/
+│       └── AppError.js
+│       └── catchAsync.js         ← جديد
+├── .env
+├── server.js
+```
+
+---
+
+## 💻 خطوة 2 — اعمل `src/utils/catchAsync.js`
+
+```javascript
+// catchAsync هي function بتاخد function وبترجع function
+// يعني: higher-order function
+const catchAsync = (fn) => {
+  return (req, res, next) => {
+    // بتشغّل الـ async function
+    // لو رجعت error — .catch(next) بيبعتها للـ error handler
+    fn(req, res, next).catch(next);
+  };
+};
+
+module.exports = catchAsync;
+```
+
+---
+
+## 🇪🇬 شرح `catchAsync` بالتفصيل
+
+```javascript
+const catchAsync = (fn) => {
+  return (req, res, next) => {
+    fn(req, res, next).catch(next);
+  };
+};
+```
+
+ده اللي بيحصل خطوة بخطوة:
+
+```mermaid
+flowchart TD
+    A["catchAsync(myController)"] --> B["بترجع function جديدة\n(req, res, next) => ..."]
+    B --> C["Express بيشغّل الـ function دي\nلما الـ request ييجي"]
+    C --> D["fn(req, res, next)\nيعني بتشغّل الـ controller الأصلي"]
+    D -->|نجح| E["Controller بعت response\nخلاص ✅"]
+    D -->|فشل - throw أو reject| F[".catch(next)"]
+    F --> G["next(err)\nبيوصل للـ Global Error Handler"]
+
+    style A fill:#553c9a,color:#fff
+    style B fill:#2b6cb0,color:#fff
+    style E fill:#276749,color:#fff
+    style F fill:#742a2a,color:#fff
+    style G fill:#742a2a,color:#fff
+```
+
+**مثال عملي — الفرق:**
+
+```javascript
+// ❌ بدون catchAsync — مملّ ومتكرر
+exports.register = async (req, res, next) => {
+  try {
+    const user = await User.create(req.body);
+    res.status(201).json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ✅ مع catchAsync — نظيف
+exports.register = catchAsync(async (req, res, next) => {
+  const user = await User.create(req.body);
+  res.status(201).json({ user });
+  // لو User.create رمى error — catchAsync بيمسكه ويبعته لـ next()
+});
+```
+
+---
+
+## 💻 خطوة 3 — اعمل `src/controllers/auth.controller.js`
+
+```javascript
+const User       = require('../models/User.model');
+const AppError   = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+
+// ══════════════════════════════════════════════════════
+// REGISTER
+// ══════════════════════════════════════════════════════
+exports.register = catchAsync(async (req, res, next) => {
+
+  // Step 1: اخلق الـ User
+  // الـ password هيتعمله hash تلقائياً بسبب الـ pre-save hook
+  const newUser = await User.create({
+    name:     req.body.name,
+    email:    req.body.email,
+    password: req.body.password,
+    role:     req.body.role,
+  });
+
+  // Step 2: بعت الـ response
+  // 201 = Created — مش 200 OK
+  res.status(201).json({
+    status: 'success',
+    data: {
+      user: newUser,
+    },
+  });
+});
+```
+
+---
+
+## 🇪🇬 ليه `201` مش `200`؟
+
+الـ HTTP Status Codes مش decoration — بيوصلوا معنى:
+
+```mermaid
+flowchart LR
+    subgraph codes["HTTP Status Codes المهمة"]
+        C200["200 OK\nالطلب نجح\nوفيه response body"]
+        C201["201 Created\nاتعمل resource جديد بنجاح"]
+        C204["204 No Content\nنجح بس مفيش حاجة ترجعها\nمثلاً بعد DELETE"]
+        C400["400 Bad Request\nالـ client بعت بيانات غلط"]
+        C401["401 Unauthorized\nمش logged in"]
+        C403["403 Forbidden\nlogged in بس مش مسموحلك"]
+        C404["404 Not Found\nالـ resource مش موجود"]
+        C500["500 Internal Server Error\nالسيرفر وقع بسبب bug"]
+    end
+
+    style C200 fill:#276749,color:#fff
+    style C201 fill:#276749,color:#fff
+    style C204 fill:#276749,color:#fff
+    style C400 fill:#744210,color:#fff
+    style C401 fill:#742a2a,color:#fff
+    style C403 fill:#742a2a,color:#fff
+    style C404 fill:#744210,color:#fff
+    style C500 fill:#4a1212,color:#fff
+```
+
+`POST /register` بيخلق user جديد — الصح إنك تبعت `201 Created`.
+
+لو بعتنا `200 OK` — مش غلط technically، بس مش semantically صح. والـ clients اللي بتتكلم مع الـ API بتعتمد على الـ status codes دي.
+
+---
+
+## 🇪🇬 ليه بنكتب `req.body.name` بدل `...req.body`؟
+
+```javascript
+// ❌ خطر — بتثق في كل حاجة جاية من الـ client
+const newUser = await User.create(req.body);
+
+// ✅ آمن — بتحدد بالظبط إيه اللي بتقبله
+const newUser = await User.create({
+  name:     req.body.name,
+  email:    req.body.email,
+  password: req.body.password,
+  role:     req.body.role,
+});
+```
+
+تخيل حد بعت:
+
+```json
+{
+  "name": "Mohamed",
+  "email": "mo@test.com",
+  "password": "pass1234",
+  "role": "client",
+  "isAdmin": true
+}
+```
+
+لو استخدمنا `...req.body` — ممكن يبقى عندنا field زيادة في الـ document. Mongoose هيتجاهله لأنه مش في الـ Schema — بس ده habit خطير لازم تتجنبه من الأول.
+
+```mermaid
+flowchart TD
+    A["Client بعت:\nname, email, password, role, isAdmin"] --> B{كيف بنتعامل مع الـ body؟}
+    B -->|"User.create(req.body)"| C["❌ بتثق في كل حاجة\nخطر على المدى البعيد"]
+    B -->|"User.create({ name, email, ... })"| D["✅ بتحدد بالظبط\nإيه اللي بتقبله"]
+
+    style C fill:#4a1212,color:#fff
+    style D fill:#1a4731,color:#fff
+```
+
+---
+
+## 💻 خطوة 4 — اعمل `src/routes/auth.routes.js`
+
+```javascript
+const express = require('express');
+const { register } = require('../controllers/auth.controller');
+
+// express.Router() بيعمل mini-app
+// بتحدد فيه routes وبعدين بتـ mount على الـ app الأساسي
+const router = express.Router();
+
+// POST /api/v1/auth/register
+router.post('/register', register);
+
+module.exports = router;
+```
+
+---
+
+## 🇪🇬 شرح `express.Router()`
+
+الـ `express.Router()` بيعمل router object — زي mini version من الـ `app`.
+
+الفكرة: بدل ما تكتب `app.post('/api/v1/auth/register', handler)` في `server.js` — بتعمل router منفصل، وبتـ mount عليه الـ routes بتاعته، وبعدين بتوصّله على الـ app.
+
+```mermaid
+flowchart TD
+    APP["app.js\napp.use('/api/v1/auth', authRouter)"]
+
+    subgraph authRouter["auth.routes.js — authRouter"]
+        R1["POST /register → register controller"]
+        R2["POST /login → login controller"]
+    end
+
+    APP --> authRouter
+
+    REQ1["POST /api/v1/auth/register"] --> APP
+    REQ2["POST /api/v1/auth/login"] --> APP
+
+    style APP fill:#553c9a,color:#fff
+    style authRouter fill:#2b6cb0,color:#fff
+```
+
+لما بتعمل `app.use('/api/v1/auth', authRouter)` — Express بيقول:
+
+> "أي request URL يبدأ بـ `/api/v1/auth` — اديه للـ authRouter."
+
+والـ authRouter بعدين بيشوف باقي الـ URL — `/register` أو `/login` وبيوصلها للـ controller الصح.
+
+---
+
+## 💻 خطوة 5 — اعمل `app.js`
+
+اعمل ملف جديد `app.js` في الـ root:
+
+```javascript
+const express            = require('express');
+const AppError           = require('./src/utils/AppError');
+const globalErrorHandler = require('./src/middlewares/errorHandler');
+
+// Import Routes
+const authRoutes = require('./src/routes/auth.routes');
+
+const app = express();
+
+// ═══════════════════════════════
+// Global Middlewares
+// ═══════════════════════════════
+app.use(express.json());
+
+// ═══════════════════════════════
+// Routes
+// ═══════════════════════════════
+app.use('/api/v1/auth', authRoutes);
+
+// ═══════════════════════════════
+// 404 — أي route مش موجودة
+// ═══════════════════════════════
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+// ═══════════════════════════════
+// Global Error Handler — آخر حاجة
+// ═══════════════════════════════
+app.use(globalErrorHandler);
+
+module.exports = app;
+```
+
+---
+
+## 💻 خطوة 6 — نظّف `server.js`
+
+`server.js` دلوقتي مسؤوليته بس: وصّل الـ DB وشغّل الـ server.
+
+```javascript
+require('dotenv').config();
+
+const mongoose = require('mongoose');
+const app      = require('./app');
+
+const PORT     = process.env.PORT     || 5000;
+const MONGO_URI = process.env.MONGO_URI;
+
+// ═══════════════════════════════
+// Handle uncaught exceptions
+// (errors خارج Express — زي syntax error في الكود)
+// ═══════════════════════════════
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! Shutting down...');
+  console.error(err.name, err.message);
+  process.exit(1);
+});
+
+// ═══════════════════════════════
+// Connect to MongoDB
+// ═══════════════════════════════
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch((err) => {
+    console.error('❌ MongoDB Connection Failed:', err.message);
+    process.exit(1);
+  });
+
+// ═══════════════════════════════
+// Start Server
+// ═══════════════════════════════
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+
+// ═══════════════════════════════
+// Handle unhandled promise rejections
+// (errors جوا async code مش اتمسكوا)
+// ═══════════════════════════════
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! Shutting down...');
+  console.error(err.name, err.message);
+  server.close(() => process.exit(1));
+});
+```
+
+---
+
+## 🇪🇬 شرح `uncaughtException` و`unhandledRejection`
+
+دول اتنين scenarios خطيرين:
+
+```mermaid
+flowchart TD
+    subgraph uncaught["uncaughtException"]
+        U1["Error حصل في\nsynchronous code\nومحدش مسكه بـ try/catch"]
+        U1 --> U2["مثلاً: خطأ في top-level code"]
+        U2 --> U3["process.exit(1)"]
+    end
+
+    subgraph unhandled["unhandledRejection"]
+        R1["Promise rejected\nومحدش عمله .catch()"]
+        R1 --> R2["مثلاً: DB connection فشل\nبعد ما السيرفر اشتغل"]
+        R2 --> R3["server.close() أولاً\nبعدين process.exit(1)"]
+    end
+
+    style uncaught fill:#742a2a,color:#fff
+    style unhandled fill:#4a1212,color:#fff
+```
+
+**ليه `server.close()` قبل `process.exit()`؟**
+
+`server.close()` بيوقف السيرفر من قبول requests جديدة — بس بيخلي الـ requests الموجودة خلاص تكمل. بعدين `process.exit(1)` بيوقف العملية كلها. ده أنظف من إنك توقف فجأة.
+
+---
+
+## 🇪🇬 الـ Request Flow الكاملة بعد التقسيم
+
+```mermaid
+sequenceDiagram
+    participant C as Client (Postman)
+    participant SV as server.js
+    participant AP as app.js
+    participant MW as express.json()
+    participant RT as auth.routes.js
+    participant CT as auth.controller.js
+    participant MD as User.model.js
+    participant DB as MongoDB
+
+    C->>SV: POST /api/v1/auth/register
+    SV->>AP: app(req, res)
+    AP->>MW: express.json() parses body
+    MW->>RT: يطابق /api/v1/auth
+    RT->>CT: يطابق POST /register
+    CT->>MD: User.create(data)
+    MD->>MD: pre-save hook — bcrypt.hash
+    MD->>DB: INSERT document
+    DB-->>MD: user saved
+    MD-->>CT: return newUser
+    CT-->>C: res.status(201).json({ user })
+```
+
+---
+
+## ✅ Checkpoint
+
+شغّل السيرفر: `npm run dev`
+
+المفروض تشوف:
+
+```
+🚀 Server running on port 5000
+✅ MongoDB Connected
+```
+
+**Test 1 — Register صح:**
+
+> **Method:** `POST` **URL:** `http://localhost:5000/api/v1/auth/register` **Body (raw JSON):**
+> 
+> ```json
+> {
+>   "name": "Mohamed",
+>   "email": "newuser@test.com",
+>   "password": "password123",
+>   "role": "client"
+> }
+> ```
+> 
+> **Expected:**
+> 
+> ```json
+> {
+>   "status": "success",
+>   "data": {
+>     "user": {
+>       "_id": "...",
+>       "name": "Mohamed",
+>       "email": "newuser@test.com",
+>       "role": "client",
+>       "createdAt": "...",
+>       "updatedAt": "..."
+>     }
+>   }
+> }
+> ```
+> 
+> **لاحظ:** الـ `password` مش موجود في الـ response — `select: false` شغّال.
+> 
+> **لاحظ:** الـ status في Postman فوق: `201 Created` مش `200 OK`.
+
+**Test 2 — Email موجود بالفعل:**
+
+> ابعت نفس الـ request بنفس الـ email مرة تانية.
+> 
+> **Expected:** error بيقول duplicate
+
+**Test 3 — بيانات ناقصة:**
+
+> **Body:** `{ "name": "Ahmed" }`
+> 
+> **Expected:** ValidationError
+
+**Test 4 — Route مش موجودة:**
+
+> **Method:** `GET` **URL:** `http://localhost:5000/api/v1/auth/anything`
+> 
+> **Expected:** `{ "status": "fail", "message": "Can't find..." }`
+
+---
+
+## 🇪🇬 ملخص Sprint 5
+
+اللي اتعلمته:
+
+- **MVC Pattern** — كل layer عندها مسؤولية واحدة بس
+- **`catchAsync`** — بتلف الـ async controllers وبتمسك الـ errors تلقائياً
+- **`express.Router()`** — بتعمل mini-app للـ routes وبتـ mount على الـ app
+- **`201 Created`** مش `200 OK` — الـ status codes بيوصّلوا معنى
+- **`req.body.field`** مش `...req.body` — بتحدد بالظبط إيه اللي بتقبله
+- **`app.js`** vs **`server.js`** — الأول للـ Express setup، التاني للـ DB وبدء التشغيل
+- **`uncaughtException`** و**`unhandledRejection`** — للـ errors اللي خارج Express
+
+---
+
+> **جاهز للـ Sprint 6؟**
+> 
+> Sprint 6 هو **Login + JWT**. هنشوف إيه الـ JWT بالظبط — 3 أجزاء، إزاي بيتعمل، وإيه معنى "Stateless Authentication". وهنبني الـ login endpoint اللي بيرجع token.
+> 
+> قول "كمّل" لما تكون شفت الـ `201 Created` في Postman بنفسك.
