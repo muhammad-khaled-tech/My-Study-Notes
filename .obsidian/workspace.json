@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Nodejs/Node.js_Interview_Prep_Arabic.md",
-                "mode": "preview",
+                "file": "Aws practitioner/02_IAM.md",
+                "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Node.js_Interview_Prep_Arabic"
+              "title": "02_IAM"
             }
           }
         ]
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 217.5124969482422
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,16 +237,20 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "bash/Shell_Scripting_Day2.excalidraw",
+    "bash/Shell_Scripting_Day2_Guide.md",
+    "bash/DBMS_BigPicture.excalidraw",
+    "Java Core/Exceptions.md",
+    "Java Core/Data Types.md",
+    "Java Core/Callback interface.md",
+    "Nodejs/ENV Variables.md",
+    "Nodejs/commom modules.md",
+    "Nodejs/Node.js_Interview_Prep_Arabic.md",
     "Nodejs/NodeJS_Internals_Masterclass.md",
     "Nodejs/Unconfirmed 243159.crdownload",
     "Nodejs/FreelanceFlow_Complete_Guide (1).md",
-    "Nodejs/Node.js_Interview_Prep_Arabic.md",
     "Java Core/Generics and Lambda Expressions and Method Reference.md",
-    "Java Core/Exceptions.md",
-    "Java Core/Callback interface.md",
-    "Java Core/Data Types.md",
     "Nodejs/esm modules.md",
-    "Nodejs/commom modules.md",
     "Untitled 4.md",
     "problem solving/hashing_tutorial.md",
     "problem solving/prefix_sum_tutorial.md",
@@ -267,11 +271,6 @@
     "Untitled 1.md",
     "Untitled.md",
     "bash/Shell_Scripting_Day3_Guide.md",
-    "bash/Shell_Scripting_Day2_Guide.md",
-    "bash/Shell_Scripting_Day1_Guide.md",
-    "bash/Shell_Scripting_Day2.excalidraw",
-    "bash/DBMS_Project_Plan.md",
-    "bash/DBMS_BigPicture.excalidraw",
     "admin2/Unconfirmed 320946.crdownload",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",

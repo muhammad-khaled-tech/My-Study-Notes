@@ -94,7 +94,7 @@ related:
     
     
     
-    ```Java
+    ```java
     // 1. جبنا الشخص
     ActionListener mom = new Person();
     
