@@ -26,7 +26,8 @@
     "Aws practitioner/what is cloud computing?.md": "rtl",
     "problem solving/DSA_Zero_to_Hero.md": "rtl",
     "problem solving/hashing_tutorial.md": "auto",
-    "Nodejs/Node.js_Interview_Prep_Arabic.md": "rtl"
+    "Nodejs/Node.js_Interview_Prep_Arabic.md": "rtl",
+    "Nodejs/NodeJS_Internals_Masterclass.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
