@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Java Core/Generics and Lambda Expressions and Method Reference.md",
-                "mode": "source",
+                "file": "Nodejs/FreelanceFlow_Complete_Guide (1).md",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Generics and Lambda Expressions and Method Reference"
+              "title": "FreelanceFlow_Complete_Guide (1)"
             }
           }
         ]
@@ -237,12 +237,13 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "Nodejs/Node.js_Interview_Prep_Arabic.md",
+    "Java Core/Generics and Lambda Expressions and Method Reference.md",
     "Java Core/Exceptions.md",
     "Java Core/Callback interface.md",
     "Java Core/Data Types.md",
     "Nodejs/esm modules.md",
     "Nodejs/commom modules.md",
-    "Nodejs/Node.js_Interview_Prep_Arabic.md",
     "Untitled 4.md",
     "problem solving/hashing_tutorial.md",
     "problem solving/prefix_sum_tutorial.md",
@@ -270,7 +271,6 @@
     "bash/DBMS_BigPicture.excalidraw",
     "admin2/RHSA2_CentOS9_Lab_Solutions.md",
     "admin2/RHSA2_Deep_Study_Guide.md",
-    "angular/angular-guide-part5.md",
     "admin2/Unconfirmed 320946.crdownload",
     "angular/Unconfirmed 762265.crdownload",
     "Pasted image 20260302213105.png",
