@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "admin2/RHSA1_Revision_Notes.md",
+                "file": "Nodejs/NodeJS_Internals_Masterclass.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "RHSA1_Revision_Notes"
+              "title": "NodeJS_Internals_Masterclass"
             }
           }
         ]
@@ -237,11 +237,11 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "admin2/RHSA1_Revision_Notes.md",
     "admin2/RHSA1_CommandMap.excalidraw",
     "admin2/RHSA2_Deep_Study_Guide.md",
     "admin2/RHSA2_CentOS_Lab_Solutions.md",
     "admin2/RHSA2_CentOS9_Lab_Solutions.md",
-    "admin2/RHSA1_Revision_Notes.md",
     "Aws practitioner/02_IAM.md",
     "bash/Shell_Scripting_Day2.excalidraw",
     "bash/Shell_Scripting_Day2_Guide.md",
@@ -272,7 +272,6 @@
     "problem solving/binary_search_on_answer_tutorial.md",
     "problem solving/Unconfirmed 579027.crdownload",
     "problem solving/Unconfirmed 658154.crdownload",
-    "admin2/Unconfirmed 320946.crdownload",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",
