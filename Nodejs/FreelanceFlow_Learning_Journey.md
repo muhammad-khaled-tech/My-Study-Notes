@@ -2635,6 +2635,9 @@ db.users.find({}, { password: 1 })
 >
 > قول "كمّل" لما تكون شفت الـ password محفوظ كـ hash في الـ DB بنفسك.
 
+# 🎓 FreelanceFlow — Learning Journey (Part 2)
+
+> متابعة من Part 1 — Sprints 0 → 4 **Part 2 يبدأ من:** Sprint 5 — Register Flow
 
 ---
 
@@ -3239,3 +3242,1082 @@ sequenceDiagram
 > Sprint 6 هو **Login + JWT**. هنشوف إيه الـ JWT بالظبط — 3 أجزاء، إزاي بيتعمل، وإيه معنى "Stateless Authentication". وهنبني الـ login endpoint اللي بيرجع token.
 > 
 > قول "كمّل" لما تكون شفت الـ `201 Created` في Postman بنفسك.
+
+---
+
+---
+
+# 🔑 Sprint 6 — Login + JWT : إزاي السيرفر بيتذكرك؟
+
+---
+
+## 🇪🇬 المشكلة — HTTP مش بيتذكر حاجة
+
+قبل ما نبني الـ Login، لازم تفهم مشكلة أساسية في طبيعة الـ HTTP نفسه.
+
+الـ HTTP بطبعه **Stateless** — يعني كل request مستقلة تماماً عن اللي قبلها.
+
+تخيل إنك بتكلم حد على التليفون — بس كل مرة بتكلمه بينساك خالص ولازم تعرّف نفسك من الأول.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as Server
+
+    U->>S: POST /login بـ email وpassword
+    S-->>U: أهلاً Mohamed ✅
+    U->>S: GET /my-profile
+    S-->>U: مين أنت؟ ❌ مش فاكرك
+    U->>S: POST /create-project
+    S-->>U: مين أنت؟ ❌ مش فاكرك
+```
+
+كل request وصلت للسيرفر من غير أي معلومة عن مين بعتها.
+
+**الحل القديم — Sessions:**
+
+```mermaid
+flowchart TD
+    subgraph sessions["الحل القديم — Sessions"]
+        L["User عمل Login"] --> DB["السيرفر حفظ session\nفي الـ Database\nsession_id=abc123 → Mohamed"]
+        DB --> C["بعت cookie للـ client\nsession_id=abc123"]
+        C --> R["كل request جاية\nالسيرفر بيروح يجيب\nالـ session من الـ DB"]
+    end
+
+    style sessions fill:#4a1212,color:#fff
+```
+
+المشكلة مع الـ Sessions:
+
+- كل request لازم query على الـ DB عشان تتحقق من الـ session
+- لو عندك 3 servers — لازم كلهم يشوفوا نفس الـ sessions database
+- مع scale كبير — بيبقى bottleneck
+
+---
+
+## 🇪🇬 الحل الحديث — JWT
+
+JWT (JSON Web Token) بيحل المشكلة بطريقة مختلفة تماماً:
+
+**بدل ما السيرفر يتذكرك — بنديك ورقة موقّعة تثبت هويتك.**
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as Server
+    participant DB as Database
+
+    U->>S: POST /login بـ email وpassword
+    S->>DB: تحقق من الـ credentials
+    DB-->>S: صح ✅
+    S-->>U: خد الـ token ده: eyJhbGci...
+
+    Note over U: الـ client بيحفظ الـ token
+
+    U->>S: GET /my-profile\nAuthorization: Bearer eyJhbGci...
+    Note over S: بيتحقق من الـ token بدون DB
+    S-->>U: بيانات Mohamed ✅
+
+    U->>S: POST /create-project\nAuthorization: Bearer eyJhbGci...
+    Note over S: بيتحقق من الـ token بدون DB
+    S-->>U: Project اتعمل ✅
+```
+
+**الفرق الجوهري:** السيرفر مش بيحفظ حاجة. بيتحقق من الـ token بـ math بس — من غير ما يروح للـ DB.
+
+---
+
+## 🇪🇬 إيه جوا الـ JWT بالظبط؟
+
+الـ JWT شكله كده:
+
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0YWJjIiwiaWF0IjoxNjk5MDAwMDAwLCJleHAiOjE2OTk2MDQ4MDB9.xK9mP2Rz8vQY3nJ5tL7wA1bF4hN6sD0cE9uI2oM
+```
+
+فيه 3 أجزاء مفصولة بـ `.`
+
+```mermaid
+flowchart LR
+    subgraph jwt["JWT = 3 أجزاء"]
+        H["Header\nBase64\n{alg: HS256, typ: JWT}"]
+        P["Payload\nBase64\n{id: '64abc', iat: ..., exp: ...}"]
+        S["Signature\nHMAC SHA256"]
+    end
+
+    H -->|"."| P
+    P -->|"."| S
+
+    style H fill:#1a365d,color:#fff
+    style P fill:#276749,color:#fff
+    style S fill:#553c9a,color:#fff
+```
+
+**الجزء الأول — Header:**
+
+```json
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+```
+
+بيقول الـ algorithm المستخدم في الـ signing هو `HS256`.
+
+**الجزء التاني — Payload:**
+
+```json
+{
+  "id": "64abc123",
+  "iat": 1699000000,
+  "exp": 1699604800
+}
+```
+
+`id` — الـ user ID — ده اللي بنحطه عشان نعرف مين الـ user.
+
+`iat` — issued at — وقت ما الـ token اتعمل.
+
+`exp` — expiry — وقت انتهاء الصلاحية.
+
+> ⚠️ الـ Payload مش مشفّر — بس مـ Base64 encoded. يعني أي حد يقدر يقراه. متحطش passwords أو sensitive data فيه.
+
+**الجزء التالت — Signature:**
+
+```
+HMACSHA256(
+  base64(header) + "." + base64(payload),
+  SECRET_KEY
+)
+```
+
+ده اللي بيخلي الـ JWT آمن. بيعمل hash للـ header والـ payload باستخدام الـ secret key اللي على السيرفر بس.
+
+```mermaid
+flowchart TD
+    subgraph verify["إزاي السيرفر بيتحقق من الـ Token؟"]
+        T["Token وصل:\nheader.payload.signature"]
+        T --> A["بيعمل الـ signature من الأول\nباستخدام الـ SECRET_KEY"]
+        A --> B{الـ signature اللي عمله\n= الـ signature في الـ Token؟}
+        B -->|نعم ✅| C["Token صح — يثق بالـ payload"]
+        B -->|لأ ❌| D["Token اتعدّل — ارفضه"]
+    end
+
+    style T fill:#2d3748,color:#fff
+    style A fill:#553c9a,color:#fff
+    style C fill:#276749,color:#fff
+    style D fill:#742a2a,color:#fff
+```
+
+لو حد غيّر الـ payload (مثلاً غيّر الـ `id` لـ user تاني) — الـ signature مش هيتطابق والسيرفر هيعرف إن الـ token اتعدّل.
+
+---
+
+## 💻 خطوة 1 — Install JWT
+
+```bash
+npm install jsonwebtoken
+```
+
+---
+
+## 💻 خطوة 2 — ضيف الـ JWT settings في `.env`
+
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URI=mongodb://127.0.0.1:27017/freelanceflow
+JWT_SECRET=my-super-secret-key-change-this-in-production-min-32-chars
+JWT_EXPIRES_IN=7d
+```
+
+**`JWT_SECRET`** — الكلمة السرية اللي بيتعمل بيها الـ signature. لازم تكون:
+
+- طويلة (32+ character)
+- عشوائية
+- محفوظة في الـ `.env` — **مش في الكود أبداً**
+
+**`JWT_EXPIRES_IN`** — بعد كام الـ token بينتهي. `7d` يعني 7 أيام. ممكن كمان `1h` أو `30d`.
+
+---
+
+## 💻 خطوة 3 — ضيف `login` في `auth.controller.js`
+
+افتح `src/controllers/auth.controller.js` وعدّله:
+
+```javascript
+const jwt      = require('jsonwebtoken');
+const User     = require('../models/User.model');
+const AppError = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+
+// ══════════════════════════════════════════════════════
+// Helper function — بنعملها مرة وبنستخدمها في register وlogin
+// ══════════════════════════════════════════════════════
+const signToken = (userId) => {
+  return jwt.sign(
+    { id: userId },               // الـ payload — إيه اللي هيتحط في الـ token
+    process.env.JWT_SECRET,        // الـ secret key
+    { expiresIn: process.env.JWT_EXPIRES_IN } // متى ينتهي
+  );
+};
+
+const sendTokenResponse = (user, statusCode, res) => {
+  // اعمل الـ token
+  const token = signToken(user._id);
+
+  // إزاي الـ password مش بيبان في الـ response
+  // حتى لو Mongoose رجّعه في الـ document — بنشيله هنا
+  user.password = undefined;
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: { user },
+  });
+};
+
+// ══════════════════════════════════════════════════════
+// REGISTER
+// ══════════════════════════════════════════════════════
+exports.register = catchAsync(async (req, res, next) => {
+  const newUser = await User.create({
+    name:     req.body.name,
+    email:    req.body.email,
+    password: req.body.password,
+    role:     req.body.role,
+  });
+
+  sendTokenResponse(newUser, 201, res);
+});
+
+// ══════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════
+exports.login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  // Step 1: تحقق إن الـ email والـ password موجودين في الـ request
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password', 400));
+  }
+
+  // Step 2: دور على الـ user بالـ email
+  // .select('+password') عشان password عنده select:false في الـ Schema
+  const user = await User.findOne({ email }).select('+password');
+
+  // Step 3: تحقق من إن الـ user موجود والـ password صح
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
+
+  // Step 4: ابعت الـ token
+  sendTokenResponse(user, 200, res);
+});
+```
+
+---
+
+## 🇪🇬 مشكلة في الكود — `bcrypt` مش متعمله import
+
+لاحظ إننا استخدمنا `bcrypt.compare` في الـ controller — بس `bcrypt` مش متعمله `require` هنا.
+
+**ليه؟** لأن الـ compare منطقياً مش مكانه في الـ controller. هو عملية خاصة بالـ user data — مكانها في الـ **Model**.
+
+الحل: نعمل **instance method** على الـ User model.
+
+---
+
+## 🇪🇬 إيه هو الـ Instance Method؟
+
+الـ Instance Method هو function بتضيفها على الـ Schema — وبتبقى متاحة على كل document.
+
+```mermaid
+flowchart TD
+    subgraph schema["User Schema"]
+        M1["userSchema.methods.correctPassword"]
+    end
+
+    subgraph docs["كل User Document"]
+        D1["user1.correctPassword(...)"]
+        D2["user2.correctPassword(...)"]
+        D3["user3.correctPassword(...)"]
+    end
+
+    schema --> docs
+
+    style schema fill:#553c9a,color:#fff
+    style docs fill:#276749,color:#fff
+```
+
+الـ `this` جوا الـ instance method بيبقى الـ document نفسه — زي بالظبط الـ pre-save hook.
+
+---
+
+## 💻 خطوة 4 — أضف Instance Method على User Model
+
+افتح `src/models/User.model.js` وضيف بعد الـ hook:
+
+```javascript
+// ══════════════════════════════════════════════════════
+// INSTANCE METHOD — متاح على كل user document
+// ══════════════════════════════════════════════════════
+userSchema.methods.correctPassword = async function (candidatePassword) {
+  // this.password = الـ hashed password في الـ DB
+  // candidatePassword = الـ password اللي الـ user بعته في الـ login
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+```
+
+---
+
+## 💻 خطوة 5 — صلّح الـ login في `auth.controller.js`
+
+دلوقتي بدل `bcrypt.compare` — بنستخدم الـ instance method:
+
+```javascript
+const jwt        = require('jsonwebtoken');
+const User       = require('../models/User.model');
+const AppError   = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+
+const signToken = (userId) => {
+  return jwt.sign(
+    { id: userId },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
+};
+
+const sendTokenResponse = (user, statusCode, res) => {
+  const token = signToken(user._id);
+  user.password = undefined;
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: { user },
+  });
+};
+
+exports.register = catchAsync(async (req, res, next) => {
+  const newUser = await User.create({
+    name:     req.body.name,
+    email:    req.body.email,
+    password: req.body.password,
+    role:     req.body.role,
+  });
+  sendTokenResponse(newUser, 201, res);
+});
+
+exports.login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  // Step 1: تحقق إن الـ fields موجودة
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password', 400));
+  }
+
+  // Step 2: جيب الـ user مع الـ password
+  const user = await User.findOne({ email }).select('+password');
+
+  // Step 3: تحقق من الـ user والـ password
+  // بنعمل الاتنين في شرط واحد عشان:
+  // لو عملناهم منفصلين — ممكن نبيّن للهاكر إيه اللي غلط
+  // هو مش عارف email ولا password — نخليه في الظلام
+  if (!user || !(await user.correctPassword(password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
+
+  // Step 4: ابعت الـ token
+  sendTokenResponse(user, 200, res);
+});
+```
+
+---
+
+## 🇪🇬 ليه بنعمل الـ Check في شرط واحد؟
+
+```javascript
+// ❌ غلط — بيكشف معلومة للهاكر
+if (!user) {
+  return next(new AppError('No user with this email', 401));
+}
+if (!(await user.correctPassword(password))) {
+  return next(new AppError('Wrong password', 401));
+}
+
+// ✅ صح — نفس الرسالة في الحالتين
+if (!user || !(await user.correctPassword(password))) {
+  return next(new AppError('Incorrect email or password', 401));
+}
+```
+
+```mermaid
+flowchart TD
+    subgraph wrong["❌ رسائل منفصلة — خطر"]
+        W1["هاكر جرّب email عشوائي"] --> W2["رد: No user with this email"]
+        W2 --> W3["هاكر عرف إن الـ email مش موجود\nيروح يجرب email تاني"]
+        W4["هاكر جرّب email موجود"] --> W5["رد: Wrong password"]
+        W5 --> W6["هاكر عرف إن الـ email صح\nيفضل يجرب passwords"]
+    end
+
+    subgraph correct["✅ رسالة واحدة — آمن"]
+        C1["هاكر جرّب أي حاجة"] --> C2["رد: Incorrect email or password"]
+        C2 --> C3["مش عارف إيه اللي غلط ✅"]
+    end
+
+    style wrong fill:#4a1212,color:#fff
+    style correct fill:#1a4731,color:#fff
+```
+
+ده اسمه **User Enumeration Attack Prevention** — منع الهاكر من معرفة الـ emails الموجودة في النظام.
+
+---
+
+## 💻 خطوة 6 — ضيف الـ login route
+
+افتح `src/routes/auth.routes.js`:
+
+```javascript
+const express            = require('express');
+const { register, login } = require('../controllers/auth.controller');
+
+const router = express.Router();
+
+router.post('/register', register);
+router.post('/login',    login);    // ← جديد
+
+module.exports = router;
+```
+
+---
+
+## 🇪🇬 الـ Token Flow الكاملة — من Login لـ Protected Route
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+
+    Note over C,S: خطوة 1 — Login
+    C->>S: POST /api/v1/auth/login\n{email, password}
+    S->>S: تحقق من الـ credentials
+    S->>S: jwt.sign({id: user._id}, SECRET)
+    S-->>C: { token: "eyJhbGci..." }
+
+    Note over C: الـ client بيحفظ الـ token
+    Note over C: في localStorage أو memory
+
+    Note over C,S: خطوة 2 — استخدام الـ Token
+    C->>S: GET /api/v1/projects\nAuthorization: Bearer eyJhbGci...
+    S->>S: jwt.verify(token, SECRET)
+    S->>S: بيطلع id من الـ payload
+    S->>S: User.findById(id)
+    S-->>C: { projects: [...] }
+```
+
+الـ `protect` middleware اللي هيعمل الـ verify ده — هنبنيه في Sprint 7.
+
+---
+
+## ✅ Checkpoint
+
+**Test 1 — Register وخد الـ token:**
+
+> **Method:** `POST` **URL:** `http://localhost:5000/api/v1/auth/register` **Body:**
+> 
+> ```json
+> { "name": "Mohamed", "email": "test@example.com", "password": "password123", "role": "client" }
+> ```
+> 
+> **Expected:**
+> 
+> ```json
+> {
+>   "status": "success",
+>   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+>   "data": { "user": { ... } }
+> }
+> ```
+
+**Test 2 — Login صح:**
+
+> **Method:** `POST` **URL:** `http://localhost:5000/api/v1/auth/login` **Body:**
+> 
+> ```json
+> { "email": "test@example.com", "password": "password123" }
+> ```
+> 
+> **Expected:** نفس الـ response — token + user بدون password
+
+**Test 3 — Password غلط:**
+
+> **Body:** `{ "email": "test@example.com", "password": "wrongpassword" }`
+> 
+> **Expected:**
+> 
+> ```json
+> { "status": "fail", "message": "Incorrect email or password" }
+> ```
+
+**Test 4 — Email مش موجود:**
+
+> **Body:** `{ "email": "nobody@example.com", "password": "password123" }`
+> 
+> **Expected:** نفس الرسالة بالظبط — `"Incorrect email or password"` السيرفر مش بيقول مين اللي غلط.
+
+**Test 5 — افحص الـ Token:**
+
+خد الـ token من الـ response وروح على [jwt.io](https://jwt.io/) والصقه.
+
+هتشوف الـ Payload بتاعه:
+
+```json
+{
+  "id": "64abc...",
+  "iat": 1699000000,
+  "exp": 1699604800
+}
+```
+
+لاحظ إن الـ `id` بتاع الـ user ده موجود — ده اللي هنستخدمه في الـ protect middleware.
+
+---
+
+## 🇪🇬 ملخص Sprint 6
+
+اللي اتعلمته:
+
+- الـ HTTP **Stateless** — بينسى كل request
+- الـ Sessions القديمة بتحتاج DB query في كل request
+- الـ JWT بيحل المشكلة بـ math — مش DB
+- الـ JWT فيه 3 أجزاء: **Header** + **Payload** + **Signature**
+- الـ Payload مش مشفّر — بس موقّع — ماتحطش sensitive data فيه
+- `jwt.sign(payload, secret, options)` لصنع الـ token
+- الـ instance method `correctPassword` — function على الـ document نفسه
+- بنتحقق من الـ user والـ password في شرط واحد — User Enumeration Prevention
+- `user.password = undefined` قبل الـ response — حتى لو `select: false`
+
+---
+
+> **جاهز للـ Sprint 7؟**
+> 
+> Sprint 7 هو **protect middleware** — إزاي نحمي الـ routes. هنبني الـ middleware اللي بيتحقق من الـ JWT في كل request، وبعدين هنبني الـ `restrictTo` عشان نفرق بين الـ client والـ freelancer.
+> 
+> قول "كمّل" لما تشوف الـ token في الـ response وتفتحه على jwt.io بنفسك.
+
+---
+
+---
+
+# 🛡️ Sprint 7 — protect + restrictTo : حراسة الـ Routes
+
+---
+
+## 🇪🇬 المشكلة — كل الـ Routes مفتوحة لأي حد
+
+دلوقتي أي حد يقدر يبعت request لأي route — سواء عمل login أو لأ. لو بنينا `POST /projects` — أي حد ممكن يخلق project من غير ما يكون logged in.
+
+محتاجين حاجتين:
+
+**الأولى — Authentication:** تأكد إن الـ user عمل login أصلاً. ده بيتعمل بـ `protect` middleware.
+
+**التانية — Authorization:** تأكد إن الـ user المعين مسموحله يعمل الـ action ده. الـ client يقدر يخلق project — الـ freelancer لأ. ده بيتعمل بـ `restrictTo` middleware.
+
+```mermaid
+flowchart TD
+    REQ["Request جاي"] --> P{protect\nهل في token صح؟}
+    P -->|لأ — مفيش token| E1["401 Unauthorized\nPlease log in"]
+    P -->|لأ — token باظ| E2["401 Unauthorized\nInvalid token"]
+    P -->|آه — token صح| R{restrictTo\nهل الـ role مسموح؟}
+    R -->|لأ — freelancer يحاول يخلق project| E3["403 Forbidden\nNot allowed"]
+    R -->|آه — client يخلق project| C["Controller يشتغل ✅"]
+
+    style REQ fill:#2d3748,color:#fff
+    style P fill:#553c9a,color:#fff
+    style R fill:#2b6cb0,color:#fff
+    style E1 fill:#742a2a,color:#fff
+    style E2 fill:#742a2a,color:#fff
+    style E3 fill:#744210,color:#fff
+    style C fill:#276749,color:#fff
+```
+
+---
+
+## 🇪🇬 الفرق بين 401 و403
+
+```mermaid
+flowchart LR
+    subgraph s401["401 Unauthorized"]
+        A1["مش عارف مين أنت"]
+        A2["مش عامل login"]
+        A3["الـ token باظ أو منتهي"]
+    end
+
+    subgraph s403["403 Forbidden"]
+        B1["عارف مين أنت"]
+        B2["عامل login وصح"]
+        B3["بس مش مسموحلك\nبالـ action ده"]
+    end
+
+    style s401 fill:#742a2a,color:#fff
+    style s403 fill:#744210,color:#fff
+```
+
+تخيل عمارة:
+
+- **401** — مش عندك كارت دخول خالص — الباب مقفول.
+- **403** — عندك كارت دخول — بس الكارت ده بيفتح الدور التاني بس، مش الدور التالت.
+
+---
+
+## 🇪🇬 إيه اللي هيعمله الـ `protect` middleware؟
+
+```mermaid
+flowchart TD
+    A["Request وصل\nفيه Authorization header"] --> B
+
+    subgraph step1["Step 1: استخرج الـ Token"]
+        B["هل في Authorization header؟\nهل بيبدأ بـ 'Bearer '؟"]
+        B -->|لأ| E1["AppError 401\nYou are not logged in"]
+    end
+
+    B -->|آه| C
+
+    subgraph step2["Step 2: تحقق من الـ Token"]
+        C["jwt.verify(token, SECRET)"]
+        C -->|Token باظ| E2["AppError 401\nInvalid token"]
+        C -->|Token منتهي| E3["AppError 401\nToken expired"]
+    end
+
+    C -->|Token صح| D
+
+    subgraph step3["Step 3: جيب الـ User من الـ DB"]
+        D["User.findById(decoded.id)"]
+        D -->|User مش موجود| E4["AppError 401\nUser no longer exists"]
+    end
+
+    D -->|User موجود| F
+
+    subgraph step4["Step 4: حط الـ User على الـ Request"]
+        F["req.user = currentUser\nnext()"]
+    end
+
+    style step1 fill:#1a365d,color:#fff
+    style step2 fill:#553c9a,color:#fff
+    style step3 fill:#276749,color:#fff
+    style step4 fill:#2b6cb0,color:#fff
+    style E1 fill:#742a2a,color:#fff
+    style E2 fill:#742a2a,color:#fff
+    style E3 fill:#742a2a,color:#fff
+    style E4 fill:#742a2a,color:#fff
+```
+
+---
+
+## 🇪🇬 `req.user` — إيه ده وليه مهم؟
+
+لما الـ `protect` middleware يشتغل — بيحط الـ user على `req.user`.
+
+ده يعني كل middleware وكل controller جاي بعده هيعرف مين الـ user ده من `req.user`.
+
+```mermaid
+sequenceDiagram
+    participant MW as protect middleware
+    participant CT as Controller
+
+    MW->>MW: jwt.verify(token)
+    MW->>MW: User.findById(decoded.id)
+    MW->>MW: req.user = currentUser
+    MW->>CT: next()
+    CT->>CT: يستخدم req.user._id
+    CT->>CT: يستخدم req.user.role
+    CT->>CT: يستخدم req.user.email
+```
+
+مش محتاج في كل controller تروح تجيب الـ user من الـ DB تاني — `protect` عمل ده وحطه على `req.user` جاهز.
+
+---
+
+## 💻 خطوة 1 — اعمل `src/middlewares/auth.middleware.js`
+
+```javascript
+const jwt        = require('jsonwebtoken');
+const { promisify } = require('util'); // built-in Node.js module
+const User       = require('../models/User.model');
+const AppError   = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+
+// ══════════════════════════════════════════════════════
+// PROTECT — تأكد إن الـ User logged in
+// ══════════════════════════════════════════════════════
+exports.protect = catchAsync(async (req, res, next) => {
+
+  // ── Step 1: استخرج الـ token ──────────────────────
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer ')
+  ) {
+    // "Bearer eyJhbGci..." → نقسم على المسافة → ["Bearer", "eyJhbGci..."]
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return next(
+      new AppError('You are not logged in. Please log in to get access.', 401)
+    );
+  }
+
+  // ── Step 2: تحقق من الـ token ────────────────────
+  // jwt.verify بتاخد callback — بنحوّلها لـ Promise بـ promisify
+  // لو الـ token باظ أو منتهي — بترمي error تلقائياً
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  // decoded = { id: '64abc...', iat: ..., exp: ... }
+
+  // ── Step 3: تحقق إن الـ User لسه موجود ──────────
+  // ممكن الـ token صح بس الـ account اتحذف بعد ما الـ token اتعمل
+  const currentUser = await User.findById(decoded.id);
+
+  if (!currentUser) {
+    return next(
+      new AppError('The user belonging to this token no longer exists.', 401)
+    );
+  }
+
+  // ── Step 4: حط الـ User على الـ Request ──────────
+  req.user = currentUser;
+  next();
+});
+
+// ══════════════════════════════════════════════════════
+// RESTRICT TO — تأكد إن الـ Role مسموح
+// ══════════════════════════════════════════════════════
+exports.restrictTo = (...roles) => {
+  // بترجع middleware function
+  // بتلف على الـ roles بـ closure
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError('You do not have permission to perform this action.', 403)
+      );
+    }
+    next();
+  };
+};
+```
+
+---
+
+## 🇪🇬 شرح `promisify(jwt.verify)` — ليه محتاجينها؟
+
+الـ `jwt.verify` في الأصل بتاخد callback:
+
+```javascript
+// الطريقة القديمة — callbacks
+jwt.verify(token, secret, (err, decoded) => {
+  if (err) { /* handle error */ }
+  // use decoded
+});
+```
+
+بس إحنا بنشتغل بـ `async/await`. `promisify` من الـ `util` module في Node.js بتحوّل أي callback-based function لـ Promise:
+
+```mermaid
+flowchart LR
+    A["jwt.verify\ncallback-based"] -->|promisify| B["jwt.verify\nPromise-based"]
+    B -->|await| C["decoded payload"]
+    B -->|throw| D["JsonWebTokenError\nأو TokenExpiredError"]
+
+    style A fill:#4a5568,color:#fff
+    style B fill:#553c9a,color:#fff
+    style C fill:#276749,color:#fff
+    style D fill:#742a2a,color:#fff
+```
+
+لو الـ token باظ — `jwt.verify` بيرمي error تلقائياً — `catchAsync` بيمسكها وبيبعتها للـ global error handler.
+
+---
+
+## 🇪🇬 شرح `restrictTo(...roles)` — الـ Closure Pattern
+
+```javascript
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) { ... }
+  };
+};
+```
+
+`...roles` — rest parameter. يعني ممكن تبعت أي عدد من الـ roles:
+
+```javascript
+restrictTo('client')               // roles = ['client']
+restrictTo('client', 'admin')      // roles = ['client', 'admin']
+restrictTo('freelancer', 'client') // roles = ['freelancer', 'client']
+```
+
+الـ function دي **بترجع function** — ده اللي بنسميه **Closure**:
+
+```mermaid
+flowchart TD
+    A["restrictTo('client')"] --> B["بترجع function جديدة\nجوّاها roles = ['client']"]
+    B --> C["Express بيشغّل الـ function دي\nلما الـ request ييجي"]
+    C --> D{req.user.role\nفي الـ roles array؟}
+    D -->|آه — client| E["next() ✅"]
+    D -->|لأ — freelancer| F["AppError 403 ❌"]
+
+    style A fill:#553c9a,color:#fff
+    style B fill:#2b6cb0,color:#fff
+    style E fill:#276749,color:#fff
+    style F fill:#742a2a,color:#fff
+```
+
+**ليه بنعمل closure ومش بنبعت الـ roles كـ argument عادي؟**
+
+لأن الـ Express middleware signature ثابت: `(req, res, next)` — مش ممكن تضيف parameter زيادة. الـ closure بتخلينا نحفظ الـ roles في الـ function نفسها.
+
+---
+
+## 🇪🇬 الفرق بين `JsonWebTokenError` و`TokenExpiredError`
+
+لما `jwt.verify` يفشل — بيرمي نوعين من الـ errors:
+
+```mermaid
+flowchart TD
+    subgraph jwtErrors["JWT Errors"]
+        E1["JsonWebTokenError\nالـ token اتعدّل أو باظ\nمثلاً: حد غيّر الـ payload"]
+        E2["TokenExpiredError\nالـ token صح بس انتهت صلاحيته\nبعد الـ JWT_EXPIRES_IN"]
+    end
+
+    style jwtErrors fill:#742a2a,color:#fff
+```
+
+دلوقتي الـ global error handler بيبعت رسالة generic لأنهم مش `AppError`. محتاجين نعملهم handle خاص.
+
+---
+
+## 💻 خطوة 2 — تحسين الـ Error Handler
+
+افتح `src/middlewares/errorHandler.js` وعدّله:
+
+```javascript
+const AppError = require('../utils/AppError');
+
+// ═══════════════════════════════════════
+// Specific Error Handlers
+// ═══════════════════════════════════════
+
+const handleJWTError = () =>
+  new AppError('Invalid token. Please log in again.', 401);
+
+const handleJWTExpiredError = () =>
+  new AppError('Your token has expired. Please log in again.', 401);
+
+const handleValidationError = (err) => {
+  // Mongoose بيدي object فيه كل الـ validation errors
+  const errors = Object.values(err.errors).map((el) => el.message);
+  const message = `Invalid input data: ${errors.join('. ')}`;
+  return new AppError(message, 400);
+};
+
+const handleDuplicateKeyError = (err) => {
+  // MongoDB بيحط الـ value اللي اتكرر في الـ keyValue object
+  const value = Object.values(err.keyValue)[0];
+  const message = `Duplicate field value: "${value}". Please use another value.`;
+  return new AppError(message, 400);
+};
+
+const handleCastError = (err) => {
+  // ممكن حد يبعت ID غلط — مش ObjectId صح
+  const message = `Invalid ${err.path}: ${err.value}`;
+  return new AppError(message, 400);
+};
+
+// ═══════════════════════════════════════
+// Response Senders
+// ═══════════════════════════════════════
+
+const sendErrorDev = (err, res) => {
+  // في الـ development — ابعت كل التفاصيل للـ debugging
+  res.status(err.statusCode).json({
+    status:  err.status,
+    message: err.message,
+    error:   err,
+    stack:   err.stack,
+  });
+};
+
+const sendErrorProd = (err, res) => {
+  if (err.isOperational) {
+    // Operational error — آمن نبعت الـ message
+    res.status(err.statusCode).json({
+      status:  err.status,
+      message: err.message,
+    });
+  } else {
+    // Programming error — متكشفش التفاصيل
+    console.error('💥 PROGRAMMING ERROR:', err);
+    res.status(500).json({
+      status:  'error',
+      message: 'Something went very wrong.',
+    });
+  }
+};
+
+// ═══════════════════════════════════════
+// Global Error Handler
+// ═══════════════════════════════════════
+const globalErrorHandler = (err, req, res, next) => {
+  err.statusCode = err.statusCode || 500;
+  err.status     = err.status     || 'error';
+
+  if (process.env.NODE_ENV === 'development') {
+    sendErrorDev(err, res);
+  } else {
+    let error = { ...err, message: err.message };
+
+    // حوّل الـ errors المعروفة لـ AppError
+    if (error.name === 'CastError')       error = handleCastError(error);
+    if (error.code === 11000)             error = handleDuplicateKeyError(error);
+    if (error.name === 'ValidationError') error = handleValidationError(error);
+    if (error.name === 'JsonWebTokenError')  error = handleJWTError();
+    if (error.name === 'TokenExpiredError')  error = handleJWTExpiredError();
+
+    sendErrorProd(error, res);
+  }
+};
+
+module.exports = globalErrorHandler;
+```
+
+---
+
+## 🇪🇬 `sendErrorDev` vs `sendErrorProd` — ليه الفرق؟
+
+```mermaid
+flowchart TD
+    subgraph dev["Development — NODE_ENV=development"]
+        D1["ابعت كل حاجة:\nmessage + stack + error object"]
+        D2["عشان تقدر تـ debug"]
+    end
+
+    subgraph prod["Production — NODE_ENV=production"]
+        P1{isOperational؟}
+        P1 -->|آه — AppError| P2["ابعت message بس\nالـ client يستاهل يعرف"]
+        P1 -->|لأ — bug| P3["ابعت 'Something went wrong'\nمتكشفش stack trace للـ hacker"]
+    end
+
+    style dev fill:#1a365d,color:#fff
+    style prod fill:#1a4731,color:#fff
+    style P3 fill:#742a2a,color:#fff
+```
+
+الـ stack trace فيه معلومات عن الكود بتاعك — أسماء ملفات، أسطر. في الـ production ده معلومة للهاكر. في الـ development ده مفيد للـ debugging.
+
+---
+
+## 💻 خطوة 3 — جرّب الـ protect على route حقيقية
+
+في `app.js` ضيف route جديدة للتجربة بس:
+
+```javascript
+const { protect } = require('./src/middlewares/auth.middleware');
+
+// Test route — protected
+app.get('/api/v1/me', protect, (req, res) => {
+  res.json({
+    status: 'success',
+    data: { user: req.user },
+  });
+});
+```
+
+---
+
+## ✅ Checkpoint
+
+**Test 1 — من غير token:**
+
+> **Method:** `GET` **URL:** `http://localhost:5000/api/v1/me` **Headers:** لا تضيف حاجة
+> 
+> **Expected:**
+> 
+> ```json
+> { "status": "fail", "message": "You are not logged in. Please log in to get access." }
+> ```
+
+**Test 2 — بـ token صح:**
+
+> اعمل login الأول وخد الـ token. **Method:** `GET` **URL:** `http://localhost:5000/api/v1/me` **Header:** `Authorization: Bearer <الـ token هنا>`
+> 
+> **Expected:** بيانات الـ user اللي عمل login — من غير password.
+
+**Test 3 — بـ token باظ:**
+
+> **Header:** `Authorization: Bearer thisisnotavalidtoken`
+> 
+> **Expected:**
+> 
+> ```json
+> { "status": "fail", "message": "Invalid token. Please log in again." }
+> ```
+
+**Test 4 — بـ token منتهي:**
+
+> في الـ `.env` غيّر `JWT_EXPIRES_IN=1s`، اعمل login، استنى ثانيتين، وبعدين بعت الـ request.
+> 
+> **Expected:**
+> 
+> ```json
+> { "status": "fail", "message": "Your token has expired. Please log in again." }
+> ```
+> 
+> رجّع `JWT_EXPIRES_IN=7d` بعدين.
+
+**Test 5 — `restrictTo` بالتجربة:**
+
+في `app.js` ضيف route:
+
+```javascript
+const { protect, restrictTo } = require('./src/middlewares/auth.middleware');
+
+app.get('/api/v1/client-only', protect, restrictTo('client'), (req, res) => {
+  res.json({ message: 'Welcome, client!' });
+});
+```
+
+> سجّل دخول بـ user عنده `role: 'freelancer'` وبعت الـ request.
+> 
+> **Expected:**
+> 
+> ```json
+> { "status": "fail", "message": "You do not have permission to perform this action." }
+> ```
+> 
+> سجّل دخول بـ user عنده `role: 'client'` وبعت تاني.
+> 
+> **Expected:** `{ "message": "Welcome, client!" }`
+
+---
+
+## 🇪🇬 ملخص Sprint 7
+
+اللي اتعلمته:
+
+- **401 vs 403** — مش عارف مين أنت vs عارف بس مش مسموحلك
+- الـ `protect` middleware بيعمل 4 steps: استخرج token، تحقق، جيب user، حط على req
+- **`req.user`** — بيتبقى متاح في كل middleware وcontroller بعد `protect`
+- **`promisify`** — بتحوّل callback functions لـ Promises
+- **Closure في `restrictTo`** — بتحفظ الـ roles في الـ function الراجعة
+- الـ error handler المحسّن — بيتعامل مع JWT errors وValidation وDuplicate وCast errors
+- **`sendErrorDev` vs `sendErrorProd`** — stack trace في الـ dev بس مش في الـ prod
+
+---
+
+> **جاهز للـ Sprint 8؟**
+> 
+> Sprint 8 هو **Projects CRUD** — أول resource حقيقي في المشروع. هنبني الـ Project model، وهنشرح concept مهم جداً: ليه بنحط `client: req.user._id` في الـ controller ومش بنثق في الـ body. وهنشوف إزاي الـ routes بتتربط بالـ protect والـ restrictTo.
+> 
+> قول "كمّل" لما تشوف `req.user` بيرجع في الـ `/api/v1/me` route بنفسك.
