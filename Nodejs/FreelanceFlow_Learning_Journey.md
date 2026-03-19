@@ -1351,3 +1351,728 @@ flowchart TD
 > Sprint 3 هيجاوب على سؤالك الأصلي — ليه محتاج Model أصلاً؟ وإيه الفرق بين MongoDB وSQL اللي اشتغلت بيها؟ وإزاي نوصل السيرفر بالـ database خطوة بخطوة؟
 >
 > قول "كمّل" لما تكون شفت الـ JSON error بيرجع صح في الـ Postman.
+
+---
+
+---
+
+# 🗄️ Sprint 3 — MongoDB + Mongoose : ليه محتاجين Model أصلاً؟
+
+---
+
+## 🇪🇬 أول حاجة — ليه محتاجين Database أصلاً؟
+
+السيرفر شغال. عارف يستقبل requests ويرد. بس فيه مشكلة واحدة كبيرة.
+
+كل البيانات اللي بيشتغل بيها السيرفر دلوقتي **موجودة في الـ RAM** — يعني في الـ memory المؤقتة للسيرفر.
+
+لما السيرفر يقف أو يتعمله restart — كل البيانات دي بتروح.
+
+```mermaid
+flowchart TD
+    subgraph without_db["❌ من غير Database"]
+        A1[User بعت بياناته] --> B1[Server حفظها في RAM]
+        B1 --> C1[Server اتعمله restart]
+        C1 --> D1[البيانات راحت 💨]
+    end
+
+    subgraph with_db["✅ مع Database"]
+        A2[User بعت بياناته] --> B2[Server بعتها للـ DB]
+        B2 --> C2[Server اتعمله restart]
+        C2 --> D2[البيانات لسه موجودة ✅]
+    end
+
+    style without_db fill:#4a1212,color:#fff
+    style with_db fill:#1a4731,color:#fff
+```
+
+الـ Database هو المكان اللي بيخزن البيانات بشكل دائم على الـ Hard Disk — مش RAM.
+
+---
+
+## 🇪🇬 SQL اللي أنت شغّالت بيه vs MongoDB
+
+أنت شغّالت مع SQL قبل كده. خلينا نشوف الفرق الأساسي:
+
+**في SQL:**
+
+البيانات بتتحفظ في **Tables** — زي Excel sheet. كل row هو record. كل column هي field محدد.
+
+```
+USERS TABLE:
+| id | name    | email           | age |
+|----|---------|-----------------|-----|
+| 1  | Mohamed | mo@test.com     | 25  |
+| 2  | Ahmed   | ahmed@test.com  | 30  |
+```
+
+لازم تحدد الـ columns وأنواعها قبل ما تحط أي بيانات — ده اسمه **Schema** في SQL. وكل row لازم تمشي بالـ schema ده.
+
+**في MongoDB:**
+
+البيانات بتتحفظ في **Collections** — زي Tables.
+بس بدل rows وcolumns، كل record هو **Document** — شبه JSON object.
+
+```
+USERS COLLECTION:
+{ "_id": "64abc", "name": "Mohamed", "email": "mo@test.com", "age": 25 }
+{ "_id": "64def", "name": "Ahmed",   "email": "ahmed@test.com" }
+```
+
+لاحظ إن الـ document التاني مفيهوش `age`. ده مقبول في MongoDB — كل document ممكن يبقى شكله مختلف.
+
+```mermaid
+flowchart LR
+    subgraph sql["SQL"]
+        direction TB
+        T["Table: users"]
+        T --> R1["Row: id=1, name=Mohamed, email=mo@test.com"]
+        T --> R2["Row: id=2, name=Ahmed, email=ahmed@test.com"]
+    end
+
+    subgraph mongo["MongoDB"]
+        direction TB
+        C["Collection: users"]
+        C --> D1["Document: {_id, name, email, age}"]
+        C --> D2["Document: {_id, name, email}"]
+    end
+
+    style sql fill:#1a365d,color:#fff
+    style mongo fill:#1a4731,color:#fff
+```
+
+**الفروق المهمة:**
+
+**SQL** — Structured. كل البيانات لازم تمشي بنفس الـ schema. قوي في الـ relationships بين الـ tables (JOINs).
+
+**MongoDB** — Flexible. كل document ممكن يبقى شكله مختلف. قوي في الـ data اللي طبيعتها متغيرة أو hierarchical.
+
+في مشروعنا هنستخدم MongoDB. بس عشان نضيف structure وvalidation زي SQL — هنستخدم **Mongoose**.
+
+---
+
+## 🇪🇬 Mongoose — ليه محتاجينه؟
+
+MongoDB في حد ذاته **schemaless** — يعني بيقبل أي document بأي شكل من غير أي validation.
+
+```javascript
+// MongoDB بدون Mongoose — بيقبل أي حاجة
+db.users.insertOne({ name: "Mohamed" })
+db.users.insertOne({ randomField: 123, anotherField: true })
+db.users.insertOne({})  // document فاضي — مقبول!
+```
+
+ده خطر في production. مش هينفع user يتسجل من غير email. ومش هينفع password يتحفظ plain text.
+
+**Mongoose** بيضيف طبقة فوق MongoDB بتعمل:
+
+```mermaid
+flowchart TD
+    YourCode["الكود بتاعك"] --> Mongoose
+
+    subgraph Mongoose["Mongoose Layer"]
+        S["Schema\nحدد شكل الداتا"]
+        V["Validation\nتحقق من الداتا قبل الحفظ"]
+        H["Hooks\nشغّل كود قبل أو بعد الحفظ"]
+        M["Methods\nأضف functions على الداتا"]
+    end
+
+    Mongoose --> Driver["MongoDB Node.js Driver"]
+    Driver --> DB["MongoDB Database"]
+
+    style YourCode fill:#2d3748,color:#fff
+    style Mongoose fill:#553c9a,color:#fff
+    style Driver fill:#2b6cb0,color:#fff
+    style DB fill:#276749,color:#fff
+```
+
+يعني: أنت بتكلم Mongoose، وMongoose بيكلم MongoDB نيابة عنك بعد ما يتأكد إن الداتا صح.
+
+---
+
+## 🇪🇬 إيه الـ Schema بالظبط؟
+
+الـ Schema هو **عقد** — بيقول: "كل document في الـ collection دي لازم يبقى شكله كده."
+
+فكر فيه زي الـ CREATE TABLE في SQL:
+
+```sql
+-- SQL
+CREATE TABLE users (
+  id       INT PRIMARY KEY AUTO_INCREMENT,
+  name     VARCHAR(50) NOT NULL,
+  email    VARCHAR(100) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  role     ENUM('client', 'freelancer') DEFAULT 'freelancer'
+);
+```
+
+ده نفسه في Mongoose:
+
+```javascript
+// Mongoose Schema — نفس الفكرة بس بـ JavaScript
+const userSchema = new mongoose.Schema({
+  name:     { type: String,  required: true },
+  email:    { type: String,  unique: true, required: true },
+  password: { type: String,  required: true },
+  role:     { type: String,  enum: ['client', 'freelancer'], default: 'freelancer' }
+});
+```
+
+```mermaid
+flowchart LR
+    subgraph sql_schema["SQL Schema"]
+        S1["VARCHAR(50) NOT NULL"] 
+        S2["UNIQUE NOT NULL"]
+        S3["ENUM('client','freelancer')"]
+        S4["DEFAULT 'freelancer'"]
+    end
+
+    subgraph mongoose_schema["Mongoose Schema"]
+        M1["type: String, maxlength: 50, required: true"]
+        M2["type: String, unique: true, required: true"]
+        M3["type: String, enum: ['client','freelancer']"]
+        M4["default: 'freelancer'"]
+    end
+
+    S1 -.->|نفس الفكرة| M1
+    S2 -.->|نفس الفكرة| M2
+    S3 -.->|نفس الفكرة| M3
+    S4 -.->|نفس الفكرة| M4
+
+    style sql_schema fill:#1a365d,color:#fff
+    style mongoose_schema fill:#1a4731,color:#fff
+```
+
+**لكن في فرق مهم:** الـ SQL schema بيتطبق على مستوى الـ database نفسه. الـ Mongoose schema بيتطبق على مستوى الـ application — في الكود بتاعنا. يعني لو حد اتصل بـ MongoDB مباشرة من غير Mongoose، ممكن يحط أي حاجة.
+
+---
+
+## 🇪🇬 إيه الـ Model بالظبط؟
+
+الـ Schema هو الـ blueprint — التصميم.
+الـ Model هو الـ class اللي بتستخدمه فعلاً عشان تتعامل مع الـ database.
+
+تخيله زي كده:
+
+```mermaid
+flowchart TD
+    subgraph analogy["مثال من الحياة"]
+        BP["Blueprint المبنى\nالتصميم على الورق"] -->|ينفذ| BLD["المبنى الفعلي\nبتدخله وتتعامل معاه"]
+    end
+
+    subgraph code["في الكود"]
+        SCH["userSchema\nالـ Schema — التعريف فقط\nمش بيتكلم مع الـ DB"] -->|mongoose.model| MDL["User Model\nبيتكلم مع الـ DB\nعنده User.find\nوUser.create\nوUser.findById\nوUser.deleteOne"]
+    end
+
+    style analogy fill:#2d3748,color:#fff
+    style code fill:#2d3748,color:#fff
+    style BP fill:#553c9a,color:#fff
+    style BLD fill:#276749,color:#fff
+    style SCH fill:#553c9a,color:#fff
+    style MDL fill:#276749,color:#fff
+```
+
+الـ Schema لوحده مش بيعمل حاجة. لازم تعمل منه Model عشان تقدر تتعامل مع الـ database.
+
+---
+
+## 💻 خطوة 1 — Install Mongoose
+
+```bash
+npm install mongoose
+```
+
+---
+
+## 💻 خطوة 2 — ضيف الـ MONGO_URI في `.env`
+
+افتح الـ `.env` وضيف:
+
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URI=mongodb://127.0.0.1:27017/freelanceflow
+```
+
+**شرح الـ URI:**
+
+`mongodb://` — البروتوكول — زي `http://` بس لـ MongoDB.
+
+`127.0.0.1` — الـ IP address بتاع جهازك المحلي. نفس `localhost`.
+
+`27017` — البورت الافتراضي لـ MongoDB.
+
+`freelanceflow` — اسم الـ database. لو مش موجود، MongoDB هيعمله تلقائياً لما تحفظ أول document.
+
+> 💡 **لو مش عندك MongoDB locally:**
+> روح على [mongodb.com/atlas](https://mongodb.com/atlas) — اعمل account مجاني وخد الـ connection string.
+> هيبقى شكله: `mongodb+srv://username:password@cluster.mongodb.net/freelanceflow`
+
+---
+
+## 💻 خطوة 3 — اعمل الـ User Schema والـ Model
+
+اعمل ملف `src/models/User.model.js`:
+
+```javascript
+const mongoose = require('mongoose');
+
+// ══════════════════════════════════════
+// الجزء الأول: Schema — التعريف
+// ══════════════════════════════════════
+
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type:     String,
+      required: [true, 'Please provide your name'],
+      trim:     true,
+    },
+
+    email: {
+      type:      String,
+      required:  [true, 'Please provide your email'],
+      unique:    true,
+      lowercase: true,
+    },
+
+    password: {
+      type:     String,
+      required: [true, 'Please provide a password'],
+    },
+
+    role: {
+      type:    String,
+      enum:    ['client', 'freelancer'],
+      default: 'freelancer',
+    },
+  },
+
+  {
+    // Schema Options — الـ object التاني
+    timestamps: true,
+  }
+);
+
+// ══════════════════════════════════════
+// الجزء التاني: Model — التنفيذ
+// ══════════════════════════════════════
+
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;
+```
+
+---
+
+## 🇪🇬 شرح كل سطر في الـ Schema — بالتفصيل الكامل
+
+### `new mongoose.Schema({ ... }, { ... })`
+
+بتعمل Schema object جديد. بياخد **argument اتنين**:
+
+- الأول: الـ fields وقواعدها
+- التاني: الـ options العامة للـ schema
+
+---
+
+### `name: { type: String, required: [...], trim: true }`
+
+**`type: String`**
+
+بيقول إن الـ `name` field لازم يكون string. لو حد بعت number أو object — Mongoose هيرفضه.
+
+القيم الممكنة:
+- `String`
+- `Number`
+- `Boolean`
+- `Date`
+- `mongoose.Schema.Types.ObjectId` — للـ references بين collections (بنيجي عليها)
+
+**`required: [true, 'Please provide your name']`**
+
+مش `required: true` بس. ده array فيه اتنين:
+- `true` — يعني الـ field ده إجباري
+- `'Please provide your name'` — الرسالة اللي هتظهر لو حد ما بعتش الـ field ده
+
+لو كتبت `required: true` بس من غير رسالة — Mongoose هيدي رسالة generic مش مفيدة.
+
+**`trim: true`**
+
+لو حد بعت `"  Mohamed  "` — بيشيل المسافات من الأول والآخر ويحفظ `"Mohamed"`. مش validator — ده transformation.
+
+---
+
+### `email: { type: String, required: [...], unique: true, lowercase: true }`
+
+**`unique: true`**
+
+ده **مش** Mongoose validator. ده بيعمل **Index** في MongoDB نفسه.
+
+```mermaid
+flowchart TD
+    subgraph validator["Mongoose Validator"]
+        V1["required: true"]
+        V2["بيشتغل في الـ application layer"]
+        V3["بيرمي ValidationError"]
+    end
+
+    subgraph index["MongoDB Index"]
+        I1["unique: true"]
+        I2["بيشتغل في الـ database layer"]
+        I3["بيرمي MongoServerError code 11000"]
+    end
+
+    style validator fill:#1a365d,color:#fff
+    style index fill:#553c9a,color:#fff
+```
+
+يعني لو بعتين users بنفس الـ email:
+
+- الـ `required` هيعمل `ValidationError`
+- الـ `unique` هيعمل `MongoServerError` بـ code `11000`
+
+الاتنين بنتعامل معاهم في الـ error handler — بعدين في Sprint 2 المتقدم.
+
+**`lowercase: true`**
+
+مش validator — ده transformation. بيحول الـ email لـ lowercase قبل الحفظ.
+
+يعني `"Mohamed@Test.COM"` هيتحفظ كـ `"mohamed@test.com"`. ده مهم عشان الـ email match يبقى consistent.
+
+---
+
+### `role: { type: String, enum: ['client', 'freelancer'], default: 'freelancer' }`
+
+**`enum: ['client', 'freelancer']`**
+
+بيقول إن الـ role مينفعش تبقى غير إحدى القيمتين دول. لو حد بعت `role: 'admin'` — Mongoose هيرفضه.
+
+**`default: 'freelancer'`**
+
+لو حد سجّل من غير ما يبعت role — القيمة الافتراضية هتبقى `'freelancer'`.
+
+---
+
+### `{ timestamps: true }` — الـ Schema Options
+
+ده الـ argument التاني لـ `new mongoose.Schema(...)`.
+
+`timestamps: true` بيقول لـ Mongoose: "ضيف تلقائياً fieldين على كل document":
+
+- `createdAt` — وقت ما الـ document اتعمل
+- `updatedAt` — وقت آخر تعديل عليه
+
+من غير ما تكتب سطر زيادة — Mongoose بيديهم تلقائياً وبيحدّثهم تلقائياً.
+
+```mermaid
+flowchart LR
+    A["User.create({name, email, password})"] --> B["Mongoose بيضيف\nتلقائياً"]
+    B --> C["_id: ObjectId\ncreatedAt: Date.now()\nupdatedAt: Date.now()"]
+
+    style A fill:#2d3748,color:#fff
+    style B fill:#553c9a,color:#fff
+    style C fill:#276749,color:#fff
+```
+
+---
+
+### `mongoose.model('User', userSchema)`
+
+ده السطر اللي بيحوّل الـ Schema لـ Model.
+
+```javascript
+const User = mongoose.model('User', userSchema);
+```
+
+**`'User'`** — اسم الـ Model. Mongoose بياخد الاسم ده ويعمله lowercase وplural عشان يحدد اسم الـ collection:
+
+```
+'User'     → collection: 'users'
+'Product'  → collection: 'products'
+'BlogPost' → collection: 'blogposts'
+```
+
+**`userSchema`** — الـ blueprint اللي عملناه.
+
+**الناتج `User`** — ده الـ class اللي هنستخدمه في كل الـ controllers:
+
+```javascript
+// كل ده بيبقى متاح بعد ما تعمل Model
+User.find()                // SELECT * FROM users
+User.findById(id)          // SELECT * FROM users WHERE id = ?
+User.findOne({ email })    // SELECT * FROM users WHERE email = ? LIMIT 1
+User.create({ ... })       // INSERT INTO users VALUES (...)
+User.findByIdAndUpdate()   // UPDATE users SET ... WHERE id = ?
+User.findByIdAndDelete()   // DELETE FROM users WHERE id = ?
+User.countDocuments()      // SELECT COUNT(*) FROM users
+```
+
+---
+
+## 💻 خطوة 4 — وصّل الـ Server بـ MongoDB
+
+في `server.js` ضيف الـ connection:
+
+```javascript
+require('dotenv').config();
+const express            = require('express');
+const mongoose           = require('mongoose');
+const AppError           = require('./src/utils/AppError');
+const globalErrorHandler = require('./src/middlewares/errorHandler');
+const User               = require('./src/models/User.model');
+
+const app  = express();
+const PORT = process.env.PORT || 5000;
+
+// ✅ CONNECT TO MONGODB
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('✅ MongoDB Connected');
+  })
+  .catch((err) => {
+    console.error('❌ MongoDB Connection Failed:', err.message);
+    process.exit(1); // لو الـ DB مش شغال — مفيش فايدة نكمل
+  });
+
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send('FreelanceFlow server is alive! 🚀');
+});
+
+// ✅ NEW: Test route — بنخلق user مباشرة عشان نشوف إن الـ DB شغال
+app.post('/test-user', async (req, res, next) => {
+  try {
+    const user = await User.create(req.body);
+    res.status(201).json({
+      status: 'success',
+      data:   { user },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/test-error', (req, res, next) => {
+  next(new AppError('This is a fake error!', 400));
+});
+
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+app.use(globalErrorHandler);
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+---
+
+## 🇪🇬 شرح `mongoose.connect()`
+
+```javascript
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => { console.log('✅ Connected') })
+  .catch((err) => { process.exit(1) });
+```
+
+`mongoose.connect()` بترجع **Promise** — يعني بياخد وقت. مش بيحصل فوراً. لازم تستنى الـ database تقول "أنا جاهز".
+
+`.then(...)` — بيشتغل لو الـ connection نجح.
+
+`.catch(...)` — بيشتغل لو فشل. `process.exit(1)` بيوقف السيرفر كله — لو الـ database مش شغال، السيرفر مش هينفع يكمل.
+
+```mermaid
+sequenceDiagram
+    participant S as server.js
+    participant M as Mongoose
+    participant DB as MongoDB
+
+    S->>M: mongoose.connect(MONGO_URI)
+    M->>DB: TCP Connection attempt
+    alt Connection successful
+        DB-->>M: Connected ✅
+        M-->>S: .then() يشتغل
+        S->>S: console.log Connected
+    else Connection failed
+        DB-->>M: Refused ❌
+        M-->>S: .catch() يشتغل
+        S->>S: process.exit(1)
+    end
+```
+
+---
+
+## 🇪🇬 شرح `User.create(req.body)` — الـ journey الكاملة
+
+لما بتعمل `await User.create(req.body)` — في رحلة كاملة بتحصل:
+
+```mermaid
+flowchart TD
+    A["User.create(req.body)"] --> B
+
+    subgraph validation["Step 1: Validation"]
+        B["Mongoose بيتحقق من الـ Schema:\nهل name موجود؟\nهل email موجود؟\nهل role في الـ enum؟"]
+    end
+
+    B -->|فشل| ERR1["ValidationError\nبتوصل للـ Error Handler"]
+    B -->|نجح| C
+
+    subgraph hooks["Step 2: Hooks"]
+        C["بيشغّل pre-save hooks\n(مفيش حاليا — Sprint 4 هيضيفهم)"]
+    end
+
+    C --> D
+
+    subgraph insert["Step 3: Database Insert"]
+        D["بيبعت INSERT للـ MongoDB\nومنهم:\n_id يتولّد تلقائياً\ncreatedAt\nupdatedAt"]
+    end
+
+    D -->|فشل| ERR2["MongoServerError\nمثلاً duplicate email"]
+    D -->|نجح| E
+
+    subgraph posthooks["Step 4: Post Hooks"]
+        E["بيشغّل post-save hooks\n(مفيش حاليا)"]
+    end
+
+    E --> F["بيرجع الـ document كامل"]
+
+    style validation fill:#1a365d,color:#fff
+    style hooks fill:#553c9a,color:#fff
+    style insert fill:#276749,color:#fff
+    style posthooks fill:#553c9a,color:#fff
+    style ERR1 fill:#742a2a,color:#fff
+    style ERR2 fill:#742a2a,color:#fff
+```
+
+---
+
+## 🇪🇬 ليه استخدمنا `async/await` هنا؟
+
+```javascript
+app.post('/test-user', async (req, res, next) => {
+  try {
+    const user = await User.create(req.body);
+    ...
+  } catch (err) {
+    next(err);
+  }
+});
+```
+
+`User.create()` بياخد وقت — لازم يكلم الـ database على الشبكة. ده مش بيحصل فوراً.
+
+`async` بتقول للـ function "أنت ممكن تستنى حاجة".
+
+`await` بتقول "استنّى لحد ما الـ `User.create()` يخلص" — بس من غير ما توقف السيرفر كله.
+
+```mermaid
+sequenceDiagram
+    participant R as Route Handler
+    participant M as Mongoose
+    participant DB as MongoDB
+
+    R->>M: await User.create(data)
+    Note over R: الـ route handler بيستنى
+    Note over R: بس السيرفر كله مش واقف
+    M->>DB: INSERT document
+    DB-->>M: Document saved ✅
+    M-->>R: بيرجع الـ user document
+    R->>R: res.json(user)
+```
+
+الـ `try/catch` حوالين `await User.create()` عشان لو حصل error — بنبعته للـ `next(err)` اللي بيوصله للـ global error handler.
+
+---
+
+## ✅ Checkpoint
+
+شغّل السيرفر. المفروض تشوف في الـ terminal:
+
+```
+Server running on port 5000
+✅ MongoDB Connected
+```
+
+**Test 1 — اخلق User صح:**
+
+> **Method:** `POST`
+> **URL:** `http://localhost:5000/test-user`
+> **Body (raw JSON):**
+> ```json
+> {
+>   "name": "Mohamed",
+>   "email": "mo@test.com",
+>   "password": "pass1234",
+>   "role": "client"
+> }
+> ```
+>
+> **Expected:**
+> ```json
+> {
+>   "status": "success",
+>   "data": {
+>     "user": {
+>       "_id": "...",
+>       "name": "Mohamed",
+>       "email": "mo@test.com",
+>       "password": "pass1234",
+>       "role": "client",
+>       "createdAt": "...",
+>       "updatedAt": "..."
+>     }
+>   }
+> }
+> ```
+
+> ⚠️ **لاحظ:** الـ `password` ظاهر كـ plain text. ده مشكلة كبيرة — Sprint 4 هيحلها.
+
+**Test 2 — بعت من غير required fields:**
+
+> **Body:** `{ "name": "Ahmed" }`
+>
+> **Expected:** ValidationError رسالة فيها "Please provide your email" و"Please provide a password"
+
+**Test 3 — نفس الـ email مرتين:**
+
+> ابعت Test 1 تاني مرة بنفس الـ email بالظبط.
+>
+> **Expected:** Error بيقول الـ email موجود بالفعل — رسالة مش جميلة دلوقتي، بنحسنها بعدين.
+
+**Test 4 — بعت role غلط:**
+
+> **Body:** `{ "name": "Sara", "email": "sara@test.com", "password": "pass1234", "role": "admin" }`
+>
+> **Expected:** ValidationError بيقول إن `admin` مش في الـ enum
+
+---
+
+## 🇪🇬 ملخص Sprint 3
+
+اللي اتعلمته:
+
+- الـ database ضرورية عشان البيانات متروحش لما السيرفر يقف
+- MongoDB بتخزن **Documents** في **Collections** — زي rows في tables في SQL
+- Mongoose بيضيف validation وstructure فوق MongoDB
+- الـ **Schema** هو التعريف — بيحدد شكل الداتا وقواعدها
+- الـ **Model** هو الـ class اللي بتتعامل بيه مع الـ database
+- `mongoose.model('User', schema)` بيخلق collection اسمها `users` في الـ DB
+- `User.create(data)` بيعمل validation الأول، بعدين بيحفظ في الـ DB
+- الـ `timestamps: true` بيضيف `createdAt` و`updatedAt` تلقائياً
+
+---
+
+> **جاهز للـ Sprint 4؟**
+>
+> Sprint 4 هو أهم sprint في الـ security — **Password Hashing**.
+>
+> هنشوف ليه الـ `password: "pass1234"` اللي بيتحفظ دلوقتي خطر جداً، وهنفهم إيه الـ hashing وليه مختلف عن الـ encryption، وهنبني الـ `pre('save')` hook اللي بيعمل hash للـ password تلقائياً قبل ما يتحفظ في الـ DB.
+>
+> قول "كمّل" لما تكون شفت الـ user اتحفظ في الـ DB بنفسك وجربت الـ 4 tests.
