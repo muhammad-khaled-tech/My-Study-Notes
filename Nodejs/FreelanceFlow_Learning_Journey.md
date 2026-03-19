@@ -67,11 +67,11 @@ app.listen(PORT, () => {
 npm run dev
 ```
 
-افتح Postman أو المتصفح:
+افتح Postman:
 
-| Test | Method | URL | Expected |
-|------|--------|-----|----------|
-| Server alive? | GET | `http://localhost:5000/` | `FreelanceFlow server is alive! 🚀` |
+> **Method:** `GET`
+> **URL:** `http://localhost:5000/`
+> **Expected:** `FreelanceFlow server is alive! 🚀`
 
 **لو شفت الرسالة دي → Sprint 0 خلص. الباب مفتوح.**
 
@@ -143,26 +143,19 @@ app.listen(PORT, () => {
 افتح Postman وبعت الـ requests دي:
 
 **Test 1 — بدون body:**
-| Field | Value |
-|-------|-------|
-| Method | POST |
-| URL | `http://localhost:5000/test-body` |
-| Body | None |
 
-Expected response: `{ "received": {} }`
+> **Method:** `POST`
+> **URL:** `http://localhost:5000/test-body`
+> **Body:** None
+> **Expected:** `{ "received": {} }`
 
 **Test 2 — مع JSON body:**
-| Field | Value |
-|-------|-------|
-| Method | POST |
-| URL | `http://localhost:5000/test-body` |
-| Headers | `Content-Type: application/json` |
-| Body (raw JSON) | `{ "name": "Mohamed", "role": "client" }` |
 
-Expected response:
-```json
-{ "received": { "name": "Mohamed", "role": "client" } }
-```
+> **Method:** `POST`
+> **URL:** `http://localhost:5000/test-body`
+> **Header:** `Content-Type: application/json`
+> **Body (raw JSON):** `{ "name": "Mohamed", "role": "client" }`
+> **Expected:** `{ "received": { "name": "Mohamed", "role": "client" } }`
 
 **شوف الـ terminal كمان** — المفروض تشوف:
 ```
@@ -185,19 +178,19 @@ req.body is: { name: 'Mohamed', role: 'client' }
 POST /test-body
      │
      ▼
-express.json()   ← reads the raw body bytes, parses them,
-     │             sets req.body = { name: 'Mohamed', ... }
-     │             then calls next()
+express.json()      ← reads raw body bytes, parses them,
+     │                sets req.body = { name: 'Mohamed', ... }
+     │                then calls next()
      ▼
-/test-body handler ← req.body is now available here
+/test-body handler  ← req.body is now available here
      │
      ▼
-res.json(...)    ← response sent, cycle ends
+res.json(...)       ← response sent, cycle ends
 ```
 
 **`express.json()` بيعمل إيه داخلياً؟**
 
-بيشوف الـ `Content-Type` header في الـ request. لو كان `application/json`، بياخد الـ raw bytes من الـ request stream، بيعملهم `JSON.parse()` ، وبيحط النتيجة على `req.body`. لو الـ Content-Type مش JSON — بيعمل `next()` من غير ما يعمل حاجة.
+بيشوف الـ `Content-Type` header في الـ request. لو كان `application/json`، بياخد الـ raw bytes من الـ request stream، بيعملهم `JSON.parse()`، وبيحط النتيجة على `req.body`. لو الـ Content-Type مش JSON — بيعمل `next()` من غير ما يعمل حاجة.
 
 **ليه `app.use()` من غير path؟**
 
@@ -251,7 +244,6 @@ module.exports = AppError;
 
 ```javascript
 const globalErrorHandler = (err, req, res, next) => {
-  // Default to 500 if no statusCode was set
   err.statusCode = err.statusCode || 500;
   err.status     = err.status     || 'error';
 
@@ -268,8 +260,8 @@ module.exports = globalErrorHandler;
 
 ```javascript
 require('dotenv').config();
-const express      = require('express');
-const AppError     = require('./src/utils/AppError');
+const express            = require('express');
+const AppError           = require('./src/utils/AppError');
 const globalErrorHandler = require('./src/middlewares/errorHandler');
 
 const app  = express();
@@ -279,18 +271,15 @@ app.use(express.json());
 
 // ✅ NEW: A route that throws a fake error — just to test our error handler
 app.get('/test-error', (req, res, next) => {
-  // We're passing an AppError to next() — this skips all normal middleware
-  // and jumps directly to the globalErrorHandler
   next(new AppError('This is a fake error for testing!', 400));
 });
 
-// ✅ NEW: Catch-all for routes that don't exist (404)
+// ✅ NEW: Catch-all for routes that don't exist
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// ✅ NEW: The global error handler — MUST be the last thing registered
-// Express knows it's an error handler because it has 4 parameters
+// ✅ NEW: Global error handler — MUST be the last thing registered
 app.use(globalErrorHandler);
 
 app.listen(PORT, () => {
@@ -303,35 +292,26 @@ app.listen(PORT, () => {
 ## ✅ Checkpoint
 
 **Test 1 — الـ fake error:**
-| Field | Value |
-|-------|-------|
-| Method | GET |
-| URL | `http://localhost:5000/test-error` |
 
-Expected:
-```json
-{
-  "status": "fail",
-  "message": "This is a fake error for testing!"
-}
-```
+> **Method:** `GET`
+> **URL:** `http://localhost:5000/test-error`
+> **Expected:**
+> ```json
+> { "status": "fail", "message": "This is a fake error for testing!" }
+> ```
 
 **Test 2 — route مش موجودة:**
-| Field | Value |
-|-------|-------|
-| Method | GET |
-| URL | `http://localhost:5000/anything-random` |
 
-Expected:
-```json
-{
-  "status": "fail",
-  "message": "Can't find /anything-random on this server!"
-}
-```
+> **Method:** `GET`
+> **URL:** `http://localhost:5000/anything-random`
+> **Expected:**
+> ```json
+> { "status": "fail", "message": "Can't find /anything-random on this server!" }
+> ```
 
-**Test 3 — تأكد إن الـ status code صح:**
-في Postman، شوف أعلى الـ response — المفروض يكتب `400 Bad Request` للـ test الأول و `404 Not Found` للتاني.
+**Test 3 — تأكد من الـ status code في Postman:**
+
+أعلى الـ response — المفروض يكتب `400 Bad Request` للـ Test 1 و `404 Not Found` للـ Test 2.
 
 **لو الـ errors بيترجعوا كـ JSON مش كـ HTML → Sprint 2 خلص.**
 
@@ -346,31 +326,24 @@ Express بيتعرف على الـ error handler بالـ signature بتاعته
 **إيه اللي بيحصل لما بتعمل `next(err)`؟**
 
 ```
-app.get('/test-error', (req, res, next) => {
-  next(new AppError('...', 400));  // ← calls next() with an argument
-});
-```
-
-لما بتعمل `next(something)` — Express بيعمل إيه؟
-
-```
-next() with NO argument   → go to the next NORMAL middleware
-next() with AN argument   → skip ALL normal middleware
-                            jump directly to the error handler
+next()           → go to the NEXT normal middleware
+next(anything)   → SKIP all normal middleware
+                   jump directly to the error handler
 ```
 
 **إيه اللي بيخلي `AppError` مفيد أكتر من `new Error()` العادي؟**
 
 الـ native `Error` object عنده `message` و `stack` بس. الـ `AppError` بيضيف:
+
 - `statusCode` — عشان الـ error handler يعرف يبعت الـ HTTP status الصح
 - `status` — `'fail'` أو `'error'` حسب الـ status code
-- `isOperational = true` — ده الـ flag المهم. بعدين لما نعمل الـ production error handler، هنستخدم الـ flag ده عشان نفرق بين:
+- `isOperational = true` — الـ flag المهم. بعدين هنستخدمه عشان نفرق بين:
   - **Operational errors** (زي "user not found") — آمن نبعت الـ message للـ client
-  - **Programming errors** (زي bug في الكود) — خطر نبعت التفاصيل — بنبعت "Something went wrong" بدل كده
+  - **Programming errors** (زي bug في الكود) — خطر نبعت التفاصيل، نبعت "Something went wrong" بدل كده
 
 **`app.all('*')` بتعمل إيه؟**
 
-`app.all` بيطابق أي HTTP method (GET, POST, PATCH, DELETE...). الـ `'*'` بتطابق أي path. يعني: "أي request على أي path ومش اتعمله match بالـ routes اللي فوق — ادّيه للـ error handler كـ 404".
+`app.all` بيطابق أي HTTP method. الـ `'*'` بتطابق أي path. يعني: "أي request على أي path ومش اتعمله match بالـ routes اللي فوق — ادّيه للـ error handler كـ 404".
 
 ---
 
@@ -386,8 +359,8 @@ MongoDB هو مكان حفظ الداتا. Mongoose هو الـ translator بي�
 
 تخيل إن MongoDB هو مخزن كبير جداً فيه أدراج. كل drawer هو collection (زي `users`, `projects`). Mongoose هو اللي بيقولك: "الـ drawer ده هيستقبل بس أشياء معينة، بشكل معين."
 
-**الـ Schema** = التعليمات اللي بتحدد شكل الداتا.
-**الـ Model** = الـ JavaScript class اللي بيديك methods تتعامل بيها مع الـ collection.
+- **Schema** = التعليمات اللي بتحدد شكل الداتا
+- **Model** = الـ JavaScript class اللي بيديك methods تتعامل بيها مع الـ collection
 
 **Sprint 3 هدفه:** نوصل بـ MongoDB ونعمل `User` model بسيط — **بدون أي hooks دلوقتي.** هنضيف الـ hooks في Sprint 4.
 
@@ -439,11 +412,10 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // auto-adds createdAt and updatedAt
+    timestamps: true,
   }
 );
 
-// The Model: compiled from the schema, represents the 'users' collection
 const User = mongoose.model('User', userSchema);
 module.exports = User;
 ```
@@ -452,10 +424,10 @@ module.exports = User;
 
 ```javascript
 require('dotenv').config();
-const express      = require('express');
-const mongoose     = require('mongoose');
-const User         = require('./src/models/User.model');
-const AppError     = require('./src/utils/AppError');
+const express            = require('express');
+const mongoose           = require('mongoose');
+const User               = require('./src/models/User.model');
+const AppError           = require('./src/utils/AppError');
 const globalErrorHandler = require('./src/middlewares/errorHandler');
 
 const app  = express();
@@ -469,13 +441,13 @@ mongoose
   .then(() => console.log('✅ MongoDB Connected'))
   .catch((err) => console.error('❌ MongoDB Connection Failed:', err));
 
-// ✅ NEW: Test route — creates a raw user (no hashing yet, that's Sprint 4)
+// ✅ NEW: Test route — creates a raw user (no hashing yet, Sprint 4 fixes this)
 app.post('/test-user', async (req, res, next) => {
   try {
     const user = await User.create(req.body);
     res.status(201).json({ status: 'success', data: { user } });
   } catch (err) {
-    next(err); // passes Mongoose errors to our global error handler
+    next(err);
   }
 });
 
@@ -496,62 +468,31 @@ app.listen(PORT, () => {
 
 **Test 1 — User creation صح:**
 
-| Field | Value |
-|-------|-------|
-| Method | POST |
-| URL | `http://localhost:5000/test-user` |
-| Body (JSON) | `{ "name": "Mohamed", "email": "mo@test.com", "password": "pass1234", "role": "client" }` |
+> **Method:** `POST`
+> **URL:** `http://localhost:5000/test-user`
+> **Body (raw JSON):** `{ "name": "Mohamed", "email": "mo@test.com", "password": "pass1234", "role": "client" }`
+> **Expected:** user object كامل مع `_id` و `createdAt`
 
-Expected response:
-```json
-{
-  "status": "success",
-  "data": {
-    "user": {
-      "_id": "64abc...",
-      "name": "Mohamed",
-      "email": "mo@test.com",
-      "password": "pass1234",
-      "role": "client",
-      "createdAt": "...",
-      "updatedAt": "..."
-    }
-  }
-}
-```
+> ⚠️ **لاحظ:** الـ password ظاهر كـ plain text دلوقتي — Sprint 4 هيحل المشكلة دي.
 
-> ⚠️ **لاحظ:** الـ password ظاهر كـ plain text في الـ response دلوقتي. ده مقبول مؤقتاً — Sprint 4 هيحل المشكلة دي.
+**Test 2 — Validation error:**
 
-**Test 2 — Validation error (missing required field):**
-
-| Field | Value |
-|-------|-------|
-| Method | POST |
-| Body (JSON) | `{ "name": "Ahmed" }` — email و password ناقصين |
-
-Expected:
-```json
-{
-  "status": "error",
-  "message": "User validation failed: email: Please provide your email, password: ..."
-}
-```
+> **Method:** `POST`
+> **Body (raw JSON):** `{ "name": "Ahmed" }`
+> **Expected:** error بيقول إن email و password مطلوبين
 
 **Test 3 — Duplicate email:**
 
-ابعت نفس الـ request بتاع Test 1 تاني مرة.
-
-Expected: error بيقول إن الـ email موجود بالفعل (code 11000 error من MongoDB).
-
-> الـ error message مش جميل دلوقتي — هنحسنه بعدين في الـ error handler. المهم إن السيرفر مش بيـ crash.
+> ابعت نفس الـ Test 1 تاني مرة بنفس الـ email
+> **Expected:** error إن الـ email موجود بالفعل
 
 **لو الـ user اتحفظ في الـ database → Sprint 3 خلص.**
 
-> تقدر تتأكد بـ MongoDB Compass أو `mongosh`:
-> ```
-> use freelanceflow
-> db.users.find()
-> ```
+تتأكد بـ `mongosh`:
+```
+use freelanceflow
+db.users.find()
+```
 
 ---
 
@@ -563,60 +504,47 @@ Expected: error بيقول إن الـ email موجود بالفعل (code 11000
 // Schema = the blueprint — defines shape and rules, NO DB interaction
 const userSchema = new mongoose.Schema({ name: String });
 
-// Model = compiled class from the schema — gives you query methods
-// 'User' → Mongoose creates a 'users' collection (lowercase, pluralized)
+// Model = compiled class — gives you all the query methods
 const User = mongoose.model('User', userSchema);
 
-// Now User has:
-User.find()              // query the users collection
-User.create({})          // insert a document
-User.findById(id)        // find by _id
-User.findByIdAndUpdate() // find + update atomically
-User.deleteOne()         // delete matching document
+User.find()               // query all users
+User.create({})           // insert a document
+User.findById(id)         // find by _id
+User.findByIdAndUpdate()  // find + update atomically
+User.deleteOne()          // delete matching document
 ```
 
 **إيه معنى `unique: true` بالظبط؟**
 
-`unique: true` مش Mongoose validator — ده بيعمل **unique index** في MongoDB نفسه. الفرق المهم:
-
 ```javascript
-// This is a Mongoose validator — runs BEFORE saving, throws ValidationError
+// Mongoose validator — runs BEFORE saving, throws ValidationError
 required: [true, 'Email is required']
 
-// This is a MongoDB index — enforced at DB level, throws MongoServerError (code 11000)
+// MongoDB index — enforced at DB level, throws MongoServerError code 11000
 unique: true
 ```
 
-عشان كده الـ error اللي بييجي من `unique` مختلف شكله. هنتعامل معاه في الـ error handler بعدين.
+عشان كده الـ error اللي بييجي من `unique` مختلف شكله عن الـ validation error. هنتعامل معاه في الـ error handler بعدين.
 
-**إيه `timestamps: true` بيضيف؟**
-
-بيضيف automatically:
-- `createdAt` — وقت ما الـ document اتعمل
-- `updatedAt` — وقت آخر تعديل
-
-من غير ما تكتب سطر واحد زيادة.
-
-**إيه اللي بيحصل لما بتعمل `User.create(data)`؟**
+**إيه اللي بيحصل داخلياً لما بتعمل `User.create(data)`؟**
 
 ```
-User.create({ name: 'Mohamed', email: 'mo@test.com', ... })
+User.create({ ... })
     │
     ▼
-1. Mongoose validates the data against the Schema
-   (required fields? correct types? enum values?)
+1. Validate data against Schema
     │
     ▼
-2. Runs pre('save') hooks (none yet — Sprint 4)
+2. Run pre('save') hooks    ← none yet, Sprint 4 adds these
     │
     ▼
-3. Sends the INSERT command to MongoDB
+3. Send INSERT to MongoDB
     │
     ▼
-4. Runs post('save') hooks (none yet)
+4. Run post('save') hooks   ← none yet
     │
     ▼
-5. Returns the saved document (with _id, createdAt, updatedAt added)
+5. Return saved document (with _id, createdAt, updatedAt)
 ```
 
 ---
@@ -627,16 +555,14 @@ User.create({ name: 'Mohamed', email: 'mo@test.com', ... })
 
 عملنا في الـ 3 sprints دول:
 
-| Sprint | ما اتبنى | حالته |
-|--------|----------|-------|
-| 0 | Express server alive | ✅ |
-| 1 | `express.json()` — body parsing | ✅ |
-| 2 | `AppError` + Global Error Handler | ✅ |
-| 3 | MongoDB connection + User Schema | ✅ |
+- **Sprint 0** ✅ — Express server alive
+- **Sprint 1** ✅ — `express.json()` body parsing
+- **Sprint 2** ✅ — `AppError` + Global Error Handler
+- **Sprint 3** ✅ — MongoDB connection + User Schema
 
 **الجاي في الـ sprints القادمة:**
 
-- **Sprint 4** — Password Hashing Hook (`pre('save')`) — ليه في الـ Model مش الـ Controller
+- **Sprint 4** — Password Hashing Hook — ليه في الـ Model مش الـ Controller
 - **Sprint 5** — Register flow (real controller + route)
 - **Sprint 6** — Login + JWT — الـ Stateless concept
 - **Sprint 7** — `protect` middleware — تأمين الـ routes
