@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "angular/snapgrid-project-plan.md",
+                "file": "angular/FreelanceFlow_Frontend_Journey.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "snapgrid-project-plan"
+              "title": "FreelanceFlow_Frontend_Journey"
             }
           },
           {
@@ -251,8 +251,10 @@
   },
   "active": "d5c1111ead807e05",
   "lastOpenFiles": [
-    "angular/snapgrid-obsidian.md",
     "angular/snapgrid-project-plan.md",
+    "angular/FreelanceFlow_Frontend_Journey.md",
+    "angular/Unconfirmed 102538.crdownload",
+    "angular/snapgrid-obsidian.md",
     "angular/angular-guide-part8.md",
     "angular/angular-guide-part9.md",
     "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
@@ -273,7 +275,6 @@
     "Nodejs/Unconfirmed 356923.crdownload",
     "Nodejs/Unconfirmed 98101.crdownload",
     "Nodejs/Unconfirmed 160332.crdownload",
-    "Nodejs/Unconfirmed 414583.crdownload",
     "Nodejs/ENV Variables.md",
     "JavaScript/Day-4 lecture  codes.md",
     "mean/implementation_plan.md",
@@ -286,7 +287,6 @@
     "bash/DBMS_Project_Plan.md",
     "Java Core/Data Types.md",
     "Java Core/Wrapers.md",
-    "admin2/RHSA1_Revision_Notes.md",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",

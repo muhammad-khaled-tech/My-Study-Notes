@@ -30,7 +30,8 @@
     "Nodejs/NodeJS_Internals_Masterclass.md": "auto",
     "Java Core/Exceptions.md": "rtl",
     "Aws practitioner/02_IAM.md": "rtl",
-    "Nodejs/FreelanceFlow_Journey_nodejs_project.md": "rtl"
+    "Nodejs/FreelanceFlow_Journey_nodejs_project.md": "rtl",
+    "angular/FreelanceFlow_Frontend_Journey.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
