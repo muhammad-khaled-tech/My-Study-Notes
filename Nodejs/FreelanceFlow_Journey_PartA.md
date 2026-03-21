@@ -37,7 +37,7 @@
 
 Node.js عنده حاجة built-in اسمها `http` — تقدر تعمل بيها server. بس الكود بيبقى طويل جداً وصعب.
 
-Express هو فريم وورك بتسهّل الموضوع ده. بدل ما تكتب 50 سطر، بتكتب 5 سطور.
+Express هو library بتسهّل الموضوع ده. بدل ما تكتب 50 سطر، بتكتب 5 سطور.
 
 تخيله زي فرق ما بين تبني عربية من أجزاء خام، أو تاخد chassis جاهز وتبني عليه. Express هو الـ chassis.
 
@@ -275,6 +275,7 @@ Server running on port 5000
 
 افتح Postman:
 
+> [!example] Test
 > **Method:** `GET`
 > **URL:** `http://localhost:5000/`
 > **Expected:** `FreelanceFlow server is alive! 🚀`
@@ -416,6 +417,7 @@ app.post('/test-body', (req, res) => {
 
 شغّل السيرفر وافتح Postman:
 
+> [!example] Test
 > **Method:** `POST`
 > **URL:** `http://localhost:5000/test-body`
 > **Body:** اختار `raw` وبعدين `JSON` وحط:
@@ -533,6 +535,7 @@ flowchart TD
 
 بعد ما ضفت `app.use(express.json())` — ارجع لـ Postman وبعت نفس الـ request:
 
+> [!example] Test
 > **Method:** `POST`
 > **URL:** `http://localhost:5000/test-body`
 > **Body (raw JSON):** `{ "name": "Mohamed", "role": "client" }`
@@ -563,18 +566,13 @@ req.body is: { name: 'Mohamed', role: 'client' }
 
 الـ HTTP body مش بييجي دفعة واحدة. بييجي كـ **stream** — chunks صغيرة من البيانات. الـ `express.json()` بيستنى يجمع كل الـ chunks دي، وبعدين بيعمل `JSON.parse()` على الناتج.
 
-```mermaid
-sequenceDiagram
-    participant P as Postman
-    participant M as express.json Middleware
-    participant R as Route Handler
-
-    P->>M: Request + Body chunks
-    M->>M: جمع الـ chunks
-    M->>M: JSON.parse على الـ body
-    M->>M: req.body = النتيجة
-    M->>R: next() — روح للـ route
-    R->>P: res.json(req.body)
+```
+    Postman ──► express.json Middleware: Request + Body chunks
+    express.json Middleware → جمع الـ chunks
+    express.json Middleware → JSON.parse على الـ body
+    express.json Middleware → req.body = النتيجة
+    express.json Middleware ──► Route Handler: next() — روح للـ route
+    Route Handler ──► Postman: res.json(req.body)
 ```
 
 لو الـ JSON جاي malformed (مثلاً فيه syntax error) — الـ `express.json()` بيرمي error تلقائياً ومش بيكمل للـ route. هنشوف إزاي نتعامل مع الـ errors دي في Sprint 2.
@@ -614,6 +612,7 @@ sequenceDiagram
 
 جرّب دلوقتي: افتح Postman وبعت request على route مش موجودة:
 
+> [!example] Test
 > **Method:** `GET`
 > **URL:** `http://localhost:5000/هاي`
 
@@ -913,8 +912,7 @@ flowchart TD
 
 ## ✅ Checkpoint
 
-**Test 1 — الـ fake error:**
-
+> [!example] Test 1 — الـ fake error
 > **Method:** `GET`
 > **URL:** `http://localhost:5000/test-error`
 >
@@ -924,8 +922,7 @@ flowchart TD
 > ```
 > وفي أعلى Postman: `400 Bad Request`
 
-**Test 2 — Route مش موجودة:**
-
+> [!example] Test 2 — Route مش موجودة
 > **Method:** `GET`
 > **URL:** `http://localhost:5000/اي-حاجة-تانية`
 >
@@ -1497,23 +1494,17 @@ mongoose
 
 `.catch(...)` — بيشتغل لو فشل. `process.exit(1)` بيوقف السيرفر كله — لو الـ database مش شغال، السيرفر مش هينفع يكمل.
 
-```mermaid
-sequenceDiagram
-    participant S as server.js
-    participant M as Mongoose
-    participant DB as MongoDB
-
-    S->>M: mongoose.connect(MONGO_URI)
-    M->>DB: TCP Connection attempt
-    alt Connection successful
-        DB-->>M: Connected ✅
-        M-->>S: .then() يشتغل
-        S->>S: console.log Connected
-    else Connection failed
-        DB-->>M: Refused ❌
-        M-->>S: .catch() يشتغل
-        S->>S: process.exit(1)
-    end
+```
+    server.js ──► Mongoose: mongoose.connect(MONGO_URI)
+    Mongoose ──► MongoDB: TCP Connection attempt
+    # لو Connection successful
+    MongoDB ──► Mongoose: Connected ✅
+    Mongoose ──► server.js: .then() يشتغل
+    server.js → console.log Connected
+    # غير كده
+    MongoDB ──► Mongoose: Refused ❌
+    Mongoose ──► server.js: .catch() يشتغل
+    server.js → process.exit(1)
 ```
 
 ---
@@ -1581,19 +1572,14 @@ app.post('/test-user', async (req, res, next) => {
 
 `await` بتقول "استنّى لحد ما الـ `User.create()` يخلص" — بس من غير ما توقف السيرفر كله.
 
-```mermaid
-sequenceDiagram
-    participant R as Route Handler
-    participant M as Mongoose
-    participant DB as MongoDB
-
-    R->>M: await User.create(data)
-    Note over R: الـ route handler بيستنى
-    Note over R: بس السيرفر كله مش واقف
-    M->>DB: INSERT document
-    DB-->>M: Document saved ✅
-    M-->>R: بيرجع الـ user document
-    R->>R: res.json(user)
+```
+    Route Handler ──► Mongoose: await User.create(data)
+    # الـ route handler بيستنى
+    # بس السيرفر كله مش واقف
+    Mongoose ──► MongoDB: INSERT document
+    MongoDB ──► Mongoose: Document saved ✅
+    Mongoose ──► Route Handler: بيرجع الـ user document
+    Route Handler → res.json(user)
 ```
 
 الـ `try/catch` حوالين `await User.create()` عشان لو حصل error — بنبعته للـ `next(err)` اللي بيوصله للـ global error handler.
@@ -1609,8 +1595,7 @@ Server running on port 5000
 ✅ MongoDB Connected
 ```
 
-**Test 1 — اخلق User صح:**
-
+> [!example] Test 1 — اخلق User صح
 > **Method:** `POST`
 > **URL:** `http://localhost:5000/test-user`
 > **Body (raw JSON):**
@@ -1643,20 +1628,17 @@ Server running on port 5000
 
 > ⚠️ **لاحظ:** الـ `password` ظاهر كـ plain text. ده مشكلة كبيرة — Sprint 4 هيحلها.
 
-**Test 2 — بعت من غير required fields:**
-
+> [!example] Test 2 — بعت من غير required fields
 > **Body:** `{ "name": "Ahmed" }`
 >
 > **Expected:** ValidationError رسالة فيها "Please provide your email" و"Please provide a password"
 
-**Test 3 — نفس الـ email مرتين:**
-
+> [!example] Test 3 — نفس الـ email مرتين
 > ابعت Test 1 تاني مرة بنفس الـ email بالظبط.
 >
 > **Expected:** Error بيقول الـ email موجود بالفعل — رسالة مش جميلة دلوقتي، بنحسنها بعدين.
 
-**Test 4 — بعت role غلط:**
-
+> [!example] Test 4 — بعت role غلط
 > **Body:** `{ "name": "Sara", "email": "sara@test.com", "password": "pass1234", "role": "admin" }`
 >
 > **Expected:** ValidationError بيقول إن `admin` مش في الـ enum
@@ -1907,22 +1889,16 @@ flowchart TD
 
 في `pre('save')` — يعني: "قبل ما تحفظ أي document — شغّل الكود ده."
 
-```mermaid
-sequenceDiagram
-    participant C as Controller
-    participant M as Mongoose
-    participant H as pre-save Hook
-    participant DB as MongoDB
-
-    C->>M: User.create(data)
-    M->>M: Run Validation
-    M->>H: شغّل pre-save hook
-    H->>H: bcrypt.hash(password, 12)
-    H->>H: this.password = hashedPassword
-    H->>M: next() — خلاص جاهز
-    M->>DB: INSERT document
-    DB-->>M: Saved ✅
-    M-->>C: return user
+```
+    Controller ──► Mongoose: User.create(data)
+    Mongoose → Run Validation
+    Mongoose ──► pre-save Hook: شغّل pre-save hook
+    pre-save Hook → bcrypt.hash(password, 12)
+    pre-save Hook → this.password = hashedPassword
+    pre-save Hook ──► Mongoose: next() — خلاص جاهز
+    Mongoose ──► MongoDB: INSERT document
+    MongoDB ──► Mongoose: Saved ✅
+    Mongoose ──► Controller: return user
 ```
 
 الـ Controller مش عارف أي حاجة عن الـ hash. بياخد البيانات، بيبعتها لـ Mongoose، وبيستنى. الـ hash بيحصل تلقائياً في الـ middle.
@@ -2172,8 +2148,7 @@ userSchema.pre('save', async function(next) {
 
 ## ✅ Checkpoint
 
-**Test 1 — اخلق User جديد:**
-
+> [!example] Test 1 — اخلق User جديد
 > **Method:** `POST`
 > **URL:** `http://localhost:5000/test-user`
 > **Body:**
@@ -2203,8 +2178,7 @@ db.users.find({ email: 'mo2@test.com' })
 
 مش `pass1234` — الـ hashing اشتغل.
 
-**Test 3 — بعت password أقل من 8 حروف:**
-
+> [!example] Test 3 — بعت password أقل من 8 حروف
 > **Body:** `{ "name": "Test", "email": "test@test.com", "password": "123" }`
 >
 > **Expected:** ValidationError — "Password must be at least 8 characters"

@@ -494,28 +494,18 @@ flowchart TD
 
 ## الـ Request Flow الكاملة بعد التقسيم
 
-```mermaid
-sequenceDiagram
-    participant C as Client (Postman)
-    participant SV as server.js
-    participant AP as app.js
-    participant MW as express.json()
-    participant RT as auth.routes.js
-    participant CT as auth.controller.js
-    participant MD as User.model.js
-    participant DB as MongoDB
-
-    C->>SV: POST /api/v1/auth/register
-    SV->>AP: app(req, res)
-    AP->>MW: express.json() parses body
-    MW->>RT: يطابق /api/v1/auth
-    RT->>CT: يطابق POST /register
-    CT->>MD: User.create(data)
-    MD->>MD: pre-save hook — bcrypt.hash
-    MD->>DB: INSERT document
-    DB-->>MD: user saved
-    MD-->>CT: return newUser
-    CT-->>C: res.status(201).json({ user })
+```
+    Client (Postman) ──► server.js: POST /api/v1/auth/register
+    server.js ──► app.js: app(req, res)
+    app.js ──► express.json(): express.json() parses body
+    express.json() ──► auth.routes.js: يطابق /api/v1/auth
+    auth.routes.js ──► auth.controller.js: يطابق POST /register
+    auth.controller.js ──► User.model.js: User.create(data)
+    User.model.js → pre-save hook — bcrypt.hash
+    User.model.js ──► MongoDB: INSERT document
+    MongoDB ──► User.model.js: user saved
+    User.model.js ──► auth.controller.js: return newUser
+    auth.controller.js ──► Client (Postman): res.status(201).json({ user })
 ```
 
 ---
@@ -531,8 +521,7 @@ sequenceDiagram
 ✅ MongoDB Connected
 ```
 
-**Test 1 — Register صح:**
-
+> [!example] Test 1 — Register صح
 > **Method:** `POST` **URL:** `http://localhost:5000/api/v1/auth/register` **Body (raw JSON):**
 > 
 > ```json
@@ -566,20 +555,17 @@ sequenceDiagram
 > 
 > **لاحظ:** الـ status في Postman فوق: `201 Created` مش `200 OK`.
 
-**Test 2 — Email موجود بالفعل:**
-
+> [!example] Test 2 — Email موجود بالفعل
 > ابعت نفس الـ request بنفس الـ email مرة تانية.
 > 
 > **Expected:** error بيقول duplicate
 
-**Test 3 — بيانات ناقصة:**
-
+> [!example] Test 3 — بيانات ناقصة
 > **Body:** `{ "name": "Ahmed" }`
 > 
 > **Expected:** ValidationError
 
-**Test 4 — Route مش موجودة:**
-
+> [!example] Test 4 — Route مش موجودة
 > **Method:** `GET` **URL:** `http://localhost:5000/api/v1/auth/anything`
 > 
 > **Expected:** `{ "status": "fail", "message": "Can't find..." }`
@@ -622,17 +608,13 @@ sequenceDiagram
 
 تخيل إنك بتكلم حد على التليفون — بس كل مرة بتكلمه بينساك خالص ولازم تعرّف نفسك من الأول.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Server
-
-    U->>S: POST /login بـ email وpassword
-    S-->>U: أهلاً Mohamed ✅
-    U->>S: GET /my-profile
-    S-->>U: مين أنت؟ ❌ مش فاكرك
-    U->>S: POST /create-project
-    S-->>U: مين أنت؟ ❌ مش فاكرك
+```
+    User ──► Server: POST /login بـ email وpassword
+    Server ──► User: أهلاً Mohamed ✅
+    User ──► Server: GET /my-profile
+    Server ──► User: مين أنت؟ ❌ مش فاكرك
+    User ──► Server: POST /create-project
+    Server ──► User: مين أنت؟ ❌ مش فاكرك
 ```
 
 كل request وصلت للسيرفر من غير أي معلومة عن مين بعتها.
@@ -664,26 +646,18 @@ JWT (JSON Web Token) بيحل المشكلة بطريقة مختلفة تمام�
 
 **بدل ما السيرفر يتذكرك — بنديك ورقة موقّعة تثبت هويتك.**
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Server
-    participant DB as Database
-
-    U->>S: POST /login بـ email وpassword
-    S->>DB: تحقق من الـ credentials
-    DB-->>S: صح ✅
-    S-->>U: خد الـ token ده: eyJhbGci...
-
-    Note over U: الـ client بيحفظ الـ token
-
-    U->>S: GET /my-profile<br/>Authorization: Bearer eyJhbGci...
-    Note over S: بيتحقق من الـ token بدون DB
-    S-->>U: بيانات Mohamed ✅
-
-    U->>S: POST /create-project<br/>Authorization: Bearer eyJhbGci...
-    Note over S: بيتحقق من الـ token بدون DB
-    S-->>U: Project اتعمل ✅
+```
+    User ──► Server: POST /login بـ email وpassword
+    Server ──► Database: تحقق من الـ credentials
+    Database ──► Server: صح ✅
+    Server ──► User: خد الـ token ده: eyJhbGci...
+    # الـ client بيحفظ الـ token
+    User ──► Server: GET /my-profile Authorization: Bearer eyJhbGci...
+    # بيتحقق من الـ token بدون DB
+    Server ──► User: بيانات Mohamed ✅
+    User ──► Server: POST /create-project Authorization: Bearer eyJhbGci...
+    # بيتحقق من الـ token بدون DB
+    Server ──► User: Project اتعمل ✅
 ```
 
 **الفرق الجوهري:** السيرفر مش بيحفظ حاجة. بيتحقق من الـ token بـ math بس — من غير ما يروح للـ DB.
@@ -1057,26 +1031,20 @@ module.exports = router;
 
 ## الـ Token Flow الكاملة — من Login لـ Protected Route
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-
-    Note over C,S: خطوة 1 — Login
-    C->>S: POST /api/v1/auth/login<br/>{email, password}
-    S->>S: تحقق من الـ credentials
-    S->>S: jwt.sign({id: user._id}, SECRET)
-    S-->>C: { token: "eyJhbGci..." }
-
-    Note over C: الـ client بيحفظ الـ token
-    Note over C: في localStorage أو memory
-
-    Note over C,S: خطوة 2 — استخدام الـ Token
-    C->>S: GET /api/v1/projects<br/>Authorization: Bearer eyJhbGci...
-    S->>S: jwt.verify(token, SECRET)
-    S->>S: بيطلع id من الـ payload
-    S->>S: User.findById(id)
-    S-->>C: { projects: [...] }
+```
+    # خطوة 1 — Login
+    Client ──► Server: POST /api/v1/auth/login {email, password}
+    Server → تحقق من الـ credentials
+    Server → jwt.sign({id: user._id}, SECRET)
+    Server ──► Client: { token: "eyJhbGci..." }
+    # الـ client بيحفظ الـ token
+    # في localStorage أو memory
+    # خطوة 2 — استخدام الـ Token
+    Client ──► Server: GET /api/v1/projects Authorization: Bearer eyJhbGci...
+    Server → jwt.verify(token, SECRET)
+    Server → بيطلع id من الـ payload
+    Server → User.findById(id)
+    Server ──► Client: { projects: [...] }
 ```
 
 الـ `protect` middleware اللي هيعمل الـ verify ده — هنبنيه في Sprint 7.
@@ -1085,8 +1053,7 @@ sequenceDiagram
 
 ## ✅ Checkpoint
 
-**Test 1 — Register وخد الـ token:**
-
+> [!example] Test 1 — Register وخد الـ token
 > **Method:** `POST` **URL:** `http://localhost:5000/api/v1/auth/register` **Body:**
 > 
 > ```json
@@ -1103,8 +1070,7 @@ sequenceDiagram
 > }
 > ```
 
-**Test 2 — Login صح:**
-
+> [!example] Test 2 — Login صح
 > **Method:** `POST` **URL:** `http://localhost:5000/api/v1/auth/login` **Body:**
 > 
 > ```json
@@ -1113,8 +1079,7 @@ sequenceDiagram
 > 
 > **Expected:** نفس الـ response — token + user بدون password
 
-**Test 3 — Password غلط:**
-
+> [!example] Test 3 — Password غلط
 > **Body:** `{ "email": "test@example.com", "password": "wrongpassword" }`
 > 
 > **Expected:**
@@ -1123,8 +1088,7 @@ sequenceDiagram
 > { "status": "fail", "message": "Incorrect email or password" }
 > ```
 
-**Test 4 — Email مش موجود:**
-
+> [!example] Test 4 — Email مش موجود
 > **Body:** `{ "email": "nobody@example.com", "password": "password123" }`
 > 
 > **Expected:** نفس الرسالة بالظبط — `"Incorrect email or password"` السيرفر مش بيقول مين اللي غلط.
@@ -1284,18 +1248,14 @@ flowchart TD
 
 ده يعني كل middleware وكل controller جاي بعده هيعرف مين الـ user ده من `req.user`.
 
-```mermaid
-sequenceDiagram
-    participant MW as protect middleware
-    participant CT as Controller
-
-    MW->>MW: jwt.verify(token)
-    MW->>MW: User.findById(decoded.id)
-    MW->>MW: req.user = currentUser
-    MW->>CT: next()
-    CT->>CT: يستخدم req.user._id
-    CT->>CT: يستخدم req.user.role
-    CT->>CT: يستخدم req.user.email
+```
+    protect middleware → jwt.verify(token)
+    protect middleware → User.findById(decoded.id)
+    protect middleware → req.user = currentUser
+    protect middleware ──► Controller: next()
+    Controller → يستخدم req.user._id
+    Controller → يستخدم req.user.role
+    Controller → يستخدم req.user.email
 ```
 
 مش محتاج في كل controller تروح تجيب الـ user من الـ DB تاني — `protect` عمل ده وحطه على `req.user` جاهز.
@@ -1601,8 +1561,7 @@ app.get('/api/v1/me', protect, (req, res) => {
 
 ## ✅ Checkpoint
 
-**Test 1 — من غير token:**
-
+> [!example] Test 1 — من غير token
 > **Method:** `GET` **URL:** `http://localhost:5000/api/v1/me` **Headers:** لا تضيف حاجة
 > 
 > **Expected:**
@@ -1611,14 +1570,12 @@ app.get('/api/v1/me', protect, (req, res) => {
 > { "status": "fail", "message": "You are not logged in. Please log in to get access." }
 > ```
 
-**Test 2 — بـ token صح:**
-
+> [!example] Test 2 — بـ token صح
 > اعمل login الأول وخد الـ token. **Method:** `GET` **URL:** `http://localhost:5000/api/v1/me` **Header:** `Authorization: Bearer <الـ token هنا>`
 > 
 > **Expected:** بيانات الـ user اللي عمل login — من غير password.
 
-**Test 3 — بـ token باظ:**
-
+> [!example] Test 3 — بـ token باظ
 > **Header:** `Authorization: Bearer thisisnotavalidtoken`
 > 
 > **Expected:**
@@ -1627,8 +1584,7 @@ app.get('/api/v1/me', protect, (req, res) => {
 > { "status": "fail", "message": "Invalid token. Please log in again." }
 > ```
 
-**Test 4 — بـ token منتهي:**
-
+> [!example] Test 4 — بـ token منتهي
 > في الـ `.env` غيّر `JWT_EXPIRES_IN=1s`، اعمل login، استنى ثانيتين، وبعدين بعت الـ request.
 > 
 > **Expected:**
@@ -2186,19 +2142,14 @@ const project = await Project.findById(id).populate('client', 'name email');
 - "جيب الـ document اللي `_id` بتاعه = الـ `client` field ده"
 - "بس جيب `name` و`email` بس — مش كل الـ fields"
 
-```mermaid
-sequenceDiagram
-    participant CT as Controller
-    participant MG as Mongoose
-    participant DB as MongoDB
-
-    CT->>MG: Project.findById(id).populate('client', 'name email')
-    MG->>DB: Query 1: db.projects.findOne({_id: id})
-    DB-->>MG: { title: '...', client: ObjectId('64abc') }
-    MG->>DB: Query 2: db.users.findOne({_id: '64abc'}, {name:1, email:1})
-    DB-->>MG: { name: 'Mohamed', email: 'mo@test.com' }
-    MG->>MG: Replace ObjectId with user document
-    MG-->>CT: { title: '...', client: { name: 'Mohamed', email: '...' } }
+```
+    Controller ──► Mongoose: Project.findById(id).populate('client', 'name email')
+    Mongoose ──► MongoDB: Query 1: db.projects.findOne({_id: id})
+    MongoDB ──► Mongoose: { title: '...', client: ObjectId('64abc') }
+    Mongoose ──► MongoDB: Query 2: db.users.findOne({_id: '64abc'}, {name:1, email:1})
+    MongoDB ──► Mongoose: { name: 'Mohamed', email: 'mo@test.com' }
+    Mongoose → Replace ObjectId with user document
+    Mongoose ──► Controller: { title: '...', client: { name: 'Mohamed', email: '...' } }
 ```
 
 **ملاحظة:** `.populate()` بتعمل query تانية على الـ DB. مش مجاني. استخدمه لما محتاجه فعلاً.
@@ -2313,35 +2264,23 @@ module.exports = app;
 
 ## الـ Full Request Flow للـ Project Create
 
-```mermaid
-sequenceDiagram
-    participant C as Client (Postman)
-    participant AP as app.js
-    participant MW as protect middleware
-    participant RT as project.routes.js
-    participant CT as project.controller.js
-    participant MD as Project.model.js
-    participant DB as MongoDB
-
-    C->>AP: POST /api/v1/projects<br/>Authorization: Bearer token<br/>Body: { title, budget, ... }
-
-    AP->>MW: protect middleware
-    MW->>MW: jwt.verify(token)
-    MW->>DB: User.findById(decoded.id)
-    DB-->>MW: currentUser
-    MW->>MW: req.user = currentUser
-    MW->>RT: next()
-
-    RT->>RT: restrictTo('client')<br/>req.user.role === 'client'? ✅
-    RT->>CT: createProject
-
-    CT->>CT: { ...req.body, client: req.user._id }
-    CT->>MD: Project.create(data)
-    MD->>MD: pre-save hook<br/>validate budget.max > budget.min
-    MD->>DB: INSERT project
-    DB-->>MD: project saved
-    MD-->>CT: return project
-    CT-->>C: 201 { project }
+```
+    Client (Postman) ──► app.js: POST /api/v1/projects Authorization: Bearer token Body: { title, budget, ... }
+    app.js ──► protect middleware: protect middleware
+    protect middleware → jwt.verify(token)
+    protect middleware ──► MongoDB: User.findById(decoded.id)
+    MongoDB ──► protect middleware: currentUser
+    protect middleware → req.user = currentUser
+    protect middleware ──► project.routes.js: next()
+    project.routes.js → restrictTo('client') req.user.role === 'client'? ✅
+    project.routes.js ──► project.controller.js: createProject
+    project.controller.js → { ...req.body, client: req.user._id }
+    project.controller.js ──► Project.model.js: Project.create(data)
+    Project.model.js → pre-save hook validate budget.max > budget.min
+    Project.model.js ──► MongoDB: INSERT project
+    MongoDB ──► Project.model.js: project saved
+    Project.model.js ──► project.controller.js: return project
+    project.controller.js ──► Client (Postman): 201 { project }
 ```
 
 ---
@@ -2358,8 +2297,7 @@ sequenceDiagram
 { "name": "Sara Freelancer", "email": "freelancer@test.com", "password": "password123", "role": "freelancer" }
 ```
 
-**Test 1 — Create Project كـ client:**
-
+> [!example] Test 1 — Create Project كـ client
 > **Method:** `POST` **URL:** `http://localhost:5000/api/v1/projects` **Header:** `Authorization: Bearer <client token>` **Body:**
 > 
 > ```json
@@ -2374,44 +2312,37 @@ sequenceDiagram
 > 
 > **Expected:** `201` + project object بـ `client: "64abc..."` (الـ ID بتاعك)
 
-**Test 2 — Create Project كـ freelancer:**
-
+> [!example] Test 2 — Create Project كـ freelancer
 > نفس الـ request بس بـ freelancer token
 > 
 > **Expected:** `403 Forbidden`
 
-**Test 3 — Create Project من غير token:**
-
+> [!example] Test 3 — Create Project من غير token
 > من غير Authorization header
 > 
 > **Expected:** `401 Unauthorized`
 
-**Test 4 — Get All Projects:**
-
+> [!example] Test 4 — Get All Projects
 > **Method:** `GET` **URL:** `http://localhost:5000/api/v1/projects` **Header:** `Authorization: Bearer <أي token>`
 > 
 > **Expected:** قائمة بالـ projects — client field فيه `name` و`email` مش ID بس
 
-**Test 5 — Budget Validation:**
-
+> [!example] Test 5 — Budget Validation
 > **Body:** نفس الـ request بس `budget: { "min": 2000, "max": 500 }`
 > 
 > **Expected:** `400` — "Maximum budget must be greater than minimum budget"
 
-**Test 6 — Update Project:**
-
+> [!example] Test 6 — Update Project
 > **Method:** `PATCH` **URL:** `http://localhost:5000/api/v1/projects/<project_id>` **Header:** `Authorization: Bearer <client token>` **Body:** `{ "title": "Updated Title" }`
 > 
 > **Expected:** `200` + project بالـ title الجديد
 
-**Test 7 — Update Project بـ user تاني:**
-
+> [!example] Test 7 — Update Project بـ user تاني
 > نفس الـ request بس بـ freelancer token (أو client تاني)
 > 
 > **Expected:** `403 Forbidden`
 
-**Test 8 — Delete Project (Soft Delete):**
-
+> [!example] Test 8 — Delete Project (Soft Delete)
 > **Method:** `DELETE` **URL:** `http://localhost:5000/api/v1/projects/<project_id>` **Header:** `Authorization: Bearer <client token>`
 > 
 > **Expected:** `204 No Content`
@@ -2540,29 +2471,22 @@ flowchart TD
 
 ## الـ `post('save')` Hook — إزاي بيشتغل؟
 
-```mermaid
-sequenceDiagram
-    participant CT as Controller
-    participant MD as Proposal Model
-    participant HK as post-save Hook
-    participant PM as Proposal Collection
-    participant PJ as Project Collection
-
-    CT->>MD: proposal.status = 'accepted'
-    CT->>MD: proposal.save()
-    MD->>MD: Validation ✅
-    MD->>MD: pre-save hooks (لو في)
-    MD->>PM: INSERT/UPDATE to DB
-    PM-->>MD: Saved ✅
-    MD->>HK: شغّل post-save hook
-    HK->>HK: doc.status === 'accepted'? ✅
-    HK->>PM: updateMany — reject all others
-    PM-->>HK: Done ✅
-    HK->>PJ: findByIdAndUpdate — status: in_progress
-    PJ-->>HK: Done ✅
-    HK-->>MD: Hook finished
-    MD-->>CT: return proposal
-    CT-->>CT: res.json(proposal)
+```
+    Controller ──► Proposal Model: proposal.status = 'accepted'
+    Controller ──► Proposal Model: proposal.save()
+    Proposal Model → Validation ✅
+    Proposal Model → pre-save hooks (لو في)
+    Proposal Model ──► Proposal Collection: INSERT/UPDATE to DB
+    Proposal Collection ──► Proposal Model: Saved ✅
+    Proposal Model ──► post-save Hook: شغّل post-save hook
+    post-save Hook → doc.status === 'accepted'? ✅
+    post-save Hook ──► Proposal Collection: updateMany — reject all others
+    Proposal Collection ──► post-save Hook: Done ✅
+    post-save Hook ──► Project Collection: findByIdAndUpdate — status: in_progress
+    Project Collection ──► post-save Hook: Done ✅
+    post-save Hook ──► Proposal Model: Hook finished
+    Proposal Model ──► Controller: return proposal
+    Controller → res.json(proposal)
 ```
 
 الـ Controller مش شايف أي حاجة من الـ cascade — بس بيعمل `proposal.save()` والباقي بيحصل تلقائياً.
@@ -3023,12 +2947,10 @@ flowchart TD
 { "name": "Omar", "email": "omar@test.com", "password": "password123", "role": "freelancer" }
 ```
 
-**Test 1 — خلق Project:**
-
+> [!example] Test 1 — خلق Project
 > سجّل دخول بالـ client وخد الـ token. **POST** `/api/v1/projects` بالـ client token
 
-**Test 2 — بعت Proposal من Freelancer 1:**
-
+> [!example] Test 2 — بعت Proposal من Freelancer 1
 > سجّل دخول بـ Sara وخد الـ token.
 > 
 > **Method:** `POST` **URL:** `http://localhost:5000/api/v1/projects/<project_id>/proposals` **Header:** `Authorization: Bearer <Sara token>` **Body:**
@@ -3042,30 +2964,25 @@ flowchart TD
 > 
 > **Expected:** `201` + proposal بـ `status: "pending"`
 
-**Test 3 — بعت Proposal من Freelancer 2:**
-
+> [!example] Test 3 — بعت Proposal من Freelancer 2
 > سجّل دخول بـ Omar وخد الـ token. نفس الـ request على نفس الـ project.
 
-**Test 4 — حاول تبعت Proposal تاني من نفس الـ Freelancer:**
-
+> [!example] Test 4 — حاول تبعت Proposal تاني من نفس الـ Freelancer
 > بعت تاني بـ Sara token على نفس الـ project.
 > 
 > **Expected:** `400 — You have already submitted a proposal for this project`
 
-**Test 5 — شوف الـ Proposals كـ Client:**
-
+> [!example] Test 5 — شوف الـ Proposals كـ Client
 > **Method:** `GET` **URL:** `http://localhost:5000/api/v1/projects/<project_id>/proposals` **Header:** `Authorization: Bearer <Ali client token>`
 > 
 > **Expected:** قائمة بالـ proposals مع بيانات الـ freelancers
 
-**Test 6 — شوف الـ Proposals بـ Freelancer Token:**
-
+> [!example] Test 6 — شوف الـ Proposals بـ Freelancer Token
 > نفس الـ request بـ Sara token.
 > 
 > **Expected:** `403 Forbidden`
 
-**Test 7 — ⭐ اقبل Proposal Sara:**
-
+> [!example] Test 7 — ⭐ اقبل Proposal Sara
 > **Method:** `PATCH` **URL:** `http://localhost:5000/api/v1/proposals/<sara_proposal_id>/accept` **Header:** `Authorization: Bearer <Ali client token>`
 > 
 > **Expected:** `200` + proposal بـ `status: "accepted"`
@@ -3094,8 +3011,7 @@ db.projects.findOne({ _id: ObjectId('<project_id>') })
 
 **ده الـ Cascade Hook شغّال.**
 
-**Test 9 — حاول تبعت Proposal على Project في_progress:**
-
+> [!example] Test 9 — حاول تبعت Proposal على Project في_progress
 > اعمل proposal جديد على نفس الـ project.
 > 
 > **Expected:** `400 — This project is no longer accepting proposals`
@@ -3415,41 +3331,27 @@ flowchart TD
 
 **المشكلة:**
 
-```mermaid
-sequenceDiagram
-    participant CT as Controller
-    participant MG as Mongoose
-    participant DB as MongoDB
-    participant HK as post-save hook
-
-    CT->>MG: Review.findOneAndDelete({ _id: id })
-    MG->>DB: DELETE document
-    DB-->>MG: Deleted ✅
-    MG-->>HK: post-save hook؟
-    Note over HK: ❌ مش بيشتغل!<br/>findOneAndDelete مش بيشغّل post-save
+```
+    Controller ──► Mongoose: Review.findOneAndDelete({ _id: id })
+    Mongoose ──► MongoDB: DELETE document
+    MongoDB ──► Mongoose: Deleted ✅
+    Mongoose ──► post-save hook: post-save hook؟
+    # ❌ مش بيشتغل! findOneAndDelete مش بيشغّل post-save
 ```
 
 **الـ Solution — pre + post query middleware:**
 
-```mermaid
-sequenceDiagram
-    participant CT as Controller
-    participant MG as Mongoose
-    participant DB as MongoDB
-
-    CT->>MG: Review.findOneAndDelete({ _id: id })
-
-    Note over MG: pre /^findOneAnd/ hook بيشتغل
-    MG->>DB: findOne({ _id: id }) — جيب الـ doc قبل الحذف
-    DB-->>MG: review document
-    MG->>MG: this.reviewDoc = review document
-
-    MG->>DB: DELETE document
-    DB-->>MG: Deleted ✅
-
-    Note over MG: post /^findOneAnd/ hook بيشتغل
-    MG->>MG: this.reviewDoc.constructor.calcAverageRating(...)
-    MG->>DB: Update User avgRating
+```
+    Controller ──► Mongoose: Review.findOneAndDelete({ _id: id })
+    # pre /^findOneAnd/ hook بيشتغل
+    Mongoose ──► MongoDB: findOne({ _id: id }) — جيب الـ doc قبل الحذف
+    MongoDB ──► Mongoose: review document
+    Mongoose → this.reviewDoc = review document
+    Mongoose ──► MongoDB: DELETE document
+    MongoDB ──► Mongoose: Deleted ✅
+    # post /^findOneAnd/ hook بيشتغل
+    Mongoose → this.reviewDoc.constructor.calcAverageRating(...)
+    Mongoose ──► MongoDB: Update User avgRating
 ```
 
 `/^findOneAnd/` هو regex بيطابق `findOneAndDelete` و`findOneAndUpdate` وكل حاجة تبدأ بـ `findOneAnd`.
@@ -3691,14 +3593,12 @@ router.patch('/:id/complete', restrictTo('client'), completeProject);
 
 ## ✅ Checkpoint
 
-**Test 1 — أكمل الـ Project:**
-
+> [!example] Test 1 — أكمل الـ Project
 > **Method:** `PATCH` **URL:** `http://localhost:5000/api/v1/projects/<project_id>/complete` **Header:** `Authorization: Bearer <client token>`
 > 
 > **Expected:** `200` + project بـ `status: "completed"`
 
-**Test 2 — اعمل Review:**
-
+> [!example] Test 2 — اعمل Review
 > **Method:** `POST` **URL:** `http://localhost:5000/api/v1/reviews` **Header:** `Authorization: Bearer <client token>` **Body:**
 > 
 > ```json
@@ -3720,12 +3620,10 @@ db.users.findOne({ email: 'sara@test.com' })
 
 > هتشوف `avgRating: 5` و`ratingsCount: 1` — اتضافوا تلقائياً بالـ static method.
 
-**Test 4 — اعمل Review تاني على project تاني:**
-
+> [!example] Test 4 — اعمل Review تاني على project تاني
 > اعمل project جديد، خليه يخلص، وبعدين review بـ rating مختلف. روح شوف الـ `avgRating` اتحسب تاني.
 
-**Test 5 — Dashboard Stats:**
-
+> [!example] Test 5 — Dashboard Stats
 > **Method:** `GET` **URL:** `http://localhost:5000/api/v1/reviews/stats/<sara_id>` **Header:** `Authorization: Bearer <أي token>`
 > 
 > **Expected:**
