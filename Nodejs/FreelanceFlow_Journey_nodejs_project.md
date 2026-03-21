@@ -2247,26 +2247,6 @@ db.users.find({}, { password: 1 })
 
 ---
 
-> **جاهز للـ Sprint 5؟**
->
-> Sprint 5 هو أول sprint عملي كامل في الـ Project — بنبني الـ **Register flow** بالكامل.
->
-> هنعمل Controller حقيقي وRoute حقيقي. هنتعلم إزاي نقسّم الكود لملفات منظمة بدل ما يبقى كله في `server.js`. وهنشرح ليه بنبعت `201 Created` مش `200 OK` لما نخلق user جديد.
->
-> قول "كمّل" لما تكون شفت الـ password محفوظ كـ hash في الـ DB بنفسك.
-
-# 🎓 FreelanceFlow — Learning Journey (Part 2)
-
-> متابعة من Part 1 — Sprints 0 → 4 **Part 2 يبدأ من:** Sprint 5 — Register Flow
-
----
-
-# 🎓 FreelanceFlow — Learning Journey (Part B)
-> متابعة من Part A — Sprints 0 → 4
-> **Part B يبدأ من:** Sprint 5 — Register Flow
-
----
-
 # 👤 Sprint 5 — Register : أول Endpoint حقيقي
 
 ---
