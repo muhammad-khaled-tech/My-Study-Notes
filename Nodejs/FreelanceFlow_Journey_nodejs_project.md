@@ -2414,6 +2414,57 @@ const catchAsync = (fn) => {
 ```
 
 ده اللي بيحصل خطوة بخطوة:
+### 🛠️ التشريح الكامل لـ `src/utils/catchAsync.js`
+
+> [!INFO] ليه الـ `catchAsync`؟
+> 
+> في الـ `async/await` العادي، لو حصل Error جوه الـ Controller والسيرفر ملقاش `try/catch` تمسكه، الـ Request هتفضل "علقانة" (Hanging) والسيرفر ممكن يفرقع (Crash). الـ `catchAsync` وظيفتها تلف الـ Controller بتاعك وتحميه من غير ما تضطر تكتب `try/catch` في كل فايل.
+
+---
+
+#### 1️⃣ مفهوم الـ Higher-Order Function (HOF)
+
+الـ `catchAsync` هي **Higher-Order Function**؛ يعني فانكشن "بتاخد" فانكشن تانية كـ Argument، و"بترجع" فانكشن تالتة خالص.
+
+- **المدخل (`fn`):** ده الـ Controller "الخام" اللي أنت بتكتبه (زي الـ `register` أو `login`).
+    
+- **المخرج:** فانكشن جديدة إكسبريس بيفهمها كـ Middleware ليها `(req, res, next)`.
+    
+
+---
+
+#### 2️⃣ تحليل الكود "سطر بسطر"
+
+JavaScript
+
+```
+const catchAsync = (fn) => {
+  return (req, res, next) => {
+    fn(req, res, next).catch(next);
+  };
+};
+```
+
+- **`return (req, res, next) => { ... }`**: لما إكسبريس بيشوف الـ Route بتاعك، هو مستني Middleware. الـ `catchAsync` بتديله الفانكشن دي اللي جواها "الكمين" بتاع الـ Error.
+    
+- **`fn(req, res, next)`**: هنا إحنا بنشغل الـ Controller الأصلي بتاعك اللي أنت بعته. وبما إنه `async` فهو بيرجع **Promise** أوتوماتيك.
+    
+- **`.catch(next)`**: دي هي "الزتونة". لو الـ Promise اللي رجعت من الـ Controller حصلها **Reject** (يعني حصل Error)، الـ `.catch` هتمسكه وتبعت الـ Error ده فوراً لـ `next()`.
+    
+
+> [!IMPORTANT] القاعدة الذهبية
+> 
+> في إكسبريس، أول ما تبعت "أي حاجة" جوه الـ `next(err)`، السيستم بيفهم إن دي حالة طوارئ وبينط فوراً للـ **Global Error Handler** اللي أنت بنيته في `Sprint 2`.
+
+---
+
+#### 3️⃣ الفرق الجوهري (قبل وبعد)
+
+| **قبل الـ catchAsync (الأسلوب القديم)** | **بعد الـ catchAsync (أسلوب السينيور)**           |
+| --------------------------------------- | ------------------------------------------------- |
+| كود "مكلكع" بالـ `try/catch` في كل حتة. | كود "نظيف" (Clean Code) مركز بس على الـ Logic.    |
+| لو نسيت `catch` واحدة، السيرفر يقع.     | حماية مركزية أوتوماتيكية لأي Controller.          |
+| تكرار ممل لـ `next(err)` يدوياً.        | الـ Wrapper هو اللي بيبعت للـ `next` بالنيابة عنك |
 
 ```mermaid
 flowchart TD
