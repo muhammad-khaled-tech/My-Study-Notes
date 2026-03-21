@@ -107,7 +107,8 @@ npm install --save-dev nodemon
 
 `dotenv` — بيخليك تحط الـ settings السرية (زي كلمة سر الـ database) في ملف منفصل مش في الكود نفسه. هنشرحه أكتر بعدين.
 
-`nodemon` — بدل ما توقف السيرفر وتشغله كل مرة بتغير الكود، `nodemon` بيعمل ده تلقائياً. الـ `--save-dev` معناها "ده بس للـ development، مش للـ production".
+`nodemon` — بدل ما توقف السيرفر وتشغله كل مرة بتغير الكود، `nodemon` بيعمل ده تلقائياً. 
+الـ `--save-dev` معناها "ده بس للـ development، مش للـ production".
 
 ---
 
