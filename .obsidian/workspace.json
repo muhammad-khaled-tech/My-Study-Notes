@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Nodejs/FreelanceFlow_Learning_Journey.md",
+                "file": "Nodejs/FreelanceFlow_Journey_PartA.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "FreelanceFlow_Learning_Journey"
+              "title": "FreelanceFlow_Journey_PartA"
             }
           }
         ]
@@ -238,14 +238,18 @@
   },
   "active": "5bfa0189fd1a889f",
   "lastOpenFiles": [
+    "Nodejs/Node.js_Interview_Prep_Arabic.md",
+    "Nodejs/FreelanceFlow_Learning_Journey.md",
+    "Nodejs/FreelanceFlow_Journey_PartB.md",
+    "Nodejs/Unconfirmed 518780.crdownload",
+    "Nodejs/FreelanceFlow_Journey_PartA.md",
+    "Nodejs/Unconfirmed 480669.crdownload",
     "Nodejs/Unconfirmed 356923.crdownload",
     "Nodejs/Unconfirmed 98101.crdownload",
     "Nodejs/Unconfirmed 160332.crdownload",
     "Nodejs/Unconfirmed 414583.crdownload",
     "Nodejs/ENV Variables.md",
-    "Nodejs/FreelanceFlow_Learning_Journey.md",
     "Nodejs/Unconfirmed 451337.crdownload",
-    "Nodejs/Node.js_Interview_Prep_Arabic.md",
     "Nodejs/NodeJS_Internals_Masterclass.md",
     "JavaScript/Day-4 lecture  codes.md",
     "Nodejs/Unconfirmed 999610.crdownload",
@@ -267,13 +271,9 @@
     "admin2/RHSA2_CentOS9_Lab_Solutions.md",
     "Aws practitioner/02_IAM.md",
     "bash/Shell_Scripting_Day2.excalidraw",
-    "bash/DBMS_BigPicture.excalidraw",
     "Java Core/Exceptions.md",
     "Java Core/Callback interface.md",
     "Nodejs/commom modules.md",
-    "Nodejs/Unconfirmed 243159.crdownload",
-    "Java Core/Generics and Lambda Expressions and Method Reference.md",
-    "Aws practitioner/Unconfirmed 637060.crdownload",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",
