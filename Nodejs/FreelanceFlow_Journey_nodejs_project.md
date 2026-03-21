@@ -1123,7 +1123,7 @@ flowchart LR
     style mongoose_schema fill:#1a4731,color:#fff
 ```
 
-**لكن في فرق مهم:** الـ SQL schema بيتطبق على مستوى الـ database نفسه. الـ Mongoose schema بيتطبق على مستوى الـ application — في الكود بتاعنا. يعني لو حد اتصل بـ MongoDB مباشرة من غير Mongoose، ممكن يحط أي حاجة.
+==**لكن في فرق مهم:** الـ SQL schema بيتطبق على مستوى الـ database نفسه. الـ Mongoose schema بيتطبق على مستوى الـ application — في الكود بتاعنا. يعني لو حد اتصل بـ MongoDB مباشرة من غير Mongoose، ممكن يحط أي حاجة.==
 
 ---
 
