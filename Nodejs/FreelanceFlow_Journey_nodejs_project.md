@@ -585,17 +585,6 @@ req.body is: { name: 'Mohamed', role: 'client' }
 
 ---
 
-> **جاهز للـ Sprint 2؟**
->
-> Sprint 2 هيكون عن `AppError` والـ Global Error Handler.
-> هنشوف إيه اللي بيحصل لما السيرفر بيعمل crash من غير error handler، وهنبني نظام طوارئ مركزي يمسك كل الـ errors في مكان واحد.
->
-> قول "كمّل" لما تكون جربت الـ checkpoint وشفت `req.body` يوصل صح.
-
----
-
----
-
 # 🛡️ Sprint 2 — AppError + Global Error Handler : نظام الطوارئ
 
 ---
