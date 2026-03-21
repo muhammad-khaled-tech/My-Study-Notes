@@ -1,328 +1,330 @@
 # FreelanceFlow — Git & GitHub Training Guide
 
-> بيتوازى مع الـ Learning Journey sprint by sprint.
-> بعد ما تخلص كل sprint وتشوف الـ checkpoint — اعمل الـ git section الخاص بيه هنا.
-> الـ repo: https://github.com/muhammad-khaled-tech/freelance-flow.git
+> Runs parallel to the Learning Journey sprint by sprint. After finishing each sprint and verifying the checkpoint in Postman — come here and run the git section. Repo: https://github.com/muhammad-khaled-tech/freelance-flow.git
+
+---
+
+## The Branching Strategy
+
+```
+main          ← production-ready, only touched at the very end
+  └── dev     ← integration branch, always up to date
+        ├── sprint/00-bare-server       → merge to dev
+        ├── sprint/01-express-json      → merge to dev
+        ├── sprint/02-error-handler     → merge to dev
+        ├── sprint/03-mongodb-schema    → merge to dev
+        ├── sprint/04-password-hashing  → merge to dev
+        ├── sprint/05-register          → merge to dev
+        ├── sprint/06-login-jwt         → merge to dev
+        ├── sprint/07-protect           → merge to dev
+        ├── sprint/08-projects-crud     → merge to dev
+        ├── sprint/09-proposals-cascade → merge to dev
+        └── sprint/10-reviews           → merge to dev
+                                                  ↓
+                                            merge dev → main
+```
+
+This is **simplified GitFlow** — the same pattern used in real teams.
+
+- `main` stays clean and always represents a fully working version
+- `dev` is the integration branch — everything comes here first
+- Each sprint branch is isolated — if something breaks it does not affect the others
+- The final `dev → main` merge is your "production release"
 
 ---
 
 ## One-Time Setup
 
 ```bash
-# اعمل clone للـ repo المحلي
+# Clone the repo
 git clone https://github.com/muhammad-khaled-tech/freelance-flow.git
 cd freelance-flow
 
-# تحقق من الـ connection
+# Create dev branch and push it to GitHub
+git checkout -b dev
+git push -u origin dev
+
+# Verify
 git remote -v
-# Output:
-# origin  https://github.com/muhammad-khaled-tech/freelance-flow.git (fetch)
-# origin  https://github.com/muhammad-khaled-tech/freelance-flow.git (push)
+git branch -a
 ```
 
----
-
-## الـ Workflow بتاعك في كل Sprint
-
-```
-1. اكتب الكود (اتبع الـ learning journey)
-2. شوف الـ checkpoint في Postman
-3. لما كل حاجة شغالة → تعالى هنا وعمل الـ git commands
-4. روح للـ sprint الجاي
-```
-
-الـ git commands مش حاجة إضافية — هي **جزء من الـ sprint نفسه**.
-
----
-
-## Sprint 0 — First Commit
-
-### الملف الأول اللي لازم تعمله: `.gitignore`
+**Create `.gitignore` before anything:**
 
 ```bash
-# اعمله في الـ root بالـ content ده
 cat > .gitignore << 'EOF'
-# Dependencies
 node_modules/
-
-# Environment variables — NEVER push this to GitHub
 .env
-
-# Logs
 *.log
 npm-debug.log*
-
-# OS files
 .DS_Store
 Thumbs.db
-
-# IDE
 .vscode/
 .idea/
 EOF
 ```
 
-> [!warning] مهم جداً
-> الـ `.env` فيه الـ `JWT_SECRET` والـ `MONGO_URI`. لو اتـ push على GitHub — أي حد يقدر يشوفهم. الـ `.gitignore` بيمنع ده.
+> [!warning] Critical The `.env` file contains your `JWT_SECRET` and `MONGO_URI`. If pushed to GitHub anyone can read them. The `.gitignore` prevents this permanently.
 
-### الـ Git Commands
-
-```bash
-# شوف إيه اللي اتغير
-git status
-
-# Add كل الـ files
-git add .
-
-# Commit مع رسالة واضحة
-git commit -m "feat: Sprint 0 - bare-bones Express server
-
-- Initialize project with npm
-- Add express and dotenv dependencies
-- Create server.js with basic GET / route
-- Add .gitignore (exclude node_modules and .env)"
-
-# Push للـ GitHub
-git push origin main
-```
-
-### الـ Commit Message — ليه شكله كده؟
-
-ده بيتبع الـ **Conventional Commits** standard:
-
-```
-<type>: <short description>
-
-<optional longer body>
-```
-
-الـ types المهمة:
-
-```
-feat:     feature جديدة
-fix:      bug fix
-refactor: تغيير في الكود من غير feature أو bug
-docs:     تغيير في الـ documentation
-chore:    setup أو configuration
-test:     إضافة tests
-```
-
-في الـ industry كل الـ teams بتستخدم ده — بيخلي الـ git history قابل للقراءة.
-
----
-
-## Sprint 1 — express.json Middleware
-
-```bash
-git add server.js
-
-git commit -m "feat: Sprint 1 - add express.json middleware
-
-- Register express.json() before all routes
-- Add /test-body route to verify req.body parsing
-- Demonstrates middleware pipeline concept"
-
-git push origin main
-```
-
----
-
-## Sprint 2 — Error Handler
-
-```bash
-git add src/utils/AppError.js src/middlewares/errorHandler.js server.js
-
-git commit -m "feat: Sprint 2 - global error handling system
-
-- Add AppError class extending native Error
-- Add statusCode, status, isOperational properties
-- Implement globalErrorHandler middleware (4-param)
-- Add /test-error route for verification
-- Add app.all('*') catch-all 404 handler"
-
-git push origin main
-```
-
----
-
-## Sprint 3 — MongoDB + First Schema
-
-### قبل الـ commit — اعمل `.env.example`
-
-الـ `.env` مش بيتـ push — بس الـ developer التاني محتاج يعرف إيه الـ variables المطلوبة. الحل هو ملف `.env.example`:
+**Create `.env.example` — this one gets pushed:**
 
 ```bash
 cat > .env.example << 'EOF'
 PORT=5000
 NODE_ENV=development
 MONGO_URI=mongodb://127.0.0.1:27017/freelanceflow
-JWT_SECRET=your-secret-key-min-32-characters
+JWT_SECRET=your-secret-key-minimum-32-characters
 JWT_EXPIRES_IN=7d
 EOF
 ```
 
-ده بيتـ push على GitHub — بس من غير قيم حقيقية.
-
-```bash
-git add src/models/User.model.js server.js .env.example
-
-git commit -m "feat: Sprint 3 - MongoDB connection and User schema
-
-- Add mongoose dependency
-- Connect to MongoDB with error handling
-- Create User schema (name, email, password, role)
-- Add timestamps option
-- Add unique index on email field
-- Add .env.example for documentation"
-
-git push origin main
-```
+This tells any developer which environment variables they need — without exposing real values.
 
 ---
 
-## Sprint 4 — Password Hashing Hook
+## The Merge Command — Same Pattern Every Sprint
 
 ```bash
-git add src/models/User.model.js
+# Step 1: on sprint branch, commit when checkpoint passes
 
-git commit -m "feat: Sprint 4 - password hashing with bcrypt
+# Step 2: merge into dev
+git checkout dev
+git merge sprint/XX-name --no-ff -m "merge: sprint XX - short description"
 
-- Add bcryptjs dependency
-- Implement pre-save hook for password hashing
-- Add isModified check to avoid re-hashing on other updates
-- Add select: false on password field
-- Add minlength validation (8 chars)
-- Add correctPassword instance method"
-
-git push origin main
+# Step 3: push dev
+git push origin dev
 ```
+
+`--no-ff` means no fast forward. It creates an explicit merge commit so the branch structure stays visible in the graph. Most teams use this.
 
 ---
 
-## Sprint 5 — MVC Structure + Register
-
-هنا بنعمل **refactor كبير** — بنقسّم الكود لملفات. مناسب نعمله على **branch** منفصل.
-
-### الـ Branch Concept
-
-```mermaid
-gitGraph
-   commit id: "Sprint 4"
-   branch feature/mvc-structure
-   checkout feature/mvc-structure
-   commit id: "Add folder structure"
-   commit id: "Add catchAsync"
-   commit id: "Add auth controller"
-   commit id: "Add auth routes"
-   commit id: "Add app.js"
-   checkout main
-   merge feature/mvc-structure id: "Sprint 5 complete"
-```
+## Sprint 00 — Bare-Bones Server
 
 ```bash
-# اعمل branch جديد
-git checkout -b feature/mvc-structure
+git checkout dev
+git checkout -b sprint/00-bare-server
 
-# اعمل الـ folder structure
-mkdir -p src/controllers src/routes
-
-# بعد ما تكتب الكود
 git add .
 
-git commit -m "refactor: Sprint 5 - MVC structure and register endpoint
+git commit -m "feat: Sprint 00 - bare-bones Express server
 
+- Initialize project with npm
+- Add express and dotenv dependencies
+- Create server.js with basic GET / route
+- Add .gitignore (exclude node_modules and .env)
+- Add .env.example for documentation"
+
+git checkout dev
+git merge sprint/00-bare-server --no-ff -m "merge: sprint 00 - bare-bones server"
+git push origin dev
+```
+
+---
+
+## Sprint 01 — express.json Middleware
+
+```bash
+git checkout dev
+git checkout -b sprint/01-express-json
+
+git add server.js
+
+git commit -m "feat: Sprint 01 - add express.json middleware
+
+- Register express.json() before all routes
+- Add /test-body route to verify req.body parsing
+- Demonstrates middleware pipeline concept"
+
+git checkout dev
+git merge sprint/01-express-json --no-ff -m "merge: sprint 01 - express.json middleware"
+git push origin dev
+```
+
+---
+
+## Sprint 02 — Error Handler
+
+```bash
+git checkout dev
+git checkout -b sprint/02-error-handler
+
+git add src/utils/AppError.js src/middlewares/errorHandler.js server.js
+
+git commit -m "feat: Sprint 02 - global error handling system
+
+- Add AppError class extending native Error
+- Add statusCode, status, isOperational properties
+- Implement globalErrorHandler middleware (4-param signature)
+- Add /test-error route for verification
+- Add app.all('*') catch-all 404 handler"
+
+git checkout dev
+git merge sprint/02-error-handler --no-ff -m "merge: sprint 02 - error handler"
+git push origin dev
+```
+
+---
+
+## Sprint 03 — MongoDB + Schema
+
+```bash
+git checkout dev
+git checkout -b sprint/03-mongodb-schema
+
+git add src/models/User.model.js server.js
+
+git commit -m "feat: Sprint 03 - MongoDB connection and User schema
+
+- Add mongoose dependency
+- Connect to MongoDB with error handling and process.exit
+- Create User schema (name, email, password, role)
+- Add timestamps option (createdAt, updatedAt)
+- Add unique index on email field
+- Add /test-user route for verification"
+
+git checkout dev
+git merge sprint/03-mongodb-schema --no-ff -m "merge: sprint 03 - mongodb and user schema"
+git push origin dev
+```
+
+---
+
+## Sprint 04 — Password Hashing
+
+```bash
+git checkout dev
+git checkout -b sprint/04-password-hashing
+
+git add src/models/User.model.js
+
+git commit -m "feat: Sprint 04 - password hashing with bcrypt
+
+- Add bcryptjs dependency
+- Implement pre-save hook for password hashing (cost factor 12)
+- Add isModified check to skip re-hashing on unrelated updates
+- Add select: false on password field
+- Add minlength validation (8 characters)
+- Add correctPassword instance method"
+
+git checkout dev
+git merge sprint/04-password-hashing --no-ff -m "merge: sprint 04 - password hashing"
+git push origin dev
+```
+
+---
+
+## Sprint 05 — MVC Structure + Register
+
+```bash
+git checkout dev
+git checkout -b sprint/05-register
+
+mkdir -p src/controllers src/routes
+
+git add .
+
+git commit -m "feat: Sprint 05 - MVC structure and register endpoint
+
+- Create src/utils/catchAsync.js
 - Create src/controllers/auth.controller.js
 - Create src/routes/auth.routes.js
-- Create src/utils/catchAsync.js
-- Create app.js (separate from server.js)
-- Move route logic from server.js to controllers
-- Implement register endpoint (POST /api/v1/auth/register)
-- Apply Fat Model, Thin Controller principle"
+- Create app.js (separate Express setup from server.js)
+- Refactor server.js (DB connection + app.listen only)
+- Implement POST /api/v1/auth/register
+- Apply Fat Model, Thin Controller principle
+- Use explicit req.body fields (not spread)"
 
-# ارجع للـ main وعمل merge
-git checkout main
-git merge feature/mvc-structure
-
-git push origin main
+git checkout dev
+git merge sprint/05-register --no-ff -m "merge: sprint 05 - MVC structure and register"
+git push origin dev
 ```
-
-> [!info] ليه Branch؟
-> الـ refactor الكبير ممكن يكسر حاجة شغالة. الـ branch بيخليك تشتغل بأمان — لو حاجة غلطت ترجع للـ main اللي شغال. ده بالظبط اللي بيحصل في الـ teams.
 
 ---
 
-## Sprint 6 — Login + JWT
+## Sprint 06 — Login + JWT
 
 ```bash
+git checkout dev
+git checkout -b sprint/06-login-jwt
+
 git add src/controllers/auth.controller.js src/routes/auth.routes.js
 
-git commit -m "feat: Sprint 6 - login and JWT authentication
+git commit -m "feat: Sprint 06 - login and JWT authentication
 
 - Add jsonwebtoken dependency
-- Implement login endpoint (POST /api/v1/auth/login)
-- Add signToken helper function
-- Add sendTokenResponse helper function
+- Implement POST /api/v1/auth/login
+- Add signToken and sendTokenResponse helpers
 - Add JWT_SECRET and JWT_EXPIRES_IN to .env.example
-- Implement user enumeration prevention (single error message)"
+- Prevent user enumeration (single error for wrong email or password)"
 
-git push origin main
+git checkout dev
+git merge sprint/06-login-jwt --no-ff -m "merge: sprint 06 - login and JWT"
+git push origin dev
 ```
 
 ---
 
-## Sprint 7 — Protect + restrictTo
+## Sprint 07 — protect + restrictTo
 
 ```bash
+git checkout dev
+git checkout -b sprint/07-protect
+
 git add src/middlewares/auth.middleware.js src/middlewares/errorHandler.js
 
-git commit -m "feat: Sprint 7 - route protection and authorization
+git commit -m "feat: Sprint 07 - route protection and authorization
 
 - Create auth.middleware.js
-- Implement protect middleware (JWT verification, 4 steps)
+- Implement protect middleware (4 steps: extract, verify, find user, attach)
 - Implement restrictTo factory function (closure pattern)
-- Enhance errorHandler with JWT-specific error handling
-- Add JsonWebTokenError and TokenExpiredError handlers
-- Add sendErrorDev / sendErrorProd separation"
+- Add JWT error handlers (JsonWebTokenError, TokenExpiredError)
+- Add sendErrorDev / sendErrorProd based on NODE_ENV
+- Add Mongoose error handlers (CastError, DuplicateKey, ValidationError)"
 
-git push origin main
+git checkout dev
+git merge sprint/07-protect --no-ff -m "merge: sprint 07 - protect and restrictTo"
+git push origin dev
 ```
 
 ---
 
-## Sprint 8 — Projects CRUD
+## Sprint 08 — Projects CRUD
 
 ```bash
-git checkout -b feature/projects-crud
+git checkout dev
+git checkout -b sprint/08-projects-crud
 
 git add src/models/Project.model.js \
         src/controllers/project.controller.js \
         src/routes/project.routes.js \
         app.js
 
-git commit -m "feat: Sprint 8 - Projects CRUD with soft delete
+git commit -m "feat: Sprint 08 - Projects CRUD with soft delete
 
-- Create Project schema (title, description, budget, skills, deadline)
-- Add cross-field validation (budget.max > budget.min)
+- Create Project schema (title, description, budget, skills, deadline, status)
+- Add cross-field validation via pre-save hook (budget.max > budget.min)
 - Add status state machine (open, in_progress, completed, cancelled)
-- Implement createProject (client role only)
-- Implement getAllProjects (open projects with populate)
-- Implement getProject (single with populate)
-- Implement updateProject (owner authorization check)
-- Implement deleteProject (soft delete - status: cancelled)
-- Add router.use(protect) pattern
-- Add .route() method chaining"
+- Add DB indexes on status and client fields
+- Implement createProject — client only, injects req.user._id
+- Implement getAllProjects — open projects with client populate
+- Implement getProject — single project with populate
+- Implement updateProject — owner check, strips protected fields
+- Implement deleteProject — soft delete (status: cancelled)
+- Add router.use(protect) pattern"
 
-git checkout main
-git merge feature/projects-crud
-git push origin main
+git checkout dev
+git merge sprint/08-projects-crud --no-ff -m "merge: sprint 08 - projects CRUD"
+git push origin dev
 ```
 
 ---
 
-## Sprint 9 — Proposals + Cascade Hook
+## Sprint 09 — Proposals + Cascade Hook
 
 ```bash
-git checkout -b feature/proposals-cascade
+git checkout dev
+git checkout -b sprint/09-proposals-cascade
 
 git add src/models/Proposal.model.js \
         src/controllers/proposal.controller.js \
@@ -330,22 +332,23 @@ git add src/models/Proposal.model.js \
         src/routes/project.routes.js \
         app.js
 
-git commit -m "feat: Sprint 9 - proposals system with cascade hook
+git commit -m "feat: Sprint 09 - proposals system with cascade hook
 
-- Create Proposal schema (project, freelancer, coverLetter, bidAmount)
+- Create Proposal schema (project, freelancer, coverLetter, bidAmount, status)
 - Add compound unique index {project, freelancer}
-- Implement post-save cascade hook:
-  * Reject all other pending proposals on acceptance
+- Implement post-save cascade hook on proposal acceptance:
+  * Reject all other pending proposals on same project
   * Update project status to in_progress
   * Set acceptedFreelancer on project
-- Implement submitProposal (freelancer role only)
-- Implement getProjectProposals (client owner only)
-- Implement acceptProposal (triggers cascade automatically)
+  * Uses mongoose.model() to avoid circular dependency
+- Implement submitProposal — freelancer only
+- Implement getProjectProposals — client owner only
+- Implement acceptProposal — triggers cascade via .save()
 - Add nested routes /:projectId/proposals"
 
-git checkout main
-git merge feature/proposals-cascade
-git push origin main
+git checkout dev
+git merge sprint/09-proposals-cascade --no-ff -m "merge: sprint 09 - proposals and cascade"
+git push origin dev
 ```
 
 ---
@@ -353,7 +356,8 @@ git push origin main
 ## Sprint 10 — Reviews + Aggregation
 
 ```bash
-git checkout -b feature/reviews-aggregation
+git checkout dev
+git checkout -b sprint/10-reviews
 
 git add src/models/Review.model.js \
         src/controllers/review.controller.js \
@@ -363,196 +367,222 @@ git add src/models/Review.model.js \
 
 git commit -m "feat: Sprint 10 - reviews and aggregation pipeline
 
-- Add avgRating and ratingsCount to User schema
+- Add avgRating and ratingsCount fields to User schema
 - Create Review schema with compound index {project, reviewer}
-- Implement calcAverageRating static method
-- Add post-save hook to trigger recalculation
-- Add pre/post findOneAnd hooks for delete recalculation
-- Implement createReview with business rule validation
-- Implement getFreelancerStats with aggregation pipeline
-- \$match + \$group stages for proposal and review stats"
+- Implement calcAverageRating static method using aggregation pipeline
+- Add post-save hook for recalculation after review create
+- Add pre/post findOneAnd hooks for recalculation after review delete
+- Implement createReview with 3-layer business rule validation
+- Implement getFreelancerStats with two aggregation pipelines
+- Add completeProject endpoint (in_progress -> completed)"
 
+git checkout dev
+git merge sprint/10-reviews --no-ff -m "merge: sprint 10 - reviews and aggregation"
+git push origin dev
+```
+
+---
+
+## Final — Merge dev into main
+
+After all sprints are done and everything works end to end:
+
+```bash
 git checkout main
-git merge feature/reviews-aggregation
+
+git merge dev --no-ff -m "release: FreelanceFlow API v1.0.0
+
+Complete REST API including:
+- Express + MVC architecture
+- JWT authentication and role-based authorization
+- MongoDB + Mongoose with hooks and validation
+- Projects, Proposals, Reviews CRUD
+- Cascade hook on proposal acceptance
+- MongoDB aggregation pipeline for stats
+- Global error handling system"
+
 git push origin main
 ```
 
 ---
 
-## الـ Git History بعد كل الـ Sprints
+## The Final Git Graph
 
-لما تخلص كل حاجة، `git log --oneline` المفروض تشوف حاجة زي دي:
+After everything is merged, `git log --oneline --graph` will look like this:
 
 ```
-a1b2c3d feat: Sprint 10 - reviews and aggregation pipeline
-e4f5g6h feat: Sprint 9 - proposals system with cascade hook
-i7j8k9l feat: Sprint 8 - Projects CRUD with soft delete
-m0n1o2p feat: Sprint 7 - route protection and authorization
-q3r4s5t feat: Sprint 6 - login and JWT authentication
-u6v7w8x feat: Sprint 5 - MVC structure and register endpoint
-y9z0a1b feat: Sprint 4 - password hashing with bcrypt
-c2d3e4f feat: Sprint 3 - MongoDB connection and User schema
-g5h6i7j feat: Sprint 2 - global error handling system
-k8l9m0n feat: Sprint 1 - add express.json middleware
-o1p2q3r feat: Sprint 0 - bare-bones Express server
+*   release: FreelanceFlow API v1.0.0        ← main
+|\
+* | merge: sprint 10 - reviews               ← dev
+|\|
+| * feat: Sprint 10 - reviews and aggregation
+|/
+* merge: sprint 09 - proposals and cascade
+|\
+| * feat: Sprint 09 - proposals system with cascade hook
+|/
+* merge: sprint 08 - projects CRUD
+|\
+| * feat: Sprint 08 - Projects CRUD with soft delete
+|/
+* ... sprints 00-07
 ```
 
-ده بيبقى portfolio جميل — حد يفتح الـ repo يشوف الـ progress من الأول للآخر.
+A professional git history. Anyone who opens the repo can follow the entire build journey from start to finish.
 
 ---
 
 ---
 
-# Skills Roadmap — إيه اللي تضيفه على المشروع ده
+# Skills Roadmap — What to Add Next
 
-الـ sprints اللي فاتوا بنوا الـ foundation. دلوقتي في مجالات تانية تقدر تضيفها على **نفس المشروع** عشان تتعلمهم على كود حقيقي.
+All of these get added to the same FreelanceFlow repo as feature branches off `dev`. You build skills and portfolio at the same time.
+
+```bash
+# Pattern for every new skill
+git checkout dev
+git checkout -b feat/skill-name
+# implement
+git checkout dev
+git merge feat/skill-name --no-ff -m "feat: add skill-name"
+git push origin dev
+```
 
 ---
 
-## المستوى التاني — يستحق دلوقتي
+## Level 2 — Add These Right After the Sprints
 
 ### 1. Input Validation — `express-validator`
 
-دلوقتي بتعتمد على Mongoose validation بس. لو حد بعت malformed JSON أو fields فاضية — الـ error messages مش كويسة.
+Currently relying on Mongoose validation only. Request-level validation catches bad data before it hits the controller.
 
 ```bash
 npm install express-validator
+git checkout -b feat/input-validation
 ```
 
-**اللي هتتعلمه:** validation على مستوى الـ route قبل ما الداتا توصل الـ controller. الفرق بين schema validation والـ request validation.
-
-**تضيفه على:** كل الـ POST وPATCH routes في المشروع.
+**What you learn:** validation middleware chain, custom validators, consistent error response format. **Where to apply:** all POST and PATCH routes in the project.
 
 ---
 
 ### 2. Rate Limiting — `express-rate-limit`
 
-حماية الـ API من الـ brute force. الـ login endpoint تحديداً خطر من غيره.
+The login endpoint is vulnerable to brute force without it.
 
 ```bash
 npm install express-rate-limit
+git checkout -b feat/rate-limiting
 ```
 
-**اللي هتتعلمه:** middleware عام على كل الـ routes، وmiddleware خاص على الـ auth routes.
-
 ```javascript
-// مثال — 5 login attempts كل 15 دقيقة
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000,  // 15 minutes
   max: 5,
   message: 'Too many login attempts. Try again in 15 minutes.'
 });
-
 router.post('/login', loginLimiter, login);
 ```
+
+**What you learn:** global vs route-specific middleware, sliding window rate limiting.
 
 ---
 
 ### 3. API Documentation — `swagger-ui-express`
 
-بدل ما تشرح الـ API بالكلام — بتعمل docs تفاعلية.
+Interactive docs that let anyone test the API from the browser at `GET /api-docs`.
 
 ```bash
 npm install swagger-ui-express swagger-jsdoc
+git checkout -b feat/api-docs
 ```
 
-**اللي هتتعلمه:** كيفية توثيق الـ API بـ OpenAPI spec. ده مطلوب في كل production project.
+**What you learn:** OpenAPI spec, JSDoc annotations on routes, self-documenting APIs.
 
 ---
+
+## Level 3 — After You Are Comfortable
 
 ### 4. Testing — `jest` + `supertest`
 
-الـ code اللي مش عنده tests — مش موثوق فيه في الـ industry.
+The most valuable one for interviews.
 
 ```bash
 npm install --save-dev jest supertest
+git checkout -b feat/testing
 ```
 
-**اللي هتتعلمه:** unit tests على الـ models، integration tests على الـ endpoints. وهتشوف الـ cascade hook بيتتست إزاي.
+**What you learn:** unit tests on models, integration tests on endpoints, how to test the cascade hook specifically, test coverage reports.
 
 ---
 
-## المستوى التالت — بعد ما تتحكم في الـ foundation
-
 ### 5. Caching — `redis`
 
-الـ `getAllProjects` بيعمل DB query في كل request. مع traffic عالي ده بطيء.
+The `getAllProjects` query hits the DB on every request. With real traffic this becomes slow.
 
-**اللي هتتعلمه:** تخزين الـ responses في Redis لمدة 5 دقائق. Invalidate الـ cache لما project جديد يتضاف.
+```bash
+npm install redis
+git checkout -b feat/redis-cache
+```
+
+**What you learn:** cache-aside pattern, TTL (time to live), cache invalidation when data changes.
 
 ---
 
 ### 6. File Upload — `multer` + Cloudinary
 
-إضافة profile pictures للـ freelancers وattachments للـ projects.
+Profile pictures for freelancers, attachments for projects.
 
 ```bash
 npm install multer cloudinary multer-storage-cloudinary
+git checkout -b feat/file-upload
 ```
 
-**اللي هتتعلمه:** multipart/form-data، cloud storage، image optimization.
+**What you learn:** multipart/form-data, cloud storage, file size and type validation.
 
 ---
 
 ### 7. Real-time Notifications — `socket.io`
 
-لما client يقبل proposal — الـ freelancer يتـ notify فوراً.
+When a client accepts a proposal, the freelancer gets notified instantly without polling.
 
 ```bash
 npm install socket.io
+git checkout -b feat/real-time
 ```
 
-**اللي هتتعلمه:** WebSockets، events، الفرق بين HTTP وWebSocket.
+**What you learn:** WebSockets, event-based communication, the difference between HTTP and WebSocket.
 
 ---
 
 ### 8. Email — `nodemailer`
 
-إرسال email لما:
-- User جديد يسجّل
-- Proposal يتقبل
-- Project يتكمّل
+Send emails on: new registration, proposal accepted, project completed.
 
 ```bash
 npm install nodemailer
+git checkout -b feat/email
 ```
 
 ---
 
-## ترتيب الأولوية
+## Priority Order
 
 ```
-دلوقتي (بعد الـ Sprints مباشرة):
-  1. express-validator   → validation صح
-  2. express-rate-limit  → security أساسي
-  3. swagger             → documentation
+Right now (after the sprints):
+  1. express-validator   — correct validation layer
+  2. express-rate-limit  — basic security
+  3. swagger             — professional documentation
 
-بعد كده:
-  4. jest + supertest    → testing مهم للـ interviews
-  5. redis caching       → performance
+Next:
+  4. jest + supertest    — high interview value
+  5. redis               — important performance concept
 
 Advanced:
   6. file upload
   7. socket.io
-  8. email
+  8. nodemailer
 ```
 
 ---
 
-## كل skill فيهم — هتضيفه على نفس الـ FreelanceFlow
-
-مش هتعمل project جديد. هتفتح branch في نفس الـ repo وتضيف الـ feature. كده بتتعلم وبتبني portfolio في نفس الوقت.
-
-```bash
-# مثال
-git checkout -b feature/input-validation
-# اعمل الـ implementation
-git commit -m "feat: add express-validator for request validation"
-git checkout main
-git merge feature/input-validation
-git push origin main
-```
-
----
-
-> **آخر نصيحة:** الـ repo ده لما يكون فيه 15-20 commit بـ conventional messages وfeature branches — ده بيبقى أحسن حاجة تقدر تبينها في الـ interview. أحسن من CV بفقرة "Node.js experience".
+> **Last note:** A repo with sprint branches, conventional commit messages, and a clean merge history into main is more valuable in an interview than anything you can write on a CV.

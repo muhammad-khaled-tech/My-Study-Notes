@@ -4,26 +4,6 @@
     "type": "split",
     "children": [
       {
-        "id": "557220b900bbad1c",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "1ea5305f642c857b",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Nodejs/FreelanceFlow_Index.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "FreelanceFlow_Index"
-            }
-          }
-        ]
-      },
-      {
         "id": "94fcdbcc950d4002",
         "type": "tabs",
         "children": [
@@ -33,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
+                "file": "Nodejs/FreelanceFlow_Git_Guide.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "FreelanceFlow_Journey_nodejs_project"
+              "title": "FreelanceFlow_Git_Guide"
             }
           }
         ]
@@ -258,13 +238,13 @@
   "active": "d5c1111ead807e05",
   "lastOpenFiles": [
     "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
+    "Nodejs/FreelanceFlow_Git_Guide.md",
     "Nodejs/FreelanceFlow_Index.md",
     "Nodejs/FreelanceFlow_Complete_Guide.md",
     "Nodejs/NodeJS_Internals_Masterclass.md",
     "Nodejs/Node.js_Interview_Prep_Arabic.md",
     "Nodejs/FreelanceFlow_Learning_Journey.md",
     "Nodejs/FreelanceFlow_Journey_PartB.md",
-    "Nodejs/FreelanceFlow_Git_Guide.md",
     "Nodejs/Unconfirmed 446122.crdownload",
     "Nodejs/Unconfirmed 965572.crdownload",
     "Nodejs/Unconfirmed 961607.crdownload",
