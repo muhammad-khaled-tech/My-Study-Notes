@@ -1633,18 +1633,6 @@ Server running on port 5000
 
 ---
 
-> **جاهز للـ Sprint 4؟**
->
-> Sprint 4 هو أهم sprint في الـ security — **Password Hashing**.
->
-> هنشوف ليه الـ `password: "pass1234"` اللي بيتحفظ دلوقتي خطر جداً، وهنفهم إيه الـ hashing وليه مختلف عن الـ encryption، وهنبني الـ `pre('save')` hook اللي بيعمل hash للـ password تلقائياً قبل ما يتحفظ في الـ DB.
->
-> قول "كمّل" لما تكون شفت الـ user اتحفظ في الـ DB بنفسك وجربت الـ 4 tests.
-
----
-
----
-
 # 🔐 Sprint 4 — Password Hashing : ليه الـ Password Plain Text خطر جداً؟
 
 ---
