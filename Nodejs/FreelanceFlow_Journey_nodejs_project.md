@@ -327,16 +327,6 @@ Server running on port 5000
 
 ---
 
-> **جاهز للـ Sprint 1؟**
->
-> Sprint 1 هيشرح `express.json()` — ليه لو بعت JSON في الـ request ومش عامل الـ middleware ده، `req.body` هيبقى `undefined`. وهنجرّب الفرق بأيدينا في Postman.
->
-> قول "كمّل" لما تكون شغّلت الـ server وشفت الـ response بنفسك.
-
----
-
----
-
 # 📦 Sprint 1 — `express.json()` : ليه السيرفر مش بيفهم الـ Body؟
 
 ---
@@ -357,7 +347,7 @@ Server running on port 5000
 
 لما بتبعت request من Postman، مش بتبعت كلمة أو رقم بس. بتبعت **رسالة كاملة** فيها أجزاء:
 
-```
+```json
 POST /test-body HTTP/1.1
 Host: localhost:5000
 Content-Type: application/json

@@ -6,6 +6,7 @@
       {
         "id": "94fcdbcc950d4002",
         "type": "tabs",
+        "dimension": 78.51739788199697,
         "children": [
           {
             "id": "d5c1111ead807e05",
@@ -26,6 +27,7 @@
       {
         "id": "6f949bb6d0e85fdd",
         "type": "tabs",
+        "dimension": 21.482602118003026,
         "children": [
           {
             "id": "0c3035698e2f1392",
@@ -98,7 +100,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -255,10 +258,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "0c3035698e2f1392",
+  "active": "d5c1111ead807e05",
   "lastOpenFiles": [
-    "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
     "Nodejs/FreelanceFlow_Git_Guide.md",
+    "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
     "Nodejs/FreelanceFlow_Index.md",
     "Nodejs/FreelanceFlow_Complete_Guide.md",
     "Nodejs/NodeJS_Internals_Masterclass.md",
