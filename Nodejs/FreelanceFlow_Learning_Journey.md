@@ -380,7 +380,7 @@ Authorization: Bearer xyz123
 flowchart LR
     A[Request جاي] --> B[Middleware 1\nexpress.json]
     B --> C[Middleware 2\nAuth Check]
-    C --> D[Route Handler\nالكود بتاعك]
+    C --> D[Route Handler\n الكود بتاعك]
     D --> E[Response راجع]
 
     style A fill:#2d3748,color:#fff
