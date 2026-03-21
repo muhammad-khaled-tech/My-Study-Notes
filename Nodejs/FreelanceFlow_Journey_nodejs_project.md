@@ -2829,16 +2829,6 @@ flowchart TD
 
 ---
 
-> **جاهز للـ Sprint 6؟**
-> 
-> Sprint 6 هو **Login + JWT**. هنشوف إيه الـ JWT بالظبط — 3 أجزاء، إزاي بيتعمل، وإيه معنى "Stateless Authentication". وهنبني الـ login endpoint اللي بيرجع token.
-> 
-> قول "كمّل" لما تكون شفت الـ `201 Created` في Postman بنفسك.
-
----
-
----
-
 # 🔑 Sprint 6 — Login + JWT : إزاي السيرفر بيتذكرك؟
 
 ---
