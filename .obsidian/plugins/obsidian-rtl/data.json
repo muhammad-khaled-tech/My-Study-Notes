@@ -34,7 +34,8 @@
     "Untitled 2.md": "rtl",
     "JavaScript/JS_Engine_Internals.md": "rtl",
     "angular/new/01-TypeScript-For-Angular.md": "rtl",
-    "angular/old/FreelanceFlow_Frontend_Journey.md": "rtl"
+    "angular/old/FreelanceFlow_Frontend_Journey.md": "rtl",
+    "angular/new/02-Angular-Architecture.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
