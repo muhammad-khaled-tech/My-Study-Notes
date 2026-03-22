@@ -362,3 +362,8 @@
 "event_logs:sources:opened": {"key":"sources:opened","ct":487,"first_at":1767708131546,"last_at":1774123476564,"class_name":"EventLog","event_sources":{"active-leaf-change":487}},
 "event_logs:sources:imported": {"key":"sources:imported","ct":5731,"first_at":1767705443972,"last_at":1774123489592,"class_name":"EventLog"},
 "event_logs:item:embedded": {"key":"item:embedded","ct":14924,"first_at":1767705477927,"last_at":1774123499905,"class_name":"EventLog"},
+"event_logs:sources:opened": {"key":"sources:opened","ct":488,"first_at":1767708131546,"last_at":1774123682972,"class_name":"EventLog","event_sources":{"active-leaf-change":488}},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":266,"first_at":1767705772065,"last_at":1774125351419,"class_name":"EventLog"},
+"event_logs:sources:opened": {"key":"sources:opened","ct":489,"first_at":1767708131546,"last_at":1774135777434,"class_name":"EventLog","event_sources":{"active-leaf-change":489}},
+"event_logs:sources:opened": {"key":"sources:opened","ct":490,"first_at":1767708131546,"last_at":1774135784402,"class_name":"EventLog","event_sources":{"active-leaf-change":490}},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":267,"first_at":1767705772065,"last_at":1774136120938,"class_name":"EventLog"},
