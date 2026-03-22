@@ -36,20 +36,21 @@
             }
           },
           {
-            "id": "c599072a0abefc09",
+            "id": "622e79da27bc6470",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "angular/new/02-Angular-Architecture.md",
+                "file": "angular/new/02.5-Control-Flow-DI-Signals.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "02-Angular-Architecture"
+              "title": "02.5-Control-Flow-DI-Signals"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -263,14 +264,16 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "52fbfe6bf84950e4",
+  "active": "3aff34665e98b7ce",
   "lastOpenFiles": [
-    "angular/new/Unconfirmed 55902.crdownload",
+    "angular/new/02.5-Control-Flow-DI-Signals.md",
     "angular/new/02-Angular-Architecture.md",
+    "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
+    "angular/new/Unconfirmed 943665.crdownload",
+    "angular/new/Unconfirmed 55902.crdownload",
     "angular/new/04-RxJS.md",
     "angular/new/Unconfirmed 106231.crdownload",
     "angular/new/03-Template-Syntax-and-Lifecycle.md",
-    "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
     "angular/new/Unconfirmed 392525.crdownload",
     "angular/new/Unconfirmed 850060.crdownload",
     "angular/new/01-TypeScript-For-Angular.md",
@@ -285,7 +288,6 @@
     "angular/old/angular-guide-part8.md",
     "angular/new/Unconfirmed 428807.crdownload",
     "angular/new",
-    "angular/angular.tar.xz",
     "angular (2)/angular-guide-part9.md",
     "angular (2)/angular-guide-part8.md",
     "angular (2)/angular-guide-part7.md",
@@ -297,7 +299,6 @@
     "angular (2)/angular-guide-part1.md",
     "angular (2)/agent-instructions.md",
     "angular (2)/FreelanceFlow_Frontend_Journey.md",
-    "angular (2)",
     "angular-guide-part5.md",
     "angular-guide-part9.md",
     "angular-guide-part3.md",
