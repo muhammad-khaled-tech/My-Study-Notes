@@ -33,7 +33,8 @@
     "Nodejs/FreelanceFlow_Journey_nodejs_project.md": "rtl",
     "angular/FreelanceFlow_Frontend_Journey.md": "rtl",
     "Untitled 2.md": "rtl",
-    "JavaScript/JS_Engine_Internals.md": "rtl"
+    "JavaScript/JS_Engine_Internals.md": "rtl",
+    "angular/new/01-TypeScript-For-Angular.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,

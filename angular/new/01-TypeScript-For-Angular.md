@@ -1,10 +1,10 @@
 # الفصل الأول — TypeScript: السلاح السري بتاع Angular
 
-> **ملاحظة:** كل عنوان فرعي في الملف ده مكتوب كـ Obsidian internal link عشان الـ graph يربط الدنيا ببعضها.
+> **ملاحظة للـ Obsidian:** كل عنوان فرعي مكتوب كـ internal link عشان الـ graph يربط الدنيا. العنوانين دول هم محطات رحلة واحدة متصلة — مش مواضيع منفصلة.
 
 ---
 
-## لماذا وُجد TypeScript أصلاً؟
+## البداية — ليه وُجد TypeScript أصلاً؟
 
 تخيل معايا إن في شركة كبيرة، فيه مهندس اسمه **Anders Hejlsberg** — نفس الراجل اللي عمل C#. في 2012، كان شغال في Microsoft وشايف حاجة بتحصل في الدنيا بتخوفه: الـ JavaScript بدأت تتحول من "لغة بتعمل بيها buttons" لـ "لغة بتبني بيها تطبيقات بـ 100,000 سطر."
 
@@ -12,69 +12,71 @@
 
 فيه حكاية مشهورة: الـ JavaScript اتعملت في **10 أيام** سنة 1995 على إيد Brendan Eich. الهدف كان بسيط — تضيف animations وتعمل form validation. مش إنك تبني بيها Angular app بـ 50 ألف سطر وفيها 30 developer شغالين في نفس الوقت.
 
-المشكلة الكبيرة إن JavaScript **مفيهاش types**. يعني إيه ده بالظبط؟
+المشكلة الكبيرة إن JavaScript **مفيهاش types**:
 
 ```javascript
-// JavaScript — بيعمل حاجة غلط بصمت تام
+// JavaScript — fails silently in production
 function calculateTotal(price, quantity) {
   return price * quantity;
 }
 
-// اتصورت إنك بتحسب 10 × 5 = 50
+// You expected 10 × 5 = 50
 calculateTotal("10", 5);
-// النتيجة: "1010101010" ← string repetition مش multiplication!
-// JavaScript ما قالكش أي error. الـ bug راح production وأنت مش عارف.
+// Returns: "1010101010" — string repetition, not multiplication!
+// No error. No warning. Bug ships to production.
 ```
 
-اللي حصل ده مش نادر — ده بيحصل كل يوم في مشاريع كبيرة. **Anders** شاف المشكلة دي وقرر يحلها بدون ما يعمل لغة جديدة من الصفر. الحل كان **TypeScript**: JavaScript + نظام types فوقيها.
+**TypeScript** هو JavaScript + نظام contracts فوقيها. بتكتب types، وTypeScript بيتحقق منها وقت الكتابة — مش وقت التشغيل.
 
 ```typescript
-// TypeScript — يمسك الـ bug قبل ما تشغل الكود
+// TypeScript — catches the bug in your editor, before any execution
 function calculateTotal(price: number, quantity: number): number {
   return price * quantity;
 }
 
 calculateTotal("10", 5);
-// ❌ TypeScript Error — في محررك مباشرةً، قبل أي تشغيل:
+// ❌ TypeScript Error (in your editor, instantly):
 // Argument of type 'string' is not assignable to parameter of type 'number'
 ```
 
-**Angular** اتكتب بـ TypeScript من أول يوم. مش خيار — ضرورة. مشروعك كله بالكامل TypeScript. فهمه مش optional.
+**Angular اتكتبت بـ TypeScript من أول يوم.** مش خيار — ضرورة. مشروعك **FreelanceFlow** كله TypeScript. فهمه مش optional.
+
+> طيب، الـ types ديه — إيه أبسط شكل ليها في الكود الفعلي؟
 
 ---
 
-## [[Types and Type Annotations]] — العقد مع المتغيرات
+## [[01-Types-and-Annotations]] — العقد مع المتغيرات
 
-الـ **type annotation** هو نظام عقود بسيط: بتقول للـ TypeScript "المتغير ده هيتعامل بس مع النوع ده."
+الـ **type annotation** هو إعلان نية: "المتغير ده هيتعامل بس مع النوع ده — لو حاولت تحط فيه غيره، أعلمني فوراً."
 
 ```typescript
-// Basic annotations
+// Basic type declarations
 let name: string    = "Mohamed";
 let age: number     = 25;
 let isLoggedIn: boolean = false;
-let scores: number[]   = [90, 85, 78];  // array of numbers
-let tags: string[]     = ["angular", "ts"]; // array of strings
+let scores: number[]    = [90, 85, 78];
+let tags: string[]      = ["angular", "typescript"];
 ```
 
-**الجزء الذكي — Type Inference:** TypeScript بيحفظ نوع المتغير حتى لو ماكتبتش الـ annotation:
+**الجزء الذكي — Type Inference:** TypeScript بيحفظ النوع حتى لو ماكتبتش الـ annotation:
 
 ```typescript
-let name = "Mohamed"; // TypeScript فاهم: هذا string
-let age  = 25;        // TypeScript فاهم: هذا number
+let name = "Mohamed"; // TypeScript infers: string
+let age  = 25;        // TypeScript infers: number
 
 name = 42;
 // ❌ Error: Type 'number' is not assignable to type 'string'
-// هو "تذكر" إن name هي string حتى من غير ما تقوله
+// It "remembers" that name is a string, even without explicit annotation
 ```
 
 **الـ `any` — باب الهروب الملعون:**
 
 ```typescript
 let data: any = "hello";
-data = 42;          // تمام
-data = { x: 1 };   // تمام
-data.doesntExist;   // تمام — TypeScript صمّ عيّ
-// الـ any بيلغي كل فائدة TypeScript. استخدامه = خسارة
+data = 42;          // fine
+data = { x: 1 };   // fine
+data.doesntExist;   // fine — TypeScript goes silent on anything typed as 'any'
+// Using 'any' defeats the entire purpose of TypeScript
 ```
 
 **الـ `void` — للفنكشنات اللي بتعمل بس مش بتدي:**
@@ -82,53 +84,62 @@ data.doesntExist;   // تمام — TypeScript صمّ عيّ
 ```typescript
 function logout(): void {
   localStorage.removeItem('token');
-  // بتعمل حاجة وبس — مش بتـreturn قيمة
+  // performs an action, returns nothing
 }
 ```
 
-**الـ `null` في حياتك اليومية كـ Angular developer:**
+**الـ `null` في حياتك اليومية:**
 
 ```typescript
-let token: string | null = null; // ممكن string أو null
+let token: string | null = null; // can be a string OR null — nothing else
 token = "eyJhbGci..."; // valid
 token = null;          // valid
-token = 42;            // ❌ Error: لا هو string ولا null
+token = 42;            // ❌ Error: neither string nor null
 ```
+
+> تمام. عرفنا نوع المتغير البسيط. بس إيه اللي بيحصل لما المتغير ده مش رقم أو string — لما هو **object** فيه حقول؟ زي project من الـ API بتاع FreelanceFlow؟
 
 ---
 
-## [[Interfaces]] — "بلوبرينت" الداتا بتاعتك
+## [[02-Interfaces]] — "بلوبرينت" الداتا بتاعتك
 
-الـ **Interface** هي وصف لشكل object: لازم يبقى فيه الحقول دي بالأنواع دي، وبس.
+في FreelanceFlow، الـ API بيرجع لك objects. Project له title وbudget وstatus. Proposal لها freelancer وprice وmessage. إزاي تقول لـ TypeScript "الـ project ده شكله كده بالظبط"؟
+
+الإجابة: **Interface**.
 
 تخيلها زي فورمة حكومية: لازم تملي الخانة دي والخانة دي — غيرها مش مقبول.
 
 ```typescript
-// تعريف الـ blueprint
-interface Book {
+// Define the exact shape of a Project from our API
+interface Project {
   _id: string;
   title: string;
-  price: number;
-  inStock: boolean;
+  description: string;
+  budget: number;
+  status: 'open' | 'in-progress' | 'completed';
+  clientId: string;
 }
 
-// استخدام الـ blueprint
-const book: Book = {
+// Use the shape
+const project: Project = {
   _id: "abc123",
-  title: "Clean Code",
-  price: 29.99,
-  inStock: true,
+  title: "Build E-commerce Site",
+  description: "Full stack project with Angular",
+  budget: 5000,
+  status: 'open',
+  clientId: "user_xyz",
 };
 
-// TypeScript بيتحكم بيها
-book.tittle;  // ❌ Error: 'tittle' مش موجود — قصدك 'title'؟
-              // حتى الـ typos بيمسكها!
+// TypeScript now enforces the shape
+project.tittle;  // ❌ Error: 'tittle' does not exist — did you mean 'title'?
 
-const incomplete: Book = {
+const incomplete: Project = {
   _id: "123",
-  title: "Some Book",
-  // ❌ Error: حقل 'price' ناقص
-  // ❌ Error: حقل 'inStock' ناقص
+  title: "Some Project",
+  // ❌ Error: Property 'description' is missing
+  // ❌ Error: Property 'budget' is missing
+  // ❌ Error: Property 'status' is missing
+  // ❌ Error: Property 'clientId' is missing
 };
 ```
 
@@ -144,210 +155,244 @@ const incomplete: Book = {
 interface User {
   email: string;
 }
-// بعد compile → اختفت تماماً من JavaScript
+// After TypeScript compiles → completely disappears from JavaScript output
 
 class UserService {
-  login() { /* ... */ }
+  login() { /* real code */ }
 }
-// بعد compile → موجودة كـ JavaScript class حقيقي
+// After TypeScript compiles → exists as real JavaScript code
 ```
 
 **Extending Interfaces — وراثة الشكل:**
 
 ```typescript
+// Every entity in our API has these fields
 interface BaseEntity {
   _id: string;
   createdAt: string;
+  updatedAt: string;
 }
 
-interface User extends BaseEntity {
-  email: string;
-  firstName: string;
-  // User كمان بياخد _id و createdAt من BaseEntity
+// Project inherits all BaseEntity fields
+interface Project extends BaseEntity {
+  title: string;
+  budget: number;
+  status: 'open' | 'in-progress' | 'completed';
 }
-// User الآن محتاج: _id, createdAt, email, firstName
+// A Project now requires: _id, createdAt, updatedAt, title, budget, status
 ```
+
+> كويس — عرفنا نوصف شكل الـ object. بس إيه اللي بيحصل لما حقل في الـ object ممكن يكون قيمتين مختلفتين؟ زي الـ `status` اللي ممكن يكون `'open'` أو `'in-progress'` أو `'completed'`؟
 
 ---
 
-## [[Union Types and Literal Types]] — المرونة المضبوطة
+## [[03-Union-and-Literal-Types]] — المرونة المضبوطة
 
-**Union type** — المتغير ممكن يبقى نوع من الأنواع دي:
+في FreelanceFlow، الـ proposal عندها `status` ممكن يكون `'pending'`, `'accepted'`, أو `'rejected'`. لو كتبت `status: string` — TypeScript هيقبل `'banana'` وده bug. الحل؟
+
+**Union type** — المتغير ممكن يكون نوع من الأنواع دي:
 
 ```typescript
 let token: string | null = null;
 
 let id: number | string = 42;
-id = "abc123"; // valid كمان
+id = "abc123"; // also valid
 ```
 
-**Literal types** — أقوى من Union: بتحدد القيم المسموح بيها بالظبط:
+**Literal types** — أقوى: بتحدد القيم المسموح بيها بالظبط:
 
 ```typescript
-// role مش أي string — لازم تبقى "user" أو "admin" بالظبط
-type Role = 'user' | 'admin';
+// Status can ONLY be one of these three strings — nothing else
+type ProposalStatus = 'pending' | 'accepted' | 'rejected';
 
-let userRole: Role = 'user';      // ✅
-userRole = 'admin';               // ✅
-userRole = 'moderator';           // ❌ Error: مش في القائمة
-
-// في interfaces:
-interface User {
-  role: 'user' | 'admin';
+interface Proposal {
+  _id: string;
+  projectId: string;
+  freelancerId: string;
+  price: number;
+  status: ProposalStatus;
 }
 
-// TypeScript بيمسك حتى الـ comparisons المستحيلة:
-if (user.role === 'superadmin') {
-  // ❌ TypeScript Warning: هذا الشرط مستحيل يبقى true
+let p: Proposal = { /* ... */ status: 'pending' };  // ✅
+p.status = 'accepted';                               // ✅
+p.status = 'banana';                                 // ❌ Error: not in the union
+p.status = 'Pending';                                // ❌ Error: case-sensitive
+
+// TypeScript even catches impossible comparisons:
+if (p.status === 'cancelled') {
+  // ❌ Warning: This condition is always false
+  // 'cancelled' is not a valid ProposalStatus
 }
 ```
+
+> ممتاز. الـ interface بتاعة الـ Proposal دلوقتي type-safe. بس إيه اللي يحصل لما حقل مش موجود دايماً؟ مثلاً الـ Proposal ممكن يبقى ليها cover letter أو لأ؟
 
 ---
 
-## [[Optional Chaining]] — التعامل الآمن مع الغياب
+## [[04-Optional-Chaining]] — التعامل الآمن مع الغياب
 
 **Optional field (`?`)** — حقل ممكن يغيب ومفيش مشكلة:
 
 ```typescript
-interface Review {
+interface Proposal {
   _id: string;
-  rating: number;
-  comment?: string; // الـ ? = ممكن يكون undefined — مش إجباري
+  price: number;
+  coverLetter?: string; // the ? means: might be undefined — not required
 }
 
-// كلاهما valid:
-const withComment: Review    = { _id: "1", rating: 5, comment: "Great!" };
-const withoutComment: Review = { _id: "2", rating: 4 }; // comment غايب — ok
+// Both are valid:
+const withLetter: Proposal    = { _id: "1", price: 500, coverLetter: "I'm perfect for this!" };
+const withoutLetter: Proposal = { _id: "2", price: 300 }; // no coverLetter — that's fine
 ```
 
 **Optional chaining (`?.`)** — التصفح الآمن في الـ null:
 
-تخيل إنك شايل خارطة طريق، وبتحاول توصل لـ "القاهرة > مصر الجديدة > حي X" — لو أي محطة في الطريق مش موجودة، مش بيوقع crash، بيرجع `undefined` بهدوء.
+تخيل إنك شايل خريطة طريق وبتحاول توصل لـ "القاهرة > مصر الجديدة > حي X" — لو أي محطة في الطريق مش موجودة، مش بيوقع crash، بيرجع `undefined` بهدوء.
 
 ```typescript
-const user = auth.getCurrentUser(); // ممكن ترجع null
+const user = auth.getCurrentUser(); // might return null
 
-// بدون optional chaining — crash لو user هي null:
+// Without optional chaining — crashes if user is null:
 console.log(user.firstName);  // ❌ TypeError: Cannot read properties of null
 
-// بـ optional chaining — بيرجع undefined بأمان:
-console.log(user?.firstName); // undefined — مش crash
+// With optional chaining — returns undefined safely:
+console.log(user?.firstName); // undefined — no crash
 
-// Chaining على مستويات:
-console.log(user?.address?.city);
-// لو user = null → undefined
-// لو user موجود بس address = null → undefined
-// لو كل حاجة موجودة → قيمة city الحقيقية
+// Chaining multiple levels:
+console.log(user?.profile?.avatarUrl);
+// if user = null    → undefined
+// if profile = null → undefined
+// if both exist     → the actual avatarUrl value
 ```
 
-**في Angular forms اللي شغالها كل يوم:**
+**في Angular forms بتاعتك كل يوم:**
 
 ```typescript
-// في الـ template:
+// In the template:
 @if (loginForm.get('email')?.touched && loginForm.get('email')?.invalid)
 //                           ^
-// .get() بترجع null لو الـ control مش موجود — ?.  تحمينا من crash
+// .get() returns null if the control doesn't exist — ?. prevents crash
 ```
+
+> تمام — عرفنا نتعامل مع الـ null بأمان. بس أحياناً أنت عارف إن القيمة مش null، وTypeScript مش مصدّقك. ازاي تقوله "ثق بيّ"؟
 
 ---
 
-## [[Non-Null Assertion Operator]] — "ثق بيّ يا TypeScript"
+## [[05-Non-Null-Assertion]] — "ثق بيّ يا TypeScript"
 
 أحياناً أنت عارف إن القيمة مش null، بس TypeScript مش شايف ده. الـ `!` بيقول له "سيبها عليا":
 
 ```typescript
-// TypeScript شايف: loginForm.value.email هي string | null | undefined
-// أنت عارف: الـ form valid قبل السطر ده يتنفذ، يعني email موجودة
+// TypeScript sees: loginForm.value.email is string | null | undefined
+// You know: the form is valid before this line runs — email exists
 
 const email = this.loginForm.value.email!;
 //                                      ^
-// الـ ! بيقول: "ثق إن القيمة دي مش null"
-// TypeScript بيتعامل مع email كـ string — مش string | null | undefined
+// The ! removes null/undefined from the type
+// TypeScript now treats email as: string (not string | null | undefined)
 ```
 
-**⚠️ تحذير:** استخدم الـ `!` بس لما تكون متأكد 100%. لو غلطت، بتاخد runtime crash من غير أي warning من TypeScript.
+**⚠️ تحذير:** استخدم الـ `!` بس لما تكون متأكد 100%. لو غلطت، بتاخد runtime crash من غير أي warning:
+
+```typescript
+const element = document.getElementById('myId')!;
+// Fine IF you are certain the element exists in the DOM
+// If it doesn't exist — runtime crash. TypeScript won't warn you.
+```
+
+> عرفنا نتعامل مع الأنواع البسيطة والـ null. بس إيه اللي بيحصل لما بتكتب function بتشتغل مع أنواع مختلفة — مش نوع واحد؟ زي function بترجع أول عنصر، بس مرة من array of Projects ومرة من array of Proposals؟
 
 ---
 
-## [[Generics]] — "القالب المرن"
+## [[06-Generics]] — "القالب المرن"
 
-الـ **Generic** زي عفريت بيتشكل — تقوله "اتشكل string" يبقى string، تقوله "اتشكل number" يبقى number، بس في الحالتين هو نفس الكود.
+في FreelanceFlow، الـ API بترجع response بنفس الشكل دايماً:
 
-**المشكلة من غير Generics:**
-
-```typescript
-function getFirstString(arr: string[]): string { return arr[0]; }
-function getFirstNumber(arr: number[]): number  { return arr[0]; }
-// نفس الكود، مكرر، بس لأنواع مختلفة — مش منطقي
+```json
+{ "success": true, "message": "ok", "data": { ... } }
 ```
 
-**الحل بـ Generics:**
+الـ `data` ممكن يكون `User`، أو `Project[]`، أو `Proposal`. لو كتبت interface منفصلة لكل واحدة — بتكرر نفسك. الحل؟ **Generics**.
+
+الـ Generic زي عفريت بيتشكل — تقوله "اتشكل `User`" يبقى User، تقوله "اتشكل `Project[]`" يبقى Project array، بس في الحالتين نفس الكود الواحد.
 
 ```typescript
+// Without generics — repetition:
+function getFirstString(arr: string[]): string { return arr[0]; }
+function getFirstNumber(arr: number[]): number  { return arr[0]; }
+// Same logic, duplicated just for different types
+
+// With generics — write once, works for all types:
 function getFirst<T>(arr: T[]): T {
   return arr[0];
 }
-// T = placeholder — بيتبدل بالنوع الحقيقي وقت الاستخدام
+// T is a placeholder — TypeScript replaces it with the actual type at call time
 
 getFirst<string>(['a', 'b', 'c']); // T = string → returns string
 getFirst<number>([1, 2, 3]);       // T = number → returns number
-getFirst(['a', 'b', 'c']);         // TypeScript بيحدس T = string أوتوماتيك
+getFirst(['a', 'b', 'c']);         // TypeScript infers T = string automatically
 ```
 
-**في مشروعك بالظبط — الـ ApiResponse:**
+**في FreelanceFlow بالظبط — الـ ApiResponse:**
 
 ```typescript
+// One interface for ALL API responses — T is whatever 'data' contains
 interface ApiResponse<T> {
   success: boolean;
   message: string;
-  data: T; // بيتبدل بأي نوع تحدده
+  data: T;
 }
 
-// استخدام:
-const userRes: ApiResponse<User>     = { success: true, message: "ok", data: user };
-const booksRes: ApiResponse<Book[]>  = { success: true, message: "ok", data: books };
+// TypeScript knows the exact shape of 'data' in each case:
+const userRes: ApiResponse<User>          = { success: true, message: "ok", data: user };
+const projectsRes: ApiResponse<Project[]> = { success: true, message: "ok", data: projects };
+const proposalRes: ApiResponse<Proposal>  = { success: true, message: "ok", data: proposal };
 ```
 
-**ليه ده قوي؟** Interface واحدة بدل ما تكتب `UserApiResponse`, `BookApiResponse`, `OrderApiResponse` — كلهم متطابقين بس بنوع `data` مختلف.
+**ليه ده قوي؟** Interface واحدة بدل `UserApiResponse`, `ProjectApiResponse`, `ProposalApiResponse` — كلهم متطابقين ما عدا نوع `data`.
+
+> عارفين Generics. بس في الكود بتاعنا بنشوف أحياناً `type Role = 'user' | 'admin'` — ده مش interface. إيه الفرق؟
 
 ---
 
-## [[Type Aliases]] — أسماء جديدة لأشكال قديمة
+## [[07-Type-Aliases]] — أسماء جديدة لأشكال قديمة
 
-الـ `type` بيعمل اسم بديل لأي نوع:
+الـ `type` بيعمل اسم بديل لأي نوع — بسيط أو معقد:
 
 ```typescript
-// Union type بإسم
-type ID = string | number;
+// Alias for a union type — used across the whole app
+type UserRole = 'client' | 'freelancer' | 'admin';
 
-// Object type (شبه interface)
-type Point = { x: number; y: number };
+// Alias for a function signature
+type ApiCall<T> = (id: string) => Observable<ApiResponse<T>>;
 
-// Function type
-type LoginFn = (email: string, password: string) => Observable<any>;
+// Alias for an object shape (similar to interface)
+type Coordinates = { lat: number; lng: number };
 ```
 
 | | `interface` | `type` |
 |---|---|---|
 | Object shapes | ✅ مناسب | ✅ مناسب |
-| Union types | ❌ | ✅ فقط بـ type |
-| Function types | ❌ | ✅ مناسب |
-| Extending | ✅ `extends` | ⚠️ ممكن بس أصعب |
+| Union types | ❌ | ✅ فقط |
+| Function signatures | ❌ | ✅ |
+| Extending | ✅ `extends` | ⚠️ أصعب |
 
-**القاعدة البسيطة:** استخدم `interface` لـ object shapes، `type` لـ unions والـ function signatures.
+**القاعدة:** استخدم `interface` لـ object shapes، `type` لـ unions والـ function signatures.
+
+> تمام. عارفين كل أنواع TypeScript. دلوقتي السؤال المهم: Angular نفسها إزاي بتعرف إن الـ class ده component؟ وإن ده service؟ الإجابة في أغرب — وأقوى — حاجة في TypeScript.
 
 ---
 
-## [[Decorators]] — "الطوابع السحرية" بتاعة Angular
+## [[08-Decorators]] — "الطوابع السحرية" بتاعة Angular
 
-**ده أهم section في الـ TypeScript chapter كله.** Angular مبنية على decorators. لو ماعرفتش إيه هو الـ decorator، Angular هتفضل magic مش بتفهمها.
+**ده أهم section في الـ chapter كله.** Angular مبنية على decorators. لو ماعرفتش إيه هو الـ decorator، Angular هتفضل magic مش بتفهمها.
 
-### الـ Decorator هو فنكشن بيلف على حاجة تانية ويضيف سلوك ليها.
+### الـ Decorator هو فنكشن بيلف على class أو property ويضيف سلوك ليها.
 
-تخيله زي الـ "طابع" بتاخده في الجواب الحكومي — الطابع مش هو محتوى الجواب، بس بيقول "الجواب ده رسمي ومسجل."
+تخيله زي الـ "طابع" بتاخده في الجواب الرسمي — الطابع مش هو محتوى الجواب، بس بيقول "الجواب ده رسمي ومسجل."
 
 ```typescript
-// decorator بسيط للتوضيح:
+// A decorator is just a function that receives what it decorates
 function Log(target: any, key: string, descriptor: PropertyDescriptor) {
   const original = descriptor.value;
   descriptor.value = function (...args: any[]) {
@@ -358,78 +403,79 @@ function Log(target: any, key: string, descriptor: PropertyDescriptor) {
 }
 
 class Calculator {
-  @Log
+  @Log // wraps the add method — every call gets logged automatically
   add(a: number, b: number) { return a + b; }
 }
 
 new Calculator().add(2, 3);
 // Console: "Calling add with [2, 3]"
 // Returns: 5
-// الـ @Log أضاف الـ logging من غير ما تغير في جوه الـ method
+// @Log added behavior without modifying the method's internal code
 ```
 
 ### الـ Decorators بتاعة Angular:
 
 ```typescript
-@Component({...})    // يحول class عادي → Component Angular يعرفه ويديره
-@Injectable({...})   // يحول class عادي → Service Angular يعمله instance
-@Input()             // يحول property → بياخد قيمة من الـ parent
-@Output()            // يحول property → يبعث events للـ parent
-@ViewChild()         // يحول property → reference لـ element في الـ template
-@HostListener()      // يحول method → DOM event listener
+@Component({...})    // transforms a plain class → Angular knows it's a component
+@Injectable({...})   // transforms a plain class → Angular manages it as a service
+@Input()             // transforms a property → accepts values from parent component
+@Output()            // transforms a property → emits events to parent component
+@ViewChild()         // transforms a property → holds a reference to a child element
+@HostListener()      // transforms a method → DOM event listener
 ```
 
 ### ما الذي يفعله `@Component` فعلياً؟
 
-لما TypeScript يشوف `@Component({...})` على class، بيحصل التالي:
-
 ```mermaid
 flowchart TD
-    A["TypeScript يشوف @Component على class"] --> B["يستدعي فنكشن Component<br/>ويمرر لها الـ class"]
-    B --> C["Angular تسجل الـ class<br/>في component registry"]
-    C --> D["Angular تحفظ الـ metadata:<br/>selector, template, styles, imports"]
-    D --> E["Angular تربط الـ template<br/>بـ properties الـ class"]
-    E --> F["Angular دلوقتي 'عارفة' الـ Component"]
+    A["TypeScript sees @Component on a class"] --> B["Calls the Component function<br/>passing the class as argument"]
+    B --> C["Angular registers the class<br/>in the component registry"]
+    C --> D["Stores the metadata:<br/>selector / template / styles / imports"]
+    D --> E["Links template expressions<br/>to class properties"]
+    E --> F["Angular now knows this is a component"]
+    F --> G["&lt;app-project-card&gt; in HTML<br/>→ renders this component"]
 ```
 
-بدون الـ `@Component`، Angular ماتعرفش إن الـ class ده component خالص. بتعامله كـ plain TypeScript class عادي.
+بدون الـ `@Component`، Angular ماتعرفش إن الـ class ده component خالص. بتعامله كـ plain TypeScript class.
+
+> آخر حاجة — Angular بتمسك كل الـ services وبتوزعها على الـ components. عشان تعمل ده لازم يعرف "من يقدر يوصل لإيه." ده اللي بيحدده الـ Access Modifiers.
 
 ---
 
-## [[Access Modifiers]] — "من يحق له الوصول؟"
+## [[09-Access-Modifiers]] — "من يحق له الوصول؟"
 
 TypeScript بيديك تحكم كامل في مين يقدر يوصل لإيه في الـ class:
 
 ```typescript
 class AuthService {
-  public apiUrl  = 'http://localhost:5000'; // الكل يقرأ ويكتب
-  private token  = 'secret';               // AuthService بس — حتى الـ component اللي بيستخدمها لا
-  protected base = '/api';                 // AuthService والـ subclasses بتاعتها
-  readonly KEY   = 'jwt_token';            // الكل يقرأ — مفيش حد يكتب
+  public apiUrl  = 'http://localhost:5000'; // anyone can read and write
+  private token  = 'secret';               // ONLY AuthService — not even the component using it
+  protected base = '/api';                 // AuthService and its subclasses
+  readonly KEY   = 'jwt_token';            // anyone can read — nobody can write after init
 }
 
 const service = new AuthService();
 service.apiUrl;       // ✅
 service.token;        // ❌ Error: 'token' is private
-service.KEY;          // ✅ (reading)
+service.KEY;          // ✅ reading is fine
 service.KEY = 'x';    // ❌ Error: read-only
 ```
 
 **في Angular — العرف المتبع:**
 - `private` للـ internal state اللي الـ components متفترضش تلمسه مباشرةً
-- `public` (أو من غير modifier — بيبقى public تلقائي) للـ methods اللي الـ components بتستدعيها
-- `readonly` للـ constants
+- `public` أو من غير modifier (بيبقى public تلقائياً) للـ methods اللي الـ components بتستدعيها
+- `readonly` للـ constants اللي بتتحدد مرة واحدة
 
 **الـ `!` في class properties:**
 
 ```typescript
-class Navbar {
-  private authSub!: Subscription;
-  //              ^
+class ProjectsPage {
+  private projectsSub!: Subscription;
+  //                  ^
   // "Definite Assignment Assertion"
-  // بتقول لـ TypeScript: "أنا عارف إني هـassign القيمة دي قبل ما استخدمها"
-  // بنستخدمها لما الـ assignment بتحصل في ngOnInit مش في الـ constructor
-  // من غير !، TypeScript يشتكي: "Property 'authSub' has no initializer"
+  // Tells TypeScript: "I promise this will be assigned before it's used"
+  // Used when assignment happens in ngOnInit, not the constructor
+  // Without !, TypeScript complains: "Property 'projectsSub' has no initializer"
 }
 ```
 
@@ -442,17 +488,17 @@ mindmap
   root((TypeScript))
     Types
       string / number / boolean
-      arrays : T[]
+      arrays T[]
       null / undefined / void
-      any (avoid!)
+      any<br/>avoid!
     Interfaces
       object blueprint
-      extends (inheritance)
+      extends inheritance
       compile-time only
     Advanced Types
-      Union : A or B
-      Literal : exact values
-      Generics : placeholder T
+      Union A or B
+      Literal exact values
+      Generics placeholder T
       Type Alias
     OOP Features
       Access Modifiers
@@ -461,9 +507,9 @@ mindmap
       Decorators
         @Component
         @Injectable
-        @Input / @Output
+        @Input @Output
     Safety Operators
-      Optional ? : maybe undefined
+      Optional ? maybe undefined
       Optional chaining ?.
       Non-null assertion !
 ```
@@ -473,27 +519,177 @@ mindmap
 ## ✅ Checkpoint — أسئلة إنترفيو TypeScript
 
 **س: إيه الفرق بين `interface` و `type`؟**
-
-> `interface` لـ object shapes وبتقدر تـextend منها بسهولة. `type` لـ unions، function types، وأي نوع تاني. للـ object shapes المجردة — كلاهما works، لكن convention في Angular هو `interface`.
+> `interface` لـ object shapes، قابلة لـ `extends`، وبتختفي بعد الـ compile. `type` لـ unions وfunction signatures وأي نوع تاني. للـ object shapes المجردة — كلاهما يشتغل، لكن convention في Angular هو `interface`.
 
 **س: إيه معنى `generic` وليه بنستخدمه؟**
-
-> الـ generic هو placeholder للنوع — بيخليك تكتب كود مرة واحدة يشتغل مع أنواع مختلفة بدون ما تكرر نفسك. مثال: `ApiResponse<T>` بدل `UserApiResponse`, `BookApiResponse`, إلخ.
+> الـ generic هو placeholder للنوع — بيخليك تكتب كود مرة واحدة يشتغل مع أنواع مختلفة. مثال: `ApiResponse<T>` بدل `ProjectApiResponse`, `ProposalApiResponse`, `UserApiResponse` — كلهم متطابقين ما عدا `data`.
 
 **س: إيه الفرق بين `?.` و `!`؟**
-
-> `?.` (optional chaining) = "لو القيمة موجودة كمل، لو لا ارجع `undefined` بهدوء." `!` (non-null assertion) = "أنا أكيد إنها مش null، ثق بيا." الأولى defensive الثانية assertive.
+> `?.` (optional chaining) = "لو القيمة موجودة كمّل، لو لا ارجع `undefined` بهدوء." `!` (non-null assertion) = "أنا أكيد إنها مش null، ثق بيا." الأولى defensive، التانية assertive.
 
 **س: إيه اللي بيحصل فعلياً لما بنكتب `@Component({...})`؟**
+> الـ `@Component` هو decorator — فنكشن بيتنفذ على الـ class وبيسجله في Angular's component registry مع الـ metadata بتاعته (selector, template, imports). من غيره، Angular ماتعرفش إن الـ class ده component خالص.
 
-> الـ `@Component` هو decorator — فنكشن بيتنفذ على الـ class وبيسجله في Angular's component registry مع كل الـ metadata بتاعته (selector, template, imports). من غيره، Angular مش هتعرف إن الـ class ده component.
+---
+
+## 🛠️ Practical Exercise — FreelanceFlow Types Foundation
+
+قبل ما نبدأ نبني أي component، لازم نبني **الـ types** بتاعة المشروع. ده الأساس اللي هيبنى عليه كل حاجة جاية.
+
+### المطلوب
+
+اعمل ملف `src/app/models/index.ts` وحط فيه الـ interfaces دول، level by level:
+
+---
+
+**Level 1 — BaseEntity:**
+
+```typescript
+// Every document in our MongoDB database has these fields
+interface BaseEntity {
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+---
+
+**Level 2 — User:**
+
+```typescript
+// Extend BaseEntity — User inherits _id, createdAt, updatedAt
+interface User extends BaseEntity {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'client' | 'freelancer' | 'admin'; // literal union — no other string allowed
+  profilePicture?: string;                  // optional — might not exist
+  bio?: string;
+}
+```
+
+---
+
+**Level 3 — Project:**
+
+```typescript
+interface Project extends BaseEntity {
+  title: string;
+  description: string;
+  budget: number;
+  status: 'open' | 'in-progress' | 'completed' | 'cancelled';
+  clientId: string;
+  freelancerId?: string; // optional — only set after a proposal is accepted
+  skills: string[];
+}
+```
+
+---
+
+**Level 4 — Proposal:**
+
+```typescript
+interface Proposal extends BaseEntity {
+  projectId: string;
+  freelancerId: string;
+  price: number;
+  deliveryDays: number;
+  coverLetter?: string;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+```
+
+---
+
+**Level 5 — Generic ApiResponse:**
+
+```typescript
+// One interface for ALL API responses from our backend
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+// For paginated list endpoints (GET /projects, GET /proposals, etc.)
+interface PaginatedResponse<T> {
+  success: boolean;
+  message: string;
+  data: {
+    items: T[];
+    total: number;
+    page: number;
+    limit: number;
+  };
+}
+```
+
+---
+
+### التحدي الاختياري 🔥
+
+اكتب الـ type signatures دول، وبعدين نفّذهم:
+
+```typescript
+// 1. A function that takes a Project and returns its Arabic status label
+type GetStatusLabel = (project: Project) => string;
+
+// 2. A function that filters proposals by their status
+type FilterProposals = (
+  proposals: Proposal[],
+  status: Proposal['status']  // hint: 'pending' | 'accepted' | 'rejected'
+) => Proposal[];
+
+// Implement both:
+const getStatusLabel: GetStatusLabel = (project) => {
+  // hint: use a switch statement or an object map
+  // expected: 'open' → 'مفتوح', 'in-progress' → 'جارٍ', etc.
+};
+
+const filterProposals: FilterProposals = (proposals, status) => {
+  // one line using .filter()
+};
+```
+
+---
+
+### ✅ Expected Output
+
+بعد ما تعمل الملف، تأكد إن ده بيـcompile من غير errors:
+
+```typescript
+// This should compile with NO errors:
+const project: Project = {
+  _id: "proj_001",
+  title: "Build FreelanceFlow Frontend",
+  description: "Angular 21 app with Tailwind",
+  budget: 8000,
+  status: 'open',
+  clientId: "user_abc",
+  skills: ["Angular", "TypeScript", "Tailwind"],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+// This SHOULD give you ❌ Error:
+project.status = 'banana';       // not in the union
+project.status = 'Open';         // case-sensitive — 'open' only
+
+// This SHOULD also give you ❌ Error:
+const res: ApiResponse<Project> = {
+  success: true,
+  data: project,
+  // ❌ Error: Property 'message' is missing
+};
+```
 
 ---
 
 ## 🫒 زتونة الإنترفيو
 
-> **"TypeScript is JavaScript with a contract system. Instead of discovering type bugs at runtime in production, you catch them at compile-time in your editor. Angular uses it because the framework's entire DI system, decorators, and template binding depend on type information to work correctly."**
+> **"TypeScript is JavaScript with a contract system. Instead of discovering type bugs at runtime in production, you catch them at compile-time in your editor. Angular uses it because the framework's entire DI system, decorators, and template binding depend on type information to work correctly — without TypeScript, Angular cannot function."**
 
 ---
 
-*Next → [[02-Angular-Architecture]] — إزاي Angular تقرأ كودك وتشغله من أول سطر في main.ts*
+*Next → [[02-Angular-Architecture]] — الـ types بتاعنا جاهزة. دلوقتي إزاي Angular تقرأ كودك وتشغّله من أول سطر في `main.ts`؟*
