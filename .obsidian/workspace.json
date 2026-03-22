@@ -49,8 +49,7 @@
               "title": "02-Angular-Architecture"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -264,14 +263,15 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "c599072a0abefc09",
+  "active": "52fbfe6bf84950e4",
   "lastOpenFiles": [
+    "angular/new/Unconfirmed 55902.crdownload",
+    "angular/new/02-Angular-Architecture.md",
     "angular/new/04-RxJS.md",
     "angular/new/Unconfirmed 106231.crdownload",
     "angular/new/03-Template-Syntax-and-Lifecycle.md",
     "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
     "angular/new/Unconfirmed 392525.crdownload",
-    "angular/new/02-Angular-Architecture.md",
     "angular/new/Unconfirmed 850060.crdownload",
     "angular/new/01-TypeScript-For-Angular.md",
     "angular/old/FreelanceFlow_Frontend_Journey.md",
@@ -301,7 +301,6 @@
     "angular-guide-part5.md",
     "angular-guide-part9.md",
     "angular-guide-part3.md",
-    "angular-guide-part8.md",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",
