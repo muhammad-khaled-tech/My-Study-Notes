@@ -1,341 +1,659 @@
-# الفصل الخامس — Services وHTTP والـ Interceptors والـ Guards
+# الفصل الخامس — Services والـ HTTP والـ Interceptors والـ Guards
 
-> **المتطلبات:** [[04-RxJS]] — لازم تعرف الـ Observable والـ subscribe والـ pipe والـ operators قبل ما تبدأ. الفصل ده هو المكان اللي كل ده بيتطبق فيه.
-
----
-
-## البداية — لحظة اتصال الـ Frontend بالـ Backend
-
-لحد دلوقتي كل الـ data اللي اشتغلنا عليها كانت **hardcoded** في الـ component نفسه:
-
-```typescript
-products = ['Laptop', 'Mouse', 'Keyboard']; // fake data
-user = { name: 'Mohamed', role: 'admin' };  // fake data
-```
-
-في التطبيق الحقيقي — الـ data بتيجي من **Backend API**. في HTTP request بيتبعت، server بيرد بـ JSON، الـ frontend بيعرضه.
-
-الرحلة دي فيها 4 layers مهمة في Angular:
-
-```
-Component → Service → HttpClient → Backend API
-    ↑                                    ↓
-    └─────── data flows back ────────────┘
-```
-
-**ليه 4 layers وليس مباشرة من الـ component؟**
-
-- **Component** = مسؤول عن الـ UI بس. مش المفروض يعرف إزاي بيتبعت request.
-- **Service** = مسؤول عن الـ logic والـ data. المكان الصح للـ HTTP calls.
-- **HttpClient** = Angular's built-in HTTP tool.
-- **Backend** = السيرفر اللي بيرد على الـ requests.
-
-الـ Separation of Concerns ده بيخلي الكود قابل للـ testing والـ reuse.
-
-> بس قبل ما نبدأ نكتب أي HTTP call — Angular محتاج يعرف إنك عايز تستخدم الـ HttpClient. إزاي نفعّله؟
+> **المتطلبات:** [[04-RxJS]] — لازم تعرف الـ Observable والـ subscribe والـ pipe والـ operators. ده هو المكان اللي كل ده بيتطبق فيه.
 
 ---
 
-## [[01-provideHttpClient]] — "تسجيل الـ HTTP Client"
+## البداية — لحظة الحقيقة
 
-الـ `HttpClient` مش متاح by default — لازم تـregisters في الـ `app.config.ts`:
+في كل الفصول اللي فاتت، كنا بنشتغل على **data وهمية**:
 
 ```typescript
-// app.config.ts
-import { ApplicationConfig }                          from '@angular/core';
-import { provideRouter }                              from '@angular/router';
+export class ProductsComponent {
+  products = ['Laptop', 'Mouse', 'Keyboard']; // مش حقيقي
+  user = { name: 'Mohamed', role: 'admin' };  // مش حقيقي
+  cartCount = 3;                               // مش حقيقي
+}
+```
+
+ده كان مناسب للتعلم. بس في التطبيق الحقيقي — الـ data بتيجي من **Server**.
+
+المستخدم يفتح الموقع → الـ Angular app تبعت request لسيرفر → السيرفر يرجع JSON → الـ app تعرضه.
+
+```
+User opens the app
+      ↓
+Angular app (running in browser)
+      ↓ HTTP Request
+Backend Server (Node.js / Python / Java / any)
+      ↓ HTTP Response (JSON)
+Angular app
+      ↓
+User sees real data
+```
+
+الفصل ده هو رحلة اتصال الـ Angular بالـ Backend — من أول request لحد ما الـ data تتعرض، مع حماية الـ routes وإضافة الـ token لكل request تلقائياً.
+
+---
+
+### ليه الـ Architecture مهمة قبل الكود
+
+في Angular، الـ HTTP calls مش بتتعمل في الـ Component مباشرة. فيه تقسيم واضح:
+
+```
+Component  →  "مسؤول عن الـ UI بس"
+Service    →  "مسؤول عن الـ logic والـ data"
+HttpClient →  "الأداة اللي بتبعت الـ HTTP requests"
+```
+
+**ليه مش نكتب الـ HTTP call في الـ Component مباشرة؟**
+
+```typescript
+// Bad approach — HTTP in component directly
+@Component({ ... })
+export class ProductsComponent {
+  products: Product[] = [];
+
+  ngOnInit() {
+    // Calling HTTP directly from component — problematic!
+    this.http.get<Product[]>('/api/products').subscribe(data => {
+      this.products = data;
+    });
+  }
+}
+```
+
+المشكلة:
+- لو **3 components** كلهم محتاجين نفس الـ products — ستكتب نفس الكود 3 مرات
+- لو الـ API URL اتغيّر — تغيّره في 3 أماكن
+- لو الـ logic اتغيّر (مثلاً: فلترة الـ response) — تغيّره في 3 أماكن
+- مش قابل للـ **testing** — مش تقدر تعمل fake HTTP بسهولة
+
+```typescript
+// Good approach — HTTP in service
+@Injectable({ providedIn: 'root' })
+export class ProductService {
+  getProducts(): Observable<Product[]> {
+    return this.http.get<Product[]>('/api/products');
+    // One place — all components use this method
+  }
+}
+
+// In any component that needs products:
+export class ProductsComponent {
+  private productService = inject(ProductService);
+
+  ngOnInit() {
+    this.productService.getProducts().subscribe(data => {
+      this.products = data;
+    });
+  }
+}
+```
+
+الـ Service هو **"المخزن المركزي للـ logic"** — اكتبه مرة، استخدمه في أي مكان.
+
+> قبل ما نكتب أي HTTP call — Angular محتاج نـ"تفعّل" الـ HTTP Client. إزاي؟
+
+---
+
+## [[01-setup-http]] — "تفعيل الـ HTTP Client"
+
+الـ `HttpClient` في Angular مش متاح by default. محتاج تسجّله في `app.config.ts` — وده ملف بيشتغل مرة واحدة عند بدء التطبيق ويحدد إيه المكونات الأساسية المتاحة للتطبيق كله.
+
+```typescript
+// src/app/app.config.ts
+import { ApplicationConfig }   from '@angular/core';
+import { provideRouter }       from '@angular/router';
 import {
   provideHttpClient,
   withFetch,
-  withInterceptors
 } from '@angular/common/http';
-
-import { routes }           from './app.routes';
-import { tokenInterceptor } from './interceptors/token.interceptor';
-import { errorInterceptor } from './interceptors/error.interceptor';
+import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
 
     provideHttpClient(
-      withFetch(),
-      // Use the browser's native fetch() API internally
-      // instead of the older XMLHttpRequest (XHR)
-      // Benefits: better performance, works with Angular SSR
-
-      withInterceptors([tokenInterceptor, errorInterceptor])
-      // Register interceptors — we'll build these later in this chapter
+      withFetch()
+      // withFetch() يخلي Angular يستخدم الـ fetch() API
+      // بدلاً من الـ XMLHttpRequest القديم
+      // أسرع وأحدث وبيشتغل مع Angular SSR
     ),
   ],
 };
 ```
 
-بعد ما تضيف `provideHttpClient()` — أي Service في التطبيق تقدر تـ`inject(HttpClient)` وتبدأ تعمل HTTP requests.
+بعد ما تضيف `provideHttpClient()` — أي Service في التطبيق تقدر تعمل:
+
+```typescript
+private http = inject(HttpClient);
+// والـ HttpClient جاهز لاستخدامه
+```
 
 ---
 
-## [[02-first-http-service]] — "أول Service بتكلم الـ Backend"
+### الـ `environment.ts` — إزاي تتجنب hardcoding الـ URL
 
-خليني نبني Service من الصفر خطوة خطوة. هنبدأ بأبسط حاجة ممكنة ونكبّرها.
-
-### الخطوة الأولى — Service هيكلية فارغة
+في المشاريع الحقيقية مش بتكتب الـ URL مباشرة في الـ Service — بتستخدم **environment files**:
 
 ```typescript
-// src/app/services/post.service.ts
-import { Injectable, inject } from '@angular/core';
-import { HttpClient }          from '@angular/common/http';
-import { Observable }          from 'rxjs';
+// src/environments/environment.ts (development)
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3000/api',
+};
+
+// src/environments/environment.prod.ts (production)
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.myapp.com/api',
+};
+```
+
+```typescript
+// In your service:
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PostService {
-  private http = inject(HttpClient);
-  //             ^^^^^^^^^^^^^^^^^^
-  // Angular gives us the HttpClient singleton
-  // We can now make HTTP requests using this.http
-
-  private baseUrl = 'https://jsonplaceholder.typicode.com';
-  // The API base URL — stored here so we change it in ONE place
-  // In real projects: use environment.apiUrl instead of hardcoding
+  private baseUrl = environment.apiUrl;
+  // In development: 'http://localhost:3000/api'
+  // In production:  'https://api.myapp.com/api'
+  // Angular swaps the file automatically during ng build --prod
 }
 ```
 
-### الخطوة الثانية — GET: جلب قائمة
+ده بيخليك تبني الـ app مرة وتـdeploy على servers مختلفة من غير ما تغيّر الكود.
+
+> تمام، الـ setup جاهز. خليني أبني أول service بتكلم backend حقيقي خطوة بخطوة.
+
+---
+
+## [[02-build-first-service]] — بناء أول Service خطوة بخطوة
+
+هنبني `PostService` بتشتغل مع الـ API العام: `https://jsonplaceholder.typicode.com`
+
+ده API حقيقي مجاني ممكن تجربه من غير setup.
+
+---
+
+### الخطوة 1 — تعريف الـ Interface
+
+قبل أي كود — لازم نعرف شكل الـ data:
 
 ```typescript
-interface Post {
+// src/app/models/post.model.ts
+export interface Post {
   id:     number;
   title:  string;
   body:   string;
   userId: number;
 }
 
+// Interface for creating a new post (no id yet — server generates it)
+export interface CreatePostDto {
+  title:  string;
+  body:   string;
+  userId: number;
+}
+```
+
+---
+
+### الخطوة 2 — الـ Service الأساسي
+
+```typescript
+// src/app/services/post.service.ts
+import { Injectable, inject } from '@angular/core';
+import { HttpClient }          from '@angular/common/http';
+import { Observable }          from 'rxjs';
+import { Post, CreatePostDto } from '../models/post.model';
+
 @Injectable({ providedIn: 'root' })
 export class PostService {
+
   private http    = inject(HttpClient);
   private baseUrl = 'https://jsonplaceholder.typicode.com';
 
-  // GET /posts — fetch all posts
-  getPosts(): Observable<Post[]> {
+  // GET all posts
+  getAll(): Observable<Post[]> {
     return this.http.get<Post[]>(`${this.baseUrl}/posts`);
-    //                  ^^^^^^^^
-    // The generic <Post[]> tells TypeScript:
-    // "expect the response body to be an array of Post objects"
-    // HttpClient WON'T validate this at runtime — TypeScript-only
-    // But it gives you full type safety and autocomplete
+    // this.http.get<Post[]>(...) does NOT send a request yet
+    // It returns an Observable — a "description" of a future request
+    // The request is sent ONLY when someone subscribes to this Observable
+  }
+
+  // GET one post by id
+  getById(id: number): Observable<Post> {
+    return this.http.get<Post>(`${this.baseUrl}/posts/${id}`);
+    // URL: /posts/1, /posts/42, etc.
+  }
+
+  // POST — create a new post
+  create(data: CreatePostDto): Observable<Post> {
+    return this.http.post<Post>(`${this.baseUrl}/posts`, data);
+    // Angular automatically:
+    //   - converts data object to JSON string
+    //   - sets Content-Type: application/json header
+  }
+
+  // PATCH — partial update
+  update(id: number, changes: Partial<Post>): Observable<Post> {
+    return this.http.patch<Post>(`${this.baseUrl}/posts/${id}`, changes);
+  }
+
+  // DELETE
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/posts/${id}`);
   }
 }
 ```
 
-**لاحظ:** الـ `getPosts()` مش بتـsubscribe — بترجع الـ Observable نفسه. الـ component هو اللي هيـsubscribe.
-
 ---
 
-### إزاي الـ Component يستخدم الـ Service
+### الخطوة 3 — الـ Component اللي بيستخدم الـ Service
 
 ```typescript
+// src/app/components/post-list.component.ts
 import { Component, OnInit, inject } from '@angular/core';
-import { PostService }               from './post.service';
-import { AsyncPipe }                 from '@angular/common';
+import { PostService }               from '../services/post.service';
+import { Post }                      from '../models/post.model';
 
 @Component({
-  selector:   'app-posts',
+  selector:   'app-post-list',
   standalone: true,
-  imports:    [AsyncPipe],
   template: `
+    <!-- Loading state -->
     @if (isLoading) {
-      <p>Loading posts...</p>
-    } @else if (error) {
-      <p class="error">{{ error }}</p>
-    } @else {
-      @for (post of posts; track post.id) {
-        <article>
-          <h3>{{ post.title }}</h3>
-          <p>{{ post.body }}</p>
-        </article>
-      } @empty {
-        <p>No posts found.</p>
-      }
+      <div class="loading">
+        <p>⏳ Loading posts...</p>
+      </div>
+    }
+
+    <!-- Error state -->
+    @else if (errorMessage) {
+      <div class="error">
+        <p>❌ {{ errorMessage }}</p>
+        <button (click)="loadPosts()">Try Again</button>
+      </div>
+    }
+
+    <!-- Success state -->
+    @else {
+      <div class="posts-container">
+        <h2>Posts ({{ posts.length }})</h2>
+
+        @for (post of posts; track post.id) {
+          <article class="post-card">
+            <h3>{{ post.title }}</h3>
+            <p>{{ post.body | slice:0:150 }}...</p>
+            <button (click)="deletePost(post.id)">Delete</button>
+          </article>
+        } @empty {
+          <p>No posts found.</p>
+        }
+      </div>
     }
   `,
 })
-export class PostsComponent implements OnInit {
+export class PostListComponent implements OnInit {
   private postService = inject(PostService);
 
-  posts:     Post[]        = [];
-  isLoading: boolean       = true;
-  error:     string | null = null;
+  posts:        Post[]        = [];
+  isLoading:    boolean       = false;
+  errorMessage: string | null = null;
 
   ngOnInit() {
-    this.postService.getPosts().subscribe({
+    this.loadPosts();
+  }
+
+  loadPosts() {
+    this.isLoading    = true;
+    this.errorMessage = null;
+
+    this.postService.getAll().subscribe({
       next: (data) => {
         this.posts     = data;
         this.isLoading = false;
       },
       error: (err) => {
-        this.error     = 'Failed to load posts. Please try again.';
-        this.isLoading = false;
-        console.error('HTTP error:', err);
+        this.errorMessage = 'Failed to load posts. Please try again.';
+        this.isLoading    = false;
+        console.error('Error:', err);
+      },
+    });
+  }
+
+  deletePost(id: number) {
+    this.postService.delete(id).subscribe({
+      next: () => {
+        // Remove from local array — no need for another HTTP call
+        this.posts = this.posts.filter(post => post.id !== id);
+      },
+      error: (err) => {
+        alert('Failed to delete post.');
       },
     });
   }
 }
 ```
 
-ده الـ pattern الأساسي: `isLoading → true` → request يتبعت → بييجي رد → `isLoading → false` + بيتعرض الـ data أو الـ error.
+ده هو **الـ Pattern الأساسي** في كل Angular app:
+1. `isLoading = true` → تبعت الـ request
+2. Response يجي → تحط الـ data وتعمل `isLoading = false`
+3. Error يجي → تحط الـ error message وتعمل `isLoading = false`
+
+> خليني أشرح كل HTTP method بالتفصيل مع أمثلة حقيقية.
 
 ---
 
-## [[03-all-http-methods]] — كل الـ HTTP Methods بالتفصيل
+## [[03-http-get-deep]] — الـ GET: كل تفاصيله
 
-الـ `HttpClient` بيدعم كل الـ HTTP methods. خليني أشرح كل واحدة بمثال واضح يبيّن ليه بتستخدمها:
+الـ GET هو أبسط وأكثر HTTP method استخداماً. بتجيب data من الـ server.
 
 ---
 
-### GET — جلب data
+### GET بسيط — جلب كل البيانات
 
 ```typescript
-// GET all items
-getAllPosts(): Observable<Post[]> {
-  return this.http.get<Post[]>(`${this.baseUrl}/posts`);
-}
-
-// GET single item by ID
-getPostById(id: number): Observable<Post> {
-  return this.http.get<Post>(`${this.baseUrl}/posts/${id}`);
-  // URL: /posts/42 → gets the post with id 42
-}
-
-// GET with query parameters — search/filter/pagination
-searchPosts(query: string, page: number = 1): Observable<Post[]> {
-  return this.http.get<Post[]>(`${this.baseUrl}/posts`, {
-    params: {
-      q:     query,
-      page:  page.toString(),   // params must be strings
-      limit: '10',
-    }
-    // Sends: GET /posts?q=angular&page=1&limit=10
-  });
-}
-
-// GET with HttpParams (for dynamic params)
-import { HttpParams } from '@angular/common/http';
-
-getFiltered(filters: Record<string, string>): Observable<Post[]> {
-  let params = new HttpParams();
-  Object.entries(filters).forEach(([key, val]) => {
-    params = params.set(key, val);
-    // HttpParams is immutable — .set() returns a new instance
-  });
-  return this.http.get<Post[]>(`${this.baseUrl}/posts`, { params });
+// GET /api/products → returns all products
+getAllProducts(): Observable<Product[]> {
+  return this.http.get<Product[]>(`${this.baseUrl}/products`);
 }
 ```
 
 ---
 
-### POST — إنشاء resource جديد
+### GET بـ URL Parameter — جلب عنصر واحد
 
 ```typescript
-interface CreatePostDto {
-  title:  string;
-  body:   string;
-  userId: number;
+// GET /api/products/42 → returns product with id=42
+getProductById(id: number): Observable<Product> {
+  return this.http.get<Product>(`${this.baseUrl}/products/${id}`);
+  //                                                          ^^
+  // Template literal to embed the id in the URL
 }
+```
 
+```typescript
+// Usage in component:
+this.productService.getProductById(42).subscribe({
+  next: (product) => {
+    this.product = product;
+    this.pageTitle = product.name;
+  },
+  error: (err) => {
+    if (err.status === 404) {
+      this.error = 'Product not found';
+    }
+  },
+});
+```
+
+---
+
+### GET مع Query Parameters — البحث والفلترة والصفحات
+
+```typescript
+// GET /api/products?search=laptop&page=2&limit=10
+searchProducts(query: string, page: number = 1): Observable<Product[]> {
+  return this.http.get<Product[]>(`${this.baseUrl}/products`, {
+    params: {
+      search: query,
+      page:   page.toString(),
+      // !! params must be strings — numbers need .toString()
+      limit:  '10',
+    }
+  });
+}
+```
+
+**مثال أكثر تعقيداً مع `HttpParams`:**
+
+```typescript
+import { HttpParams } from '@angular/common/http';
+
+// GET /api/products?minPrice=100&maxPrice=500&category=electronics&inStock=true
+getFilteredProducts(filters: {
+  minPrice?: number;
+  maxPrice?: number;
+  category?: string;
+  inStock?:  boolean;
+}): Observable<Product[]> {
+
+  let params = new HttpParams();
+  // HttpParams is immutable — each .set() returns a new object
+
+  if (filters.minPrice !== undefined) {
+    params = params.set('minPrice', filters.minPrice.toString());
+  }
+  if (filters.maxPrice !== undefined) {
+    params = params.set('maxPrice', filters.maxPrice.toString());
+  }
+  if (filters.category) {
+    params = params.set('category', filters.category);
+  }
+  if (filters.inStock !== undefined) {
+    params = params.set('inStock', filters.inStock.toString());
+  }
+
+  return this.http.get<Product[]>(`${this.baseUrl}/products`, { params });
+}
+```
+
+```typescript
+// Usage:
+this.productService.getFilteredProducts({
+  minPrice: 100,
+  maxPrice: 500,
+  category: 'electronics',
+}).subscribe(products => {
+  this.products = products;
+});
+// Sends: GET /api/products?minPrice=100&maxPrice=500&category=electronics
+```
+
+---
+
+### GET مع Custom Headers
+
+```typescript
+// Some APIs need extra headers beyond Authorization
+getProtectedData(): Observable<SensitiveData> {
+  return this.http.get<SensitiveData>(`${this.baseUrl}/sensitive`, {
+    headers: {
+      'X-API-Key':    'my-api-key-123',
+      'X-Request-ID': Math.random().toString(36).slice(2),
+      // unique ID per request — useful for debugging
+    }
+  });
+}
+```
+
+> شرحنا GET بالكامل. دلوقتي الـ POST — اللي بيبعت data للـ server.
+
+---
+
+## [[04-http-post-deep]] — الـ POST: إرسال Data للـ Server
+
+الـ POST بيبعت data جديدة للـ server عشان يحفظها.
+
+```typescript
+// POST /api/posts — create a new post
 createPost(data: CreatePostDto): Observable<Post> {
   return this.http.post<Post>(`${this.baseUrl}/posts`, data);
   // Angular automatically:
-  //   → serializes data to JSON string
-  //   → sets Content-Type: application/json header
-  //   → sends POST request with body
-}
-```
-
-**الـ component بيستخدمه:**
-
-```typescript
-onSubmit() {
-  const newPost: CreatePostDto = {
-    title:  this.form.value.title,
-    body:   this.form.value.body,
-    userId: 1,
-  };
-
-  this.postService.createPost(newPost).subscribe({
-    next: (created) => {
-      console.log('Created with id:', created.id);
-      this.router.navigate(['/posts', created.id]);
-    },
-    error: (err) => {
-      this.errorMsg = err.error?.message || 'Failed to create post';
-    },
-  });
+  //   ✓ converts data to JSON: JSON.stringify(data)
+  //   ✓ sets header: Content-Type: application/json
+  //   ✓ sets header: Accept: application/json
 }
 ```
 
 ---
 
-### PUT vs PATCH — الفرق المهم
+### الـ Component اللي بيبعت POST
+
+```typescript
+@Component({
+  selector:   'app-create-post',
+  standalone: true,
+  imports:    [FormsModule],
+  template: `
+    <form (ngSubmit)="onSubmit()">
+      <input
+        [(ngModel)]="title"
+        name="title"
+        placeholder="Post title"
+        required
+      />
+      <textarea
+        [(ngModel)]="body"
+        name="body"
+        placeholder="Post body"
+        rows="5"
+      ></textarea>
+      <button
+        type="submit"
+        [disabled]="isSubmitting || !title || !body"
+      >
+        {{ isSubmitting ? 'Creating...' : 'Create Post' }}
+      </button>
+      @if (successMessage) {
+        <p class="success">{{ successMessage }}</p>
+      }
+      @if (errorMessage) {
+        <p class="error">{{ errorMessage }}</p>
+      }
+    </form>
+  `,
+})
+export class CreatePostComponent {
+  private postService = inject(PostService);
+  private router      = inject(Router);
+
+  title:          string  = '';
+  body:           string  = '';
+  isSubmitting:   boolean = false;
+  successMessage: string  = '';
+  errorMessage:   string  = '';
+
+  onSubmit() {
+    if (!this.title.trim() || !this.body.trim()) return;
+
+    this.isSubmitting  = true;
+    this.errorMessage  = '';
+    this.successMessage = '';
+
+    this.postService.createPost({
+      title:  this.title,
+      body:   this.body,
+      userId: 1,
+    }).subscribe({
+      next: (createdPost) => {
+        this.isSubmitting   = false;
+        this.successMessage = `Post created with id: ${createdPost.id}`;
+        // Navigate to the new post after 1 second
+        setTimeout(() => {
+          this.router.navigate(['/posts', createdPost.id]);
+        }, 1000);
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        this.errorMessage = err.message || 'Failed to create post.';
+      },
+    });
+  }
+}
+```
+
+---
+
+## [[05-put-patch-delete]] — PUT وPATCH وDELETE
+
+---
+
+### PUT vs PATCH — الفرق الحقيقي
+
+ده فرق بيحصل فيه confusion كتير:
 
 ```
-PUT   = Replace the ENTIRE resource
-PATCH = Update ONLY the specified fields
+PUT   → أبعت الـ resource كامل — كأنك بتستبدل الـ record بالكامل
+PATCH → أبعت بس الـ fields اللي اتغيّرت — والباقي يفضل زي ما هو
 ```
 
 ```typescript
-// PUT — send the COMPLETE updated object
-replacePost(id: number, fullPost: Post): Observable<Post> {
-  return this.http.put<Post>(`${this.baseUrl}/posts/${id}`, fullPost);
-  // Sends ALL fields — even unchanged ones
-  // If you omit a field — the server might set it to null or delete it
+interface UserProfile {
+  id:        number;
+  firstName: string;
+  lastName:  string;
+  email:     string;
+  phone:     string;
+  bio:       string;
+  avatar:    string;
 }
 
-// PATCH — send ONLY the changed fields
-updatePostTitle(id: number, newTitle: string): Observable<Post> {
-  return this.http.patch<Post>(`${this.baseUrl}/posts/${id}`, {
-    title: newTitle
-    // Only the title field is sent
-    // Server updates title, keeps all other fields unchanged
-  });
+// PUT — must send ALL fields
+updateProfileFull(id: number, fullProfile: UserProfile): Observable<UserProfile> {
+  return this.http.put<UserProfile>(`${this.baseUrl}/users/${id}`, fullProfile);
+  // If you forget to send 'phone' → server might set it to null!
+  // Use when: you have a form that shows ALL fields
 }
 
-// Partial<T> — TypeScript type for "some fields of T"
-updatePost(id: number, changes: Partial<Post>): Observable<Post> {
-  return this.http.patch<Post>(`${this.baseUrl}/posts/${id}`, changes);
+// PATCH — send ONLY what changed
+updateProfilePartial(
+  id:      number,
+  changes: Partial<UserProfile>  // Partial<T> = all fields optional
+): Observable<UserProfile> {
+  return this.http.patch<UserProfile>(`${this.baseUrl}/users/${id}`, changes);
+  // Example: changes = { bio: 'New bio text' }
+  // Server updates only bio — all other fields stay the same
+  // Use when: user edits one specific field
 }
 ```
 
-**متى تستخدم أيهم؟**
-
-- `PUT` → لما بتعرض form فيها كل بيانات الـ resource وبترسلها كاملة بعد التعديل
-- `PATCH` → لما بتغيّر field واحد أو اتنين بدون form كاملة
+```typescript
+// Real example — user edits their bio only:
+updateBio(userId: number, newBio: string) {
+  return this.http.patch<UserProfile>(
+    `${this.baseUrl}/users/${userId}`,
+    { bio: newBio }  // only send the changed field
+  );
+}
+```
 
 ---
 
 ### DELETE — حذف resource
 
 ```typescript
+// DELETE /api/posts/42 — delete post with id=42
 deletePost(id: number): Observable<void> {
   return this.http.delete<void>(`${this.baseUrl}/posts/${id}`);
-  // Most APIs return empty body on delete (204 No Content)
-  // void type means: we don't care about the response body
+  // Most APIs return 204 No Content on successful delete
+  // void type = we don't expect a response body
 }
 ```
 
-**في الـ component مع تأكيد:**
-
 ```typescript
-deletePost(id: number) {
-  if (!confirm('Are you sure you want to delete this post?')) return;
+// In component — delete with optimistic UI:
+deletePost(postId: number) {
+  // Optimistic update: remove from UI immediately (before server confirms)
+  const deletedPost = this.posts.find(p => p.id === postId);
+  this.posts = this.posts.filter(p => p.id !== postId);
 
-  this.postService.deletePost(id).subscribe({
+  this.postService.deletePost(postId).subscribe({
     next: () => {
-      // Remove from local array without another HTTP call
-      this.posts = this.posts.filter(p => p.id !== id);
-      console.log('Post deleted successfully');
+      // Server confirmed — nothing more to do
+      console.log('Deleted successfully');
     },
     error: (err) => {
-      this.errorMsg = 'Failed to delete. Please try again.';
+      // Server failed — restore the deleted item
+      if (deletedPost) {
+        this.posts = [...this.posts, deletedPost];
+      }
+      this.errorMessage = 'Failed to delete. Please try again.';
     },
   });
 }
@@ -343,44 +661,48 @@ deletePost(id: number) {
 
 ---
 
-## [[04-typed-responses]] — "الـ TypeScript Safety في HTTP"
+## [[06-typed-responses-deep]] — الـ TypeScript Safety في HTTP
 
-الـ generic type في `http.get<T>()` بيعطيك **compile-time safety** — TypeScript بيعرف شكل الـ response:
+الـ generic type في الـ HttpClient بيديك فائدتين:
+1. **Autocomplete** — تعرف إيه الـ properties الموجودة في الـ response
+2. **Compile-time errors** — TypeScript يمسك الأخطاء قبل ما تشغّل الكود
 
 ```typescript
-// Without type — response is 'any' — no safety
+// ❌ Without types — 'any' response
 this.http.get('/api/posts').subscribe(data => {
-  data.title;     // no error — but might crash at runtime if structure is different
-  data.tittle;    // typo — no error! TypeScript can't help
-  data.price.toFixed(2); // might crash — is price a number? TypeScript doesn't know
+  data.tittle;       // typo — no error! Will crash at runtime
+  data.TITLE;        // wrong case — no error!
+  data.price * 100;  // maybe doesn't have price — no error!
 });
 
-// With type — response is Post[] — full safety
+// ✅ With types — full safety
 this.http.get<Post[]>('/api/posts').subscribe(data => {
-  data[0].title;     // ✅ TypeScript knows: data is Post[], post.title is string
-  data[0].tittle;    // ❌ Error: 'tittle' does not exist on type 'Post'
-  data[0].price;     // ❌ Error: 'price' does not exist on type 'Post'
-  data[0].id * 2;    // ✅ TypeScript knows id is number
+  data[0].title;     // ✅ TypeScript knows: title is string
+  data[0].tittle;    // ❌ Compile error: 'tittle' doesn't exist on Post
+  data[0].price;     // ❌ Compile error: 'price' doesn't exist on Post
+  data[0].id * 100;  // ✅ TypeScript knows: id is number
 });
 ```
 
 ---
 
-### الـ API Response Wrapper
+### الـ API Wrapper — الشكل الشائع للـ Responses
 
-في معظم الـ backends، الـ response مش مجرد data — بييجي wrapped:
+كتير من الـ backends بترجع الـ data بشكل wrapped:
 
 ```json
 {
   "success": true,
   "message": "ok",
-  "data": [ ... ]
+  "data": [
+    { "id": 1, "title": "First Post" },
+    { "id": 2, "title": "Second Post" }
+  ]
 }
 ```
 
-عشان تتعامل معاه بشكل صح:
-
 ```typescript
+// Interface for the wrapper
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -392,103 +714,131 @@ getPosts(): Observable<ApiResponse<Post[]>> {
   return this.http.get<ApiResponse<Post[]>>('/api/posts');
 }
 
-// In subscribe — access data through the wrapper:
-this.postService.getPosts().subscribe({
-  next: (response) => {
-    this.posts = response.data;        // response.data is Post[]
-    console.log(response.message);     // "ok"
-    console.log(response.success);     // true
-  },
+// Component usage:
+this.postService.getPosts().subscribe(response => {
+  // TypeScript knows the structure:
+  this.posts   = response.data;       // Post[]
+  this.message = response.message;    // string
+  this.ok      = response.success;    // boolean
 });
 
-// Or unwrap in the service with map():
+// OR — unwrap in service with map():
 import { map } from 'rxjs/operators';
 
-getPostsDirect(): Observable<Post[]> {
+getPostsUnwrapped(): Observable<Post[]> {
   return this.http.get<ApiResponse<Post[]>>('/api/posts').pipe(
     map(response => response.data)
-    // component gets Post[] directly — no wrapper
+    // component gets Post[] directly — no wrapper to deal with
   );
 }
 ```
 
 ---
 
-## [[05-error-handling-http]] — "التعامل مع الأخطاء"
+## [[07-error-handling-deep]] — التعامل مع الأخطاء بالتفصيل
 
-### الـ `HttpErrorResponse` — تشريح الـ Error Object
+### الـ `HttpErrorResponse` — تشريح كامل
 
-لما HTTP request تفشل — Angular بيبعتلك object من نوع `HttpErrorResponse` في الـ `error` callback:
+لما HTTP request تفشل — Angular مش بيـthrow exception عادي. الـ error بييجي في الـ Observable stream كـ `HttpErrorResponse` object:
 
 ```typescript
 import { HttpErrorResponse } from '@angular/common/http';
 
-this.postService.createPost(data).subscribe({
-  next: (created) => { /* success */ },
+this.postService.create(data).subscribe({
+  next: (result) => { /* success */ },
   error: (err: HttpErrorResponse) => {
-    // err contains EVERYTHING you need:
-    console.log(err.status);         // HTTP status code: 400, 401, 403, 404, 500...
-    console.log(err.statusText);     // "Bad Request", "Not Found", "Internal Server Error"...
-    console.log(err.error);          // the response BODY — your backend's JSON error object
-    console.log(err.error?.message); // your backend's custom message field
-    console.log(err.url);            // the URL that failed
-    console.log(err.message);        // Angular's own error message (less useful usually)
+    // err.status — the HTTP status code number
+    console.log(err.status);       // 400, 401, 403, 404, 500, etc.
+
+    // err.statusText — the status text
+    console.log(err.statusText);   // "Bad Request", "Not Found", etc.
+
+    // err.error — the response BODY
+    // This is your backend's JSON error object
+    console.log(err.error);
+    // Example: { success: false, message: "Email already exists", field: "email" }
+
+    // err.error?.message — your backend's custom message
+    console.log(err.error?.message);  // "Email already exists"
+
+    // err.url — the URL that failed
+    console.log(err.url);          // "https://api.myapp.com/api/users"
+
+    // err.message — Angular's internal message (less useful for users)
+    console.log(err.message);      // "Http failure response for ..."
   },
 });
 ```
 
-**مثال: backend بيرجع:**
-```json
-{ "success": false, "message": "Email already exists" }
-```
-
-```typescript
-error: (err: HttpErrorResponse) => {
-  // err.status  = 400
-  // err.error   = { success: false, message: "Email already exists" }
-  this.errorMessage = err.error?.message || 'Something went wrong';
-  // shows: "Email already exists"
-}
-```
-
 ---
 
-### الـ Error Status Codes — معناها
+### الـ Error Status Codes — معناها وكيف تتعامل معها
 
 ```typescript
 error: (err: HttpErrorResponse) => {
+  let userMessage: string;
+
   switch (err.status) {
     case 0:
-      // No internet / server is down / CORS error
-      this.msg = 'Cannot connect to server. Check your internet.';
+      // Network error — no internet, server is down, CORS issue
+      // err.status === 0 means the request never reached the server
+      userMessage = '⚠️ No internet connection or server is unreachable.';
       break;
+
     case 400:
-      // Bad Request — invalid data sent
-      this.msg = err.error?.message || 'Invalid input data.';
+      // Bad Request — you sent invalid data
+      // The server understood your request but rejected it (validation error)
+      userMessage = err.error?.message || 'Invalid data. Please check your input.';
       break;
+
     case 401:
-      // Unauthorized — not logged in or token expired
-      this.msg = 'Please log in to continue.';
+      // Unauthorized — you're not authenticated
+      // Token is missing, expired, or invalid
+      // Usually handled globally by errorInterceptor
+      userMessage = 'Your session expired. Please log in again.';
       break;
+
     case 403:
-      // Forbidden — logged in but not allowed
-      this.msg = 'You don\'t have permission for this action.';
+      // Forbidden — you're authenticated but not authorized
+      // You're logged in but don't have permission
+      userMessage = 'You don\'t have permission to do this.';
       break;
+
     case 404:
-      // Not Found — resource doesn't exist
-      this.msg = 'The requested item was not found.';
+      // Not Found — the resource doesn't exist
+      userMessage = 'The item you\'re looking for doesn\'t exist.';
       break;
+
+    case 409:
+      // Conflict — resource already exists (e.g., duplicate email)
+      userMessage = err.error?.message || 'This item already exists.';
+      break;
+
     case 422:
-      // Unprocessable Entity — validation error
-      this.msg = err.error?.message || 'Validation failed.';
+      // Unprocessable Entity — validation failed on server
+      userMessage = err.error?.message || 'Please check your input.';
       break;
+
+    case 429:
+      // Too Many Requests — rate limited
+      userMessage = 'Too many attempts. Please wait a moment.';
+      break;
+
     case 500:
-      // Internal Server Error — backend bug
-      this.msg = 'Server error. Please try again later.';
+      // Internal Server Error — server bug (not your fault)
+      userMessage = 'Server error. Please try again later.';
       break;
+
+    case 503:
+      // Service Unavailable — server is overloaded or down for maintenance
+      userMessage = 'Service temporarily unavailable. Please try later.';
+      break;
+
     default:
-      this.msg = `Unexpected error (${err.status})`;
+      userMessage = `Something went wrong (${err.status}). Please try again.`;
   }
+
+  this.errorMessage = userMessage;
 }
 ```
 
@@ -496,309 +846,511 @@ error: (err: HttpErrorResponse) => {
 
 ### Error Handling في الـ Service مع `catchError`
 
-```typescript
-import { catchError, throwError } from 'rxjs';
-import { HttpErrorResponse }       from '@angular/common/http';
+أحياناً محتاج تعالج الـ error في الـ Service نفسها — مش بس في الـ Component:
 
-createPost(data: CreatePostDto): Observable<Post> {
-  return this.http.post<Post>('/api/posts', data).pipe(
-    catchError((err: HttpErrorResponse) => {
-      // Handle globally here — then re-throw for component
-      if (err.status === 401) {
-        this.router.navigate(['/login']); // global redirect
+```typescript
+import { catchError, throwError, of } from 'rxjs';
+
+// Option A — return fallback value on error (graceful degradation)
+getProducts(): Observable<Product[]> {
+  return this.http.get<Product[]>('/api/products').pipe(
+    catchError(err => {
+      console.error('Failed to load products:', err);
+
+      if (err.status === 0) {
+        // No internet — return empty array (maybe from local cache)
+        return of([]);
+        // of([]) creates an Observable that emits [] and completes
+        // The component gets [] — no crash, no error shown to user
       }
-      // Transform error message for better UX
-      const msg = err.error?.message || 'Failed to create post';
+
+      // For other errors — re-throw to let component handle them
+      return throwError(() => err);
+    })
+  );
+}
+
+// Option B — transform the error to a user-friendly message
+createProduct(data: CreateProductDto): Observable<Product> {
+  return this.http.post<Product>('/api/products', data).pipe(
+    catchError((err: HttpErrorResponse) => {
+      const msg = err.error?.message || 'Failed to create product';
       return throwError(() => new Error(msg));
-      // Component's error handler now gets: Error("Failed to create post")
-      // Not the raw HttpErrorResponse
+      // Component's error handler gets: Error("Failed to create product")
+      // Cleaner than raw HttpErrorResponse for the component to deal with
     })
   );
 }
 ```
 
-> فهمنا HTTP. دلوقتي فيه مشكلة شائعة جداً: كل request محتاجة headers زي الـ Authorization token. لو كتبتها في كل request يدوياً — هيبقى كود متكرر. الحل؟ الـ Interceptors.
+---
+
+### مثال كامل — Loading States Pattern
+
+ده الـ pattern الأكثر استخداماً في كل Angular app:
+
+```typescript
+@Component({
+  selector:   'app-user-profile',
+  standalone: true,
+  template: `
+    <div class="profile-page">
+      @if (isLoading) {
+        <!-- Skeleton loader while fetching -->
+        <div class="skeleton">
+          <div class="skeleton-avatar"></div>
+          <div class="skeleton-text"></div>
+          <div class="skeleton-text short"></div>
+        </div>
+      } @else if (error) {
+        <!-- Error state with retry button -->
+        <div class="error-state">
+          <p>{{ error }}</p>
+          <button (click)="loadUser()">🔄 Retry</button>
+        </div>
+      } @else if (user) {
+        <!-- Success state — show the data -->
+        <div class="user-card">
+          <img [src]="user.avatar" [alt]="user.name" />
+          <h2>{{ user.name }}</h2>
+          <p>{{ user.email }}</p>
+          <p>Posts: {{ user.postsCount }}</p>
+        </div>
+      }
+    </div>
+  `,
+})
+export class UserProfileComponent implements OnInit {
+  private userService = inject(UserService);
+  private route       = inject(ActivatedRoute);
+
+  user:      User | null  = null;
+  isLoading: boolean      = false;
+  error:     string | null = null;
+
+  ngOnInit() {
+    this.loadUser();
+  }
+
+  loadUser() {
+    const userId = this.route.snapshot.params['id'];
+
+    this.isLoading = true;
+    this.error     = null;
+    this.user      = null;
+
+    this.userService.getById(userId).subscribe({
+      next: (userData) => {
+        this.user      = userData;
+        this.isLoading = false;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error     = err.status === 404
+          ? 'User not found.'
+          : 'Failed to load user. Please try again.';
+        this.isLoading = false;
+      },
+    });
+  }
+}
+```
+
+> فهمنا HTTP كامل. دلوقتي فيه مشكلة كبيرة: كل request محتاجة `Authorization: Bearer <token>` header. لو ضفتها يدوياً في كل request — هيبقى كود متكرر في كل service. الحل؟ الـ **Interceptors**.
 
 ---
 
-## [[06-what-is-interceptor]] — "الـ Middleware بتاع Angular"
+## [[08-interceptors-concept]] — الـ Interceptors: "حارس كل Request"
 
-الـ **Interceptor** هو function بتشتغل تلقائياً لكل HTTP request وresponse في التطبيق كله.
+### الـ Metaphor أولاً
 
-تخيّل إنك مقهى وفيه شخص في المدخل بيعمل 2 حاجة لكل زبون بيدخل:
-- **عند الدخول:** بيتأكد إن معاه كارت العضوية (يضيف الـ token)
-- **عند الخروج:** لو الزبون قال "النادل وقح" بيتدخل ويتعامل مع الموقف (بيـhandle الـ errors)
+تخيّل إنك بتشتغل في شركة وعندك بطاقة موظف. كل ما بتدخل أي باب في الشركة — الـ security guard بيطلبها.
+
+بدل ما تمسك البطاقة وتوريها في كل باب يدوياً — فيه نظام أوتوماتيك بيـattach البطاقة لأي شخص يحاول يدخل أي باب.
 
 ```
-Without Interceptors:
+Without interceptor:
+  getProducts()   → manually add Authorization header
+  getOrders()     → manually add Authorization header
+  createPost()    → manually add Authorization header
+  updateProfile() → manually add Authorization header
+  deleteComment() → manually add Authorization header
+  ... every single HTTP call in every single service
 
-PostService:  http.get('/api/posts', { headers: { Authorization: 'Bearer ...' } })
-UserService:  http.get('/api/users', { headers: { Authorization: 'Bearer ...' } })
-CartService:  http.post('/api/cart', data, { headers: { Authorization: 'Bearer ...' } })
-OrderService: http.post('/api/orders', data, { headers: { Authorization: 'Bearer ...' } })
-// Same header added manually in every single call — fragile and repetitive
-
-With Interceptors:
-
-Every http.* call → tokenInterceptor runs automatically → adds header
-No code in services needed — interceptor handles it for ALL requests
+With tokenInterceptor:
+  getProducts()   → interceptor adds header automatically ✅
+  getOrders()     → interceptor adds header automatically ✅
+  createPost()    → interceptor adds header automatically ✅
+  updateProfile() → interceptor adds header automatically ✅
+  deleteComment() → interceptor adds header automatically ✅
+  Services don't need to do ANYTHING
 ```
+
+الـ Interceptor هو **middleware** بيشتغل تلقائياً لكل HTTP request وresponse في التطبيق كله.
 
 ---
 
 ### الـ Interceptor Pipeline — الصورة الكاملة
 
 ```
-Component calls: postService.getPosts()
-    ↓
-HttpClient creates the request
-    ↓
-┌─── INTERCEPTOR PIPELINE (outgoing — request direction) ───────────┐
-│  [1] tokenInterceptor                                              │
-│      → reads token from localStorage                               │
-│      → clones request with Authorization header added              │
-│      → calls next(clonedRequest)                                   │
-│                                                                    │
-│  [2] errorInterceptor                                              │
-│      → wraps next(req) with .pipe(catchError(...))                 │
-│      → calls next(req) — passes to next handler                    │
-└────────────────────────────────────────────────────────────────────┘
-    ↓
-HTTP request goes to the network
-    ↓ (response comes back)
-┌─── INTERCEPTOR PIPELINE (incoming — response direction) ──────────┐
-│  [2] errorInterceptor (unwinding)                                  │
-│      → if response is error: handle 401/403 → re-throw            │
-│      → if response is success: pass through                        │
-│                                                                    │
-│  [1] tokenInterceptor (unwinding)                                  │
-│      → pass through (nothing to do for responses)                  │
-└────────────────────────────────────────────────────────────────────┘
-    ↓
-Component's subscribe({ next, error }) receives the result
+Component calls: postService.createPost(data)
+         ↓
+   HttpClient creates request:
+   POST /api/posts
+   Body: { title: "...", body: "..." }
+   Headers: { Content-Type: application/json }
+         ↓
+┌──────────────────────────────────────────────────────┐
+│              OUTGOING (Request) PIPELINE              │
+│                                                      │
+│  [Interceptor 1: tokenInterceptor]                   │
+│  → reads token: "eyJhbGci..."                        │
+│  → clones request with Authorization header          │
+│  → calls next(clonedRequest)                         │
+│                                                      │
+│  [Interceptor 2: errorInterceptor]                   │
+│  → wraps the response with .pipe(catchError(...))    │
+│  → calls next(req) — passes to network               │
+└──────────────────────────────────────────────────────┘
+         ↓
+   Request goes to the network:
+   POST /api/posts
+   Authorization: Bearer eyJhbGci...
+   Content-Type: application/json
+   Body: { title: "...", body: "..." }
+         ↓
+   Backend processes request and sends response
+         ↓
+┌──────────────────────────────────────────────────────┐
+│             INCOMING (Response) PIPELINE              │
+│  (Runs in REVERSE order — unwinding the stack)       │
+│                                                      │
+│  [Interceptor 2: errorInterceptor — unwinding]       │
+│  → if error: handle 401 (logout) or 403 (redirect)  │
+│  → re-throw error for component to handle           │
+│  → if success: pass through unchanged               │
+│                                                      │
+│  [Interceptor 1: tokenInterceptor — unwinding]       │
+│  → nothing to do for responses — pass through        │
+└──────────────────────────────────────────────────────┘
+         ↓
+   Component's subscribe({ next, error }) receives result
 ```
 
 ---
 
-### الـ Interceptor Function Signature
+### الـ Interceptor Function — الشكل العام
 
 ```typescript
-import { HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { HttpInterceptorFn } from '@angular/common/http';
 
 export const myInterceptor: HttpInterceptorFn = (req, next) => {
-  // req:  the outgoing request — READ-ONLY (immutable)
-  // next: a function — call it to pass the request to the next step
-  //       returns Observable<HttpEvent<unknown>> — the response stream
+  //                                              ^^^  ^^^^
+  //                                         request  next handler
 
-  // Do something before the request:
-  console.log('Request to:', req.url);
+  // req  = the outgoing HTTP request object (READ-ONLY — immutable)
+  // next = a function: call next(req) to pass the request to the next step
+  //        it returns Observable<HttpEvent<unknown>> — the response stream
 
-  // Pass the request along and return the response Observable:
+  console.log(`[HTTP] ${req.method} ${req.url}`);
+
+  // MUST return the Observable from next():
   return next(req);
+  // This passes the request forward and returns the response Observable
+  // The component's subscribe() is attached to this Observable
 };
 ```
-
-الـ Interceptor مش بيـblock الـ request — هو بيـpass it along بعد ما يعمل اللي محتاجه.
-
-> إيه معنى إن الـ request immutable؟ وإزاي نغيّر فيه؟
 
 ---
 
-## [[07-cloning-requests]] — "ليه الـ Request Immutable وإزاي نغيّره"
-
-**الـ HttpRequest immutable** — مش تقدر تعدّل فيه مباشرةً:
+### ليه الـ Request مش قابل للتعديل المباشر؟
 
 ```typescript
-export const badInterceptor: HttpInterceptorFn = (req, next) => {
-  req.headers.set('Authorization', 'Bearer token'); // ❌ does NOTHING
-  // HttpHeaders is also immutable — .set() returns a NEW object, doesn't modify in place
+export const wrongInterceptor: HttpInterceptorFn = (req, next) => {
+  // ❌ This does NOTHING — HttpHeaders is also immutable!
+  req.headers.set('Authorization', 'Bearer token');
+  // .set() returns a NEW HttpHeaders object — doesn't modify the original
   // The original req.headers is unchanged
 
-  // This also doesn't work:
-  // req.url = 'https://new-url.com'; // ❌ TypeScript Error: cannot assign to read-only property
+  // ❌ This gives TypeScript error:
+  // req.url = 'https://new-url.com';
+  // Error: Cannot assign to 'url' because it is a read-only property
+
+  return next(req); // passes the UNCHANGED request
 };
 ```
 
-**ليه Angular بيجعله immutable؟**
+**ليه Angular يجعله Immutable؟**
 
-لأن نفس الـ request object ممكن يتمرر لعدة interceptors. لو واحد غيّره in-place — التاني هيشوف الـ request المعدّل من غير ما يعرف. الـ immutability بيضمن إن كل interceptor بيشتغل على نسخة واضحة.
+لأن نفس الـ request object ممكن يتـreference في أكتر من مكان. لو واحد غيّره in-place — التاني هيشوف الـ request المتغيّر من غير ما يعرف. الـ Immutability بيضمن إن كل interceptor بيشتغل على نسخة واضحة معروفة.
 
 **الحل: `req.clone()`**
 
 ```typescript
-export const addHeaderInterceptor: HttpInterceptorFn = (req, next) => {
-  // Create a NEW request object with modifications:
+export const correctInterceptor: HttpInterceptorFn = (req, next) => {
+  // Create a NEW request based on req — with modifications:
   const modifiedReq = req.clone({
     setHeaders: {
-      'X-Custom-Header': 'my-value',
-      'Accept-Language': 'ar',
+      'Authorization': 'Bearer my-token',
     }
-    // modifiedReq = copy of req + the new headers
-    // req itself is UNCHANGED
   });
+  // modifiedReq = copy of req + the Authorization header
+  // req is UNCHANGED
 
   return next(modifiedReq); // send the modified copy
 };
 ```
 
 ```typescript
-// All the things req.clone() can change:
-req.clone({
-  setHeaders: { 'Key': 'Value' },          // add/replace headers
-  headers: req.headers.append('K', 'V'),   // append to existing headers
-  url: 'https://new-url.com/api',          // change URL
-  method: 'POST',                           // change method (rare)
-  body: { ...req.body, extra: 'field' },   // change body (rare)
-  setParams: { page: '1', limit: '10' },   // add query params
-  params: req.params.append('sort', 'asc'),// append query params
-  responseType: 'blob',                     // change expected response type
-  withCredentials: true,                    // include cookies in cross-origin
-})
+// Everything req.clone() can change:
+const modified = req.clone({
+  // Add/replace headers
+  setHeaders: {
+    'Authorization': `Bearer ${token}`,
+    'X-Request-ID':  generateId(),
+  },
+
+  // Append to existing headers (without replacing)
+  headers: req.headers.append('X-Extra', 'value'),
+
+  // Change the URL
+  url: req.url.replace('http://', 'https://'),
+
+  // Add/replace query params
+  setParams: { version: 'v2', locale: 'ar' },
+
+  // Change the response type expected
+  responseType: 'blob', // for file downloads
+
+  // Include cookies in cross-origin requests
+  withCredentials: true,
+});
+```
+
+> فهمنا مفهوم الـ Interceptors. دلوقتي نبني الاثنين اللي بتحتاجهم في أي Angular app.
+
+---
+
+## [[09-token-interceptor-full]] — Token Interceptor: من البداية للنهاية
+
+### الـ TokenService أولاً
+
+الـ Token Interceptor محتاج service بتقرأ وتكتب الـ JWT:
+
+```typescript
+// src/app/services/token.service.ts
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class TokenService {
+  private readonly TOKEN_KEY = 'jwt_token';
+  // Constant key name — if you change it, change it in ONE place only
+
+  // Save token to localStorage
+  setToken(token: string): void {
+    localStorage.setItem(this.TOKEN_KEY, token);
+    // localStorage persists across browser refreshes (unlike sessionStorage)
+  }
+
+  // Read token from localStorage
+  getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
+    // Returns the token string if exists, null if not
+  }
+
+  // Remove token (on logout)
+  removeToken(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+  }
+
+  // Check if user is authenticated (token exists and not expired)
+  isAuthenticated(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+
+    try {
+      // JWT structure: header.payload.signature
+      // Decode the payload (middle part):
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // atob() decodes base64
+      // payload.exp = expiry time in Unix seconds
+
+      return payload.exp * 1000 > Date.now();
+      // Convert seconds to milliseconds and compare to now
+      // true = token is still valid
+      // false = token has expired
+    } catch {
+      return false; // invalid token format
+    }
+  }
+
+  // Decode token and return the user data inside it
+  getUser(): { id: string; email: string; role: string } | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+      // Returns: { id: "...", email: "...", role: "admin", exp: ... }
+    } catch {
+      return null;
+    }
+  }
+}
 ```
 
 ---
 
-## [[08-token-interceptor]] — "Token Interceptor: كل سطر بالتفصيل"
+### الـ Token Interceptor نفسه
 
 ```typescript
 // src/app/interceptors/token.interceptor.ts
-
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject }             from '@angular/core';
 import { TokenService }       from '../services/token.service';
 
 export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
-  // ─── Step 1: Get the token ─────────────────────────────────────────
-  const token = inject(TokenService).getToken();
-  // inject(TokenService): get the singleton service
-  // .getToken(): reads from localStorage → returns string | null
-  // inject() works here because interceptors run in Angular's injection context
 
-  // ─── Step 2: Skip if no token ──────────────────────────────────────
+  // ─── Step 1: Get the current token ────────────────────────────────
+  const token = inject(TokenService).getToken();
+  // inject() works here because interceptors run in injection context
+  // .getToken() = localStorage.getItem('jwt_token') → string | null
+
+  // ─── Step 2: If no token — pass request as-is ─────────────────────
   if (!token) {
     return next(req);
-    // No token = user not logged in
-    // Pass request as-is — public endpoints don't need Authorization
-    // Examples: GET /api/posts, POST /api/auth/login, POST /api/auth/register
+    // No token = user is not logged in
+    // Pass the request without Authorization header
+    // This is correct for: /api/auth/login, /api/auth/register, /api/public/...
   }
 
-  // ─── Step 3: Clone request with Authorization header ───────────────
-  const authenticatedReq = req.clone({
+  // ─── Step 3: Clone request with Authorization header ──────────────
+  const requestWithToken = req.clone({
     setHeaders: {
       Authorization: `Bearer ${token}`,
-      // "Bearer " prefix is REQUIRED by the RFC 6750 standard
-      // Your Express backend expects: Authorization: Bearer eyJhbGci...
-      // Space between "Bearer" and the token is mandatory
+      // ☝️ "Bearer " + the token
+      // RFC 6750 defines this format for token authentication
+      // The space between "Bearer" and the token is REQUIRED
+      // Backend reads: request.headers['authorization'].split(' ')[1]
     }
   });
-  // authenticatedReq = copy of req + Authorization header
-  // req is unchanged (immutable)
+  // requestWithToken = copy of req with Authorization header added
+  // req itself is unchanged (still immutable)
 
-  // ─── Step 4: Pass the authenticated request ────────────────────────
-  return next(authenticatedReq);
-  // The network sends authenticatedReq — with the header
-  // Any component making HTTP calls doesn't need to manually add this header
+  // ─── Step 4: Send the request with the token ──────────────────────
+  return next(requestWithToken);
+  // Angular sends requestWithToken to the network
+  // Backend receives: Authorization: Bearer eyJhbGci...
 };
 ```
 
 ---
 
-### مثال حي: إيه اللي بيحصل بالكامل
+### تتبع الرحلة الكاملة
 
 ```
-User is logged in. token = "eyJhbGci..."
+User is logged in. Token = "eyJhbGci..."
 
-1. PostsComponent calls: postService.getPosts()
+1. ProfileComponent calls: profileService.getCurrentUser()
 
-2. HttpClient creates request:
-   GET /api/posts
+2. profileService does: this.http.get('/api/users/me')
+   Request created:
+   GET /api/users/me
    Headers: { Accept: application/json }
-   (no Authorization header yet)
+   (no Authorization yet)
 
 3. tokenInterceptor runs:
-   - inject(TokenService).getToken() → "eyJhbGci..."
-   - token exists → create cloned request
-   - cloned request:
-     GET /api/posts
-     Headers: { Accept: application/json, Authorization: "Bearer eyJhbGci..." }
-   - next(clonedRequest)
+   → inject(TokenService).getToken() → "eyJhbGci..."
+   → token exists → clone the request
+   → cloned request:
+     GET /api/users/me
+     Headers: {
+       Accept: application/json,
+       Authorization: "Bearer eyJhbGci..."
+     }
+   → next(clonedRequest)
 
-4. Request goes to network:
-   GET /api/posts HTTP/1.1
+4. Network sends:
+   GET /api/users/me HTTP/1.1
+   Host: api.myapp.com
    Authorization: Bearer eyJhbGci...
+   Accept: application/json
 
-5. Server validates token → sends back: { success: true, data: [...] }
+5. Backend validates token → sends back user data
+   Status: 200 OK
+   Body: { id: "123", name: "Mohamed", email: "..." }
 
-6. PostsComponent subscribe.next() receives the data
+6. ProfileComponent's subscribe.next() gets the user data
 ```
 
 ---
 
-## [[09-error-interceptor]] — "Error Interceptor: كل سطر بالتفصيل"
+## [[10-error-interceptor-full]] — Error Interceptor: التعامل العالمي مع الأخطاء
 
 ```typescript
 // src/app/interceptors/error.interceptor.ts
-
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject }                               from '@angular/core';
 import { catchError, throwError }               from 'rxjs';
 import { Router }                               from '@angular/router';
-import { AuthService }                          from '../services/auth.service';
+import { TokenService }                         from '../services/token.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth   = inject(AuthService);
-  const router = inject(Router);
-  // Get both services upfront — they're needed inside the error handler
+  const tokenService = inject(TokenService);
+  const router       = inject(Router);
 
   return next(req).pipe(
-    // next(req): send the request forward
-    // returns Observable<HttpEvent<T>> — the response stream
-    // .pipe(): attach operators to the response stream
+    // next(req) returns the response Observable
+    // .pipe() attaches operators to that Observable
+    // If request SUCCEEDS → catchError is skipped entirely
+    // If request FAILS → catchError intercepts the error
 
     catchError((err: HttpErrorResponse) => {
-      // catchError intercepts ANY error in the response stream
-      // err.status is the HTTP status code
 
-      // ─── Handle 401 Unauthorized ─────────────────────────────────────
+      // ─── Handle 401 Unauthorized ──────────────────────────────────
       if (err.status === 401) {
-        // 401 = server doesn't recognize our token
-        // Happens when: token expired, token tampered with, or missing
-        // Action: force logout and send to login page
+        // 401 = server doesn't recognize your token
+        // Causes: token expired, token was tampered with, token is missing
+        // Solution: force logout and send to login page
 
-        auth.logout();
-        // logout() does 3 things:
-        //   1. Removes token from localStorage
-        //   2. Notifies BehaviorSubject → Navbar hides user menu
-        //   3. Navigates to /auth/login
+        tokenService.removeToken();
+        // Remove the invalid token from localStorage
+
+        router.navigate(['/auth/login']);
+        // Send user to login page
+        // They need to log in again to get a fresh token
       }
 
-      // ─── Handle 403 Forbidden ────────────────────────────────────────
+      // ─── Handle 403 Forbidden ─────────────────────────────────────
       if (err.status === 403) {
-        // 403 = server KNOWS who you are, but you're not ALLOWED
-        // Example: regular user hitting an admin-only endpoint
-        // DO NOT logout — the user IS authenticated (token is valid)
-        // Just redirect them away from the forbidden area
+        // 403 = server KNOWS who you are (token is valid)
+        //       but you DON'T HAVE PERMISSION for this action
+        // Example: regular user tries to access admin-only endpoint
+        // Solution: redirect to home (NOT logout — token is still valid!)
 
         router.navigate(['/']);
-        // Send to home page — appropriate for both logged-in non-admins
-        // and any edge cases where 403 occurs
+        // Go to home page
+        // We don't logout — they're still logged in, just not authorized
       }
 
-      // ─── Re-throw the error ──────────────────────────────────────────
+      // ─── CRITICAL: Re-throw the error ─────────────────────────────
       return throwError(() => err);
-      // CRITICAL: re-throw the error so it continues propagating
       //
-      // WITHOUT this line:
-      //   catchError would "swallow" the error
-      //   The Observable would complete (not error)
-      //   Component's error handler would NEVER be called
-      //   Component couldn't show "Invalid email or password" to the user
+      // WHY is this line essential?
       //
-      // WITH this line:
-      //   Error continues downstream to the component's subscribe.error
-      //   Both interceptor AND component can handle the error
-      //   Interceptor = global handling (logout, redirect)
-      //   Component   = local UI handling (show error message, re-enable button)
+      // If we DON'T re-throw:
+      //   catchError "swallows" the error
+      //   The Observable completes WITHOUT emitting anything
+      //   Component's subscribe.next() is never called
+      //   Component's subscribe.error() is ALSO never called
+      //   Component is stuck — isLoading stays true forever
+      //   Error message is never shown to user
+      //
+      // If we DO re-throw:
+      //   Error continues flowing downstream to the component
+      //   Component's subscribe.error() gets called
+      //   Component shows error message to user
+      //   Interceptor handled global concerns (logout/redirect)
+      //   Component handles local UI concerns (show message, reset form)
     })
   );
 };
@@ -806,111 +1358,165 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
 ---
 
-### الفرق بين الـ Interceptors الاثنين
+### الفرق بين الـ Interceptors الاثنين جنب بعض
 
 ```
 tokenInterceptor:
-  When: on every OUTGOING request
-  What: adds Authorization header if token exists
-  Modifies: the REQUEST
-  Returns: next(modifiedRequest)
+  ─────────────────────────────────────────────
+  WHEN:    Every outgoing request
+  WHAT:    Adds Authorization header if token exists
+  AFFECTS: The REQUEST going out
+  LOGIC:   req → clone with header → next(clone)
 
 errorInterceptor:
-  When: on every INCOMING response (if it's an error)
-  What: handles 401 (logout) and 403 (redirect)
-  Modifies: the RESPONSE stream (adds catchError)
-  Returns: next(req).pipe(catchError(...))
+  ─────────────────────────────────────────────
+  WHEN:    Every incoming response (if it's an error)
+  WHAT:    Handles 401 (remove token + redirect to login)
+            Handles 403 (redirect to home)
+            Re-throws all errors for components to handle too
+  AFFECTS: The RESPONSE coming back
+  LOGIC:   next(req).pipe(catchError(handler))
 ```
 
 ---
 
-### تسجيل الـ Interceptors — الترتيب مهم
+### تسجيل الـ Interceptors في الـ App Config
 
 ```typescript
 // app.config.ts
-provideHttpClient(
-  withInterceptors([tokenInterceptor, errorInterceptor])
-  //                     [1]               [2]
-)
+import { tokenInterceptor } from './interceptors/token.interceptor';
+import { errorInterceptor } from './interceptors/error.interceptor';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([
+        tokenInterceptor,  // index 0 — runs FIRST on outgoing
+        errorInterceptor,  // index 1 — runs SECOND on outgoing
+      ])
+      // On incoming response — runs in REVERSE:
+      // errorInterceptor first (handles errors)
+      // tokenInterceptor second (pass-through for responses)
+    ),
+  ],
+};
 ```
 
-**الترتيب في الـ outgoing direction (request):**
-`tokenInterceptor` أولاً ← يضيف الـ token ← بعدين `errorInterceptor`
+**ليه الترتيب مهم؟**
 
-**الترتيب في الـ incoming direction (response):**
-يتعكس — `errorInterceptor` أولاً ← يـhandle الـ errors ← بعدين `tokenInterceptor`
+```
+Outgoing:
+Request → [tokenInterceptor] → [errorInterceptor] → Network
 
-الـ interceptors بتشتغل زي stack — LIFO للـ responses.
+Incoming:
+Network → [errorInterceptor] → [tokenInterceptor] → Component
+                ↑
+         Catches 401/403 here (before component sees it)
+```
 
-> فهمنا كيف نبعت requests ونـhandle أخطاء على مستوى التطبيق كله. دلوقتي الجزء الأخير: إزاي نتحكم في من يقدر يوصل لأيه صفحة؟
+> ممتاز. عرفنا HTTP كامل مع الـ Interceptors. دلوقتي الـ Routing — وبعده الـ Guards اللي هي "الحماية" على بعض الـ routes.
 
 ---
 
-## [[10-routing-basics]] — "الـ Routing: توصيل الـ URL للـ Component"
+## [[11-routing-full]] — الـ Routing: توجيه المستخدم
 
-في Angular، الـ **Router** هو اللي بيقرر component أيه يتعرض لما الـ URL يتغيّر.
+### الفكرة الأساسية
+
+في Angular، الـ URL في الـ browser مش بيفتح صفحة HTML جديدة. هو بيقول للـ Angular Router: "اعرض الـ component المناسب لهذا الـ URL."
+
+```
+User types: http://localhost:4200/products
+→ Angular Router: find the route matching 'products'
+→ Found: { path: 'products', loadComponent: () => import('./products') }
+→ Angular: load ProductsComponent and render it inside <router-outlet>
+→ NO page reload — everything happens in the same HTML page
+```
+
+ده اللي بيسموه **Single Page Application (SPA)** — صفحة HTML واحدة، لكن Angular بيغيّر المحتوى بناءً على الـ URL.
+
+---
+
+### `app.routes.ts` — ملف تعريف المسارات
 
 ```typescript
-// app.routes.ts
+// src/app/app.routes.ts
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
     path: 'home',
-    // matches: http://localhost:4200/home
-    loadComponent: () => import('./home/home').then(c => c.HomeComponent),
+    // Matches: http://localhost:4200/home
+    loadComponent: () => import('./pages/home/home.component')
+      .then(m => m.HomeComponent),
+    // loadComponent = Lazy Loading
+    // The HomeComponent code is NOT downloaded at startup
+    // It downloads ONLY when user navigates to /home
+    // This makes the initial app load much faster
   },
+
   {
-    path: 'about',
-    loadComponent: () => import('./about/about').then(c => c.AboutComponent),
+    path: 'products',
+    loadComponent: () => import('./pages/products/products.component')
+      .then(m => m.ProductsComponent),
+  },
+
+  {
+    path: 'products/:id',
+    // :id is a URL parameter — a dynamic segment
+    // Matches: /products/1, /products/42, /products/laptop-pro
+    loadComponent: () => import('./pages/product-detail/product-detail.component')
+      .then(m => m.ProductDetailComponent),
   },
 ];
 ```
 
-الـ `loadComponent` هو **Lazy Loading** — Angular مش بيحمّل كود الـ component غير لما المستخدم يفتح صفحته. بيقلّل حجم الـ initial bundle بشكل كبير.
+---
+
+### قراءة الـ URL Parameters في الـ Component
+
+```typescript
+import { ActivatedRoute } from '@angular/router';
+
+@Component({ ... })
+export class ProductDetailComponent implements OnInit {
+  private route          = inject(ActivatedRoute);
+  private productService = inject(ProductService);
+
+  product: Product | null = null;
+
+  ngOnInit() {
+    // Read the :id parameter from the current URL
+    const id = this.route.snapshot.params['id'];
+    // If URL is /products/42 → id = '42' (always a string!)
+    // If URL is /products/laptop → id = 'laptop'
+
+    this.productService.getById(Number(id)).subscribe({
+      next: (data) => this.product = data,
+      error: (err) => console.error(err),
+    });
+  }
+}
+```
 
 ---
 
-### أنواع الـ Paths
+### الـ Empty Path والـ Redirect
 
 ```typescript
 export const routes: Routes = [
-  // Static path
-  { path: 'home', loadComponent: () => import('./home') },
-
-  // Dynamic parameter
-  { path: 'posts/:id', loadComponent: () => import('./post-detail') },
-  // Matches: /posts/1, /posts/42, /posts/abc
-  // router.params['id'] gives you the value
-
-  // Redirect
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
-  // Empty URL → redirect to /home
-  // pathMatch: 'full' is required to avoid matching EVERY url
-
-  // Wildcard — must be LAST
-  { path: '**', loadComponent: () => import('./not-found') },
-  // Matches anything not matched above
+  // When URL is exactly '' (empty), redirect to 'home'
+  {
+    path:      '',
+    redirectTo: 'home',
+    pathMatch:  'full',
+    // pathMatch: 'full' is CRITICAL
+    // Without it: path '' matches the START of EVERY URL
+    // /products starts with '' → redirect to home ← WRONG
+    // /orders starts with '' → redirect to home ← WRONG
+    // pathMatch: 'full' means: match ONLY if URL is EXACTLY ''
+  },
 ];
-```
-
----
-
-### لماذا `pathMatch: 'full'` على الـ redirect؟
-
-```typescript
-// WITHOUT pathMatch: 'full'
-{ path: '', redirectTo: 'home' }
-// path: '' matches the START of EVERY URL
-// /about starts with '' → redirect to /home ← WRONG!
-// /posts starts with '' → redirect to /home ← WRONG!
-// This creates infinite redirect loops
-
-// WITH pathMatch: 'full'
-{ path: '', redirectTo: 'home', pathMatch: 'full' }
-// path: '' matches ONLY if the ENTIRE URL is '' (empty)
-// /about → doesn't match → continues to next route ✅
-// ''     → matches → redirects to /home ✅
 ```
 
 ---
@@ -921,33 +1527,116 @@ export const routes: Routes = [
 export const routes: Routes = [
   {
     path: 'dashboard',
-    // No component on parent — just groups children
+    // Parent route — no component, just groups children
     children: [
-      { path: '',         loadComponent: () => import('./dashboard/overview') },
-      { path: 'stats',    loadComponent: () => import('./dashboard/stats')    },
-      { path: 'settings', loadComponent: () => import('./dashboard/settings') },
+      {
+        path: '',
+        // Matches /dashboard (parent with nothing after)
+        loadComponent: () => import('./pages/dashboard/overview').then(m => m.OverviewComponent),
+      },
+      {
+        path: 'analytics',
+        // Matches /dashboard/analytics
+        loadComponent: () => import('./pages/dashboard/analytics').then(m => m.AnalyticsComponent),
+      },
+      {
+        path: 'settings',
+        // Matches /dashboard/settings
+        loadComponent: () => import('./pages/dashboard/settings').then(m => m.SettingsComponent),
+      },
     ],
   },
-  // URLs: /dashboard, /dashboard/stats, /dashboard/settings
 ];
 ```
 
 ---
 
-## [[11-route-guards]] — "الـ Guards: حارس البوابة"
+### الـ Wildcard Route — صفحة الـ 404
 
-الـ **Route Guard** هو function بتشتغل قبل ما Angular يفتح route معينة. بيقرر: "هل المستخدم مسموحه يدخل هنا؟"
+```typescript
+export const routes: Routes = [
+  { path: 'home',     loadComponent: () => import('./home')     },
+  { path: 'products', loadComponent: () => import('./products') },
+
+  // MUST be LAST — catches everything not matched above
+  {
+    path: '**',
+    // '**' = match any path that didn't match anything above
+    loadComponent: () => import('./pages/not-found/not-found').then(m => m.NotFoundComponent),
+  },
+  // If '**' was FIRST → it would catch EVERYTHING before other routes get a chance!
+];
+```
+
+---
+
+### الـ RouterLink — التنقل في الـ Template
+
+```html
+<!-- Navigate to a fixed path -->
+<a routerLink="/home">Home</a>
+<a routerLink="/products">Products</a>
+
+<!-- Navigate with a dynamic parameter -->
+<a [routerLink]="['/products', product.id]">{{ product.name }}</a>
+<!-- Generates: /products/42 -->
+
+<!-- routerLinkActive — add class when route is active -->
+<nav>
+  <a routerLink="/home"     routerLinkActive="active-link">Home</a>
+  <a routerLink="/products" routerLinkActive="active-link">Products</a>
+  <!-- 'active-link' class is added only to the link matching current URL -->
+</nav>
+
+<!-- Programmatic navigation from TypeScript: -->
+<!-- inject(Router).navigate(['/products', id]) -->
+```
+
+> فهمنا الـ Routing. دلوقتي فيه مشكلة: بعض الـ pages محتاجة login. وبعضها محتاجة admin role. إزاي نحمي الـ routes دي؟
+
+---
+
+## [[12-guards-concept]] — الـ Guards: "حارس البوابة"
+
+### المشكلة الأولى
+
+```typescript
+export const routes: Routes = [
+  { path: 'profile',    loadComponent: () => import('./profile') },
+  { path: 'dashboard',  loadComponent: () => import('./dashboard') },
+  { path: 'admin',      loadComponent: () => import('./admin') },
+];
+```
+
+بالـ routing ده — **أي شخص** يقدر يكتب `/admin` في الـ URL ويفتح صفحة الـ admin!
+
+الحل هو الـ **Guard** — function بتشتغل قبل ما Angular يفتح الـ route. بيقرر: "المستخدم ده مسموحله يدخل؟"
+
+```typescript
+export const routes: Routes = [
+  { path: 'profile',   canActivate: [authGuard],  loadComponent: () => import('./profile') },
+  { path: 'dashboard', canActivate: [authGuard],  loadComponent: () => import('./dashboard') },
+  { path: 'admin',     canActivate: [adminGuard], loadComponent: () => import('./admin') },
+];
+```
+
+---
+
+### الـ Guard Flow
 
 ```
 User navigates to /profile
-    ↓
-Angular finds: { path: 'profile', canActivate: [authGuard], ... }
-    ↓
+         ↓
+Angular Router: found route { path: 'profile', canActivate: [authGuard] }
+         ↓
 Angular calls: authGuard()
-    ↓
-  Returns true  → navigation continues → Profile loads ✅
-  Returns UrlTree → navigation BLOCKED → redirected to UrlTree path ↩️
-  Returns false → navigation BLOCKED silently ❌
+         ↓
+authGuard() returns...
+  ┌─────────────────────────────────────────────────────────┐
+  │  true       → navigation CONTINUES → Profile loads      │
+  │  false      → navigation BLOCKED → nothing happens      │
+  │  UrlTree    → navigation BLOCKED → redirect to UrlTree  │
+  └─────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -955,253 +1644,320 @@ Angular calls: authGuard()
 ### الـ Guard Type Signature
 
 ```typescript
-import { CanActivateFn, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
 
-// Full signature:
+// The type Angular expects:
 type CanActivateFn = (
   route: ActivatedRouteSnapshot, // info about the target route
-  state: RouterStateSnapshot     // info about the current router state
+  state: RouterStateSnapshot     // the full router state
 ) => boolean | UrlTree | Observable<boolean | UrlTree> | Promise<boolean | UrlTree>;
 
-// In practice — if you don't need route/state:
+// Simplest possible guard:
+export const alwaysAllowGuard: CanActivateFn = () => true;
+export const alwaysBlockGuard: CanActivateFn = () => false;
+
+// Most guards look like this:
 export const myGuard: CanActivateFn = () => {
-  return true; // or false, or UrlTree
+  const isAllowed = checkSomeCondition();
+  return isAllowed
+    ? true
+    : inject(Router).createUrlTree(['/some/other/path']);
 };
 ```
 
-الـ Guard ممكن يرجع:
-- `true` → proceed
-- `false` → block silently
-- `UrlTree` → block + redirect to this URL (الأشهر)
-- `Observable<boolean | UrlTree>` → async check (مثلاً check مع backend)
-- `Promise<boolean | UrlTree>` → async check
-
 ---
 
-## [[12-auth-guard]] — "authGuard: كل سطر بالتفصيل"
+## [[13-auth-guard-full]] — authGuard: كل سطر مشروح
 
 ```typescript
 // src/app/guards/auth.guard.ts
 
-import { inject }                    from '@angular/core';
-import { CanActivateFn, Router }     from '@angular/router';
-import { AuthService }               from '../services/auth.service';
+import { inject }                from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { TokenService }          from '../services/token.service';
 
 export const authGuard: CanActivateFn = () => {
-  // No need for (route, state) parameters — we don't use them
-  // TypeScript allows omitting unused parameters
+  // We don't need (route, state) parameters here
+  // TypeScript allows omitting unused parameters at the end
 
-  const auth = inject(AuthService);
-  // Get the AuthService singleton
-  // inject() works here — guards run in injection context
+  // ─── Step 1: Check if user is authenticated ───────────────────────
+  const tokenService = inject(TokenService);
+  // Get the singleton TokenService — same instance everywhere
 
-  if (auth.isLoggedIn()) {
+  if (tokenService.isAuthenticated()) {
+    // isAuthenticated() checks:
+    //   1. Token exists in localStorage
+    //   2. Token is not expired (checks the 'exp' field in JWT payload)
+    // If both true → user is properly logged in
+
     return true;
-    // Token exists AND is not expired
-    // Angular proceeds: loads the guarded component
+    // Returning true = "yes, let them in"
+    // Angular continues navigation → component loads
   }
 
-  return inject(Router).createUrlTree(['/auth/login']);
-  // User is NOT authenticated
-  // createUrlTree() creates a UrlTree — Angular's instruction to redirect
-  // DO NOT use router.navigate() here — guards must return synchronously
-  // router.navigate() is async (returns Promise) — Angular can't wait for it in a guard
-  // createUrlTree() is synchronous — perfect for guards
+  // ─── Step 2: User is NOT authenticated → redirect to login ────────
+  const router = inject(Router);
 
-  // ['/auth/login'] = the path to redirect to
-  // Leading '/' means absolute path (not relative)
+  return router.createUrlTree(['/auth/login']);
+  // createUrlTree() creates a UrlTree object representing /auth/login
+  //
+  // WHY createUrlTree() and NOT router.navigate()?
+  //
+  // router.navigate() is ASYNC — returns Promise<boolean>
+  // Guards must return synchronously (or Observable/Promise they return,
+  // not a Promise from router.navigate())
+  // If you use router.navigate(), the guard returns undefined
+  // Angular sees undefined → treats as false → blocks navigation silently
+  // User is blocked but never redirected to login — they're stuck!
+  //
+  // createUrlTree() is SYNCHRONOUS — returns UrlTree immediately
+  // Angular sees UrlTree → handles the redirect itself
+  // User is correctly redirected to /auth/login
 };
-```
-
-**في الـ routes:**
-
-```typescript
-export const routes: Routes = [
-  { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./profile') },
-  { path: 'cart',    canActivate: [authGuard], loadComponent: () => import('./cart')    },
-  { path: 'orders',  canActivate: [authGuard], loadComponent: () => import('./orders')  },
-];
 ```
 
 ---
 
-## [[13-admin-guard]] — "adminGuard: كل سطر بالتفصيل"
+### تجربة authGuard يدوياً
+
+```
+Scenario A: User is logged in
+
+1. User navigates to /profile
+2. Angular calls authGuard()
+3. tokenService.isAuthenticated() → true (token exists, not expired)
+4. authGuard returns: true
+5. Angular loads ProfileComponent ✅
+
+Scenario B: User is NOT logged in
+
+1. User types /profile in browser URL bar
+2. Angular calls authGuard()
+3. tokenService.isAuthenticated() → false (no token in localStorage)
+4. authGuard returns: UrlTree('/auth/login')
+5. Angular redirects to /auth/login
+6. User sees the login page ✅
+
+Scenario C: User's token expired
+
+1. User was logged in, left browser open for 2 hours, token expired
+2. User clicks "Profile" link
+3. Angular calls authGuard()
+4. tokenService.isAuthenticated() → false (token exists but exp < now)
+5. authGuard returns: UrlTree('/auth/login')
+6. Angular redirects to /auth/login
+7. User re-logs in and gets new token ✅
+```
+
+---
+
+## [[14-admin-guard-full]] — adminGuard: كل سطر مشروح
 
 ```typescript
 // src/app/guards/admin.guard.ts
 
 import { inject }                from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService }           from '../services/auth.service';
+import { TokenService }          from '../services/token.service';
 
 export const adminGuard: CanActivateFn = () => {
-  const auth   = inject(AuthService);
+  const tokenService = inject(TokenService);
+  const router       = inject(Router);
 
-  if (auth.isLoggedIn() && auth.isAdmin()) {
-    // isLoggedIn(): token exists and not expired
-    // isAdmin(): decoded token has role === 'admin'
-    //
-    // Why check BOTH? Isn't isAdmin() enough?
-    // If not logged in → getCurrentUser() returns null
-    // null?.role === 'admin' → undefined === 'admin' → false
-    // So isAdmin() alone would work — but isLoggedIn() && isAdmin() is more explicit
-
-    return true;
-    // User is authenticated AND has admin role → allow access
+  // ─── Check 1: Is user authenticated at all? ───────────────────────
+  if (!tokenService.isAuthenticated()) {
+    // Not logged in at all
+    // Send to login page — they need to authenticate first
+    return router.createUrlTree(['/auth/login']);
   }
 
-  return inject(Router).createUrlTree(['/']);
-  // Redirect to home — NOT to /auth/login
+  // ─── Check 2: Is the authenticated user an admin? ─────────────────
+  const user = tokenService.getUser();
+  // getUser() decodes the JWT payload and returns the user data
+  // Returns: { id: "...", email: "...", role: "admin" | "user" }
+  // Returns null if token is invalid or not present
+
+  if (user?.role === 'admin') {
+    // User is logged in AND has admin role
+    return true;
+    // Navigation continues → Admin page loads
+  }
+
+  // ─── User is logged in but NOT admin ──────────────────────────────
+  return router.createUrlTree(['/']);
+  // Redirect to home page
   //
-  // Why home and not login?
-  // Case 1: logged in but not admin → sending them to login makes no sense
-  //         They ARE logged in — just don't have admin role
-  //         Home is the right place for them
-  // Case 2: not logged in → home is fine too (usually shows public content)
-  //         Or home itself might be protected by authGuard and redirect to login
+  // WHY '/' and not '/auth/login'?
+  //
+  // The user IS logged in (passed check 1 above)
+  // They just don't have admin permissions
+  // Sending them to login makes no sense — they're already logged in!
+  // Home page is the appropriate "you can't go there" destination
+  //
+  // Imagine: Ali is logged in as a regular user
+  // He types /admin in the URL
+  // adminGuard: Ali is authenticated? YES → skip login redirect
+  //             Ali is admin? NO → go to home page
+  // Ali sees the home page — no "you're not allowed" message needed
+  // He just ends up at home, which is natural
 };
 ```
 
 ---
 
-### حماية كاملة لقسم كامل من الـ app
+### مقارنة authGuard مع adminGuard
 
-```typescript
-export const routes: Routes = [
-  // Protect ALL admin routes with one guard on the PARENT:
-  {
-    path: 'admin',
-    canActivate: [adminGuard],
-    // adminGuard protects ALL children automatically
-    children: [
-      { path: '',        loadComponent: () => import('./admin/dashboard') },
-      { path: 'users',   loadComponent: () => import('./admin/users')     },
-      { path: 'reports', loadComponent: () => import('./admin/reports')   },
-      // All these are protected — adminGuard runs before any of them
-    ],
-  },
-];
-// Navigating to /admin, /admin/users, or /admin/reports
-// → adminGuard runs → blocks if not admin
+```
+authGuard:
+  Question: "Is user logged in?"
+  Yes → allow
+  No  → redirect to /auth/login
+
+adminGuard:
+  Question 1: "Is user logged in?"
+  No  → redirect to /auth/login (need to log in first)
+  Yes → continue to question 2
+
+  Question 2: "Does user have admin role?"
+  Yes → allow
+  No  → redirect to / (logged in but not admin → go home)
 ```
 
 ---
 
-## [[14-complete-routes]] — `app.routes.ts` الكامل بكل سطر
+## [[15-complete-routes-file]] — الـ Routes الكاملة مع كل التفاصيل
 
 ```typescript
 // src/app/app.routes.ts
 
 import { Routes } from '@angular/router';
-// Routes: TypeScript type for the array — ensures correct structure
-
 import { authGuard }  from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
 
-  // ─── Root redirect ────────────────────────────────────────────────────
+  // ─── Root redirect ─────────────────────────────────────────────────
   {
-    path:      '',
+    path:       '',
     redirectTo: 'home',
     pathMatch:  'full',
-    // Empty URL → /home
-    // pathMatch: 'full' prevents matching every URL (see explanation above)
+    // Empty URL ('/') → redirect to '/home'
+    // pathMatch: 'full' prevents this from matching ALL URLs
   },
 
-  // ─── Public routes — no guard needed ─────────────────────────────────
+  // ─── Public routes (no guard needed) ───────────────────────────────
   {
     path: 'home',
-    loadComponent: () => import('./features/home/home').then(c => c.HomeComponent),
-    // Lazy loaded — only downloaded when user visits /home
-    // import() returns Promise<module>
-    // .then(c => c.HomeComponent) extracts the named export
+    loadComponent: () =>
+      import('./pages/home/home.component').then(m => m.HomeComponent),
+    // Lazy loaded — downloaded only when user visits /home
   },
 
   {
-    path: 'posts',
-    loadComponent: () => import('./features/posts/post-list').then(c => c.PostListComponent),
+    path: 'products',
+    loadComponent: () =>
+      import('./pages/products/products.component').then(m => m.ProductsComponent),
   },
 
   {
-    path: 'posts/:id',
-    // Dynamic segment — :id is a URL parameter
-    // /posts/42 → route.params['id'] === '42'
-    loadComponent: () => import('./features/posts/post-detail').then(c => c.PostDetailComponent),
+    path: 'products/:id',
+    // Dynamic — matches /products/1, /products/42, /products/anything
+    loadComponent: () =>
+      import('./pages/product-detail/product-detail.component').then(m => m.ProductDetailComponent),
   },
 
-  // ─── Auth routes — group under /auth ─────────────────────────────────
+  // ─── Auth routes (login/register) ──────────────────────────────────
   {
     path: 'auth',
+    // Parent — groups login and register under /auth
     children: [
       {
         path: 'login',
         // /auth/login
-        loadComponent: () => import('./features/auth/login').then(c => c.LoginComponent),
+        loadComponent: () =>
+          import('./pages/auth/login/login.component').then(m => m.LoginComponent),
       },
       {
         path: 'register',
         // /auth/register
-        loadComponent: () => import('./features/auth/register').then(c => c.RegisterComponent),
+        loadComponent: () =>
+          import('./pages/auth/register/register.component').then(m => m.RegisterComponent),
       },
     ],
   },
 
-  // ─── Protected routes — require login ────────────────────────────────
+  // ─── Protected routes (login required) ─────────────────────────────
   {
     path: 'profile',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/profile/profile').then(c => c.ProfileComponent),
+    // authGuard runs first — if not logged in → redirects to /auth/login
+    loadComponent: () =>
+      import('./pages/profile/profile.component').then(m => m.ProfileComponent),
   },
 
   {
     path: 'cart',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/cart/cart').then(c => c.CartComponent),
+    loadComponent: () =>
+      import('./pages/cart/cart.component').then(m => m.CartComponent),
   },
 
   {
     path: 'orders',
     canActivate: [authGuard],
-    // Guard on parent → all children are protected
+    // Guard on PARENT protects ALL children automatically
     children: [
       {
         path: '',
         // /orders
-        loadComponent: () => import('./features/orders/order-list').then(c => c.OrderListComponent),
+        loadComponent: () =>
+          import('./pages/orders/order-list.component').then(m => m.OrderListComponent),
       },
       {
         path: ':id',
         // /orders/abc123
-        loadComponent: () => import('./features/orders/order-detail').then(c => c.OrderDetailComponent),
+        loadComponent: () =>
+          import('./pages/orders/order-detail.component').then(m => m.OrderDetailComponent),
       },
     ],
   },
 
-  // ─── Admin routes — require login + admin role ────────────────────────
+  // ─── Admin routes (login + admin role required) ─────────────────────
   {
     path: 'admin',
     canActivate: [adminGuard],
+    // adminGuard checks: logged in? AND admin role?
+    // If not logged in → /auth/login
+    // If logged in but not admin → /
     children: [
       {
         path: '',
         // /admin
-        loadComponent: () => import('./features/admin/dashboard').then(c => c.AdminDashboardComponent),
+        loadComponent: () =>
+          import('./pages/admin/dashboard.component').then(m => m.AdminDashboardComponent),
       },
       {
         path: 'users',
         // /admin/users
-        loadComponent: () => import('./features/admin/users').then(c => c.AdminUsersComponent),
+        loadComponent: () =>
+          import('./pages/admin/users.component').then(m => m.AdminUsersComponent),
+      },
+      {
+        path: 'reports',
+        // /admin/reports
+        loadComponent: () =>
+          import('./pages/admin/reports.component').then(m => m.AdminReportsComponent),
       },
     ],
   },
 
-  // ─── 404 — must be LAST ────────────────────────────────────────────────
+  // ─── 404 Not Found — MUST be last! ──────────────────────────────────
   {
     path: '**',
-    // Wildcard — matches ANYTHING not matched above
-    // If placed first or in the middle → catches everything!
-    loadComponent: () => import('./features/not-found/not-found').then(c => c.NotFoundComponent),
+    // Wildcard — matches anything not matched above
+    // If this was first, it would catch everything!
+    loadComponent: () =>
+      import('./pages/not-found/not-found.component').then(m => m.NotFoundComponent),
   },
 ];
 ```
@@ -1212,31 +1968,38 @@ export const routes: Routes = [
 
 ```mermaid
 flowchart TD
-    subgraph HTTP["HTTP Layer"]
-        A["provideHttpClient()"] --> B["HttpClient Service"]
-        B --> C["GET / POST / PUT / PATCH / DELETE"]
-        C --> D["Typed Response Observable<T>"]
-        D --> E["Error: HttpErrorResponse"]
-    end
+    A["User Action"] --> B["Angular Router"]
+    B --> C{"Route has canActivate?"}
+    C -->|"No guard"| D["Load Component"]
+    C -->|"authGuard"| E{"isAuthenticated?"}
+    C -->|"adminGuard"| F{"isAuth AND isAdmin?"}
 
-    subgraph Interceptors["Interceptor Pipeline"]
-        F["tokenInterceptor"] -->|"adds Authorization header"| G["Request → Network"]
-        H["errorInterceptor"] -->|"handles 401/403"| I["Response → Component"]
-    end
+    E -->|"true"| D
+    E -->|"false"| G["Redirect /auth/login"]
 
-    subgraph Guards["Route Guards"]
-        J["canActivate: authGuard"] -->|"isLoggedIn?"| K["true → load component"]
-        J -->|"false"| L["UrlTree → redirect to login"]
-        M["canActivate: adminGuard"] -->|"isLoggedIn && isAdmin?"| K
-        M -->|"false"| N["UrlTree → redirect to home"]
-    end
+    F -->|"true"| D
+    F -->|"not auth"| G
+    F -->|"not admin"| H["Redirect /"]
 
-    HTTP --> Interceptors
-    Guards --> HTTP
+    D --> I["Component makes HTTP call via Service"]
+    I --> J["HttpClient creates request"]
+    J --> K["tokenInterceptor: add Authorization header"]
+    K --> L["errorInterceptor: wrap with catchError"]
+    L --> M["Request goes to Network"]
 
-    style HTTP fill:#1e1b4b,color:#fff,stroke:#6d28d9
-    style Interceptors fill:#1e3a5f,color:#fff,stroke:#2563eb
-    style Guards fill:#14532d,color:#fff,stroke:#16a34a
+    M --> N{"Response?"}
+    N -->|"Success"| O["errorInterceptor pass-through"]
+    N -->|"401"| P["logout + redirect to /auth/login"]
+    N -->|"403"| Q["redirect to /"]
+    N -->|"other error"| R["re-throw to component"]
+
+    O --> S["Component subscribe.next() — shows data"]
+    R --> T["Component subscribe.error() — shows error"]
+
+    style A fill:#1e1b4b,color:#fff,stroke:#6d28d9
+    style S fill:#14532d,color:#fff,stroke:#16a34a
+    style T fill:#7f1d1d,color:#fff,stroke:#dc2626
+    style G fill:#7f1d1d,color:#fff,stroke:#dc2626
 ```
 
 ---
@@ -1244,40 +2007,41 @@ flowchart TD
 ## ✅ Checkpoint — أسئلة الإنترفيو
 
 **س: إيه الفرق بين PUT وPATCH؟**
-> `PUT` بيستبدل الـ resource كاملاً — لازم ترسل كل الـ fields حتى اللي ما اتغيرتش. `PATCH` بيعدّل بس الـ fields اللي ذكرتها — الباقي بيفضل زي ما هو. في الغالب `PATCH` أنسب للـ update operations لأنه أخف وأأمن.
+> `PUT` بيستبدل الـ resource كاملاً — لازم ترسل كل الـ fields حتى اللي ما اتغيرتش. لو نسيت field — الـ server ممكن يحذفه أو يجعله null. `PATCH` بيحدّث فقط الـ fields المرسلة — الباقي بيفضل زي ما هو. استخدم `PATCH` للـ partial updates زي تعديل bio أو تغيير اسم فقط.
 
-**س: إيه الـ Interceptor وإيه فايدته؟**
-> الـ Interceptor هو middleware بيشتغل أوتوماتيك لكل HTTP request/response. بيحل مشكلة تكرار الكود — بدل ما تضيف Authorization header في كل request يدوياً، الـ tokenInterceptor بيضيفه لكل request تلقائياً. الـ errorInterceptor بيـhandle الـ 401 و403 globally بدل ما كل service تعمل ده بنفسها.
+**س: إيه الـ Interceptor وليه بنستخدمه؟**
+> الـ Interceptor هو middleware بيشتغل تلقائياً لكل HTTP request وresponse. بيحل مشكلة تكرار الكود — بدل ما تضيف `Authorization` header في كل service يدوياً، الـ `tokenInterceptor` بيضيفه لكل request أوتوماتيك. الـ `errorInterceptor` بيـhandle 401 و403 globally بدل ما كل component يعملهم بنفسه.
 
-**س: ليه الـ HttpRequest immutable وإيه الحل؟**
-> Immutability بتضمن إن كل interceptor بيشوف نسخة نظيفة من الـ request ومش متأثرة بـ interceptors تانية. الحل: `req.clone({...})` اللي بتعمل نسخة جديدة من الـ request مع التعديلات المطلوبة — الأصلي بيفضل unchanged.
+**س: ليه `req.clone()` بدل التعديل المباشر؟**
+> الـ `HttpRequest` immutable — مش تقدر تغيّره in-place. السبب: نفس الـ request ممكن يتـreference في أكتر من مكان. `req.clone({...})` بيعمل نسخة جديدة مع التعديلات — الأصلي بيفضل unchanged. الـ Immutability بيضمن إن كل interceptor بيشتغل على نسخة واضحة ومعروفة.
 
-**س: إيه الفرق بين `router.navigate()` و `router.createUrlTree()` في الـ Guards؟**
-> `router.navigate()` بترجع `Promise<boolean>` — async. الـ Guard لازم يرجع نتيجة synchronous أو Observable/Promise معروف. `createUrlTree()` بترجع `UrlTree` object بشكل synchronous — Angular فاهمه مباشرة كـ redirect instruction. الـ Guards بتستخدم `createUrlTree()` لأنه sync ومتوافق مع نظام الـ Guard.
+**س: ليه `createUrlTree()` في الـ Guards وليس `router.navigate()`؟**
+> `router.navigate()` async — بترجع `Promise<boolean>`. الـ Guard لازم يرجع نتيجة synchronous أو Observable/Promise. لو استخدمت `navigate()`، الـ Guard بيرجع `undefined` → Angular بيعامله كـ `false` → navigation متوقفة بس المستخدم ما بيتحوّلش لأي مكان. `createUrlTree()` synchronous — بترجع `UrlTree` فوراً → Angular بيعمل الـ redirect صح.
 
-**س: إيه معنى `pathMatch: 'full'` على الـ redirect routes؟**
-> بدونه، الـ empty path `''` بتـmatch بداية كل URL — كل URL بيبدأ بـ `''`. النتيجة: كل صفحة بتعمل redirect! مع `pathMatch: 'full'` — بيـmatch بس لما الـ URL كاملاً هو `''` (empty). بيمنع الـ infinite redirect loops.
+**س: إيه الفرق بين authGuard وadminGuard؟**
+> `authGuard` بيسأل سؤال واحد: "هل المستخدم logged in؟" — لا → redirect لـ `/auth/login`. `adminGuard` بيسأل سؤالين: (1) "هل logged in؟" — لا → redirect لـ `/auth/login`. (2) "هل admin؟" — لا → redirect لـ `/` (home). الـ redirect لـ `/` وليس `/auth/login` لأن المستخدم ممكن يكون logged in بس مش admin — وإرساله للـ login منطقياً غلط.
 
 ---
 
-## 🛠️ Practical Exercise — HTTP وGuards من الصفر
+## 🛠️ Practical Exercise
 
 ### Task 1 — اقرأ وتنبّأ
 
 ```typescript
 @Injectable({ providedIn: 'root' })
-export class DataService {
+export class ItemService {
   private http = inject(HttpClient);
+  private url  = 'https://api.example.com';
 
-  getData(): Observable<{ id: number; value: string }[]> {
-    return this.http.get<{ id: number; value: string }[]>(
-      'https://api.example.com/data'
-    ).pipe(
-      map(items => items.filter(i => i.id > 2)),
-      tap(filtered => console.log('Count after filter:', filtered.length)),
+  getItems(): Observable<Item[]> {
+    return this.http.get<Item[]>(`${this.url}/items`).pipe(
+      map(items  => items.filter(i => i.active)),
+      tap(active => console.log('Active items:', active.length)),
       catchError(err => {
-        if (err.status === 404) return of([]);
-        return throwError(() => err);
+        if (err.status === 0) {
+          return of([]);
+        }
+        return throwError(() => new Error(err.error?.message || 'Failed'));
       })
     );
   }
@@ -1287,104 +2051,128 @@ export class DataService {
 **بافتراض الـ API رجعت:**
 ```json
 [
-  { "id": 1, "value": "alpha" },
-  { "id": 2, "value": "beta"  },
-  { "id": 3, "value": "gamma" },
-  { "id": 4, "value": "delta" }
+  { "id": 1, "name": "Laptop",  "active": true  },
+  { "id": 2, "name": "Mouse",   "active": false },
+  { "id": 3, "name": "Monitor", "active": true  }
 ]
 ```
 
 **أجب:**
 1. إيه اللي بيوصل للـ component في `subscribe.next`؟
-2. ماذا يُطبع في الـ console؟
+2. ما الذي يُطبع في الـ console؟
 3. لو الـ API رجعت 404 — إيه اللي بيوصل للـ component؟
-4. لو الـ API رجعت 500 — إيه اللي بيوصل للـ component؟
+4. لو الـ API ما ردّتش خالص (internet down) — إيه اللي بيوصل للـ component؟
 
 ---
 
-### Task 2 — اكمل الـ Interceptor
+### Task 2 — اكتب Service كامل من الصفر
+
+اكتب `TodoService` بـ CRUD operations كاملة تشتغل مع الـ API ده:
+
+```
+GET    /api/todos           → returns Todo[]
+GET    /api/todos/:id       → returns Todo
+POST   /api/todos           → creates Todo, returns created Todo
+PATCH  /api/todos/:id       → partial update, returns updated Todo
+DELETE /api/todos/:id       → deletes, returns void
+```
 
 ```typescript
-// A logging interceptor that:
-// 1. Logs the method and URL before every request
-// 2. Logs "Success" + status code after successful response
-// 3. Logs "Error" + status code after failed response
-// 4. Logs the time each request took (in ms)
+interface Todo {
+  id:        number;
+  title:     string;
+  completed: boolean;
+  userId:    number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class TodoService {
+  private http    = inject(HttpClient);
+  private baseUrl = 'https://jsonplaceholder.typicode.com';
+
+  // Implement all 5 CRUD methods
+  // Each should:
+  // 1. Use the correct HTTP method
+  // 2. Have the correct return type Observable<?>
+  // 3. Handle errors with catchError
+}
+```
+
+---
+
+### Task 3 — اكتب Interceptor Logging
+
+اكتب `loggingInterceptor` بيعمل:
+- يطبع `[START] GET /api/posts` قبل كل request
+- يطبع `[SUCCESS 200] GET /api/posts (145ms)` بعد نجاح الـ request
+- يطبع `[ERROR 404] GET /api/posts/999 (89ms)` بعد فشل الـ request
+- يحسب الوقت اللي أخده الـ request
+
+```typescript
+import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
+import { tap, catchError }                  from 'rxjs/operators';
+import { throwError }                       from 'rxjs';
 
 export const loggingInterceptor: HttpInterceptorFn = (req, next) => {
-  const startTime = Date.now();
-  console.log(`[HTTP] ${req.method} ${req.url}`);
+  const start = Date.now();
+  console.log(`[START] ${req.method} ${req.url}`);
 
   return next(req).pipe(
-    tap(event => {
-      // event can be HttpResponse (success) or other HttpEvents
-      // Check: if (event instanceof HttpResponse) { ... }
-      // HttpResponse has: event.status, event.body
-      // ??? log success
-    }),
-    catchError(err => {
-      // ??? log error
-      // ??? re-throw
-    }),
+    // hint: use tap() and check if event instanceof HttpResponse
+    // hint: use catchError() and re-throw
+    // hint: const duration = Date.now() - start
   );
 };
 ```
 
 ---
 
-### Task 3 — اكتب Service كامل
-
-اكتب `UserService` بالـ CRUD operations كاملة:
+### Task 4 — اكتب Guards جديدة
 
 ```typescript
-interface User {
-  id:    number;
-  name:  string;
-  email: string;
-  role:  'admin' | 'viewer';
-}
+// Guard 1: guestGuard
+// BLOCKS access if user IS logged in
+// Use case: /auth/login and /auth/register shouldn't be accessible when logged in
+// Behavior:
+//   - Logged in? → redirect to /home
+//   - Not logged in? → allow (return true)
 
-@Injectable({ providedIn: 'root' })
-export class UserService {
-  private http    = inject(HttpClient);
-  private baseUrl = 'https://api.example.com/users';
-
-  // 1. getAll(): fetch all users
-  // 2. getById(id: number): fetch one user
-  // 3. create(data: Omit<User, 'id'>): create new user
-  // 4. update(id: number, changes: Partial<User>): partial update
-  // 5. delete(id: number): delete user
-
-  // Each method should:
-  // - Return a typed Observable
-  // - Handle errors with catchError
-  // - Use the correct HTTP method
-}
+// Guard 2: ownerGuard
+// Allows access only if the logged-in user's id matches :userId in the URL
+// Example: /users/:userId/edit
+// Behavior:
+//   - Not logged in? → redirect to /auth/login
+//   - Logged in but userId doesn't match token's userId? → redirect to /
+//   - Logged in and userId matches? → allow
+// Hint: inject ActivatedRouteSnapshot via the (route, state) params
+//       const userId = route.params['userId']
+//       compare with tokenService.getUser()?.id
 ```
 
 ---
 
-### Task 4 — اكتب Guards
+### Task 5 — اكتب الـ Routes الكاملة
 
 ```typescript
-// Guard 1: premiumGuard
-// Allows access only if user is logged in AND user.role === 'premium'
-// Redirects to /upgrade if logged in but not premium
-// Redirects to /auth/login if not logged in
+// Build app.routes.ts for a social media app with:
+// Public:     /home, /posts, /posts/:id
+// Auth:       /auth/login, /auth/register
+// Protected:  /profile, /posts/create
+// Owner:      /posts/:id/edit (only post owner can edit — use ownerGuard)
+// Admin:      /admin, /admin/users
+// 404:        catch-all
 
-// Guard 2: publicOnlyGuard
-// Blocks access if user IS logged in (opposite of authGuard!)
-// Use case: /auth/login and /auth/register — logged-in users shouldn't see these
-// Redirects to /home if already logged in
-// Allows through if NOT logged in
+export const routes: Routes = [
+  // your implementation here
+];
 ```
 
 ---
 
 ## 🫒 زتونة الإنترفيو
 
-> **"Angular's HTTP layer has four levels: `provideHttpClient()` sets it up globally, `HttpClient` makes typed requests returning Observables, Interceptors are middleware that run automatically for every request (tokenInterceptor adds Authorization headers, errorInterceptor handles 401/403 globally), and Route Guards are functions that run before navigation — returning `true` to allow or `UrlTree` (via `createUrlTree()`) to redirect. This architecture means no component ever needs to manually add auth headers, handle session expiry, or check login status before navigation — all of that happens in the shared infrastructure layer."**
+> **"Angular's HTTP architecture has four levels: `provideHttpClient()` registers the HTTP system globally; `HttpClient` sends typed requests that return lazy Observables (request only fires on subscribe); Interceptors are automatic middleware — `tokenInterceptor` adds Authorization headers to every outgoing request without touching the services, `errorInterceptor` handles 401 (logout + redirect to login) and 403 (redirect to home) globally and re-throws errors for components to handle their own UI. Route Guards are functions returning `true` or `UrlTree` — `authGuard` checks authentication (redirects to login if not), `adminGuard` checks authentication AND role (redirects to login if not authenticated, home if authenticated but not admin). `createUrlTree()` is used instead of `router.navigate()` because guards must return synchronously."**
 
 ---
 
-*Next → [[06-Reactive-Forms]] — عارفين إزاي نبعت data للـ backend. بس إزاي نجمع الـ data من المستخدم أولاً؟ الـ Reactive Forms هو نظام Angular الكامل لبناء forms مع validation وerror messages وكل الـ states.*
+*Next → [[06-Reactive-Forms]] — عارفين إزاي نجيب data من الـ backend ونحميها. دلوقتي إزاي نجمع data من المستخدم؟ الـ Reactive Forms هو نظام Angular الكامل للـ forms مع الـ validation والـ error messages وكل الـ states.*

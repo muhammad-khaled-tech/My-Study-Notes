@@ -49,8 +49,7 @@
               "title": "02.5-Control-Flow-DI-Signals"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -264,12 +263,13 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "3aff34665e98b7ce",
+  "active": "52fbfe6bf84950e4",
   "lastOpenFiles": [
-    "angular/new/05-Services-HTTP-Interceptors-Guards.md",
-    "angular/new/Unconfirmed 20316.crdownload",
+    "angular/new/Unconfirmed 541773.crdownload",
     "angular/new/02.5-Control-Flow-DI-Signals.md",
     "angular/new/02-Angular-Architecture.md",
+    "angular/new/05-Services-HTTP-Interceptors-Guards.md",
+    "angular/new/Unconfirmed 20316.crdownload",
     "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
     "angular/new/Unconfirmed 943665.crdownload",
     "angular/new/Unconfirmed 55902.crdownload",
@@ -301,7 +301,6 @@
     "angular (2)/agent-instructions.md",
     "angular (2)/FreelanceFlow_Frontend_Journey.md",
     "angular-guide-part5.md",
-    "angular-guide-part9.md",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",
