@@ -8,7 +8,21 @@
         "type": "tabs",
         "children": [
           {
-            "id": "8360f84c1d479375",
+            "id": "52fbfe6bf84950e4",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "FreelanceFlow_Journey_nodejs_project"
+            }
+          },
+          {
+            "id": "3aff34665e98b7ce",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -21,7 +35,8 @@
               "title": "02-Angular-Architecture"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -235,16 +250,17 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "8360f84c1d479375",
+  "active": "3aff34665e98b7ce",
   "lastOpenFiles": [
-    "angular/new/01-TypeScript-For-Angular.md",
+    "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
+    "angular/new/Unconfirmed 850060.crdownload",
     "angular/new/02-Angular-Architecture.md",
+    "angular/new/01-TypeScript-For-Angular.md",
     "angular/old/FreelanceFlow_Frontend_Journey.md",
     "JavaScript/JS_Engine_Internals.md",
     "angular/old/angular-guide-part1.md",
     "angular/old/snapgrid-project-plan.md",
     "angular/old/angular-guide-part2.md",
-    "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
     "angular/old",
     "angular/new/Unconfirmed 67604.crdownload",
     "angular/new/Unconfirmed 371713.crdownload",
@@ -269,10 +285,8 @@
     "angular-guide-part3.md",
     "angular-guide-part8.md",
     "angular-guide-part2.md",
-    "angular-guide-part7.md",
     "angular.tar.xz",
     "JavaScript/Unconfirmed 847589.crdownload",
-    "angular/Unconfirmed 69494.crdownload",
     "Pasted image 20260302213105.png",
     "mean/button-sprite2.png",
     "components life cycle .png",
