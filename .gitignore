@@ -8,3 +8,6 @@
 # 
 # # Obsidian Internal Settings (Optional but recommended to keep repo clean)
 # .obsidian/
+
+/backendproject/
+/backendproject/
