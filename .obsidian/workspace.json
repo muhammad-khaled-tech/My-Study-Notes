@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "angular/new/01-TypeScript-For-Angular.md",
+                "file": "angular/new/02-Angular-Architecture.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "01-TypeScript-For-Angular"
+              "title": "02-Angular-Architecture"
             }
           },
           {
@@ -292,47 +292,9 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "floating": {
-    "id": "df95dd3b58e6b76e",
-    "type": "floating",
-    "children": [
-      {
-        "id": "a29f76179d503a6c",
-        "type": "window",
-        "children": [
-          {
-            "id": "d0e67afe9c568118",
-            "type": "tabs",
-            "children": [
-              {
-                "id": "df5869bdc4915eee",
-                "type": "leaf",
-                "state": {
-                  "type": "markdown",
-                  "state": {
-                    "file": "angular/new/01-TypeScript-For-Angular.md",
-                    "mode": "source",
-                    "source": false
-                  },
-                  "icon": "lucide-file",
-                  "title": "01-TypeScript-For-Angular"
-                }
-              }
-            ]
-          }
-        ],
-        "direction": "vertical",
-        "x": 0,
-        "y": 0,
-        "width": 1024,
-        "height": 767,
-        "maximize": true,
-        "zoom": 0
-      }
-    ]
-  },
-  "active": "df5869bdc4915eee",
+  "active": "bf29eab92ed1d455",
   "lastOpenFiles": [
+    "angular/new/01-TypeScript-For-Angular.md",
     "angular/new/08-Routing-Deep.md",
     "angular/new/Unconfirmed 314474.crdownload",
     "angular/new/07-Component-Communication.md",
@@ -353,7 +315,6 @@
     "angular/new/Unconfirmed 106231.crdownload",
     "angular/new/03-Template-Syntax-and-Lifecycle.md",
     "angular/new/Unconfirmed 392525.crdownload",
-    "angular/new/01-TypeScript-For-Angular.md",
     "angular/old/FreelanceFlow_Frontend_Journey.md",
     "JavaScript/JS_Engine_Internals.md",
     "angular/old/angular-guide-part1.md",
