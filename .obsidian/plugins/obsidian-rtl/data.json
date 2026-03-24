@@ -36,7 +36,9 @@
     "angular/new/01-TypeScript-For-Angular.md": "rtl",
     "angular/old/FreelanceFlow_Frontend_Journey.md": "rtl",
     "angular/new/02-Angular-Architecture.md": "rtl",
-    "backendproject/Sprint_01_Foundation.md": "rtl"
+    "backendproject/Sprint_01_Foundation.md": "rtl",
+    "Aws practitioner/03_EC2_Storage_ELB_ASG.md": "rtl",
+    "Aws practitioner/03_EC2.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
