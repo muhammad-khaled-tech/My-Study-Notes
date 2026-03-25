@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/03_EC2.md",
+                "file": "Java Core/new notes/Sprint_1_Java_Foundation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "03_EC2"
+              "title": "Sprint_1_Java_Foundation"
             }
           }
         ]
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -238,12 +237,15 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
+    "Aws practitioner/03_EC2.md",
+    "Java Core/new notes/Sprint_1_Java_Foundation.md",
+    "Java Core/new notes/Unconfirmed 453680.crdownload",
+    "Java Core/new notes",
     "Aws practitioner/06_OtherCompute_Deployment.md",
     "Aws practitioner/Unconfirmed 609334.crdownload",
     "Aws practitioner/05_S3_Databases.md",
     "Aws practitioner/Unconfirmed 381082.crdownload",
     "Aws practitioner/03_EC2_Storage_ELB_ASG.md",
-    "Aws practitioner/03_EC2.md",
     "Aws practitioner/Notes/awsCloudPractitioner.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
@@ -263,7 +265,6 @@
     "Aws practitioner/mo",
     "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
     "Aws practitioner/Unconfirmed 661746.crdownload",
-    "Aws practitioner/Unconfirmed 418071.crdownload",
     "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
     "angular/new/05-Services-HTTP-Interceptors-Guards.md",
     "angular/new/02.5-Control-Flow-DI-Signals.md",
@@ -271,7 +272,6 @@
     "backendproject/Sprint_01_Foundation.md",
     "angular/new/01-TypeScript-For-Angular.md",
     "angular/new/08-Routing-Deep.md",
-    "angular/new/Unconfirmed 314474.crdownload",
     "angular/new/07-Component-Communication.md",
     "angular/new/06.5-Reactive-Forms-Real-Forms.md",
     "angular/new/06-Reactive-Forms-Foundation.md",
@@ -283,7 +283,6 @@
     "angular/old/snapgrid-project-plan.md",
     "angular/old/angular-guide-part2.md",
     "angular/old/angular-guide-part8.md",
-    "angular (2)/angular-guide-part9.md",
     "Untitled.canvas"
   ]
 }
