@@ -38,7 +38,8 @@
     "angular/new/02-Angular-Architecture.md": "rtl",
     "backendproject/Sprint_01_Foundation.md": "rtl",
     "Aws practitioner/03_EC2_Storage_ELB_ASG.md": "rtl",
-    "Aws practitioner/03_EC2.md": "rtl"
+    "Aws practitioner/03_EC2.md": "rtl",
+    "Aws practitioner/04_EC2_Storage_ELB_ASG.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
