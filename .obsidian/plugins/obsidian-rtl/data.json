@@ -23,7 +23,6 @@
     "Data Structure/12.5- Tree lecture code Explanation.md": "rtl",
     "xml/Java_JSON_Tutorial_Part1.md": "auto",
     "Nodejs/ENV Variables.md": "rtl",
-    "Aws practitioner/what is cloud computing?.md": "rtl",
     "problem solving/DSA_Zero_to_Hero.md": "rtl",
     "problem solving/hashing_tutorial.md": "auto",
     "Nodejs/Node.js_Interview_Prep_Arabic.md": "rtl",
@@ -41,7 +40,10 @@
     "Aws practitioner/04_EC2_Storage_ELB_ASG.md": "rtl",
     "Java Core/new notes/Sprint_1_Java_Foundation.md": "rtl",
     "Java Core/new notes/Sprint_2_DataTypes_Variables_Arrays.md": "rtl",
-    "Java Core/Inner Classes.md": "rtl"
+    "Java Core/Inner Classes.md": "rtl",
+    "Aws practitioner/05_S3_Databases.md": "rtl",
+    "Aws practitioner/06_OtherCompute_Deployment.md": "rtl",
+    "Aws practitioner/01_what is cloud computing?.md": "auto"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
