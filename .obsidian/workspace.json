@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Java Core/new notes/Sprint_4_Modifiers_Packages_Interfaces.md",
+                "file": "backendproject/Sprint_01_Foundation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Sprint_4_Modifiers_Packages_Interfaces"
+              "title": "Sprint_01_Foundation"
             }
           }
         ]
@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,12 +238,17 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
+    "backendproject/alaa/Sprint_A1_Divergence_Analyzer.md",
+    "backendproject/alaa/Unconfirmed 732589.crdownload",
+    "backendproject/alaa/Alaa_Onboarding_Sentinel_Module.md",
+    "backendproject/alaa/Unconfirmed 950364.crdownload",
+    "backendproject/alaa",
+    "Java Core/new notes/Sprint_4_Modifiers_Packages_Interfaces.md",
     "Java Core/new notes/Sprint_5_Wrappers_Autoboxing_InnerClasses.md",
     "Java Core/new notes/Unconfirmed 545193.crdownload",
     "Java Core/new notes/Sprint_6_ExceptionHandling.md",
     "Java Core/new notes/Unconfirmed 341041.crdownload",
     "backendproject/Sprint_01_Foundation.md",
-    "Java Core/new notes/Sprint_4_Modifiers_Packages_Interfaces.md",
     "Java Core/new notes/Unconfirmed 557963.crdownload",
     "Aws practitioner/03_EC2.md",
     "Aws practitioner/01_what is cloud computing?.md",
@@ -266,8 +272,6 @@
     "Java Core/new notes/Unconfirmed 600965.crdownload",
     "Java Core/new notes/Unconfirmed 453680.crdownload",
     "Java Core/new notes",
-    "Aws practitioner/Unconfirmed 609334.crdownload",
-    "Aws practitioner/Unconfirmed 381082.crdownload",
     "Aws practitioner/Notes/awsCloudPractitioner.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
@@ -279,10 +283,7 @@
     "Aws practitioner/Notes/image.png",
     "Aws practitioner/Notes/image-7.png",
     "Aws practitioner/Notes/image-4.png",
-    "Aws practitioner/Notes",
     "Aws practitioner/mo/Notes/awsCloudPractitioner.md",
-    "Nodejs/FreelanceFlow_Journey_nodejs_project.md",
-    "angular/new/05-Services-HTTP-Interceptors-Guards.md",
     "Untitled.canvas"
   ]
 }
