@@ -238,6 +238,11 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
+    "design patterns/02_S_Single_Responsibility_Principle.md",
+    "design patterns/Unconfirmed 509802.crdownload",
+    "design patterns/01_Why_SOLID.md",
+    "design patterns/Unconfirmed 847677.crdownload",
+    "design patterns",
     "backendproject/alaa/Sprint_A1_Divergence_Analyzer.md",
     "backendproject/alaa/Unconfirmed 732589.crdownload",
     "backendproject/alaa/Alaa_Onboarding_Sentinel_Module.md",
@@ -269,10 +274,6 @@
     "Java Core/Data Types.md",
     "Java Core/new notes/Sprint_2_DataTypes_Variables_Arrays.md",
     "Java Core/new notes/Sprint_1_Java_Foundation.md",
-    "Java Core/new notes/Unconfirmed 600965.crdownload",
-    "Java Core/new notes/Unconfirmed 453680.crdownload",
-    "Java Core/new notes",
-    "Aws practitioner/Notes/awsCloudPractitioner.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
@@ -283,7 +284,6 @@
     "Aws practitioner/Notes/image.png",
     "Aws practitioner/Notes/image-7.png",
     "Aws practitioner/Notes/image-4.png",
-    "Aws practitioner/mo/Notes/awsCloudPractitioner.md",
     "Untitled.canvas"
   ]
 }
