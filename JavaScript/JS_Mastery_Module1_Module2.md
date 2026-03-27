@@ -51,16 +51,16 @@
 graph TB
     subgraph CallStack["📚 Call Stack — LIFO Structure"]
         direction TB
-        FEC2["Function EC: factorialBad(1)\n Creation → Execution → Pop"]
-        FEC1["Function EC: factorialBad(2)\n Waiting for child to return"]
-        FEC0["Function EC: factorialBad(5)\n Waiting..."]
-        GEC["🌍 Global Execution Context\n Always at the bottom"]
+        FEC2["Function EC: factorialBad(1)<br>Creation → Execution → Pop"]
+        FEC1["Function EC: factorialBad(2)<br>Waiting for child to return"]
+        FEC0["Function EC: factorialBad(5)<br>Waiting..."]
+        GEC["🌍 Global Execution Context<br>Always at the bottom"]
     end
 
     subgraph EC_Phases["⚙️ Execution Context Lifecycle"]
         direction LR
-        CP["1️⃣ Creation Phase\n - Build Scope Chain\n - Hoist vars & functions\n - Set 'this' value"]
-        EP["2️⃣ Execution Phase\n - Run code line by line\n - Assign real values\n - Push/Pop child ECs"]
+        CP["1️⃣ Creation Phase<br>- Build Scope Chain<br>- Hoist vars & functions<br>- Set 'this' value"]
+        EP["2️⃣ Execution Phase<br>- Run code line by line<br>- Assign real values<br>- Push/Pop child ECs"]
         CP --> EP
     end
 
