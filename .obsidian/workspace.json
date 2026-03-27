@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "JavaScript/JS_Mastery_Module1_Module2.md",
+                "file": "JavaScript/JS_NodeJS_Elite_Vault_Part2_Modules3_4.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "JS_Mastery_Module1_Module2"
+              "title": "JS_NodeJS_Elite_Vault_Part2_Modules3_4"
             }
           }
         ]
@@ -239,6 +239,8 @@
   "lastOpenFiles": [
     "JavaScript/JS_NodeJS_Elite_Vault_Part1.md",
     "JavaScript/JS_Mastery_Module1_Module2.md",
+    "JavaScript/JS_NodeJS_Elite_Vault_Part2_Modules3_4.md",
+    "JavaScript/Unconfirmed 89862.crdownload",
     "JavaScript/Unconfirmed 449847.crdownload",
     "JavaScript/JS_Engine_Internals.md",
     "JavaScript/JavaScript interview preparation.md",
@@ -258,7 +260,6 @@
     "design patterns/Unconfirmed 509802.crdownload",
     "design patterns/01_Why_SOLID.md",
     "design patterns/Unconfirmed 847677.crdownload",
-    "design patterns",
     "backendproject/alaa/Sprint_A1_Divergence_Analyzer.md",
     "backendproject/alaa/Alaa_Onboarding_Sentinel_Module.md",
     "Java Core/new notes/Sprint_4_Modifiers_Packages_Interfaces.md",
@@ -272,7 +273,6 @@
     "Aws practitioner/03_EC2_Storage_ELB_ASG.md",
     "Java Core/new notes/Sprint_3_Operators_ControlFlow_Strings.md",
     "Java Core/Operators, Control Statements and String Handling.md",
-    "Java Core/Modifiers & Access Specifiers.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
