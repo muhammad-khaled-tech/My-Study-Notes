@@ -179,25 +179,26 @@ console.log(factorialArchitect(5));
 
 ```mermaid
 graph LR
+
     subgraph CompilationPhase["🔍 Compilation Phase — Memory Allocation"]
         direction TB
-        VarHoist["var salary\n Allocated: undefined\n ⚠️ Silent Failure Ready"]
-        LetHoist["let userName\n Allocated: UNINITIALIZED\n 🔒 TDZ Active!"]
-        FnHoist["function greet\n Allocated: Full Reference\n ✅ Ready to Call"]
+        VarHoist["var salary<br>Allocated: undefined<br>⚠️ Silent Failure Ready"]
+        LetHoist["let userName<br>Allocated: UNINITIALIZED<br>🔒 TDZ Active!"]
+        FnHoist["function greet<br>Allocated: Full Reference<br>✅ Ready to Call"]
     end
 
     subgraph ExecutionPhase["▶️ Execution Phase — Runtime"]
         direction TB
-        VarExec["var salary used before assign\n → Returns undefined (Bug!)"]
-        LetExec["let userName used before assign\n → ❌ ReferenceError: TDZ"]
-        FnExec["greet() called before declaration\n → ✅ Works perfectly"]
+        VarExec["var salary used before assign<br>→ Returns undefined (Bug!)"]
+        LetExec["let userName used before assign<br>→ ❌ ReferenceError: TDZ"]
+        FnExec["greet() called before declaration<br>→ ✅ Works perfectly"]
     end
 
     subgraph ScopeChain["🔗 Scope Chain Lookup"]
         direction LR
-        LocalScope["Local Scope\n (Function EC)"]
-        OuterScope["Outer Scope\n (Enclosing EC)"]
-        GlobalScope["Global Scope\n (Global EC)"]
+        LocalScope["Local Scope<br>(Function EC)"]
+        OuterScope["Outer Scope<br>(Enclosing EC)"]
+        GlobalScope["Global Scope<br>(Global EC)"]
         NullEnd["null → ReferenceError"]
         LocalScope -- "not found?" --> OuterScope
         OuterScope -- "not found?" --> GlobalScope
@@ -208,16 +209,19 @@ graph LR
     LetHoist --> LetExec
     FnHoist --> FnExec
 
-    style CompilationPhase fill:#0d1117,stroke:#58a6ff,color:#cdd9e5
-    style ExecutionPhase fill:#0d1117,stroke:#3fb950,color:#cdd9e5
-    style ScopeChain fill:#0d1117,stroke:#d29922,color:#cdd9e5
-    style VarHoist fill:#b08800,stroke:#d29922,color:#fff
-    style LetHoist fill:#da3633,stroke:#f85149,color:#fff
-    style FnHoist fill:#2ea043,stroke:#3fb950,color:#fff
-    style LocalScope fill:#1f6feb,stroke:#58a6ff,color:#fff
-    style OuterScope fill:#388bfd,stroke:#58a6ff,color:#fff
-    style GlobalScope fill:#1a7f37,stroke:#3fb950,color:#fff
-    style NullEnd fill:#da3633,stroke:#f85149,color:#fff
+    %% الألوان الهادية والمريحة للعين (Muted Dark Theme)
+    style CompilationPhase fill:#1e1e24,stroke:#444444,color:#e0e0e0
+    style ExecutionPhase fill:#1e1e24,stroke:#444444,color:#e0e0e0
+    style ScopeChain fill:#1e1e24,stroke:#444444,color:#e0e0e0
+    
+    style VarHoist fill:#5c4b13,stroke:#8a7222,color:#e0e0e0
+    style LetHoist fill:#5c1e1e,stroke:#8a2d2d,color:#e0e0e0
+    style FnHoist fill:#1e5c2d,stroke:#2d8a44,color:#e0e0e0
+    
+    style LocalScope fill:#1e3a5c,stroke:#2d588a,color:#e0e0e0
+    style OuterScope fill:#1e3a5c,stroke:#2d588a,color:#e0e0e0
+    style GlobalScope fill:#1e3a5c,stroke:#2d588a,color:#e0e0e0
+    style NullEnd fill:#5c1e1e,stroke:#8a2d2d,color:#e0e0e0
 ```
 
 ---
