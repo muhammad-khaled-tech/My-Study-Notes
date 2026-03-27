@@ -2460,3 +2460,243 @@ console.log(serverConfig.port);
 > **سؤالي التمهيدي ليك للـ 5 أسئلة الجايين (ماتجاوبش عليه):** _"لو عندنا كود فيه `Promise.resolve().then(() => console.log('A'))`، وتحته مباشرة كتبنا `process.nextTick(() => console.log('B'))`.. مين فيهم المحرك هينفذه الأول؟ وإيه الفرق المعماري الجوهري بين طابور الـ Microtask Queue وبين طابور הـ NextTick Queue تحت الكبوت في Node.js؟"_
 
 ---
+أهلاً بيك يا هندسة. أنا دايماً في وضع الاستقبال، ومستعدين نكمل المعركة بتاعتنا جوه محرك V8. إحنا دلوقتي هنقفل **Part 2** من الـ Gauntlet بالأسئلة من 16 لـ 20، واللي بتركز على كوارث الـ Memory Leaks والـ Object Manipulation والـ Promises تحت الكبوت.
+
+اربط الحزام، لأننا داخلين على مناطق الـ Seniority الحقيقية!
+
+> [!warning] 🕵️ Q16: The `Map` vs `WeakMap` Garbage Collection Trap الانترفيور الخبيث هيجيبلك كود بيعمل Caching لداتا ضخمة، ويسألك: ليه الكود الأول بيعمل Memory Leak وبيوقع السيرفر، بينما التاني شغال بامتياز ومابيسحبش أي رام زيادة؟
+
+```
+// Case A: The Memory Leak
+let userA = { name: "Ahmed", data: new Array(1000000) };
+const cacheA = new Map();
+cacheA.set(userA, "Secret Data");
+userA = null; // We deleted the user, right?
+
+// Case B: The Architect Way
+let userB = { name: "Ali", data: new Array(1000000) };
+const cacheB = new WeakMap();
+cacheB.set(userB, "Secret Data");
+userB = null;
+```
+
+> [!success] ✅ The Correct Output في Case A: الأوبجيكت هيفضل محجوز في الـ Heap والرام هتتملي (Memory Leak). في Case B: الـ Garbage Collector هيمسح الأوبجيكت فوراً والرام هتفضى.
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الفرق المعماري الجوهري بين الـ `Map` والـ `WeakMap` هو **قوة الإشارة (Reference Strength)**.
+> 
+> في الـ `Map` العادية، الماب بتحتفظ بـ **Strong Reference** (إشارة قوية) للـ Keys بتاعتها. حتى لو إنت عملت `userA = null` ومسحت المتغير من الـ Stack، الـ V8 Garbage Collector هيروح للـ Heap هيلاقي إن الـ `Map` لسه ماسكة في الأوبجيكت، فمش هيقدر يمسحه، والسيرفر هيضرب Out of Memory.
+> 
+> لكن الـ `WeakMap` متصممة خصيصاً للـ Caching المعماري النظيف. هي بتحتفظ بـ **Weak Reference** (إشارة ضعيفة) للـ Keys (واللي لازم وحتماً تكون Objects ومينفعش تكون Primitives). الـ GC لما بيلاقي إن مفيش أي Strong Reference بيشاور على الأوبجيكت ده غير الـ WeakMap، بيفرمه فوراً وينضف الميموري، والـ Key بيختفي أوتوماتيك من الـ WeakMap. ده بيحقق مبدأ الـ Safe Memory Management.
+
+---
+
+> [!warning] 🕵️ Q17: The Constructor Wrapper & Type Coercion Trap الانترفيور هيختبر فهمك للـ Primitives والـ Objects في الجافاسكريبت بالسطرين دول:
+
+```
+const a = new Number(10);
+const b = 10;
+
+console.log(a === b);
+```
+
+> [!success] ✅ The Correct Output `false`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الجونيور هيتسرع ويقول `true` لأن القيمتين 10.
+> 
+> لكن كـ Architect، إنت فاهم إن الجافاسكريبت بتفرق جداً بين الـ Primitive Value وبين الـ Object Wrapper. لما بتستخدم الكلمة المفتاحية `new` مع `Number`، المحرك بيخلق كائن (Object) كامل في الـ Heap Memory، وبيكون الـ `typeof` بتاعه هو `'object'`.
+> 
+> أما الإعلان التاني `const b = 10` فهو Primitive Assignment عادي جداً، والـ `typeof` بتاعه هو `'number'`. وبما إننا بنستخدم الـ Strict Equality Operator (`===`) اللي مابيعملش Type Coercion (تحويل قسري للأنواع)، المحرك بيقارن `'object' === 'number'` وبيرجع `false` فوراً. الخلاصة: إياك تستخدم `new` مع الـ Primitives!
+
+---
+
+> [!warning] 🕵️ Q18: The `Object.seal()` vs `Object.freeze()` Trap هيجيبلك كود بيحاول يحمي أوبجيكت من التعديل، ويسألك عن الـ Output:
+
+```
+const config = { mode: "prod" };
+Object.seal(config);
+
+config.mode = "dev";
+config.port = 8080;
+
+console.log(config.mode, config.port);
+```
+
+> [!success] ✅ The Correct Output `"dev", undefined`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الفخ هنا هو الخلط بين مستويات الـ Immutability في V8.
+> 
+> لما بنستخدم `Object.freeze()`، الأوبجيكت بيتحول لـ Immutable تماماً؛ لا تقدر تضيف، ولا تمسح، ولا تعدل الخصائص الموجودة.
+> 
+> لكن `Object.seal()` أضعف درجة. هي بتعمل حاجتين بس: بتمنع إضافة خصائص جديدة (Not extensible)، وبتمنع مسح الخصائص أو تغيير الـ Descriptors بتاعتها (Non-configurable). **لكنها بتسمح بتعديل القيم الموجودة بالفعل (Writable)**!
+> 
+> عشان كده، المحرك سمح بتعديل `mode` لـ `"dev"` بنجاح، لكنه رفض (في صمت، أو بـ TypeError في الـ Strict Mode) إنه يضيف الخاصية الجديدة `port`، فرجعت `undefined`.
+
+---
+
+> [!warning] 🕵️ Q19: The Async Function Implicit Wrap Trap الانترفيور هيسألك: إيه اللي هيرجع من الدالة دي بالظبط لو طبعناه في الكونسول؟ هل هو رقم 10؟
+
+```
+async function getScore() {
+    return 10;
+}
+
+console.log(getScore());
+```
+
+> [!success] ✅ The Correct Output `Promise {<fulfilled>: 10}` (أو `Promise {<resolved>: 10}`)
+
+> [!info] 🧠 Under the Hood (V8 Architecture): المبرمج اللي مش فاهم Async هيقولك هترجع 10.
+> 
+> هندسياً، أي دالة بنكتب قبلها الكلمة المفتاحية `async` **لازم وحتماً ترجع Promise**. حتى لو إنت مش كاتب `return new Promise(...)`، أو حتى لو مش كاتب `return` أصلاً (هترجع `Promise` جواه `undefined`).
+> 
+> محرك V8 بياخد القيمة اللي إنت عملتلها `return` (زي الرقم 10)، وبيعملها Implicit Wrapping (تغليف ضمني) جوه Promise معمول له Resolve. ده بيحقق مبدأ الـ Interface Consistency، عشان الـ Caller دايماً يكون متأكد إنه يقدر يستخدم `.then()` أو `await` على ناتج الدالة دي بدون ما يحصل Runtime Error.
+
+---
+
+> [!warning] 🕵️ Q20: The Promise Short-Circuiting Trap هيجيبلك كود بينفذ عمليتين Async في نفس الوقت، واحدة نجحت والتانية فشلت، ويسألك:
+
+```
+const p1 = Promise.resolve("User Data");
+const p2 = Promise.reject("Connection Failed");
+
+Promise.all([p1, p2])
+    .then(res => console.log("Success:", res))
+    .catch(err => console.log("Caught:", err));
+```
+
+> [!success] ✅ The Correct Output `Caught: Connection Failed`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): دالة `Promise.all()` مبنية تحت الكبوت على خوارزمية **Short-circuiting** (الفصل السريع). هي بتستنى كل الـ Promises تنجح عشان ترجع Array بالنتائج. لكن، بمجرد ما **أي Promise واحد بس** يضرب `reject`، الـ `Promise.all` كلها بتتدمر فوراً وبترمي الـ Error ده لبره (للـ `catch` block)، وبتتجاهل تماماً أي Promises تانية نجحت أو لسه شغالة.
+> 
+> كـ Architect، لو إنت محتاج تنفذ كذا Request وعايز تعرف حالة كل واحد فيهم (سواء نجح أو فشل) من غير ما العملية كلها تقع، لازم تستخدم الـ Pattern الأحدث: **`Promise.allSettled()`**. الدالة دي مابتعملش Short-circuit، وبتستنى كل حاجة تخلص، وبترجعلك Array من الأوبجيكتات فيها `status: 'fulfilled'` أو `status: 'rejected'`.
+
+---
+
+> [!question] 🔗 The Bridge to Part 3 (Questions 21-25) إحنا كده دغدغنا فخاخ الـ ES6، والـ Memory، والـ Objects، وفهمنا طبيعة الـ Promises.
+> 
+> دلوقتي إحنا داخلين على **Part 3 والأخير**، واللي هيختبر الـ Asynchronous Brain بتاعك لأقصى درجة.
+> 
+> **سؤالي التمهيدي ليك للـ 5 أسئلة الجايين (ماتجاوبش عليه):** _"لو كتبنا `console.log(1)`، وبعدها `setTimeout(() => console.log(2), 0)`، وبعدها `Promise.resolve().then(() => console.log(3))`... ولخبطنا معاهم شوية Microtasks و Macrotasks تانيين. إزاي الـ Call Stack بيقرر يرمي إيه في الـ Event Queue (أو الـ Macrotask Queue) وإيه في الـ Microtask Queue؟ وليه الـ V8 بيدي أولوية الـ VIP للـ Promises؟"_
+
+---
+أهلاً بيك يا هندسة. **تم استلام الأمر بنجاح**. إحنا دلوقتي في أعمق وأخطر منطقة في محرك V8: الـ **Event Loop** وإدارة الـ **Asynchronous Execution**.
+
+الجزء ده بيفصل حرفياً بين المبرمج اللي بيكتب كود بالبركة، وبين الـ Senior Architect اللي فاهم الـ Call Stack بيتنفس إزاي.
+
+اربط الحزام، إحنا دلوقتي في **Module 9 - Part 3 (Questions 21 to 25)**.
+
+## Part 3: Async & Event Loop (Microtasks, Macrotasks, Promises) (Questions 21-25)
+
+> [!warning] 🕵️ Q21: The Event Loop Priority Trap (Microtasks vs Macrotasks) الانترفيور هيحطلك الكود ده ويقولك: رتبلي الـ Output، واشرحلي إزاي الـ V8 Engine والـ Event Loop بيقرروا مين يشتغل الأول رغم إن الـ `setTimeout` واخدة وقت 0؟
+
+```
+console.log('A');
+
+setTimeout(() => {
+    console.log('B');
+}, 0);
+
+Promise.resolve().then(() => {
+    console.log('C');
+});
+
+console.log('D');
+```
+
+> [!success] ✅ The Correct Output `A` `D` `C` `B`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الجونيور هيقولك `B` هتنطبع قبل `C` لأنها مكتوبة الأول. دي إجابة بتنهي الانترفيو!
+> 
+> معمارياً، الـ Event Loop بيلف عشان يراقب الـ Call Stack والـ Event Queue.
+> 
+> 1. المحرك بينفذ الكود المتزامن (Synchronous) الأول في الـ Call Stack، فبيطبع `A` ثم `D`.
+> 2. لما بيقابل `setTimeout`، بيبعتها للـ Web API (أو الـ C++ APIs في Node.js)، ولما بتخلص (بعد 0 ثانية)، الـ Callback بتاعها بيروح يقف في طابور اسمه الـ **Event Queue (Macrotask Queue)**.
+> 3. لما بيقابل `Promise.resolve().then()`، الـ Callback بتاعها بيروح يقف في طابور تاني خالص للـ VIP اسمه الـ **Microtask Queue**.
+> 4. القاعدة الذهبية للـ Event Loop: بمجرد ما الـ Call Stack يفضى، المحرك بيبص **أولاً** على الـ Microtask Queue وينفذ كل اللي فيه بالكامل (عشان كده بيطبع `C`)، قبل ما يسمح لنفسه إنه ياخد أي حاجة من الـ Event Queue العادي (اللي بيطبع `B`). طابور الـ Microtask ليه الأولوية القصوى دايماً!
+
+---
+
+> [!warning] 🕵️ Q22: The Async Function Implicit Wrap Trap هيجيبلك دالة بسيطة جداً مكتوب قبلها `async` ومش بترجع غير رقم، ويسألك: إيه ناتج الطباعة ده بالظبط في الكونسول؟
+
+```
+async function fetchScore() {
+    return 10;
+}
+
+console.log(fetchScore());
+```
+
+> [!success] ✅ The Correct Output `Promise {<fulfilled>: 10}` (أو `Promise {<resolved>: 10}`)
+
+> [!info] 🧠 Under the Hood (V8 Architecture): المبرمج اللي مش فاهم Async Architecture هيقولك هترجع الرقم `10`.
+> 
+> هندسياً، أي دالة بنكتب قبلها الكلمة المفتاحية `async` **لازم وحتماً ترجع Promise**. حتى لو إنت مش كاتب `return new Promise(...)`، محرك V8 بياخد القيمة اللي إنت عملتلها `return` (زي الرقم 10)، وبيعملها Implicit Wrapping (تغليف ضمني) جوه Promise معمول له Resolve. ده بيحقق مبدأ الـ Interface Consistency، عشان الـ Caller دايماً يكون متأكد إنه يقدر يستخدم `.then()` أو `await` على ناتج الدالة دي بدون ما يحصل Runtime Error أو يضطر يتأكد من نوع الداتا اللي راجعة.
+
+---
+
+> [!warning] 🕵️ Q23: The Promise.all Short-Circuiting Trap الانترفيور عايز يختبر إزاي بتتعامل مع الـ Concurrent Promises. هيجيبلك الكود ده ويسألك: هل هيرجع Array فيها الداتا والـ Error، ولا هيضرب؟
+
+```
+const p1 = Promise.resolve("User Data");
+const p2 = Promise.reject(new Error("Connection Failed"));
+
+Promise.all([p1, p2])
+    .then(res => console.log("Success:", res))
+    .catch(err => console.log("Caught:", err.message));
+```
+
+> [!success] ✅ The Correct Output `Caught: Connection Failed`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): دالة `Promise.all()` مصممة معمارياً عشان تنفذ خوارزمية الـ **Short-circuiting** (الفصل السريع). هي بتستنى كل الـ Promises تنجح عشان ترجع Array بالنتائج. لكن، بمجرد ما **أي Promise واحد بس** يضرب `reject`، الـ `Promise.all` كلها بتتدمر فوراً وبترمي الـ Error ده لبره للـ `catch` block، وبتتجاهل تماماً أي Promises تانية نجحت!
+> 
+> كـ Architect، لو محتاج تنفذ כذا Request وعايز تعرف حالة كل واحد فيهم بدون ما العملية كلها تقع لو واحد فشل، لازم تستخدم الباترن الأحدث: **`Promise.allSettled()`**. الدالة دي مابتعملش Short-circuit، وبتستنى كل حاجة تخلص، وبترجعلك Array من الأوبجيكتات فيها `status: 'fulfilled'` أو `status: 'rejected'`.
+
+---
+
+> [!warning] 🕵️ Q24: The Missing Return in Await Trap ده فخ خبيث بيجمع بين الـ Async والـ Default Return Values. إيه هو ناتج الدالة دي؟
+
+```
+async function processData() {
+    await Promise.resolve(10);
+    // Notice: No return statement here!
+}
+
+console.log(processData());
+```
+
+> [!success] ✅ The Correct Output `Promise {<fulfilled>: undefined}`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): المبرمج العادي هيتخيل إن بما إننا عملنا `await` لرقم 10، فالدالة هترجع Promise فيه 10.
+> 
+> اللي بيحصل تحت الكبوت هو إن تعبير الـ `await` بيعمل Resolution للـ Promise ويرجع القيمة 10، والكود اللي تحت الـ `await` بيعتبر كأنه مكتوب جوه `.then()` Callback. لكن بما إن الدالة نفسها مفيهاش أي تعبير `return` في نهايتها، الجافاسكريبت بتطبق السلوك الافتراضي بتاع أي دالة وترجع `undefined`. وبما إن الدالة دي `async`، المحرك بياخد الـ `undefined` دي ويغلفها ضمنياً (Implicit Wrap) جوه Promise ناجح، فبترجع `Promise {<fulfilled>: undefined}`.
+
+---
+
+> [!warning] 🕵️ Q25: The `forEach` vs Async/Await Trap ده من أشهر الكوارث اللي بتحصل في الـ Production. هيقولك: الكود ده بيحاول يطبع الأرقام ببطء وبعدين يطبع "Process completed!". هل الكود ده هيستنى الـ Promises تخلص؟
+
+```
+const numbers =;
+
+numbers.forEach(async (num) => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    console.log(num);
+});
+
+console.log("Process completed!");
+```
+
+> [!success] ✅ The Correct Output `Process completed!` `1` `2` `3` `5`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الجونيور بيفترض إن الـ `forEach` هتحترم الـ `async/await` وتقف تستنى كل خطوة تخلص قبل ما تكمل!
+> 
+> معمارياً، الـ `Array.prototype.forEach` مش مصممة للتعامل مع الـ Promises نهائياً. تحت الكبوت، هي عبارة عن Synchronous Loop بينادي على הـ Callback اللي إنت مديهوله (fire and forget) ومابيعملش `await` للـ Promise اللي بيرجع من الـ Callback ده. النتيجة إن הـ `forEach` بتشغل الـ 4 دوال Async بشكل متوازي (في الخلفية)، وتكمل شغلها فوراً وتطبع `Process completed!` في نفس اللحظة. بعد 100 ملي ثانية، הـ Promises كلها بتخلص وتطبع الأرقام. كـ Architect، عشان تـ Control הـ Async Sequence (التسلسل الزمني) جوه Loop، لازم وحتماً تستخدم `for...of` loop لأنه بيدعم الـ `await` جوه الـ Block Scope بتاعه بيوقف הـ Execution لحد ما الـ Promise يخلص.
+
+---
+
+> [!question] 🔗 The Bridge to Part 3 Continued (Questions 26-30) إحنا كده دمرنا ألغام الـ Event Loop، والـ Promises، وإزاي V8 بيدير طوابير التنفيذ.
+> 
+> آخر 5 أسئلة في الـ Gauntlet وفي المنهج كله، هيكونوا عن الـ **Architecture & Module Systems** تحت الكبوت.
+> 
+> **سؤالي التمهيدي ليك لآخر 5 أسئلة (ماتجاوبش عليه):** _"لو موديول `A` عمل `require('B')`، وفي نفس اللحظة موديول `B` عمل `require('A')` (Circular Dependency)... إزاي بيئة CommonJS بتتعامل مع الأزمة دي؟ وليه موديول `B` هيشوف الـ Exports بتاعة `A` كأنها كائن فاضي أو ناقص؟ وإزاي معمارية ECMAScript Modules (ESM) حلت الكارثة دي جذرياً عن طريق مرحلة الـ 'Instantiation' والـ 'Read-only Live Bindings'؟"_
+
+---
