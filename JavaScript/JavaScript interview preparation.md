@@ -1404,3 +1404,93 @@ loaded = true;
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"في الجافاسكريبت، لو عندنا أوبجيكت `StackCalculator` جواه دالة `divide()`، والمبرمج نسي يهندل القسمة على صفر فبترجع `Infinity`. إزاي نقدر نستخدم الـ 'Proxy Design Pattern' عشان نعترض (Intercept) استدعاء الدالة دي، ونرمي Error صريح لو المقسوم عليه صفر، من غير ما نلمس الكود الأصلي بتاع الكلاس نهائياً؟ وإيه هو الفرق المعماري بين استخدام الـ 'Object Composition' وبين استخدام الـ 'Object Augmentation (Monkey Patching)' في بناء الـ Proxy ده؟"_
 
 ---
+في الجافاسكريبت، القسمة على صفر مش بتضرب Error زي لغات تانية، لكنها بترجع قيمة غريبة اسمها `Infinity`. عشان نعترض استدعاء دالة `divide()` ونعدل سلوكها من غير ما نلمس الكلاس الأصلي `StackCalculator`، بنستخدم الـ **Proxy Pattern**. عندنا طريقتين معماريين لبناء الـ Proxy ده:
+
+1. **الـ Object Composition (التركيب):** بنكريت كلاس جديد (مثلاً `SafeCalculator`) بياخد الـ `calculator` الأصلي كـ Parameter في الـ Constructor ويحتفظ بـ Reference ليه. جواه، بنكتب دالة `divide()` الخاصة بينا اللي بتعمل Validation، وأي دالة تانية (زي `getValue` أو `putValue`) بنعملها Delegation (تفويض) للأوبجيكت الأصلي.
+2. **الـ Object Augmentation أو الـ Monkey Patching (الترقيع):** هنا إحنا بنعدل الأوبجيكت الأصلي **مباشرة في الميموري**! بنحفظ نسخة من الدالة القديمة `const divideOrig = calculator.divide`، وبعدين نكتب فوقها الدالة الجديدة بتاعتنا، ولما نخلص الـ Validation بننادي على الدالة القديمة بـ `divideOrig.apply(calculator)`.
+
+الـ Composition أأمن معمارياً لأنه مابيعملش Mutation (تعديل) للأوبجيكت الأصلي، بينما الـ Monkey Patching بيغير الـ State وممكن يضرب سيستم شغال لو حد تاني بيعتمد على السلوك القديم!.
+
+خلينا نغوص في تفاصيل المعمارية دي ونبدأ في فهم الـ Structural Patterns.
+
+## 7.3 Structural Design Patterns: Proxy & Decorator (Composition over Inheritance)
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيوهات التقيلة، الانترفيور هيقولك: _"إحنا اتكلمنا عن الـ Proxy وإزاي بيغلف الأوبجيكت عشان يتحكم فيه. بس فيه Pattern تاني اسمه الـ Decorator بيغلف الأوبجيكت برضه بنفس الطريقة بالضبط (بالـ Composition)! إيه هو الفرق المعماري الجوهري بين الـ Proxy والـ Decorator؟ وليه كـ Architect بتفضل تستخدم الـ Composition Patterns دي بدل ما تستخدم الـ Inheritance (الوراثة) الصريحة؟"_
+> 
+> الهدف هنا إنه يشوفك مش مجرد حافظ كود، لكنك فاهم الـ "Intent" أو النية وراء كل Pattern وإزاي بيطبق مبادئ SOLID.
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في الـ C++ أو Java، الوراثة (Inheritance) بتخلق تسلسل هرمي صلب (Tight Coupling). لو حبيت تضيف ميزة صغيرة لكلاس، هتضطر تورث منه، ولو حبيت تضيف ميزة تانية هتورث تاني، لحد ما تلاقي نفسك في فخ الـ "Deep Inheritance Hierarchy" اللي بيدمر الميموري وبيخلي الكود مستحيل يتعدل.
+> 
+> في الـ JavaScript، الـ Architecture الحديث بيفضل مبدأ **"Composition over Inheritance"**. إحنا بنجيب الأوبجيكت، ونغلفه بأوبجيكت تاني (Wrapper) يضيفله ميزات جديدة من غير ما يعقد شجرة الوراثة.
+> 
+> **إيه الفرق بين الـ Proxy والـ Decorator؟** فنياً، الاتنين بيتكتبوا بنفس الطريقة (كلاس بيغلف كلاس). لكن **النية المعمارية (Intent)** مختلفة تماماً:
+> 
+> - **الـ Proxy Pattern:** هدفه **التحكم في الوصول (Access Control)**. الـ Proxy مابيضفش دوال جديدة للأوبجيكت، هو بس بيعترض (Intercept) الدوال الموجودة بالفعل عشان يضيف Validation، أو Caching، أو Security. (زي ما منعنا القسمة على صفر في `divide`).
+> - **الـ Decorator Pattern:** هدفه **إضافة سلوك جديد (Augmentation/Enhancement)**. الـ Decorator بيضيف ميزات أو دوال جديدة مكنتش موجودة في الأوبجيكت الأصلي. مثلاً، `StackCalculator` الأصلي مكنش فيه دالة جمع `add()`. الـ Decorator هيغلفه ويضيفله دالة `add()`، ويفوض باقي الدوال للأصل.
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي الباترنز دي بتحقق مبادئ الـ SOLID؟
+> 
+> 1. **مبدأ الـ Open/Closed Principle (OCP):** الكلاس الأصلي (`StackCalculator`) مقفول للتعديل (Closed for modification). إحنا مش هنلمس الكود بتاعه أبداً. لكنه مفتوح للتوسع (Open for extension) عن طريق إننا بنغلفه بـ Proxy أو Decorator يضيف اللوجيك اللي إحنا عايزينه.
+> 2. **مبدأ الـ Single Responsibility Principle (SRP):** بدل ما الكلاس الأصلي يكون فيه لوجيك الحسابات، ولوجيك الـ Validation، ولوجيك الـ Caching (ويبقى God Object)، إحنا بنفصل كل مسؤولية في Decorator مستقل، ونركبهم جوه بعض زي مكعبات الليجو.
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف إزاي الـ Architect بيبني **Decorator** باستخدام الـ Object Composition عشان يضيف دالة جديدة للأوبجيكت الأصلي بدون ما يلمسه:
+> 
+> **✅ كود الـ Architect (Decorator via Composition):**
+
+```
+// The Original Subject (Closed for modification)
+class StackCalculator {
+    constructor() { this.stack = []; }
+    putValue(value) { this.stack.push(value); }
+    getValue() { return this.stack.pop(); }
+    multiply() { /* ... */ }
+}
+
+// ✅ ARCHITECT CODE: The Decorator using Composition
+class EnhancedCalculator {
+    // 1. Store a reference to the original object
+    constructor(calculator) {
+        this.calculator = calculator;
+    }
+
+    // 2. ADDING NEW BEHAVIOR (Decorator Intent)
+    add() {
+        const addend2 = this.getValue();
+        const addend1 = this.getValue();
+        const result = addend1 + addend2;
+        this.putValue(result);
+        return result;
+    }
+
+    // 3. DELEGATING existing methods to the subject
+    putValue(value) { return this.calculator.putValue(value); }
+    getValue() { return this.calculator.getValue(); }
+    multiply() { return this.calculator.multiply(); }
+}
+
+const calculator = new StackCalculator();
+const enhancedCalculator = new EnhancedCalculator(calculator);
+
+enhancedCalculator.putValue(4);
+enhancedCalculator.putValue(3);
+// The new feature works seamlessly!
+console.log(enhancedCalculator.add()); // 4 + 3 = 7
+```
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> عظيم جداً يا هندسة! إحنا كده فهمنا الـ Structural Patterns وإزاي بنغلف الأوبجيكتات عشان نتحكم فيها (Proxy) أو نزودها (Decorator) عن طريق الـ Composition.
+> 
+> دلوقتي هننتقل للمستوى الأعلى: **Module 8: Behavioral Patterns & Async Flow**.
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"تخيل إن عندنا `DB` Component بيعمل اتصال بقاعدة البيانات، والاتصال ده بياخد وقت (Asynchronous Initialization) حوالي 500 ملي ثانية. لو الـ Client حاول يعمل `db.query()` قبل ما الـ 500 ملي ثانية يخلصوا، السيرفر هيضرب Error! إزاي نقدر نستخدم الـ **State Pattern** مع الـ **Command Pattern** (وتحديداً تقنية الـ Pre-initialization Queues) عشان نعترض الـ Queries دي، نخزنها في طابور، وننفذها أوتوماتيك أول ما الداتابيز تبقى جاهزة، من غير ما نجبر المبرمج اللي بيستخدم الـ DB إنه يكتب `if (!connected)` قبل كل Query؟"_
+
+(انسخ الجزء ده في أوبسيديان، وقولي "كمل" عشان أجاوبلك على السؤال ده بنفسي ونبدأ في الجزء اللي بعده).
