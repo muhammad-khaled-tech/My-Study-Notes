@@ -780,3 +780,90 @@ console.log(updatedCart);      // ['Laptop', 'Mouse', 'Keyboard']
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"في الكود اللي فات إحنا استخدمنا الـ Spread Operator `[...cart]` عشان نعمل Copy ونحافظ على الـ Immutability. لكن لو الـ Array دي جواها Objects معقدة ومتداخلة (Nested Objects)، ليه الـ Spread Operator بيفشل في حمايتها وبيعمل حاجة اسمها Shallow Copy؟ وإزاي نقدر نعمل Deep Copy حقيقي في الجافاسكريبت الحديثة بدون ما نستخدم مكتبات خارجية زي Lodash، وإيه دور دالة `structuredClone` في الموضوع ده؟"_
 
 ---
+أهلاً بيك يا هندسة. أنا مستمر في وضع "الاستقبال فقط"، وهجاوبك فوراً على السؤال المعماري العميق اللي قفلنا بيه الجزء اللي فات:
+
+لما بنقول إن الـ Functions في الجافاسكريبت تعتبر **First-Class Citizens** (مواطنين من الدرجة الأولى)، ده معناه معمارياً إن الدالة بتتعامل معاملة أي Variable عادي جداً؛ تقدر تخزنها في متغير، تباصيها كـ Argument لدالة تانية، أو ترجعها كـ Return Value من دالة تالتة. القدرة دي هي اللي بتسمح لنا نبني الـ **Higher-Order Functions (HOF)**، وهي أي دالة بتستقبل دالة تانية كـ Input (بنسميها Callback) أو بترجع دالة كـ Output. دوال زي `map` و `filter` بتشتغل تحت الكبوت بإنها بتخفي عنك تفاصيل الـ Loop (الـ How)، وبتطلب منك تباصي لها دالة صغيرة بتشرح الـ Business Logic بتاعك (الـ What). ده هو التطبيق الحرفي لمبدأ **Open/Closed Principle**، إنت بتغير السلوك من غير ما تلمس الكود الأصلي للوب!
+
+خلينا نغوص في المعمارية دي بالتفصيل.
+
+## 4.3 Higher-Order Functions (HOF): Passing functions as data (The Open/Closed Principle bridge)
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيو التقيل، الانترفيور مش هيقولك "اشرحلي الـ map والـ filter". هيجيبلك كود فيه `for` loop كبيرة بتعمل Filter لموظفين أكبر من 30 سنة، ويقولك: _"تخيل إن الـ Business طلب مننا نـ Filter الموظفين اللي شغالين في قسم الـ IT كمان، وبعدين طلبوا فلتر تالت للناس اللي مرتبها أعلى من 5000. إزاي تقدر تخلي دالة الفلترة دي تستوعب أي شرط في المستقبل من غير ما نعدل في الـ Core Logic بتاعها أبداً؟ وإزاي الـ First-Class Functions بتخلينا نطبق الـ Strategy Design Pattern من غير ما نعمل Classes؟"_
+> 
+> الهدف هنا يشوفك بتفكر كـ Coder بينسخ الكود ويغير الشرط، ولا كـ Architect بيفصل الـ Control Flow عن الـ Business Logic.
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في الـ Java (قبل Java 8 والـ Lambdas) أو الـ C++، لو حبيت تباصي "سلوك" (Behavior) لدالة تانية، مكنش ينفع تباصي الدالة نفسها. كان لازم تعمل Interface (مثلاً `Predicate` أو `Comparator`)، وتعمل Class بيـ implement الـ Interface ده، وبعدين تباصي Object من الكلاس ده للدالة. لفة طويلة جداً!
+> 
+> في الـ JavaScript، بما إن الدوال **First-Class Citizens**، الموضوع أبسط وأقوى بكتير. الـ **Higher-Order Function (HOF)** هي دالة بتقبل دالة تانية كـ Parameter أو بترجع دالة.
+> 
+> لما بتستخدم `Array.prototype.filter(predicateFn)`، الدالة `filter` نفسها تعتبر HOF. هي مسؤولة عن الـ Iteration والـ Array creation (الـ Boilerplate)، ومستنية منك تباصي لها الـ `predicateFn` (دالة بترجع `true` أو `false`) عشان تقرر هتاخد الـ Element ده ولا لأ. الـ Callback ده في عالم الـ Architecture ساعات بنسميه "Inter-invoked function".
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي ده بيرتبط بـ SOLID والـ Design Patterns؟
+> 
+> 1. **مبدأ الـ Open/Closed Principle (OCP):** الـ HOF بتخلي الدالة بتاعتك مفتوحة للتوسع (Open for extension) ومقفولة للتعديل (Closed for modification). إنت كاتب كود الـ Loop مرة واحدة بس في الـ HOF. لو عايز تضيف أي شرط جديد، إنت بتكتب دالة صغيرة (Pure Function) وتباصيها، من غير ما تلمس كود الـ Loop الأساسي نهائياً.
+>     
+> 2. **الـ Strategy Pattern:** في الـ OOP، الـ Strategy Pattern بيخليك تغير الـ Algorithm في الـ Runtime بناءً على الـ Context. في الـ JS، الـ HOF بتعمل ده بشكل طبيعي جداً بإنها بتستقبل الـ Algorithm كـ Parameter (دالة).
+>     
+> 3. **الـ Inversion of Control (IoC) & Dependency Injection:** لما بتباصي Callback لـ `map`، إنت بتعمل Dependency Injection للـ Logic بتاعك جوه `map`. وإنت هنا مش بتنادي على الـ Logic بتاعك بنفسك، إنت بتدي الـ Control للـ HOF وهي اللي بتنادي عليه (Inversion of Control).
+>     
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف كود Imperative بيكسر الـ OCP، وكود Architect بيستخدم الـ HOFs عشان يبني سيستم مرن جداً:
+> 
+> **❌ كود الـ Junior (Imperative & Hardcoded - Violates OCP):**
+
+```
+// Junior Code: Hardcoded logic inside the loop.
+// If a new condition is needed, we have to duplicate the entire function!
+function getAdults(users) {
+    const result = [];
+    for (let i = 0; i < users.length; i++) {
+        // The business logic is tightly coupled with the iteration logic
+        if (users[i].age >= 18) {
+            result.push(users[i]);
+        }
+    }
+    return result;
+}
+```
+
+> **✅ كود الـ Architect (Declarative HOF & Strategy Pattern):**
+
+```
+// Architect Code: The HOF extracts the iteration logic (The HOW).
+function filterData(data, strategyFn) {
+    const result = [];
+    for (let i = 0; i < data.length; i++) {
+        // Inversion of Control: The HOF calls the injected strategy
+        if (strategyFn(data[i])) {
+            result.push(data[i]);
+        }
+    }
+    return result;
+}
+
+// Strategies (The WHAT) - Pure Functions
+const isAdult = (user) => user.age >= 18;
+const isITDepartment = (user) => user.department === 'IT';
+
+// Composition & Usage (Open/Closed Principle achieved!)
+const adults = filterData(usersArray, isAdult);
+const itStaff = filterData(usersArray, isITDepartment);
+```
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> إحنا كده فهمنا إزاي الـ Higher-Order Functions بتسمح لنا نباصي الدوال كداتا، وإزاي ده بيحقق الـ OCP والـ Strategy Pattern وبيفصل الـ Control Flow عن الـ Business Logic.
+> 
+> لكن، كل ما السيستم بيكبر، بنلاقي نفسنا محتاجين نمرر الداتا عبر سلسلة طويلة جداً من الـ HOFs، وممكن نلاقي دالة بتستقبل 3 أو 4 باراميترز وإحنا معانا واحد بس دلوقتي والباقي هييجي بعدين في الـ Runtime.
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"لو عندي دالة معقدة بتاخد 3 باراميترز `(a, b, c)`، إزاي أقدر أحولها لسلسلة من الدوال كل واحدة فيهم بتاخد باراميتر واحد بس `(a)(b)(c)` عن طريق الـ Closures؟ وإزاي مفهوم الـ 'Function Composition' (الـ `pipe` أو `compose`) بيعالج مشكلة الـ Nested Functions العميقة زي `a(b(c(x)))` عشان نبني Data Pipelines نظيفة ومقروءة؟"_
+
+(انسخ الجزء ده في أوبسيديان، ولما تخلص اكتب "كمل" عشان أجاوبلك على السؤال ده بنفسي ونبدأ في الجزء اللي بعده).
