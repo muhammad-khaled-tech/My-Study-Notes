@@ -1978,3 +1978,485 @@ async function calculateHashArchitect(data) {
 > 
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"تخيل إننا كبرنا السيستم وعملنا `cluster.fork()` عشان نشغل 4 نسخ من السيرفر بتاعنا على نفس المكنة، وحطينا قدامهم Load Balancer بيوزع الـ Requests (عن طريق Round-Robin). لو يوزر عمل Login، والـ Request بتاعه راح لـ Instance A، وتم حفظ الـ Authentication Session في המيموري بتاعة Instance A (Stateful). إيه هي الكارثة المعمارية اللي هتحصل لما اليوزر ده يبعت الـ Request اللي بعده للـ Load Balancer؟ وإزاي بنحل الأزمة دي معمارياً عن طريق تحويل السيرفر لـ 'Stateless' باستخدام حاجة زي Redis؟"_
 
+---
+ الموديول التاسع (The Ultimate Gauntlet) هيكون بالفعل "موسوعة الانترفيوهات المرعبة"، وهنقسمه لـ 3 أجزاء زي ما طلبت بالظبط عشان نحافظ على عمق الشرح وتستوعب اللي بيحصل تحت الكبوت في محرك V8.
+
+وقبل ما ندخل في المعركة، هقفل معاك سؤال الـ Load Balancer اللي فات في سطرين: الكارثة هي إن السيرفرات بقت Stateful، لو الـ Load Balancer (بمبدأ Round-Robin) ودى اليوزر في الطلب التاني لـ Instance B، السيرفر مش هيلاقي الـ Session بتاعته في الميموري وهيعمله Log out! الحل المعماري هو جعل كل الـ Instances عبارة عن Stateless Servers، وتخزين الـ State (زي الـ Sessions) في In-Memory Store خارجي وسريع جداً زي Redis، بحيث كل الـ Instances تقرأ من مصدر واحد.
+
+وبما إنك طلبت دمج الشرح المفصل لـ **(1.3 Hoisting & Scope Chain)**، فده هيكون **أول فخ** هنفتتح بيه الموديول بتاعنا.
+
+اربط الحزام، إحنا دلوقتي في **Module 9 - Part 1 (Questions 1 to 5)**.
+
+# Module 9: The Ultimate Core JS & Async Gauntlet (30 Q&A)
+
+## Part 1: Type Coercion, JS Quirks, Truthy/Falsy, Memory Traps (Questions 1-5)
+
+> [!warning] 🕵️ Q1: The Hoisting & Temporal Dead Zone (TDZ) Trap (1.3 Core Concept) الانترفيور هيقولك: تتبع الكود ده وقولي الـ Output إيه، وليه؟
+
+```
+let userName = "Global Ahmed";
+
+function printUser() {
+    console.log(userName);
+    let userName = "Local Ali";
+}
+
+printUser();
+```
+
+> [!success] ✅ The Correct Output `ReferenceError: Cannot access 'userName' before initialization`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الإجابة الساذجة هنا هي إن الكود هيطبع "Global Ahmed" لأن الـ `let` مابيحصلهاش Hoisting. **دي إجابة خاطئة تماماً بتنهي الانترفيو!**
+> 
+> اللي بيحصل في V8 Engine كالتالي: الجافاسكريبت بتمر بمرحلتين: مرحلة الـ Parsing (الترجمة) ومرحلة الـ Execution (التنفيذ). في مرحلة الـ Parsing، المحرك بيدخل جوه الـ Block Scope بتاع دالة `printUser` وبيشوف سطر `let userName = "Local Ali"`. المحرك **بيعمل Hoisting (رفع) للمتغير ده** وبيحجزه في الميموري (Memory Allocation) جوه الـ Scope المحلي، وبيعلم عليه كـ "Uninitialized" (غير مهيأ).
+> 
+> المنطقة من بداية فتحة القوس `{` لحد السطر اللي فيه الإعلان عن المتغير اسمها الـ **Temporal Dead Zone (TDZ)**. لما بنيجي في مرحلة الـ Execution وننفذ `console.log(userName)`، المحرك بيبدأ يدور في الـ Scope Chain (سلسلة النطاقات). بيبص في النطاق المحلي الأول، فبيلاقي `userName` محجوز فعلاً وموجود! وبالتالي **مابيطلعش للـ Global Scope أبداً**. لكن بما إن المتغير لسه في الـ TDZ ومخدش قيمة، المحرك بيضرب `ReferenceError`. الهدف المعماري من الـ TDZ هو إجبارك على كتابة كود نظيف وتجنب الـ Bugs المخفية اللي كانت بتحصل مع الـ `var` اللي بياخد قيمة افتراضية `undefined`.
+
+---
+
+> [!warning] 🕵️ Q2: The Type Coercion & Order of Evaluation Trap الانترفيور هيقولك: رتبلي نواتج الطباعة للسطور دي، وفهمني ليه الجافاسكريبت بتتصرف كده؟
+
+```
+console.log(1 + 2 + '3');
+console.log('3' + 1 + 2);
+console.log(+(!(+[])));
+```
+
+> [!success] ✅ The Correct Output `'33'` `'312'` `1`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الجافاسكريبت لغة Dynamically Typed، وبتستخدم مفهوم الـ Coercion (التحويل القسري للأنواع) بناءً على قواعد صارمة جداً في الـ ECMAScript Spec.
+> 
+> 1. السطر الأول `1 + 2 + '3'`: الـ Execution بيمشي من الشمال لليمين. `1 + 2` أرقام، فالناتج `3`. بعدين المحرك بيلاقي `3 + '3'`. علامة الـ `+` لما بتشوف String بتتحول فوراً لـ Concatenation Operator (دمج نصوص). فالناتج بيبقى النص `'33'`.
+> 2. السطر التاني `'3' + 1 + 2`: من الشمال لليمين. النص `'3'` زائد الرقم `1` بيقلب دمج نصوص، فالناتج `'31'`. بعدين النص `'31'` زائد الرقم `2` بيقلب دمج تاني، فالناتج `'312'`.
+> 3. السطر التالت `+(!(+[]))`: ده فخ قراءة مرعب! تعال نفككه من جوه لبره زي ما V8 بيعمل:
+> 
+> - `+[]`: الـ Unary plus بيحاول يحول الـ Array لرقم. الـ Array الفاضية بتتحول لـ `""`، والنص الفاضي بيتحول لـ `0`.
+> - `!(0)`: الـ Not operator بيعكس الـ Falsy value `0` لـ `true`.
+> - `+(true)`: الـ Unary plus بيحول الـ `true` لرقم، فبتبقى `1`.
+
+---
+
+> [!warning] 🕵️ Q3: The Sparse Array Memory Trap الانترفيور هيجيبلك كود بيحذف عنصر من Array باستخدام `delete`، ويسألك على حجم الـ Array والقيمة:
+
+```
+const myChars = ['a', 'b', 'c', 'd'];
+delete myChars;
+
+console.log(myChars.length);
+console.log(myChars);
+```
+
+> [!success] ✅ The Correct Output `4` `undefined`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): المبرمج اللي متعود على لغات تانية بيفتكر إن `delete` بتشيل العنصر وتعمل Shift لباقي العناصر (Re-indexing)، وبالتالي الطول هيقل. ده مش حقيقي في الـ JS!
+> 
+> في V8، الـ Arrays تحت الكبوت بتتعامل معاملة الـ Objects (الـ Keys بتاعتها هي الأرقام `0, 1, 2`). لما بتستخدم الكلمة المفتاحية `delete`، إنت بتمسح الـ Property من الـ Object، لكنك **مابتعدلش** الـ Descriptor بتاع الـ `length`.
+> 
+> النتيجة إن V8 بيخلق حاجة اسمها **Sparse Array** (مصفوفة مخرومة). الاندكس رقم `1` مابقاش موجود في الميموري، فلو حاولت تطبعه هيرجعلك `undefined` (أو `empty` في بعض الـ Consoles الحديثة)، لكن الـ `length` هيفضل `4` زي ما هو. كـ Architect، لو عايز تمسح عنصر وتعمل Re-index صح من غير ما تبوظ الميموري، لازم تستخدم `myChars.splice(1, 1)`.
+
+---
+
+> [!warning] 🕵️ Q4: The Primitive Wrapper Object Trap الانترفيور عايز يختبر فهمك للـ Memory Allocation والـ Objects، هيسألك الكود ده هيطبع إيه:
+
+```
+const myNumber = new Number(0);
+
+if (myNumber) {
+    console.log(typeof myNumber);
+} else {
+    console.log("Falsy Value!");
+}
+```
+
+> [!success] ✅ The Correct Output `'object'`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): كل الـ Juniors هيشوفوا `Number(0)` هيقولوا الـ `0` ده Falsy Value فهيطبع `"Falsy Value!"`.
+> 
+> لكن الـ Architect عينه بتلقط الكلمة المفتاحية `new`. في الجافاسكريبت، الـ Primitives (زي `0`، `""`، `false`) ملهاش Properties ولا Methods. لكن لما بتستخدم `new`، إنت بتأمر الـ V8 Engine إنه يخلق **Wrapper Object** (كائن غلاف) في الـ Heap Memory يشيل جواه القيمة دي.
+> 
+> أي Object في الجافاسكريبت (حتى لو جواه `0` أو `false` أو Array فاضية) بيعتبر **Truthy Value** لما يدخل جوه `if` condition. ولما بنستخدم الـ `typeof` operator على الكائن ده، بيرجع `'object'` مش `'number'`. عشان كده استخدام `new Number()` أو `new String()` بيعتبر Anti-pattern خطير وبيهدر الميموري.
+
+---
+
+> [!warning] 🕵️ Q5: The NaN & IEEE 754 Spec Trap الانترفيور هيكتبلك كود بيحاول يلاقي مكان `NaN` جوه Array بطريقتين مختلفتين:
+
+```
+const arr = [NaN];
+
+console.log(arr.indexOf(NaN));
+console.log(arr.includes(NaN));
+```
+
+> [!success] ✅ The Correct Output `-1` `true`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الجافاسكريبت بتتبع معيار **IEEE 754** للأرقام العشرية. حسب المعيار ده، الـ `NaN` (Not a Number) هي القيمة الوحيدة في اللغة اللي **لا تساوي نفسها**! يعني `NaN === NaN` نتيجتها `false`.
+> 
+> - الدالة القديمة `Array.prototype.indexOf()` مبنية تحت الكبوت على استخدام الـ Strict Equality Operator (`===`). وبما إن `NaN === NaN` بـ `false`، الدالة مابتلاقيش العنصر وبترجع `-1`.
+> - الدالة الأحدث اللي نزلت في ES6 `Array.prototype.includes()` اتصممت عشان تحل الباج المعماري ده. تحت الكبوت، هي بتستخدم خوارزمية تانية اسمها **SameValueZero**. الخوارزمية دي بتستثني قاعدة الـ `NaN` وتعتبرهم بيساووا بعض، فبترجع `true`.
+
+---
+
+> [!question] 🔗 The Bridge to Part 1 (Questions 6-10) إحنا كده سخنّا بـ 5 أسئلة بيختبروا الأساسيات العميقة في الميموري والـ Coercion.
+> 
+> **سؤالي التمهيدي ليك للـ 5 أسئلة الجايين (ماتجاوبش عليه):** _"لو عندنا كود مكتوب فيه `console.log(typeof typeof 1)`، تفتكر الـ Output هيكون إيه؟ وليه سلسلة الـ `typeof` بتتصرف بالشكل الغريب ده تحت الكبوت؟ وإزاي نقدر نكتب دالة IIFE من غير أقواس خارجية باستخدام الـ Unary Operators؟"_
+
+---
+اربط الحزام، لأننا هنغوص في أعمق أجزاء محرك V8 (الـ AST والـ Memory Allocation).
+
+> [!warning] 🕵️ Q6: The `typeof typeof` & IIFE Parsing Trap الانترفيور الخبيث هيجيبلك السطرين دول، اللي شكلهم كأنهم Syntax Error، ويسألك: هل الكود ده هيشتغل؟ ولو اشتغل، إيه الـ Output بالظبط وليه؟
+
+```
+console.log(typeof typeof 1);
+
++function() {
+    console.log("Hidden IIFE Executed!");
+}();
+```
+
+> [!success] ✅ The Correct Output `'string'` `"Hidden IIFE Executed!"`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): المبرمج العادي هيتلخبط من تكرار `typeof`. لكن كـ Architect، إنت عارف إن محرك V8 بيعمل Evaluation (تقييم) للـ Expressions من اليمين للشمال في حالة الـ Unary Operators.
+> 
+> 1. المحرك بياخد `typeof 1` الأول، ودي بترجع النص `'number'`.
+> 2. بعدين بينفذ `typeof 'number'`، وبما إن ده نص، النتيجة النهائية هترجع `'string'`.
+> 
+> أما بالنسبة للسطر التاني، إحنا متعودين نكتب الـ IIFE (Immediately Invoked Function Expression) بين أقواس `(function(){})()`. ليه؟ لأن لو كتبنا `function` في أول السطر، الـ Parser بتاع V8 هيعتبرها "Declaration" (تعريف دالة) وهيطلب منك اسم للدالة وهيضرب Syntax Error. الهاك المعماري هنا إننا حطينا `+` (Unary Operator) قبل الـ `function`. ده بيكبر الـ Parser إنه يغير سياق القراءة (Execution Context) من Declaration لـ Expression. وبمجرد ما بقت Expression، نقدر نحط الأقواس `()` في الآخر ونعملها Invocation فوراً!
+
+---
+
+> [!warning] 🕵️ Q7: The Automatic Semicolon Insertion (ASI) Trap الانترفيور هيقولك: عندنا دالة بسيطة بترجع Object. إيه اللي هيطبع في الكونسول هنا؟
+
+```
+function getConfig() {
+    return
+    {
+        status: 'active'
+    };
+}
+
+console.log(getConfig());
+```
+
+> [!success] ✅ The Correct Output `undefined`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الفخ ده بيدمر مبرمجين الـ C++ والـ Java اللي متعودين يفتحوا الـ Curly Braces `{` في سطر جديد كنوع من الـ Clean Code.
+> 
+> اللي بيحصل تحت الكبوت في الـ V8 Parser هو ميكانيزم اسمه الـ **ASI (Automatic Semicolon Insertion)**. المحرك وهو بيعمل Parsing، لما بيلاقي الكلمة المفتاحية `return` وبعدها سطر جديد (Line Break)، بيفترض فوراً إنك نسيت الـ Semicolon، فبيحطها هو نيابة عنك!
+> 
+> الكود في الميموري بيتحول لـ: `return;` `{ status: 'active' };`
+> 
+> الدالة بترجع `undefined` فوراً، والـ Object اللي تحت ده بيعتبره المحرك Unreachable Code (كود ميت). عشان كده كـ Architects، إحنا بنجبر التيم يستخدم Linter (زي ESLint) بقاعدة `No unexpected multiline` عشان نمنع الكوارث دي تماماً.
+
+---
+
+> [!warning] 🕵️ Q8: The Primitive Wrapper Object & Equality Trap الانترفيور هيجيبلك مقارنة بين متغيرين، واحد متعرف بـ `new` والتاني لأ، ويسألك:
+
+```
+const objNum = new Number(10);
+const primNum = 10;
+
+console.log(objNum == primNum);
+console.log(objNum === primNum);
+```
+
+> [!success] ✅ The Correct Output `true` `false`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): ده اختبار عميق للفرق بين الـ Stack والـ Heap والـ Coercion.
+> 
+> 1. `primNum` هو Primitive Type، بيتخزن مباشرة في الـ Stack Memory وقيمته `10`.
+> 2. `objNum` عشان استخدمنا معاه `new`، المحرك بيحجزله Memory Block كاملة في الـ Heap كـ Object (له Methods و Prototype).
+> 
+> - **في الـ Loose Equality (`==`):** الـ V8 Engine بيشوف إن الطرفين مش من نفس النوع (Object و Number). فبيشغل خوارزمية اسمها `ToPrimitive()`. المحرك بينادي على دالة `valueOf()` اللي جوه الـ Object، واللي بترجع الرقم `10`. فبتبقى `10 == 10` وتطبع `true`.
+> - **في الـ Strict Equality (`===`):** المحرك مابيعملش أي Coercion. بيقارن النوع الأول: `typeof objNum` هو `'object'`، و `typeof primNum` هو `'number'`. بما إن الأنواع مختلفة، بيرجع `false` فوراً.
+
+---
+
+> [!warning] 🕵️ Q9: The Primitive Immutability Trap هيجيبلك كود بيحاول يعدل حرف جوه String، ويسألك على الناتج:
+
+```
+let greeting = "Hello World!";
+greeting = "J";
+
+console.log(greeting);
+```
+
+> [!success] ✅ The Correct Output `"Hello World!"`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): اللي جاي من لغة زي C بيعتقد إن الـ String هو مجرد Array of Characters، ونقدر نعدل أي حرف فيه بـ Index.
+> 
+> في الجافاسكريبت، الـ Primitive Values (زي النصوص والأرقام) هي **Immutable (غير قابلة للتعديل)**. مجرد ما اتخلقت في الميموري، مفيش أي قوة تقدر تغير محتواها.
+> 
+> لما بتكتب `greeting = "J"`، المحرك في الـ Non-strict mode بيتجاهل السطر ده تماماً (Silently fails) ومابيعملش أي Mutation، لأن مفيش Memory Address ينفع يتعدل جواه. لو كنت شغال في الـ Strict Mode، السطر ده كان هيضرب `TypeError: Cannot assign to read only property`. الطريقة الوحيدة لتغيير النص هي إعادة تعيين المتغير بالكامل (Reassignment) عشان المحرك يخلق Block جديد في الميموري.
+
+---
+
+> [!warning] 🕵️ Q10: The Sparse Arrays & Engine Downgrade Trap الانترفيور عايز يختبر فهمك لمعمارية الـ Arrays، فهيجيبلك الفخ ده:
+
+```
+const arr =;
+arr = 99;
+
+console.log(arr.length);
+console.log(arr);
+```
+
+> [!success] ✅ The Correct Output `11` `undefined`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الجافاسكريبت معندهاش Arrays حقيقية زي الـ C++ (Contiguous memory blocks). الـ Arrays في الـ JS هي مجرد Objects عادية جداً، الأرقام فيها بتعتبر Keys.
+> 
+> تحت الكبوت، محرك V8 بيحاول يعمل Optimize للـ Arrays وبيخزنها في الذاكرة بطريقة C++ Arrays اسمها **Fast Elements** طول ما العناصر ورا بعضها ومفيش فجوات.
+> 
+> لكن، بمجرد ما إنت كتبت `arr = 99`، إنت خلقت فجوة ضخمة (Hole). لو V8 حجز مكان فاضي في الميموري للعناصر دي، هيهدر الرام جداً. عشان كده المحرك بيعمل **Downgrade (تخفيض لمستوى الأداء)** للـ Array دي وبيحولها لنوع تاني اسمه **Dictionary Elements** (Hash Table).
+> 
+> الـ Array دي بقى اسمها **Sparse Array** (مصفوفة مخرومة). طولها (`length`) بيتعدل ويبقى `11` (أكبر إندكس + 1)، لكن الأماكن من `3` لـ `9` مش موجودة أصلاً في الميموري! ولما بتحاول تطبع `arr`، المحرك بيدور على الـ Key رقم `5` مابيلاقيهوش، فبيمشي في الـ Prototype Chain ومابيلاقيهوش برضه، فبيرجعلك `undefined`.
+
+---
+
+> [!question] 🔗 The Bridge to Part 2 (Questions 11-15) إحنا كده قفلنا الـ 10 أسئلة بتوع Part 1 وهضمنا الـ Coercion والـ Memory Traps.
+> 
+> دلوقتي هندخل في **Part 2: ES6+ Traps**، وهنا اللعب هيبقى على التحديثات المعمارية الحديثة.
+> 
+> **سؤالي التمهيدي ليك للـ 5 أسئلة الجايين (ماتجاوبش عليه):** _"لو إحنا عارفين إن الـ Arrow Functions (`=>`) مفيهاش `this` خاصة بيها وبتاخدها من الـ Lexical Scope الأب.. إيه اللي هيحصل لو حاولنا نضحك على الـ V8 Engine ونعمل `arrowFunction.bind({ name: "Ahmed" })` أو `arrowFunction.call(...)`؟ هل المحرك هيسمح بتغيير الـ Context ولا هيتجاهلها؟ وإزاي Destructuring لـ Object ممكن يفقدنا الـ `this` Context تماماً لو متعملش صح؟"_
+
+---
+## Part 2: ES6+ Traps & Lexical Environments (Questions 11-15)
+
+> [!warning] 🕵️ Q11: The Arrow Function & Context Forcing Trap الانترفيور هيقولك: الـ Arrow Function مالهاش `this` خاصة بيها. طيب لو حاولنا نجبرها تاخد `this` معينة باستخدام `call()` أو `bind()`، إيه اللي هيطبع هنا وليه؟
+
+```
+const user = {
+    name: "Ahmed",
+    getArrowName: () => this.name
+};
+
+const hacker = { name: "Hacker" };
+
+console.log(user.getArrowName.call(hacker));
+```
+
+> [!success] ✅ The Correct Output `undefined` (أو بيطبع قيمة الـ `name` لو متعرفة في الـ Global Window).
+
+> [!info] 🧠 Under the Hood (V8 Architecture): المبرمج العادي هيعتقد إن دالة `call()` قادرة على تغيير الـ Context (الـ `this`) لأي دالة، فهيتوقع إنها تطبع "Hacker".
+> 
+> لكن تحت الكبوت، محرك V8 بيعامل الـ Arrow Functions معاملة خاصة جداً. الـ Arrow Function مافيهاش حاجة اسمها `[[ThisValue]]` في الـ Execution Context بتاعها أصلاً! هي بتاخد الـ `this` من الـ Lexical Scope الأب لحظة تعريفها (اللي هو هنا الـ Global Scope، لأن الـ Object `{}` مش بيعمل Scope جديد).
+> 
+> لما بتستخدم `call` أو `apply` أو `bind` مع Arrow Function، محرك V8 **بيتجاهل** الـ Context اللي إنت باعتها تماماً وكأنك مابعتهاش. الدالة هتفضل تدور على `this.name` في الـ Window/Global، وبما إنه مش موجود هترجع `undefined`.
+
+---
+
+> [!warning] 🕵️ Q12: The Destructuring & Implicit Binding Trap الانترفيور هيجيبلك كود بيعمل Destructuring لميثود من Object، وبيشغلها لوحدها. إيه الناتج؟
+
+```
+class Service {
+    constructor() {
+        this.status = "Active";
+    }
+    getStatus() {
+        return this.status;
+    }
+}
+
+const myService = new Service();
+const { getStatus } = myService;
+
+console.log(getStatus());
+```
+
+> [!success] ✅ The Correct Output `TypeError: Cannot read properties of undefined (reading 'status')`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): دي واحدة من أشهر الـ Bugs في React والـ Event Listeners!
+> 
+> الجافاسكريبت بتحدد قيمة الـ `this` بناءً على الـ **Call-Site** (طريقة الاستدعاء)، مش مكان التعريف. لما بنعمل `const { getStatus } = myService`، إحنا بنخلق Reference جديد للدالة في الميموري، مفصول تماماً عن الأوبجيكت `myService`.
+> 
+> لما بنستدعيها كـ `getStatus()` (بدون `myService.`)، إحنا بنعملها invocation كـ Regular Function. وفي حالة الـ Classes أو الـ Strict Mode، الـ `this` الديفولت بتكون `undefined` (مش الـ Global Object). فالمحرك بيحاول يقرا `undefined.status` وبيضرب `TypeError` فوراً. الحل المعماري هنا هو استخدام `.bind(this)` في الـ Constructor أو استخدام Arrow Function.
+
+---
+
+> [!warning] 🕵️ Q13: The Rest Parameter Syntax Trap الانترفيور عايز يختبر الدقة المعمارية للـ Parser، فهيجيبلك دالة فيها Rest Parameter ووراها Comma (فاصلة):
+
+```
+function calculateScore(bonus, ...scores,) {
+    return bonus + scores.length;
+}
+
+console.log(calculateScore(10, 5, 5, 5));
+```
+
+> [!success] ✅ The Correct Output `SyntaxError: Rest parameter must be last formal parameter`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): من بداية ES8، الجافاسكريبت سمحت بالـ Trailing Commas (الفاصلة في نهاية الباراميترز) عشان تسهل الشغل مع الـ Git Version Control.
+> 
+> لكن، محرك V8 عنده قاعدة صارمة جداً في الـ Parsing Phase: الـ Rest Operator (`...`) لازم وحتماً يكون **آخر عنصر** في الـ Memory Signature بتاعة الدالة. وجود أي فاصلة (Comma) بعده بيخلي الـ Parser يتوقع إن فيه باراميتر تاني جاي، وده بيكسر قاعدة الـ Rest Parameter وبيضرب `SyntaxError` في مرحلة الـ Compilation قبل ما الكود يشتغل أصلاً!
+
+---
+
+> [!warning] 🕵️ Q14: The `const` Mutation vs Reassignment Trap فخ كلاسيكي بيوقع أي Junior فاكر إن `const` معناها Immutable. إيه اللي هيطبع هنا؟
+
+```
+const config = { retries: 3 };
+config.retries = 5;
+
+console.log(config.retries);
+
+config = { retries: 10 };
+```
+
+> [!success] ✅ The Correct Output `5` Then throws: `TypeError: Assignment to constant variable.`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الـ Juniors بيعتقدوا إن `const` بتجمد الأوبجيكت وتمنع تعديله.
+> 
+> معمارياً، الـ `const` بتعمل حاجة واحدة بس: بتمنع الـ **Reassignment** (إعادة تعيين الـ Pointer في الـ Stack Memory). الأوبجيكت نفسه موجود في الـ Heap Memory، والـ `const` مش بتحميه! تقدر تعدل الـ Properties بتاعته، تضيف، أو تمسح براحتك. عشان كده `config.retries = 5` بتشتغل وتطبع `5` بنجاح.
+> 
+> لكن لما بنعمل `config = {...}`، إحنا بنحاول نخلي المتغير اللي في الـ Stack يشاور على Memory Block جديد في الـ Heap، وهنا الـ V8 بيتدخل ويضرب `TypeError` عشان يحمي الـ Binding. (عشان نمنع الـ Mutation بنستخدم `Object.freeze()`).
+
+---
+
+> [!warning] 🕵️ Q15: The Loop Closure Trap (`var` vs `let`) ده من أقدم وأقوى أسئلة الانترفيوهات. إيه ناتج الطباعة للحالتين دول بعد ثانية واحدة؟
+
+```
+// Case A
+for (var i = 0; i < 3; i++) {
+    setTimeout(() => console.log(`A: ${i}`), 1000);
+}
+
+// Case B
+for (let j = 0; j < 3; j++) {
+    setTimeout(() => console.log(`B: ${j}`), 1000);
+}
+```
+
+> [!success] ✅ The Correct Output Case A prints: `A: 3`, `A: 3`, `A: 3` Case B prints: `B: 0`, `B: 1`, `B: 2`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الكود ده بيختبر علاقة الـ Event Loop بالـ Closures والـ Memory Management.
+> 
+> - **في Case A (`var`):** الـ `var` بتكون Function-Scoped. محرك V8 بيخلق متغير واحد بس `i` في الميموري. الـ Loop بيخلص بسرعة جداً و`i` بتوصل لـ `3`. لما التايمر بيخلص والـ Callback بيطلع من الـ Event Queue يتنفذ، الدالة بتسأل الـ Closure بتاعها عن قيمة `i`، بتلاقيها `3`. فبيطبع `3` تلات مرات.
+> - **في Case B (`let`):** الـ `let` بتكون Block-Scoped. محرك V8 ذكي جداً هنا؛ مع كل لفة في الـ Loop، المحرك بيخلق **Lexical Environment (Scope) جديد تماماً** في الميموري، وبينسخ فيه قيمة `j` الحالية. فكل Callback جوه الـ `setTimeout` بيعمل Closure على نسخة مختلفة ومستقلة من `j` (نسخة فيها 0، نسخة فيها 1، نسخة فيها 2). فلما التايمر يخلص، كل دالة بتطبع النسخة اللي هي محتفظة بيها في "شنطة ذكرياتها".
+
+---
+
+> [!question] 🔗 The Bridge to Part 2 Continued (Questions 16-20) إحنا كده هضمنا أول 5 أسئلة في الـ ES6+ Traps، وفهمنا إزاي المحرك بيتعامل مع الـ Lexical `this`، الـ Destructuring، والـ Block Scopes.
+> 
+> **سؤالي التمهيدي ليك للـ 5 أسئلة الجايين (ماتجاوبش عليه):** _"بما إننا اتكلمنا عن الميموري والـ Objects.. إيه اللي يحصل للـ Garbage Collector لو خزنّا داتا ضخمة جوه `Map` عادية ونسينا نمسحها؟ وإزاي الـ `WeakMap` بتحل كارثة الـ Memory Leaks دي تحت الكبوت؟ وإيه الفخ المعماري اللي بيحصل لو استخدمنا `typeof` مع كائن متكريت بـ `new String()` مقارنة بـ Text عادي؟"_
+
+---
+## Part 2: ES6+ Traps (Destructuring, Spread, Arrow functions, this binding, Closures edge cases) (Questions 11-15)
+
+> [!warning] 🕵️ Q11: The Arrow Function & Lexical Context Trap الانترفيور الخبيث هيجيبلك كود بيحاول يغير الـ `this` Context بتاع Arrow Function باستخدام دالة `bind`، ويسألك: الكود ده هيطبع إيه؟
+
+```
+const obj = {
+    name: "Architect",
+    printName: () => {
+        console.log(this.name);
+    }
+};
+
+const boundPrint = obj.printName.bind({ name: "Junior" });
+boundPrint();
+```
+
+> [!success] ✅ The Correct Output `undefined`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): المبرمج العادي هيشوف `bind` هيقولك دي بتغير الـ Context، فهيطبع "Junior".
+> 
+> لكن كـ Architect، إنت فاهم إن الـ Arrow Functions مابتتعرفش بكلمة `function`، ومفيش ليها `this` Binding خاص بيها أصلاً. تحت الكبوت في محرك V8، الـ Arrow Function بتورث الـ `this` من الـ Lexical Scope الأب وقت تعريفها (اللي هو هنا الـ Global Scope). ولما بنحاول نستخدم دوال زي `bind` أو `call` أو `apply` مع Arrow Function، محرك V8 بيتجاهل الـ Context الجديد ده تماماً وكأنه مش موجود. وبما إن الـ `name` مش متعرف في الـ Global Scope، هيطبع `undefined`.
+
+---
+
+> [!warning] 🕵️ Q12: The Destructuring Method Context Trap هيجيبلك كلاس بيعمل اتصال بقاعدة بيانات، ويعمل Destructuring (تفكيك) لدالة جواه، ويسألك عن النتيجة:
+
+```
+class Database {
+    constructor() {
+        this.status = "Connected";
+    }
+
+    getStatus() {
+        return this.status;
+    }
+}
+
+const db = new Database();
+const { getStatus } = db;
+
+console.log(getStatus());
+```
+
+> [!success] ✅ The Correct Output `TypeError: Cannot read properties of undefined (reading 'status')`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الفخ ده بيوقع 90% من الـ Juniors اللي متعودين يفككوا الأوبجيكتات بعشوائية.
+> 
+> لما بتعمل Destructuring لدالة `getStatus` من الـ `db`، إنت بتاخد Reference (مؤشر) للدالة دي وبترميه في متغير جديد، بس إنت كده **فصلت الدالة عن الأوبجيكت بتاعها**. لما بتيجي تنادي على الدالة كـ `getStatus()`، هي كده بتتنفذ كـ "Regular Function Call" بدون أي سياق. القاعدة في الجافاسكريبت إن الدالة لو اتنادت من غير Context، الـ `this` بيكون `undefined` في الـ Strict Mode. وبما إن كل الكلاسات في ES6 بتشتغل إجبارياً في الـ Strict Mode، الـ `this` هيكون بـ `undefined`، ولما المحرك يحاول يقرأ `undefined.status` هيضرب `TypeError` ويكراش السيرفر!
+
+---
+
+> [!warning] 🕵️ Q13: The Rest Parameter Trailing Comma Trap الانترفيور عايز يختبر حفظك للـ Syntax Spec بتاعة ES6، فهيكتب السطرين دول:
+
+```
+function processMetrics(firstId, ...restIds,) {
+    console.log(restIds);
+}
+
+processMetrics(1, 2, 3, 4);
+```
+
+> [!success] ✅ The Correct Output `SyntaxError: parameter after rest parameter`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): الجافاسكريبت الحديثة (ES2017+) بقت بتدعم الـ Trailing Commas (الفاصلة في نهاية الباراميترز) عشان تسهل الشغل مع الـ Version Control (زي Git).
+> 
+> بس الـ Architect الشاطر عارف إن الـ **Rest Parameter** ليه قاعدة صارمة جداً في الـ Parsing Phase: لازم وحتماً يكون هو **آخر عنصر** في تعريف الدالة. لو حطيت بعده `comma` (فاصلة)، المحرك (V8 Parser) بيتوقع إن فيه باراميتر كمان جاي، وده بيكسر القاعدة الأساسية للـ Rest Operator، فالمحرك بيرفض الكود فوراً وبيضرب `SyntaxError` في مرحلة الـ Compilation وقبل حتى ما الكود يتنفذ.
+
+---
+
+> [!warning] 🕵️ Q14: The Closure Loop (var vs let) Trap الفخ الكلاسيكي المرعب، هيطلب منك تتوقع الـ Output للحلقات التكرارية دي بعد ما الـ Call Stack يفضى:
+
+```
+for (var i = 0; i < 3; i++) {
+    setTimeout(() => console.log(`var: ${i}`), 0);
+}
+
+for (let j = 0; j < 3; j++) {
+    setTimeout(() => console.log(`let: ${j}`), 0);
+}
+```
+
+> [!success] ✅ The Correct Output `var: 3`, `var: 3`, `var: 3` `let: 0`, `let: 1`, `let: 2`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): السؤال ده بيقيس عمق فهمك للـ Lexical Scope مع الـ Event Loop.
+> 
+> 1. **الـ `var` Loop:** الكلمة المفتاحية `var` بتعمل Function/Global Scope. يعني متغير `i` ده موجود كنسخة واحدة بس في الميموري لكل اللفات. الـ `setTimeout` بترمي الكول باك بتاعها في الـ Web APIs، ولما الـ Loop يخلص، قيمة `i` في الميموري هتبقى `3`. ولما الـ Event Loop يسحب الدوال وينفذها، كلهم هيقرأوا من نفس المكان في الميموري فهيطبعوا `3`.
+>     
+> 2. **الـ `let` Loop:** الكلمة المفتاحية `let` بتعمل Block Scope. محرك V8 هنا بيعمل سحر تحت الكبوت: مع كل لفة في הـ Loop، المحرك **بيخلق Scope جديد تماماً** بـ Instance منفصلة من المتغير `j`. الكول باك بتاع `setTimeout` بيعمل Closure (تغليف) للـ Scope الجديد ده ويحتفظ بيه في הـ Heap. فكل دالة بتفتكر قيمة `j` الخاصة بيها هي بس، فهتطبع `0, 1, 2`.
+>     
+
+---
+
+> [!warning] 🕵️ Q15: The Const Object Mutation Trap هيجيبلك كود بيعدل في أوبجيكت متعرف بـ `const`، ويسألك: هل المحرك هيسمح بالتعديل ده ولا هيضرب Error؟
+
+```
+const serverConfig = {
+    port: 8080,
+    status: "active"
+};
+
+serverConfig.port = 3000;
+console.log(serverConfig.port);
+```
+
+> [!success] ✅ The Correct Output `3000`
+
+> [!info] 🧠 Under the Hood (V8 Architecture): فخ الـ Juniors المفضل! الـ `const` في الجافاسكريبت مش معناها إن القيمة Immutable (غير قابلة للتعديل).
+> 
+> كـ Architect إنت عارف الميموري متقسمة إزاي: المتغير `serverConfig` موجود في الـ **Stack**، وبيحتوي على Pointer (مؤشر) بيشاور على مكان الأوبجيكت في الـ **Heap**. الكلمة المفتاحية `const` بتمنع فقط إنك تغير الـ Pointer اللي في الـ Stack (يعني Reassignment)، لكنها **مابتمنعش نهائياً** تعديل الداتا اللي جوه الـ Heap.
+> 
+> عشان كده تغيير `serverConfig.port` قانوني جداً والمحرك هيسمح بيه وهيطبع `3000`. لو حبيت تقفل الأوبجيكت وتمنع التعديل جواه، لازم تستخدم الباترن بتاع `Object.freeze()` اللي بيقفل الـ Properties.
+
+---
+
+> [!question] 🔗 The Bridge to Part 3 (Questions 16-20) إحنا كده دغدغنا الـ ES6 Traps، وفهمنا إزاي V8 بيدير الـ Scopes، وإزاي الـ `this` بتطير مننا لو معملناش حسابنا في הـ Architecture.
+> 
+> الجزء التالت والأخير في الـ Gauntlet هيكون رعب خالص، لأنه هيدخلنا جوه الـ **Event Loop والـ Microtasks**.
+> 
+> **سؤالي التمهيدي ليك للـ 5 أسئلة الجايين (ماتجاوبش عليه):** _"لو عندنا كود فيه `Promise.resolve().then(() => console.log('A'))`، وتحته مباشرة كتبنا `process.nextTick(() => console.log('B'))`.. مين فيهم المحرك هينفذه الأول؟ وإيه الفرق المعماري الجوهري بين طابور الـ Microtask Queue وبين طابور הـ NextTick Queue تحت الكبوت في Node.js؟"_
+
+---
