@@ -1843,4 +1843,138 @@ _(ملحوظة معمارية: في الـ Production الحقيقي، بنست�
 > 
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي (CPU-Bound Tasks):** _"تخيل إننا مطلوب مننا نبني خوارزمية بتحسب Hashsum معقد جداً (بتاخد 10 ثواني من الـ CPU المتواصل). لو حطينا الكود ده في Node.js، السيرفر هيقف تماماً (Block) لمدة 10 ثواني، وأي يوزر تاني بيحاول يعمل Login هيلاقي السيرفر واقع! معمارياً.. إزاي نقدر نحل مشكلة الـ CPU-Bound Tasks دي؟ إيه الفرق المعماري الجوهري بين حل الـ 'Interleaving with setImmediate'، وحل الـ 'Child Processes (fork)'، والحل الأحدث بـ 'Worker Threads'؟ وإزاي نبني Process Pool כדי نحمي السيرفر من هجمات الـ DoS (Denial of Service)؟"_
 
-(انسخ الجزء ده في أوبسيديان، وقولي "كمل" عشان أجاوبلك على السؤال ده بنفسي ونبدأ في الجزء اللي بعده).
+---
+مشكلة الـ **CPU-Bound Tasks** هي نقطة الضعف القاتلة في أي سيستم مبني على Node.js لو المبرمج مش فاهم المعمارية. بما إننا شغالين على Single Thread، لو عندك خوارزمية (زي الـ Subset Sum أو تشفير بـ Crypto) بتاخد 10 ثواني، المايسترو (الـ Main Thread) هيقف يعرق 10 ثواني، ومفيش أي عملية I/O هتتنفذ، والسيرفر كله هيقع للمستخدمين التانيين!
+
+لمعالجة الكارثة دي، الـ Architects بيستخدموا 3 استراتيجيات:
+
+1. **الـ Interleaving بـ `setImmediate`:** بنقسم الخوارزمية لخطوات صغيرة، ونحط كل خطوة في `setImmediate`. ده بيخلي المايسترو يفك الحصار ويروح يبص على الـ Event Loop يخدم الطلبات التانية، ويرجع يكمل الخوارزمية في الـ Check Phase.
+2. **الـ Child Processes (`fork`):** بنخلق بروسيس جديدة تماماً (Node.js كامل جديد) ونتواصل معاها بـ Messages. عيبها إنها بتسحب ميموري عالية جداً.
+3. **الـ Worker Threads:** الحل الأحدث والأمثل. بنخلق Thread جديد جوه نفس الـ Process. بيستهلك ميموري أقل بكتير، وبيقدر يشارك الميموري (SharedArrayBuffer) مع الـ Main Thread.
+
+أما ليه لازم نبني **Process Pool** أو **Thread Pool**؟ لأن لو كل Request بيعمل `fork`، والهاكر بعتلك 1000 Request في ثانية، السيرفر هيعمل 1000 Process والميموري هتنفجر (وده نوع من الـ DoS Attack). الـ Pool بيحدد سقف (مثلاً 4 Workers)، وأي طلب زيادة بيتحط في طابور (Waiting Queue) لحد ما يفضى Worker.
+
+خلينا نغوص في المعمارية دي بالتفصيل.
+
+## 8.4 Taming the CPU: Interleaving, Child Processes, and Worker Threads
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيوهات التقيلة، هيجيبلك كود بيعمل حسابات معقدة زي `SubsetSum`، ويقولك: _"المبرمج ده حط الكود في `Promise` وعمل `await`، ففاكر إن الكود كده بقى Asynchronous ومش هيعطل السيرفر.. هل كلامه صح؟ وليه الـ Promise مابيحميش الـ Event Loop من الـ CPU-Bound tasks؟ وإيه هو الفرق المعماري بين تمرير الداتا لـ `child_process` وتمريرها لـ `worker_threads`؟"_
+> 
+> الهدف هنا إنه يفضح فكرة إن `async/await` سحر بيحل كل حاجة. هو عايز يتأكد إنك فاهم إن الـ Promise بيتعمل له Execute على نفس الـ Main Thread، وإن الـ CPU Intensive logic هيفضل يعمل Block للسيرفر حتى لو جوه Promise!
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في الـ Java أو الـ C++، أول ما تلاقي كود تقيل، بتعمل `new Thread()` وترميه فيه، والـ OS Scheduler بيوزع وقت الـ CPU على الـ Threads.
+> 
+> في Node.js، إحنا محكومين بالـ Event Loop. الـ `libuv` مسؤول عن الـ I/O بس، ملوش دعوة بالـ CPU-Bound Tasks بتاعتك! لو هتعمل Loop بياخد وقت، لازم إنت اللي تدير الـ Concurrency بتاعته:
+> 
+> **1. الـ Interleaving (تقطيع الوقت):** إنت بتبرمج الـ Loop بتاعك إنه يقف كل شوية، ويستخدم `setImmediate` عشان يرمي اللفة اللي جاية في الـ Event Queue. ده بيدي فرصة للـ Event Loop إنه يتنفس ويشوف لو فيه Network Request جديد يخدمه.
+> 
+> **2. الـ Child Processes (الاستنساخ):** باستخدام دالة `fork()`، إنت بتخلق نسخة كاملة من V8 Engine. التواصل بينهم بيتم عن طريق IPC (Inter-Process Communication) باستخدام أحداث زي `process.on('message')` و `process.send()`. العزل هنا (Isolation) تام 100%، بس استهلاك الموارد بشع.
+> 
+> **3. الـ Worker Threads (الخيوط الحقيقية):** دي ثورة في Node.js. بتسمحلك تعمل Threads جوه نفس الـ Process. التواصل بيتم بـ `parentPort.postMessage`. الميزة الجبارة إنك ممكن تنقل داتا ضخمة بينهم في زيرو ثانية عن طريق تمرير الـ `ArrayBuffer`، أو تشارك الميموري بـ `SharedArrayBuffer` (اللي بتحتاج تتعامل معاها بـ `Atomics` عشان تمنع الـ Race Conditions).
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي نحول الكلام ده لـ Enterprise Architecture؟
+> 
+> كـ Architect، إنت عمرك ما بتستدعي `fork()` أو `new Worker()` مباشرة جوه الـ API Endpoint! ليه؟ لأن الـ Client ممكن يعملك **Denial of Service (DoS) Attack** بإنشاء آلاف العمليات لحد ما الـ RAM تخلص.
+> 
+> إحنا بنطبق باترن الـ **Thread Pool** (أو Process Pool) مع الـ **Command Pattern**:
+> 
+> 1. بنخلق عدد ثابت من الـ Workers (عادة بيكون مساوي لعدد הـ CPU Cores بـ `os.cpus().length`).
+> 2. بنعمل طابور (`waiting` queue).
+> 3. لما ييجي Request، بنطلب Worker من الـ Pool (`acquire`). لو فيه واحد فاضي، بياخد الشغل. لو كلهم مشغولين، الـ Request بيقف في الطابور لحد ما Worker يخلص ويبلغ الـ Pool إنه فاضي (`release`).
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف كود Junior بيعمل Block للسيرفر وفاكر الـ Promise هيحميه، وكود Architect بيفصل اللوجيك لـ Worker Thread جوه Pool:
+> 
+> **❌ كود الـ Junior (Event Loop Blocking Trap):**
+
+```
+// Junior thinks 'async' magically moves CPU work to the background!
+async function calculateHashBad(data) {
+    return new Promise((resolve) => {
+        // DISASTER: This is synchronous CPU work!
+        // The Event loop is completely BLOCKED for 5 seconds here.
+        // No other users can connect!
+        const result = massiveCpuIntensiveCryptoHash(data);
+        resolve(result);
+    });
+}
+```
+
+> **✅ كود الـ Architect (Worker Threads + Pool Pattern):**
+
+```
+import { Worker } from 'worker_threads';
+
+// 1. The Architect builds a Thread Pool to prevent DoS attacks
+class ThreadPool {
+    constructor(file, poolMax) {
+        this.file = file;
+        this.poolMax = poolMax;
+        this.active = [];
+        this.pool = [];
+        this.waiting = []; // The queue for DoS protection
+    }
+
+    acquire() {
+        return new Promise((resolve) => {
+            // Reuse existing worker if available
+            if (this.pool.length > 0) {
+                const worker = this.pool.pop();
+                this.active.push(worker);
+                return resolve(worker);
+            }
+            // Queue if limit reached
+            if (this.active.length >= this.poolMax) {
+                return this.waiting.push({ resolve });
+            }
+            // Spin up a new worker up to the limit
+            const worker = new Worker(this.file);
+            worker.once('online', () => {
+                this.active.push(worker);
+                resolve(worker);
+            });
+        });
+    }
+
+    release(worker) {
+        if (this.waiting.length > 0) {
+            const { resolve } = this.waiting.shift();
+            return resolve(worker); // Pass worker to the next in queue
+        }
+        this.active = this.active.filter(w => worker !== w);
+        this.pool.push(worker);
+    }
+}
+
+// 2. Usage in the API
+const pool = new ThreadPool('./hashWorker.js', 4); // 4 CPU Cores max
+
+async function calculateHashArchitect(data) {
+    const worker = await pool.acquire(); // Safe, controlled access
+
+    return new Promise((resolve) => {
+        worker.once('message', (result) => {
+            pool.release(worker); // Free the worker for others
+            resolve(result);
+        });
+        // Send data to the background thread
+        worker.postMessage(data);
+    });
+}
+```
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> عظيم جداً يا هندسة! إحنا كده قفلنا موديول الـ Node.js Design Patterns، وعرفنا إزاي نعزل الشغل التقيل في Workers، ونحميه بـ Pool، وإزاي ندير الـ Async Flow باحترافية.
+> 
+> دلوقتي إحنا جاهزين نخرج بره الـ Node.js Process الواحدة، وندخل في عالم الـ **System Architecture & Scalability (Module 9)**!
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"تخيل إننا كبرنا السيستم وعملنا `cluster.fork()` عشان نشغل 4 نسخ من السيرفر بتاعنا على نفس المكنة، وحطينا قدامهم Load Balancer بيوزع الـ Requests (عن طريق Round-Robin). لو يوزر عمل Login، والـ Request بتاعه راح لـ Instance A، وتم حفظ الـ Authentication Session في המيموري بتاعة Instance A (Stateful). إيه هي الكارثة المعمارية اللي هتحصل لما اليوزر ده يبعت الـ Request اللي بعده للـ Load Balancer؟ وإزاي بنحل الأزمة دي معمارياً عن طريق تحويل السيرفر لـ 'Stateless' باستخدام حاجة زي Redis؟"_
+
