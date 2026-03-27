@@ -905,7 +905,7 @@ const itStaff = filterData(usersArray, isITDepartment);
 > 
 > **❌ كود الـ Junior (Blocking I/O - Anti-Pattern):**
 
-```
+```js
 import { readFileSync } from 'fs';
 
 function handleRequestBad(req, res) {
@@ -919,7 +919,7 @@ function handleRequestBad(req, res) {
 
 > **✅ كود الـ Architect (Non-Blocking I/O - Reactor Pattern):**
 
-```
+```js
 import { readFile } from 'fs';
 
 function handleRequestArchitect(req, res) {
@@ -939,4 +939,4 @@ function handleRequestArchitect(req, res) {
 > 
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"إحنا بنقول إن الـ Callbacks بترجع تقف في الـ Event Queue.. بس الحقيقة إن Node.js معندوش طابور واحد، ده عنده عدة طوابير! لو عندك `setTimeout` و `fs.readFile` و `Promise` خلصوا كلهم في نفس اللحظة.. الـ Event Loop هيقرر يختار مين الأول ينفذه؟ إيه هي الـ Phases (المراحل) الداخلية للـ Event Loop وإزاي ترتيبها بيحدد سلوك السيرفر؟"_
 
-(انسخ الجزء ده في أوبسيديان، ولما تخلص اكتب "كمل" عشان أجاوبلك على السؤال ده بنفسي ونبدأ في الجزء اللي بعده).
+---
