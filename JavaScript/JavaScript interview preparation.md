@@ -1142,3 +1142,181 @@ readerSafe.on('data', data => console.log("Safe:", data));
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"لو استخدمنا `fs.readFile` العادية اللي بتقرأ الفايل كله وتحطه في الميموري مرة واحدة.. إيه اللي هيحصل للـ V8 Heap Memory؟ وإيه هو الـ Buffer أصلاً وعلاقته بالـ C++؟ وإزاي الـ Streams في Node.js بتستخدم الـ EventEmitter عشان تقسم الفايل الضخم ده لقطع صغيرة (Chunks) وتبعتها للـ Client بكفاءة من غير ما السيرفر يقع؟"_
 
 ---
+لو الـ Readable Stream بيقرأ من الهارد ديسك بسرعة جداً، والـ Writable Stream (زي الـ HTTP Response لعميل بطيء) مابيلحقش يبعت الداتا دي، اللي بيحصل إن الـ Chunks دي بتتراكم في الـ Internal Buffer بتاع الـ Writable Stream لحد ما تعدي الحد الأقصى (الـ `highWaterMark`). لو استمرينا في القراءة، الميموري هتتملي والسيرفر هيقع (Out of Memory). هنا بيتدخل ميكانيزم عبقري في Node.js اسمه الـ **Backpressure** (الضغط العكسي). دالة `write()` مش مجرد بتبعت الداتا، دي بترجع Boolean. لو رجعت `false`، ده معناه إن الـ Buffer اتملى، ولازم الـ Readable Stream يعمل `pause()` وميقرأش داتا تانية لحد ما الـ Writable يفضي اللي عنده ويبعت حدث اسمه `drain`، ساعتها الـ Readable يعمل `resume()` ويكمل قراءة.
+
+خلينا نغوص في المعمارية دي ونقفل **Module 6** تماماً.
+
+## 6.3 Piping & Backpressure: Connecting streams without crashing the server
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيوهات الثقيلة، هيجيبلك كود بيقرأ من فايل وبيكتب في فايل تاني، والمبرمج مستخدم الـ Events العادية كده: `readStream.on('data', chunk => writeStream.write(chunk))`، ويسألك: _"الكود ده شغال تمام في الـ Local، بس لما رفعناه على الـ Production والسيرفر عليه ضغط، بدأ يستهلك رام بشكل مرعب وبيعمل Crash. الكود ده بيعاني من مشكلة إيه؟ وليه دالة `write()` مصممة إنها ترجع `boolean`؟ وإزاي دالة `pipe()` بتحل الكارثة دي؟"_
+> 
+> الهدف هنا إنه يتأكد إنك مش مجرد بتعرف تنقل داتا، لكنك فاهم إن الـ Streams ليها سرعات مختلفة، وإنك لازم تدير الـ Flow Control ده بنفسك أو تستخدم الأدوات الصح.
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في لغات زي C++ أو Java (في الـ Thread-based I/O)، لما بتكتب في Socket بطيء، الـ Thread نفسه بيحصله Block لحد ما الـ Buffer يفضى، وده بيخلق تزامن طبيعي (Natural pacing) بس بيهدر موارد.
+> 
+> في Node.js (الـ Asynchronous I/O)، الـ Event Loop مابيقفش. الـ `readStream` هيفضل يضرب حدث `data` بأقصى سرعة ممكنة للهارد ديسك. لو عملت `writeStream.write(chunk)` من غير ما تراقب النتيجة، إنت كده بتعمل Flood للميموري.
+> 
+> دالة `write()` في الـ Writable Stream هي دالة ذكية. لو الـ Buffer الداخلي عدى حاجز الـ `highWaterMark` (وهو عادة 16 كيلوبايت)، الدالة هترجع `false` كإشارة تحذير: _"أنا اتمليت، لو سمحت وقف بعت"_.
+> 
+> لما الـ Writable Stream يفضى ويقدر يستقبل داتا تاني، بيضرب حدث اسمه `drain`.
+> 
+> **الـ `pipe()`:** بدل ما تكتب اللوجيك بتاع الـ `pause` والـ `resume` والـ `drain` بإيدك، Node.js وفرلك دالة `pipe()`. الدالة دي بتاخد الـ Data اللي طالعة من الـ Readable تحطها في الـ Writable، وبتدير ميكانيزم الـ Backpressure بالكامل تحت الكبوت أوتوماتيكياً من غير أي تسريب للميموري.
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي الـ Piping بيخدم معمارية الـ Software؟
+> 
+> الـ `pipe()` هو التطبيق الأمثل لـ **Pipes and Filters Architecture Pattern**. إنت بتبني السيستم بتاعك كقطع صغيرة ومستقلة (Single Responsibility Principle)، كل قطعة (Stream) بتعمل وظيفة واحدة (مثلاً فك ضغط، فلترة، تشفير، كتابة)، وتقدر توصلهم ببعض زي مكعبات الليجو.
+> 
+> الأهم من كده إن الـ Backpressure بيحقق مبدأ الـ **System Resiliency** (مرونة النظام). السيرفر بتاعك مبيقعش تحت الضغط، لأنه بيعرف يقول للـ Source "هدي السرعة شوية" بناءً على قدرة الـ Destination، وده بيمنع الـ I/O Starvation وبيحافظ على استقرار الـ Memory Heap.
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف كود الـ Junior اللي بيتجاهل الـ Backpressure وبيدمر الميموري، وكود الـ Architect اللي بيستخدم الـ `pipe()` عشان يبني Pipeline نظيف وآمن:
+> 
+> **❌ كود الـ Junior (Ignoring Backpressure - Memory Crash):**
+
+```js
+import fs from 'fs';
+
+const readStream = fs.createReadStream('massive-database.sql');
+const writeStream = fs.createWriteStream('backup.sql');
+
+// ❌ DISASTER: The Junior reads data as fast as the disk allows
+// and blindly forces it into the writeStream.
+// The boolean return value of .write() is completely ignored!
+// Memory will explode if writing to a slow destination.
+readStream.on('data', (chunk) => {
+    writeStream.write(chunk);
+});
+```
+
+> **✅ كود الـ Architect (Using pipe for automatic Backpressure management):**
+
+```js
+import fs from 'fs';
+
+const readStream = fs.createReadStream('massive-database.sql');
+const writeStream = fs.createWriteStream('backup.sql');
+
+// ✅ ARCHITECT CODE: .pipe() automatically handles everything!
+// It listens to 'data', writes it, checks the return value of .write().
+// If false, it calls readStream.pause().
+// When writeStream emits 'drain', it calls readStream.resume().
+// Perfect memory management with zero boilerplate!
+readStream.pipe(writeStream);
+```
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> عظيم جداً يا هندسة! إحنا كده قفلنا **Module 6 (Node.js Core Architecture)** بالكامل، وفهمنا إزاي الـ `EventEmitter` والـ `Buffers` والـ `Streams` والـ `Backpressure` بيشتغلوا مع بعض عشان يبنوا سيرفر قوي ومابيقعش.
+> 
+> دلوقتي هننتقل للموديول الأخير وهو الـ Masterpiece بتاعنا: **Module 7: Node.js Design Patterns (The Architect Level)**.
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لأول درس في الموديول الجديد:** _"في الـ C++ أو الجافا، إحنا بنعتمد بشكل أساسي على الـ Classes والـ Constructors عشان نبني Objects معقدة خطوة بخطوة. لكن بما إننا عرفنا إن الجافاسكريبت بتستخدم الـ Closures والـ Duck Typing... إزاي نقدر نطبق الـ Factory Pattern والـ Builder Pattern في Node.js عشان نعزل عملية خلق الأوبجيكت (Creation) عن تفاصيله (Implementation) من غير ما نستخدم الكلمة المفتاحية `new` أو `class` أصلاً؟ وإيه علاقة ده بالـ Encapsulation الحقيقي؟"_
+
+---
+
+في لغات زي C++ أو Java، إحنا متكتفين بالكلمة المفتاحية `new` عشان نخلق (Instantiate) أوبجيكت من Class معين. لكن في الجافاسكريبت، بفضل مفهوم الـ **Duck Typing** (لو بيمشي زي البطة وبيكاكي زي البطة، يبقى بطة!)، إحنا مش محتاجين Classes أصلاً. نقدر نطبق الـ **Factory Pattern** عن طريق دالة عادية جداً بترجع Object Literal `{}`. وعشان نحقق الـ Encapsulation التام، بنعرف المتغيرات جوه الدالة دي بـ `let` أو `const`، والـ Methods اللي بنرجعها في الأوبجيكت بتحتفظ بـ Closure (شنطة ذكريات) للمتغيرات دي. كده إحنا فصلنا عملية الخلق عن التنفيذ، ومحدش يقدر يلمس الـ State من بره.
+
+خلينا نغوص في المعمارية دي ونبدأ في **Module 7: Node.js Design Patterns**.
+
+## 7.1 Factory, Builder & Revealing Constructor: Architecting Object Creation
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيو التقيل، الانترفيور هيجيبلك كود بيستخدم `new DatabaseConnection()` في 50 فايل مختلف في المشروع، ويسألك: _"إيه هي الكارثة المعمارية اللي هتحصل لو قررنا في بيئة الـ Testing إننا نستخدم Mock Database بدل الحقيقية؟ وليه استخدام الـ `new` keyword بيعتبر Hardcoded Dependency (Tight Coupling)؟ وإزاي الـ Factory Pattern بيحل الأزمة دي وبيخلينا نرجع Mock Object من غير ما نغير سطر كود واحد في الـ 50 فايل؟"_
+> 
+> الهدف هنا إنه يشوفك بتفكر بمبدأ الـ Dependency Inversion، وإنك فاهم إزاي تعزل عملية خلق الأوبجيكت (Creation) عن استخدامه (Consumption).
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في الـ OOP التقليدي، إنت بتبني `class` وتعمل منه `new`. المشكلة إن `new` بتربط الكود بتاعك بـ Concrete Implementation (تنفيذ صريح). لو حبيت تغير الكلاس ده، لازم تلف على كل مكان عملت فيه `new` وتغيره.
+> 
+> في Node.js، بنستخدم 3 باترنز أقوياء جداً للتحكم في خلق الأوبجيكتات:
+> 
+> **1. الـ Factory Pattern:** الدالة الـ Factory هي دالة عادية (مش كلاس) وظيفتها إنها تبني الأوبجيكت وترجعه. الميزة الجبارة هنا إن الـ Factory يقدر يقرر في الـ Runtime يرجعلك أي نوع من الأوبجيكتات (سواء حقيقي أو Mock)، طالما ليهم نفس الـ Methods (وده الـ Duck Typing). كمان، المتغيرات اللي جوه الـ Factory بتبقى Private تماماً بفضل الـ Closures,.
+> 
+> **2. الـ Builder Pattern:** لما بيكون عندك أوبجيكت معقد بياخد باراميترز كتير جداً في الـ Constructor (ودي بنسميها Telescoping Constructor Anti-pattern). الـ Builder بيخليك تبني الأوبجيكت خطوة خطوة عن طريق Chaining Methods زي `obj.setHost().setPort().build()`. أشهر مثال لده هي مكتبة `superagent` لبناء الـ HTTP Requests.
+> 
+> **3. الـ Revealing Constructor Pattern:** ده باترن ابتكره Domenic Denicola. فكرته إنك تخلق أوبجيكت يكون Immutable (غير قابل للتعديل) بعد ما يتكريت، لكنك بتسمح بتعديله **فقط** لحظة خلقه. أشهر تطبيق للباترن ده هو الـ `Promise`! إنت بتباصي دالة `(resolve, reject) => {...}` للكونستراكتور، وهو بيكشفلك (Reveals) أدوات التعديل دي جوه الدالة بس، لكن من بره الـ Promise مقفول,.
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي الباترنز دي بتحقق مبادئ الـ SOLID؟
+> 
+> 1. **الـ Dependency Inversion Principle (DIP):** الـ Client كود بيعتمد على الـ Interface اللي راجع من الـ Factory (مجموعة دوال)، ومش مهتم خالص باسم الكلاس ولا طريقة خلقه. ده بيخلي السيستم Loosely Coupled.
+> 2. **الـ Single Responsibility Principle (SRP):** إنت بتفصل اللوجيك المعقد بتاع "إزاي نجهز الأوبجيكت" وتلم الباراميترز بتاعته، وتحطه في الـ Factory أو الـ Builder، وتسيب الـ Client يركز بس في "إزاي يستخدم الأوبجيكت".
+> 3. **الـ Encapsulation التام:** في الجافاسكريبت، الـ Factory مع الـ Closures هو أقوى وأأمن بديل للـ `private` properties، لأن الداتا بتستخبى في الـ Lexical Scope ومستحيل الوصول ليها غير عن طريق الـ Methods اللي الـ Factory كشفها بس.
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف كود Junior بيعتمد على الـ `new` وبيفضح الـ State، وكود Architect بيستخدم الـ Factory Pattern والـ Duck Typing عشان يرجع Mock Object في بيئة التطوير:
+> 
+> **❌ كود الـ Junior (Tight Coupling & Exposed State):**
+
+```
+// Bad Code: Hardcoded class instantiation.
+// If we want to disable profiling in production, we have to add
+// 'if' statements everywhere in our app!
+class ProfilerBad {
+    constructor(label) {
+        this.label = label;
+        this.lastTime = null; // Publicly exposed state!
+    }
+    start() { this.lastTime = process.hrtime(); }
+    end() { /* calculate diff */ }
+}
+
+// The client is tightly coupled to the concrete class
+const profiler = new ProfilerBad("Database Query");
+profiler.start();
+```
+
+> **✅ كود الـ Architect (Factory Pattern with Closures & Duck Typing):**
+
+```
+// Architect Code: A Factory Function (No 'new', No 'class')
+// Source adaptation for deep encapsulation.
+export function createProfiler(label) {
+    // Private State via Closure! Cannot be touched from the outside.
+    let lastTime = null;
+
+    // Duck Typing: In production, return a Mock object (No-op)
+    // to save memory and CPU. The client won't know the difference!
+    if (process.env.NODE_ENV === 'production') {
+        return {
+            start: () => {},
+            end: () => {}
+        };
+    }
+
+    // In development, return the real implementation
+    return {
+        start() {
+            lastTime = process.hrtime();
+        },
+        end() {
+            const diff = process.hrtime(lastTime);
+            console.log(`Timer [${label}] took ${diff} seconds and ${diff} nanoseconds.`);
+        }
+    };
+}
+
+// The client code is fully decoupled. It just calls the factory.
+const profilerSafe = createProfiler("Database Query");
+profilerSafe.start(); // Works seamlessly in both environments!
+```
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> عظيم جداً يا هندسة! إحنا كده فهمنا قوة الـ Factory والـ Builder والـ Revealing Constructor، وإزاي بنعزل عملية بناء الأوبجيكت وبنحمي الـ State الداخلية باستخدام الـ Closures.
+> 
+> لكن، ساعات بنحتاج الأوبجيكت ده (زي اتصال الداتابيز) يتكريت مرة واحدة بس (Singleton) ونشاركه بين كل الفايلات في السيرفر.
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"إحنا عارفين إن دالة `require()` في الـ CommonJS بتعمل Cache للموديول بعد أول مرة بيتحمله. هل ده معناه إننا لو عملنا Export لـ Object Instance يبقى إحنا كده حققنا الـ 'Singleton Pattern' بأمان تام بنسبة 100%؟ وإيه هي الكارثة اللي ممكن تحصل للـ Module Cache لو عندنا Circular Dependencies (موديول A بيطلب B، و B بيطلب A)؟ وإزاي Node.js بيتصرف في الـ Loop دي؟"_
+
