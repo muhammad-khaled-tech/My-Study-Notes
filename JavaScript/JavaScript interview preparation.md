@@ -1320,3 +1320,87 @@ profilerSafe.start(); // Works seamlessly in both environments!
 > 
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"إحنا عارفين إن دالة `require()` في الـ CommonJS بتعمل Cache للموديول بعد أول مرة بيتحمله. هل ده معناه إننا لو عملنا Export لـ Object Instance يبقى إحنا كده حققنا الـ 'Singleton Pattern' بأمان تام بنسبة 100%؟ وإيه هي الكارثة اللي ممكن تحصل للـ Module Cache لو عندنا Circular Dependencies (موديول A بيطلب B، و B بيطلب A)؟ وإزاي Node.js بيتصرف في الـ Loop دي؟"_
 
+---
+في Node.js، دالة `require()` فعلاً بتعمل Cache للموديول في أوبجيكت اسمه `require.cache` بعد أول مرة بيتعمله تحميل. ده بيضمن إن أي استدعاء تاني لنفس الموديول هيرجع نفس الـ Instance، وده بيخلق لنا **Singleton Pattern** طبيعي جداً من غير تعقيدات. لكن، الكارثة بتحصل لما يكون عندنا **Circular Dependencies** (اعتماد دائري). يعني موديول `a.js` بيعمل require لـ `b.js`، وفي نفس الوقت `b.js` بيعمل require لـ `a.js`. في بيئة CommonJS، المحرك مش بيدخل في Infinite Loop (حلقة مفرغة)، لكنه بيعمل حاجة أسوأ: بيرجع الـ `exports` object بتاع الموديول الأول وهو **غير مكتمل** (Incomplete State). ده بيخلي أجزاء من السيستم تشوف داتا ناقصة وتضرب Errors غريبة جداً في الـ Runtime!
+
+خلينا نغوص في المعمارية دي بالتفصيل ونشوف إزاي الـ Architects بيحلوها.
+
+## 7.2 Singleton Pattern & Circular Dependencies (CommonJS vs ESM)
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيو التقيل، الانترفيور هيجيبلك فايلين: الفايل الأول `auth.js` بيـ require `user.js`. الفايل التاني `user.js` بيـ require `auth.js`. ويسألك بابتسامة خبيثة: _"هل السيرفر هيضرب Stack Overflow بسبب الـ Infinite Loop؟ ولو لأ، ليه موديول `user` بيشوف الداتا اللي جاية من `auth` على إنها `{}` (أوبجيكت فاضي) أو `undefined`؟ وإزاي معمارية ESM (ECMAScript Modules) الحديثة حلت الكارثة دي من جذورها؟"_
+> 
+> الهدف هنا إنه يشوفك فاهم الـ Module Loading Lifecycle والفرق الجوهري بين الـ Dynamic Evaluation في CommonJS والـ Static Analysis في ESM.
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في الـ C++ أو الجافا، عشان تعمل Singleton إنت بتعمل `private constructor` وتخلي الكلاس يرجع نفس الـ `static instance` كل مرة. الكومبايلر بيرفض تماماً الـ Circular Dependencies الصريحة في مرحلة الـ Compile-time.
+> 
+> في Node.js، الـ `require()` بتشتغل في الـ Runtime (Dynamic). لما بتطلب موديول، المحرك بيقرأ الفايل (Synchronously)، بينفذ الكود، وبيحط الناتج في `require.cache`. لو حصل Circular Dependency (A بيطلب B، و B بيطلب A):
+> 
+> 1. المحرك بيبدأ ينفذ `A`.
+> 2. بيلاقي `require('B')`، فبيوقف تنفيذ `A` ويروح ينفذ `B`.
+> 3. جوه `B` بيلاقي `require('A')`. هنا المحرك بيقول: "أنا مستحيل أبدأ `A` من الأول عشان معملش Infinite Loop".
+> 4. فبيعمل إيه؟ بيدي لـ `B` النسخة **غير المكتملة** (Uninitialized) من الـ `exports` بتاعة `A` (اللي هي غالباً أوبجيكت فاضي).
+> 5. `B` بيخلص ويرجع لـ `A` عشان يكمل. النتيجة إن `B` معاه داتا ناقصة من `A`!
+> 
+> **الحل السحري في ESM:** الـ ES Modules (اللي بتستخدم `import / export`) بتشتغل على 3 مراحل: Parsing، Instantiation، و Evaluation. في مرحلة الـ Instantiation، المحرك بيبني "خريطة" لكل الـ Imports والـ Exports قبل ما ينفذ سطر كود واحد، وبيعمل حاجة اسمها **Read-only Live Bindings** (روابط حية للقراءة فقط). ده معناه إن حتى لو في Circular Dependency، الموديولين بيبقوا شايفين "رابط" للميموري، ولما الكود يتنفذ، الرابط ده بيتملي بالداتا الصح، ومفيش أي موديول بيشوف داتا ناقصة.
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي ده بيفيدنا في هندسة السوفت وير؟
+> 
+> 6. **الـ Dependency Inversion & Tight Coupling:** وجود Circular Dependency هو جرس إنذار (Code Smell) معناه إن السيستم بتاعك Tightly Coupled (مرتبط ببعضه بشدة). كـ Architect، المفروض تفصل اللوجيك المشترك في موديول تالت (C)، وتخلي A و B يعتمدوا على C بدل ما يعتمدوا على بعض.
+>     
+> 7. **الـ Static Analysis (التحليل الثابت):** استخدام ESM بيحقق مبدأ الـ Fail-Fast. لأن الـ Imports بتبقى Static وموجودة في أول الفايل، المحرك بيقدر يبني الـ Dependency Graph (شجرة الاعتماديات) بشكل كامل، وده بيسمح بأدوات زي Webpack أو Rollup إنها تعمل Tree-Shaking وتمسح الكود اللي مش مستخدم.
+>     
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف الكارثة في CommonJS، وإزاي الـ Architect بيستخدم الـ ESM عشان يحل المشكلة جذرياً باستخدام الـ Live Bindings:
+> 
+> **❌ الكود السيء (CommonJS Circular Dependency Trap):**
+
+```
+// a.js (CommonJS)
+exports.loaded = false;
+const b = require('./b'); // Execution pauses here! Goes to b.js
+// By the time it comes back, 'b' has a partial copy of 'a'
+exports.loaded = true;
+
+// b.js (CommonJS)
+const a = require('./a'); // Cycle! Returns the UNFINISHED exports of 'a'
+exports.loaded = true;
+console.log("From b.js, a is:", a);
+// Output: From b.js, a is: { loaded: false } (INCOMPLETE STATE!)
+```
+
+> **✅ الكود المعماري (ESM Live Bindings Resolution):**
+
+```
+// a.js (ESM)
+import * as bModule from './b.js'; // Static resolution
+export let loaded = false;
+export const b = bModule;
+loaded = true; // The live binding updates instantly everywhere!
+
+// b.js (ESM)
+import * as aModule from './a.js'; // Static resolution
+export let loaded = false;
+export const a = aModule;
+loaded = true;
+
+// When executed, ESM guarantees that 'a' and 'b' have the FULL, updated picture
+// of each other thanks to read-only live bindings in the Memory Heap.
+```
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> عظيم جداً يا هندسة! إحنا كده قفلنا عالم الـ Creational Patterns (زي الـ Factory والـ Singleton) وفهمنا إزاي الموديولز بتتكريت وتتحمل في الميموري، وإزاي نهرب من فخ الـ Circular Dependencies.
+> 
+> دلوقتي هننتقل لنوع تاني من الباترنز: **Structural Design Patterns** (إزاي نركب الأوبجيكتات مع بعض عشان نضيف سلوكيات جديدة من غير ما نعدل الكود الأصلي).
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"في الجافاسكريبت، لو عندنا أوبجيكت `StackCalculator` جواه دالة `divide()`، والمبرمج نسي يهندل القسمة على صفر فبترجع `Infinity`. إزاي نقدر نستخدم الـ 'Proxy Design Pattern' عشان نعترض (Intercept) استدعاء الدالة دي، ونرمي Error صريح لو المقسوم عليه صفر، من غير ما نلمس الكود الأصلي بتاع الكلاس نهائياً؟ وإيه هو الفرق المعماري بين استخدام الـ 'Object Composition' وبين استخدام الـ 'Object Augmentation (Monkey Patching)' في بناء الـ Proxy ده؟"_
+
+---
