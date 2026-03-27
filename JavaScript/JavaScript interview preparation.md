@@ -1493,4 +1493,127 @@ console.log(enhancedCalculator.add()); // 4 + 3 = 7
 > 
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"تخيل إن عندنا `DB` Component بيعمل اتصال بقاعدة البيانات، والاتصال ده بياخد وقت (Asynchronous Initialization) حوالي 500 ملي ثانية. لو الـ Client حاول يعمل `db.query()` قبل ما الـ 500 ملي ثانية يخلصوا، السيرفر هيضرب Error! إزاي نقدر نستخدم الـ **State Pattern** مع الـ **Command Pattern** (وتحديداً تقنية الـ Pre-initialization Queues) عشان نعترض الـ Queries دي، نخزنها في طابور، وننفذها أوتوماتيك أول ما الداتابيز تبقى جاهزة، من غير ما نجبر المبرمج اللي بيستخدم الـ DB إنه يكتب `if (!connected)` قبل كل Query؟"_
 
-(انسخ الجزء ده في أوبسيديان، وقولي "كمل" عشان أجاوبلك على السؤال ده بنفسي ونبدأ في الجزء اللي بعده).
+---
+لما بيكون عندنا Component بيحتاج وقت عشان يعمل (Asynchronous Initialization) زي الاتصال بقاعدة البيانات، الحل الساذج هو إننا نكتب `if (!connected)` جوه كل دالة ونرمي Error، وده بيدمر الـ Developer Experience (DX). الحل المعماري العبقري هو دمج الـ **State Pattern** مع الـ **Command Pattern**. بنخلي الأوبجيكت بتاعنا يبدأ في حالة اسمها `QueuingState`، أي استدعاء لدالة `query` بيتحول لـ Command (دالة مغلفة بـ Promise) وبيتحط في طابور (Queue). أول ما الداتابيز تفتح، الأوبجيكت بيغير حالته لـ `InitializedState`، وبينفذ كل الـ Commands اللي في الطابور، وأي استدعاء جديد بيتنفذ فوراً. المبرمج اللي بيستخدم الكلاس بتاعك مش هيحس بأي تأخير ولا هيكتب أي `if` statements!
+
+خلينا نغوص في المعمارية دي بالتفصيل، لأنها من أجمل الـ Patterns في Node.js.
+
+## 8.1 The State & Command Patterns: Pre-initialization Queues
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيوهات التقيلة، هيجيبلك كلاس بيعمل Connect بـ Database، وبيقولك: _"المبرمجين في التيم بيشتكوا إنهم مضطرين يكتبوا لوجيك معقد عشان يستنوا الداتابيز تـ Connect قبل ما يبعتوا أي Query. كـ Senior Architect، إزاي تبني لهم API ذكي يستقبل الـ Queries بتاعتهم فوراً حتى لو الداتابيز لسه بتعمل Booting، وينفذها لوحده لما تخلص، زي ما مكتبة Mongoose بتعمل بالظبط؟"_
+> 
+> الهدف هنا يشوفك بتعرف تفصل الـ State عن الـ Interface، وهل بتقدر تستخدم الـ Closures عشان تبني Commands تتنفذ في المستقبل ولا لأ.
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في الـ C++ أو Java، لو كلاس مش جاهز لسه، إما بتعمل Blocking للـ Thread بالكامل (وده مستحيل في Node.js)، أو بترمي Exception صريح للمستخدم وتجبره يعمل `try/catch` أو `while(!ready)`.
+> 
+> في Node.js، إحنا بنستخدم نمطين مع بعض لحل الأزمة دي بشياكة:
+> 
+> **1. الـ Command Pattern:** بدل ما ننفذ الـ Logic فوراً، إحنا بنغلف "نية التنفيذ" (Intent) جوه دالة (Command) وبنحطها في Array (Queue). الدالة دي معاها كل الداتا اللي محتاجاها بفضل الـ Closures، ولما ييجي وقتها، هننادي عليها.
+> 
+> **2. الـ State Pattern:** الأوبجيكت نفسه مابيكونش فيه اللوجيك! الأوبجيكت بيعمل Delegation (تفويض) للوجيك ده لـ State Object داخلي. الأوبجيكت بيبدأ بـ `QueuingState` (اللي بيعمل Command Pattern ويخزن الطلبات)، وأول ما الاتصال ينجح، بنبدل الـ State دي بـ `InitializedState` (اللي بيبعت الـ Query للداتابيز مباشرة).
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي الدمج ده بيطبق الـ SOLID Principles بعبقرية؟
+> 
+> 1. **الـ Single Responsibility Principle (SRP):** كلاس الـ `QueuingState` مسؤوليته الوحيدة هي الطابور. كلاس الـ `InitializedState` مسؤوليته الوحيدة هي التنفيذ الفعلي. الأوبجيكت الأساسي مسؤوليته بس إنه يبدل بينهم.
+> 2. **الـ State Pattern & Polymorphism:** الأوبجيكت بيبان للمستخدم (Client) كأنه بيغير الكلاس بتاعه في الـ Runtime (Dynamically changing behavior).
+> 3. **الـ Developer Experience (DX):** مكتبة **Mongoose** (الخاصة بـ MongoDB) مبنية بالكامل على الباترن ده. تقدر تكتب `User.find()` في الكود بتاعك قبل حتى ما تعمل `mongoose.connect()`، والمكتبة هتخزن طلبك وتنفذه بهدوء أول ما الكونكشن يفتح!
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف الكود اللي بيعذب المبرمجين، وإزاي الـ Architect بيحوله لسحر باستخدام الـ State Pattern:
+> 
+> **❌ الكود السيء (Local Initialization Check):**
+
+```
+// Junior Code: Forces the client to handle the connection delay!
+class DBBad {
+    constructor() { this.connected = false; }
+    connect() {
+        setTimeout(() => { this.connected = true; }, 500);
+    }
+    async query(queryString) {
+        // The client must catch this error or write their own waiting logic!
+        if (!this.connected) {
+            throw new Error('Not connected yet');
+        }
+        console.log(`Query executed: ${queryString}`);
+    }
+}
+```
+
+> **✅ كود الـ Architect (State + Command Pattern via Pre-initialization Queues):**
+
+```
+// 1. The Initialized State (Executes directly)
+class InitializedState {
+    async query(queryString) {
+        console.log(`Query executed directly: ${queryString}`);
+        return "Data from DB";
+    }
+}
+
+// 2. The Queuing State (Builds Commands and queues them)
+class QueuingState {
+    constructor(db) {
+        this.db = db;
+        this.commandsQueue = [];
+    }
+    async query(queryString) {
+        console.log(`Request queued: ${queryString}`);
+        // Command Pattern: Encapsulate the request and return a Promise
+        return new Promise((resolve, reject) => {
+            const command = () => {
+                // When executed, it forwards to the NEW state
+                this.db.query(queryString).then(resolve, reject);
+            };
+            this.commandsQueue.push(command);
+        });
+    }
+}
+
+// 3. The Context Object (The Wrapper)
+class DBArchitect {
+    constructor() {
+        // Starts with the Queuing state!
+        this.state = new QueuingState(this);
+    }
+
+    async query(queryString) {
+        // Delegation to the current state
+        return this.state.query(queryString);
+    }
+
+    connect() {
+        setTimeout(() => {
+            // Swap the state!
+            const oldState = this.state;
+            this.state = new InitializedState();
+
+            // Execute all queued commands!
+            oldState.commandsQueue.forEach(command => command());
+        }, 500);
+    }
+}
+
+// Usage: The client doesn't care about the connection delay!
+const db = new DBArchitect();
+db.query("SELECT * FROM users").then(console.log); // Queued...
+db.connect();
+// After 500ms -> "Query executed directly: SELECT * FROM users"
+```
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> عظيم جداً! إحنا كده استخدمنا الـ Patterns عشان نخفي تعقيدات الـ Async Initialization عن الكلاينت ونبني API سلس جداً.
+> 
+> بس تخيل معايا سيناريو تاني في بيئة الـ Production: لو عندنا API بيحسب إجمالي المبيعات (`totalSales`)، والعملية دي تقيلة جداً على الداتابيز. وفجأة، 100 مستخدم فتحوا الداش بورد في نفس الثانية، وطلبوا نفس الـ API بنفس الباراميترز!
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي (Advanced Async Recipes):** _"لو طلبنا نفس الـ Query التقيلة دي 100 مرة في نفس اللحظة.. إزاي نقدر نستخدم قوة الـ Promises في الجافاسكريبت عشان نطبق نمط اسمه 'Asynchronous Request Batching'؟ إزاي نخلي الـ 100 مستخدم دول يركبوا على نفس الـ Promise (Piggybacking) بحيث الداتابيز تتنفذ مرة واحدة بس، وكل الـ 100 يوزر يوصلهم الرد في نفس اللحظة بدون ما نستخدم Traditional Caching زي Redis؟ وإزاي ده بيعالج مشكلة الـ Race Conditions في الـ High Load؟"_
+
+(انسخ الجزء ده في أوبسيديان، ولما تخلص اكتب "كمل" عشان أجاوبلك على السؤال ده بنفسي ونبدأ في الجزء اللي بعده).
