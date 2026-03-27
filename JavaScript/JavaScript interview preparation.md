@@ -780,8 +780,6 @@ console.log(updatedCart);      // ['Laptop', 'Mouse', 'Keyboard']
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"في الكود اللي فات إحنا استخدمنا الـ Spread Operator `[...cart]` عشان نعمل Copy ونحافظ على الـ Immutability. لكن لو الـ Array دي جواها Objects معقدة ومتداخلة (Nested Objects)، ليه الـ Spread Operator بيفشل في حمايتها وبيعمل حاجة اسمها Shallow Copy؟ وإزاي نقدر نعمل Deep Copy حقيقي في الجافاسكريبت الحديثة بدون ما نستخدم مكتبات خارجية زي Lodash، وإيه دور دالة `structuredClone` في الموضوع ده؟"_
 
 ---
-أهلاً بيك يا هندسة. أنا مستمر في وضع "الاستقبال فقط"، وهجاوبك فوراً على السؤال المعماري العميق اللي قفلنا بيه الجزء اللي فات:
-
 لما بنقول إن الـ Functions في الجافاسكريبت تعتبر **First-Class Citizens** (مواطنين من الدرجة الأولى)، ده معناه معمارياً إن الدالة بتتعامل معاملة أي Variable عادي جداً؛ تقدر تخزنها في متغير، تباصيها كـ Argument لدالة تانية، أو ترجعها كـ Return Value من دالة تالتة. القدرة دي هي اللي بتسمح لنا نبني الـ **Higher-Order Functions (HOF)**، وهي أي دالة بتستقبل دالة تانية كـ Input (بنسميها Callback) أو بترجع دالة كـ Output. دوال زي `map` و `filter` بتشتغل تحت الكبوت بإنها بتخفي عنك تفاصيل الـ Loop (الـ How)، وبتطلب منك تباصي لها دالة صغيرة بتشرح الـ Business Logic بتاعك (الـ What). ده هو التطبيق الحرفي لمبدأ **Open/Closed Principle**، إنت بتغير السلوك من غير ما تلمس الكود الأصلي للوب!
 
 خلينا نغوص في المعمارية دي بالتفصيل.
@@ -819,7 +817,7 @@ console.log(updatedCart);      // ['Laptop', 'Mouse', 'Keyboard']
 > 
 > **❌ كود الـ Junior (Imperative & Hardcoded - Violates OCP):**
 
-```
+```js
 // Junior Code: Hardcoded logic inside the loop.
 // If a new condition is needed, we have to duplicate the entire function!
 function getAdults(users) {
@@ -836,7 +834,7 @@ function getAdults(users) {
 
 > **✅ كود الـ Architect (Declarative HOF & Strategy Pattern):**
 
-```
+```js
 // Architect Code: The HOF extracts the iteration logic (The HOW).
 function filterData(data, strategyFn) {
     const result = [];
@@ -866,4 +864,3 @@ const itStaff = filterData(usersArray, isITDepartment);
 > 
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"لو عندي دالة معقدة بتاخد 3 باراميترز `(a, b, c)`، إزاي أقدر أحولها لسلسلة من الدوال كل واحدة فيهم بتاخد باراميتر واحد بس `(a)(b)(c)` عن طريق الـ Closures؟ وإزاي مفهوم الـ 'Function Composition' (الـ `pipe` أو `compose`) بيعالج مشكلة الـ Nested Functions العميقة زي `a(b(c(x)))` عشان نبني Data Pipelines نظيفة ومقروءة؟"_
 
-(انسخ الجزء ده في أوبسيديان، ولما تخلص اكتب "كمل" عشان أجاوبلك على السؤال ده بنفسي ونبدأ في الجزء اللي بعده).
