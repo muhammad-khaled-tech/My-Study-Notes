@@ -1033,3 +1033,112 @@ async function loginUserArchitect(req, res) {
 > 
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"بما إن Node.js مبني بالكامل على فكرة الـ Events (Event-Driven Architecture).. إزاي الكلاس اللي اسمه `EventEmitter` بيطبق الـ 'Observer Design Pattern'؟ وليه يعتبر من الخطر جداً (Anti-Pattern معروف باسم Unleashing Zalgo) إننا نعمل `emit` لـ Event مرة بشكل متزامن (Synchronous) ومرة بشكل غير متزامن (Asynchronous) من نفس الـ Component بناءً على كاش مثلاً؟ وإزاي ده بيدمر توقعات الـ Client؟"_
 
+---
+
+الـ `EventEmitter` في Node.js هو التطبيق العملي (Native Implementation) للـ **Observer Design Pattern**. بيسمح لأوبجيكت (Subject) إنه يبلغ مجموعة من الـ Listeners (Observers) لما يحصل حدث معين. لكن المشكلة المعمارية الخطيرة المعروفة بـ "Unleashing Zalgo" بتحصل لما الـ Component يبعت Event بشكل متزامن (Synchronous) في حالات (زي لو الداتا موجودة في الكاش)، وبشكل غير متزامن (Asynchronous) في حالات تانية (زي لو بيقرأها من الداتابيز). ده بيدمر توقعات الـ Client، لأن لو الـ Event طلع بشكل متزامن، هيضرب (Fire) قبل ما الـ Client يلحق يعمل تسجيل للـ Listener بتاعه بـ `on('event')`، وبالتالي الـ Event هيضيع في الهوا! الحل دايماً إننا نوحد السلوك ونخليه Asynchronous باستخدام `process.nextTick()`.
+
+خلينا نغوص في المعمارية دي بالتفصيل ونبدأ في **Module 6: Node.js Core Architecture**.
+
+## 6.1 The Event Emitter: Implementing the Observer Design Pattern natively
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيوهات التقيلة، مش هيقولك "إزاي بتستخدم `EventEmitter`؟". هيجيبلك كلاس بيورث من `EventEmitter`، وجواه Method بتدور على داتا، ولو الداتا دي موجودة في الكاش بيبعت الـ Event فوراً من غير ما يقرأ من الداتابيز، ويسألك:
+> 
+> _"ليه الكود ده بيشتغل صح أول مرة، ولما بننادي عليه تاني مرة (والداتا في الكاش) الـ Listener مابيطبعش حاجة؟ وإيه هو الـ Zalgo Anti-Pattern؟ وإزاي نحمي السيرفر من الـ Memory Leaks المرتبطة بالـ EventEmitter اللي ممكن توقع Node.js؟"_
+> 
+> الهدف هنا إنه يتأكد إنك فاهم الـ Event Loop صح، وعارف إن الـ `EventEmitter` مش سحر، وإنه بيعتمد على توقيت التنفيذ (Execution Timing).
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في الـ OOP التقليدي (C++/Java)، الـ Observer Pattern بيتبني عن طريق Interfaces. الـ `Subject` بيحتفظ بليستة من الـ `Observers`، ولما يحصل حدث، بيلف عليهم (Loop) وينادي Method معينة جواهم (زي `update()`).
+> 
+> في Node.js، الباترن ده مبني جوه الـ Core عن طريق كلاس `EventEmitter`. أي كلاس يقدر يورث منه بـ `extends EventEmitter` ويبقى قادر يعمل `emit` لأحداث، والـ Clients يعملوا `on` عشان يسمعوا الأحداث دي.
+> 
+> **فخ الـ Zalgo والـ Synchronous Events:** لما بتعمل `this.emit('event')`، الـ `EventEmitter` بيلف على كل الـ Listeners وينفذهم **في نفس اللحظة (Synchronously)**. لو إنت كاتب كود بيعمل `emit` قبل ما الـ Client يلحق يكتب سطر الـ `.on('event')` (لأن الكود المتزامن بيخلص قبل ما ننزل للسطر اللي بعده)، الـ Event هيتفجر في الفراغ ومحدش هيسمعه.
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي ده بيفيدنا كـ Architects؟
+> 
+> 1. **الـ Strict Predictability (التوقع الصارم):** الـ API بتاعك لازم يكون يا إما 100% Synchronous يا إما 100% Asynchronous. الخلط بينهم (Zalgo) بيكسر مبدأ الـ **Contract** بين الـ Component والـ Client، وبيخلق Bugs بتظهر وتختفي بشكل عشوائي (Race Conditions).
+>     
+> 2. **الـ Memory Management (إدارة الميموري):** الـ `EventEmitter` هو أكبر مسبب للـ Memory Leaks في Node.js. لما بتعمل `.on('event', callback)`، الـ `EventEmitter` بيحتفظ بـ Reference للـ Callback ده (واللي هو في الغالب Closure ماسك في متغيرات كبيرة). لو الـ Event ده مربوط بـ Request، ونسيت تعمل `removeListener` بعد ما الـ Request يخلص، الـ Closure هيفضل عايش للأبد في الـ Heap، والميموري هتتملي لحد ما السيرفر يقع (Out of Memory). عشان كده الـ Architect الشاطر بيستخدم دايماً `once` لو هيسمع الحدث مرة واحدة، أو بينضف وراه بـ `removeListener`.
+>     
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف كود Junior بيعمل Unleash لـ Zalgo، وكود Architect بيحمي الـ Execution Flow عن طريق الـ Asynchronous Deferral:
+> 
+> **❌ كود الـ Junior (Zalgo Anti-Pattern - Synchronous Emit):**
+
+```js
+import { EventEmitter } from 'events';
+
+class CacheReaderBad extends EventEmitter {
+    constructor() {
+        super();
+        this.cache = { fileA: "Cached Data" }; // Data already in memory
+    }
+
+    read(file) {
+        if (this.cache[file]) {
+            // ❌ ZALGO TRAP: Synchronous emit!
+            // The event fires IMMEDIATELY before the function even returns.
+            this.emit('data', this.cache[file]);
+        } else {
+            // Asynchronous emit (Simulating a database read)
+            setTimeout(() => this.emit('data', "New Data"), 100);
+        }
+    }
+}
+
+const reader = new CacheReaderBad();
+// Calling read() triggers the synchronous emit immediately.
+reader.read('fileA');
+
+// ❌ TOO LATE! The event already fired in the previous line.
+// This listener will NEVER catch the 'data' event.
+reader.on('data', data => console.log(data));
+```
+
+> **✅ كود الـ Architect (Taming Zalgo with process.nextTick):**
+
+```js
+import { EventEmitter } from 'events';
+
+class CacheReaderArchitect extends EventEmitter {
+    constructor() {
+        super();
+        this.cache = { fileA: "Cached Data" };
+    }
+
+    read(file) {
+        if (this.cache[file]) {
+            // ✅ ARCHITECT CODE: Forcing asynchronous behavior.
+            // process.nextTick defers the emit to the Microtask queue.
+            // This gives the outer scope time to attach the .on() listener!
+            process.nextTick(() => this.emit('data', this.cache[file]));
+        } else {
+            setTimeout(() => this.emit('data', "New Data"), 100);
+        }
+    }
+}
+
+const readerSafe = new CacheReaderArchitect();
+readerSafe.read('fileA');
+
+// ✅ PERFECT! The current Call Stack finishes, this listener is registered,
+// and THEN the Microtask queue executes the emitted event.
+readerSafe.on('data', data => console.log("Safe:", data));
+```
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> عظيم جداً، إحنا كده فهمنا إزاي الـ `EventEmitter` بيشتغل، وإزاي نحمي السيرفر من فخ الـ Zalgo والـ Memory Leaks، وبقينا قادرين نبني Event-Driven Components نظيفة.
+> 
+> بما إننا نقدر نبعت داتا عن طريق الـ Events.. تخيل إننا بنقرأ فايل حجمه 5 جيجا وعايزين نبعته للـ Client.
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"لو استخدمنا `fs.readFile` العادية اللي بتقرأ الفايل كله وتحطه في الميموري مرة واحدة.. إيه اللي هيحصل للـ V8 Heap Memory؟ وإيه هو الـ Buffer أصلاً وعلاقته بالـ C++؟ وإزاي الـ Streams في Node.js بتستخدم الـ EventEmitter عشان تقسم الفايل الضخم ده لقطع صغيرة (Chunks) وتبعتها للـ Client بكفاءة من غير ما السيرفر يقع؟"_
+
+---
