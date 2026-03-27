@@ -1616,4 +1616,231 @@ db.connect();
 > 
 > **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي (Advanced Async Recipes):** _"لو طلبنا نفس الـ Query التقيلة دي 100 مرة في نفس اللحظة.. إزاي نقدر نستخدم قوة الـ Promises في الجافاسكريبت عشان نطبق نمط اسمه 'Asynchronous Request Batching'؟ إزاي نخلي الـ 100 مستخدم دول يركبوا على نفس الـ Promise (Piggybacking) بحيث الداتابيز تتنفذ مرة واحدة بس، وكل الـ 100 يوزر يوصلهم الرد في نفس اللحظة بدون ما نستخدم Traditional Caching زي Redis؟ وإزاي ده بيعالج مشكلة الـ Race Conditions في الـ High Load؟"_
 
-(انسخ الجزء ده في أوبسيديان، ولما تخلص اكتب "كمل" عشان أجاوبلك على السؤال ده بنفسي ونبدأ في الجزء اللي بعده).
+---
+
+لما 100 مستخدم يطلبوا نفس الـ API التقيل في نفس اللحظة (High Load)، لو استخدمنا Caching عادي (زي Redis) والبيانات مكنتش في الكاش (Cache Miss)، الـ 100 طلب هيروحوا للداتابيز في نفس الوقت، وده بيعمل مصيبة اسمها "Cache Stampede". الحل العبقري في Node.js هو الـ **Asynchronous Request Batching** أو الـ **Piggybacking** (الركوب على ظهر الطلب). الفكرة بتعتمد على إن الـ Promise بيمثل "قيمة مستقبلية" (Future Value)، ونقدر نخلي أكتر من جهة تعمل `await` لنفس الـ Promise. بنعمل Map لتخزين الـ Promises الشغالة حالياً، ولو جه طلب جديد لنفس الداتا والـ Promise لسه مخلصش، بنرجعله نفس الـ Promise بدل ما نفتح اتصال جديد بالداتابيز. كده الـ 100 يوزر هيركبوا على نفس الـ Promise، والداتابيز هتتنفذ مرة واحدة بس، والكل هيستلم النتيجة في نفس اللحظة!
+
+خلينا نغوص في المعمارية دي بالتفصيل لأنها بتفرق بين الـ Coder العادي والـ Architect التقيل.
+
+## 8.2 Asynchronous Request Batching: The Piggybacking Pattern
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيو التقيل، الانترفيور هيجيبلك دالة بتعمل عملية حسابية أو Query تقيلة جداً `totalSales()` بتاخد 500 ملي ثانية، ويقولك: _"لو السيرفر جاله 1000 طلب في نفس الثانية للدالة دي، السيرفر هيقع أو الداتابيز هتضرب. لو قلتلي هستخدم Redis Cache هقولك إن في أول ثانية الكاش بيكون فاضي، والـ 1000 طلب هيضربوا الداتابيز برضه. إزاي تحمي الداتابيز من الـ Concurrent Requests دي باستخدام الـ Native Promises من غير أي مكاتب خارجية ومن غير ما تعطل الـ Event Loop؟"_
+> 
+> الهدف هنا يشوفك فاهم طبيعة الـ Promise كـ Object في الميموري، وإنك تقدر تستخدمه كـ "نقطة تجمع" للطلبات المتزامنة.
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في لغات الـ Multi-threading زي Java أو C++، لو عندك 100 Thread عايزين يقرأوا نفس الداتا، هتضطر تستخدم Locks و Mutexes عشان توقف 99 Thread وتخلي واحد بس يقرأ الداتا ويكتبها في الـ Shared Memory، وده بيهدر موارد الـ CPU جداً.
+> 
+> في Node.js، إحنا بنستخدم ميكانيزم الـ **Piggybacking** (باترن الركوب):
+> 
+> 1. بنعمل `Map` في الميموري نسميه `runningRequests`.
+> 2. لما ييجي طلب لمنتج معين، بنبص في الـ Map. لو مفيش Promise شغال للمنتج ده، بننادي على دالة الداتابيز اللي بترجع Promise، ونحفظ الـ Promise ده جوه الـ Map.
+> 3. لو في نفس اللحظة (قبل ما الداتابيز ترد)، جه 99 طلب تانيين لنفس المنتج.. هيبصوا في الـ Map هيلاقوا الـ Promise موجود، فهنرجعلهم نفس الـ Promise!
+> 4. الـ 99 طلب كده بقوا "راكبين" (Piggybacking) على الطلب الأول.
+> 5. أول ما الداتابيز ترد، الـ Promise هيعمل `resolve`، والـ 100 طلب هيستلموا النتيجة فوراً في نفس اللحظة، وبعدها نمسح الـ Promise من الـ Map عشان نخلي الميموري نظيفة.
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي ده بيحقق مبادئ هندسة البرمجيات المعمارية؟
+> 
+> 6. **الـ Proxy Design Pattern:** إحنا مش هنلمس دالة `totalSales()` الأصلية نهائياً. إحنا هنبني Proxy Function بتغلف الدالة الأصلية وتضيف عليها لوجيك الـ Batching. ده بيحقق مبدأ الـ **Open/Closed Principle**.
+> 7. **الـ Resource Optimization:** الباترن ده بيوفر استهلاك الـ Connections بتاعة الداتابيز والـ CPU بشكل مرعب في أوقات الـ High Load، من غير ما نضطر نبني Cache Management معقد وندخل في مشاكل الـ Cache Invalidation.
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف الكود السيء اللي بيضرب الداتابيز مع كل طلب، وكود الـ Architect اللي بيستخدم الـ Proxy والـ Map للـ Batching:
+> 
+> **❌ الكود السيء (No Batching - DB Overload):**
+
+```
+// totalSales.js (The raw, expensive API)
+export async function totalSalesRaw(product) {
+    console.log(`Executing expensive DB query for ${product}...`);
+    // Simulating a heavy DB query taking 500ms
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return 10000; // Fake total
+}
+
+// In app.js:
+// 100 concurrent requests will trigger 100 expensive queries!
+for(let i=0; i<100; i++) {
+    totalSalesRaw('laptop');
+}
+```
+
+> **✅ كود الـ Architect (The Batching Proxy):**
+
+```
+// totalSalesBatch.js
+import { totalSalesRaw } from './totalSales.js';
+
+// 1. The State: Map to hold currently running Promises
+const runningRequests = new Map();
+
+export function totalSales(product) {
+    // 2. Piggybacking: If a request is already running, return its Promise!
+    if (runningRequests.has(product)) {
+        console.log('Batching (Piggybacking) onto running request...');
+        return runningRequests.get(product);
+    }
+
+    // 3. No running request? Launch the actual DB query
+    const resultPromise = totalSalesRaw(product);
+
+    // 4. Store it in the Map for subsequent concurrent requests
+    runningRequests.set(product, resultPromise);
+
+    // 5. Clean up the Map as soon as the request completes (success or fail)
+    resultPromise.finally(() => {
+        runningRequests.delete(product);
+    });
+
+    return resultPromise;
+}
+
+// In app.js:
+// 100 concurrent requests will trigger ONLY ONE expensive query!
+for(let i=0; i<100; i++) {
+    totalSales('laptop');
+}
+```
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> عظيم جداً يا هندسة! إحنا كده استخدمنا الـ Promises عشان ندمج الطلبات المتزامنة ونحمي السيرفر من غير ما نستهلك الميموري في كاش دائم.
+> 
+> لكن، بما إننا شغالين Asynchronous، ساعات بنحتاج **نلغي** العملية اللي شغالة. في الـ Multi-threading إنت ببساطة بتقفل الـ Thread (Terminate). بس في بيئة Single-threaded زي Node.js، الـ Promises مفيهاش دالة `cancel()` أصلية!
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي:** _"لو اليوزر داس على زرار بيعمل Download لريبورت تقيل (Async Operation)، وبعدين غير رأيه وقفل الصفحة.. إزاي نقدر نعمل 'Cancelation' للـ Async Task دي؟ وإزاي الـ 'Generators' (اللي بتستخدم `yield`) تعتبر هي الحل المعماري المثالي لبناء 'Supervisor' يقدر يوقف تنفيذ الدالة من بره ويرمي `CancelError` من غير ما نسرب ميموري؟"_
+
+---
+
+في لغات زي C++ أو Java اللي شغالة بـ Multi-threading، لو اليوزر لغى العملية إنت ببساطة بتعمل Terminate للـ Thread. لكن في Node.js إحنا شغالين على Single Thread، والـ Promises بطبيعتها بتمثل "قيمة مستقبلية" ملهاش دالة `cancel()` أصلية. عشان نحل ده معمارياً بدون ما نسرب ميموري أو نلوث الـ Business Logic، بنستخدم الـ **Generators** (`function*` و `yield`). الجينيريتورز بتسمح لنا نوقف (Suspend) تنفيذ الدالة. فبنبني دالة بتشتغل كـ **Supervisor** (مشرف) بتاخد الجينيريتور ده، وبتتحكم هي في إمتى تعمله Resume (بـ `.next()`)، ولو اليوزر طلب إلغاء، الـ Supervisor بيمتنع عن عمل Resume وبيحقن Error جوه الجينيريتور باستخدام `generatorObject.throw()`، وده بيوقف العملية فوراً وينضف الميموري بأمان تام!
+
+خلينا نغوص في المعمارية دي بالتفصيل عشان دي من أمتع أجزاء المنهج.
+
+## 8.3 Canceling Asynchronous Operations: Generators as Supervisors
+
+> [!warning] 1. 🕵️ The Interview Trap
+> 
+> في الانترفيوهات التقيلة، هيجيبلك كود فيه `await fetch(...)` وبعدين `await processData(...)`، ويقولك: _"لو الداتا دي بتاخد 10 ثواني عشان تجهز، واليوزر في الثانية التانية داس 'Cancel'.. إزاي توقف استكمال الدالة دي فوراً؟ لو قلتلي هعمل متغير `isCanceled` وأشيك عليه بعد كل سطر `await`، هقولك إنت كده دمرت الـ Clean Code وخلطت الـ Control Flow بالـ Business Logic. إزاي نبني Wrapper ذكي يفصل اللوجيك ده تماماً عن طريق الـ Generators؟"_
+> 
+> الهدف هنا إنه يتأكد إنك فاهم إن الـ Promises مابتقبلش الإلغاء، وإنك بتعرف تستخدم الـ Generators كأداة معمارية مش مجرد Syntax.
+
+> [!info] 2. 🧠 The Core Concept (OOP Bridge)
+> 
+> في الـ OOP التقليدي، إحنا بنستخدم نمط اسمه **Cancellation Token**، بنمرر أوبجيكت لكل دالة عشان تتأكد منه، وده بيعمل تلوث للكود (Boilerplate).
+> 
+> الجافاسكريبت قدمت الـ **Generators** (`function*`). الدالة دي مابتتنفذش مرة واحدة، دي بترجعلك Object وتقف. إنت اللي بتقولها كملي تنفيذ لحد الـ `yield` اللي جاي عن طريق دالة `next()`.
+> 
+> الفكرة المعمارية هنا إننا هنستبدل الـ `async/await` بـ `function* / yield`. وبدل ما الـ Engine هو اللي يمشي الدالة، إحنا هنبني دالة **Supervisor** هي اللي تستقبل الجينيريتور وتمشيه خطوة خطوة. بعد كل خطوة (بعد كل Promise ما يخلص)، الـ Supervisor هيسأل نفسه: "هل اليوزر طلب إلغاء؟".
+> 
+> - لو لأ: يدي النتيجة للجينيريتور ويقوله `next()`.
+> - لو آه: يرمي Error جوه الجينيريتور بـ `throw(new CancelError())` عشان يوقفه تماماً وميكملش باقي الخطوات!
+
+> [!success] 3. 🏗️ The Architecture Link
+> 
+> إزاي ده بيطبق مبادئ الـ SOLID؟
+> 
+> 1. **الـ Single Responsibility Principle (SRP):** الدالة الأصلية (الـ Generator) بتركز بس على تسلسل العمليات (الداتا بتيجي، بتتعالج، بتتحفظ). دالة الـ Supervisor هي المسؤولة حصرياً عن فحص حالة الـ "الإلغاء". فصلنا مسؤولية الـ Business Logic عن مسؤولية الـ Flow Control.
+> 2. **الـ Decorator Pattern:** الـ Supervisor بيعمل Wrap للدالة الأصلية، وبيزود عليها قدرة جديدة (الـ Cancelability) من غير ما يعدل في الكود الداخلي بتاعها، وده بيحقق الـ Open/Closed Principle.
+
+> [!example] 4. 💻 The Code Refactoring
+> 
+> خلينا نشوف كود Junior بيلوث البيزنس لوجيك عشان يقدر يكنسل العملية، وكود Architect بيبني Supervisor ذكي باستخدام الـ Generators:
+> 
+> **❌ كود الـ Junior (Manual Checking - Boilerplate & Dirty Code):**
+
+```
+// The Junior mixes Business Logic with Cancelation Logic!
+async function processDataBad(cancelObj) {
+    const resA = await asyncRoutine('A');
+    console.log(resA);
+    // Boilerplate: Manual check after every single async step!
+    if (cancelObj.cancelRequested) throw new CancelError();
+
+    const resB = await asyncRoutine('B');
+    console.log(resB);
+    // Boilerplate again!
+    if (cancelObj.cancelRequested) throw new CancelError();
+
+    return "Done";
+}
+```
+
+> **✅ كود الـ Architect (Generator Supervisor - Clean & Decoupled):**
+
+```
+import { CancelError } from './cancelError.js';
+
+// 1. The Architect builds a reusable Supervisor (Decorator)
+function createAsyncCancelable(generatorFunction) {
+    return function asyncCancelable(...args) {
+        const generatorObject = generatorFunction(...args);
+        let cancelRequested = false;
+
+        // The exposed cancel API
+        function cancel() { cancelRequested = true; }
+
+        // The Controller Loop
+        const promise = new Promise((resolve, reject) => {
+            async function nextStep(prevResult) {
+                // Centralized check! The business logic doesn't know about this.
+                if (cancelRequested) {
+                    return reject(new CancelError());
+                }
+                if (prevResult.done) {
+                    return resolve(prevResult.value);
+                }
+                try {
+                    // Advance the generator to the next yield
+                    nextStep(generatorObject.next(await prevResult.value));
+                } catch (err) {
+                    try {
+                        // Inject error into the generator to stop execution cleanly
+                        nextStep(generatorObject.throw(err));
+                    } catch (err2) { reject(err2); }
+                }
+            }
+            nextStep({});
+        });
+
+        // Return both the promise and the cancel function
+        return { promise, cancel };
+    }
+}
+
+// 2. The Business Logic (Pure, no cancelation checks!)
+const cancelableTask = createAsyncCancelable(function* () {
+    const resA = yield asyncRoutine('A');
+    console.log(resA);
+    const resB = yield asyncRoutine('B');
+    console.log(resB);
+    return "Done";
+});
+
+// 3. Usage
+const { promise, cancel } = cancelableTask();
+
+// If the user clicks cancel after 100ms:
+setTimeout(() => cancel(), 100);
+
+promise.catch(err => {
+    if (err instanceof CancelError) console.log('Function explicitly canceled!');
+});
+```
+
+_(ملحوظة معمارية: في الـ Production الحقيقي، بنستخدم مكتبات زي `caf` - Cancelable Async Flows اللي مبنية على نفس الباترن ده بالظبط)._
+
+> [!question] 5. 🔗 The Bridge & Mock Question
+> 
+> عظيم جداً يا هندسة! إحنا كده قفلنا ملف الـ Async Flow تماماً، وعرفنا إزاي ندير العمليات المتزامنة، نعملها Batching، ونعملها Cancelation وكل ده على Single Thread بدون ما نعطل الـ Event Loop.
+> 
+> لكن، طول ما إحنا بنعمل عمليات I/O (زي الداتابيز أو الـ API)، الـ Event Loop شغال زي الفل لأن `libuv` شايل الحمل.
+> 
+> **سؤال الانترفيو الخبيث اللي بيمهد لدرسنا الجاي (CPU-Bound Tasks):** _"تخيل إننا مطلوب مننا نبني خوارزمية بتحسب Hashsum معقد جداً (بتاخد 10 ثواني من الـ CPU المتواصل). لو حطينا الكود ده في Node.js، السيرفر هيقف تماماً (Block) لمدة 10 ثواني، وأي يوزر تاني بيحاول يعمل Login هيلاقي السيرفر واقع! معمارياً.. إزاي نقدر نحل مشكلة الـ CPU-Bound Tasks دي؟ إيه الفرق المعماري الجوهري بين حل الـ 'Interleaving with setImmediate'، وحل الـ 'Child Processes (fork)'، والحل الأحدث بـ 'Worker Threads'؟ وإزاي نبني Process Pool כדי نحمي السيرفر من هجمات الـ DoS (Denial of Service)؟"_
+
+(انسخ الجزء ده في أوبسيديان، وقولي "كمل" عشان أجاوبلك على السؤال ده بنفسي ونبدأ في الجزء اللي بعده).
