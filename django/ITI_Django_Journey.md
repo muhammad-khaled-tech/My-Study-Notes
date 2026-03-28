@@ -373,14 +373,46 @@ USE_I18N = True
 USE_TZ = True
 ```
 
-> [!bug] 🕵️ فخ الانترفيو
-> **السؤال:** "إيه الفرق بين `STATIC_URL` و `STATICFILES_DIRS` و `STATIC_ROOT`؟"
+> [!warning]+ 🕵️ فخ الانترفيو: ثلاثية الـ Static Files
+> الفرق بين الإعدادات دي هو الفرق بين كود "شغال على جهازك" وكود "شغال في الحقيقة".
 >
-> - **`STATIC_URL`**: الـ URL prefix اللي بيظهر في الـ browser للـ static files (زي `/static/style.css`).
-> - **`STATICFILES_DIRS`**: folders بتدور Django فيها على الـ static files أثناء الـ Development.
-> - **`STATIC_ROOT`**: المكان اللي `collectstatic` بيجمع كل الـ static files فيه للـ Production.
+> ### 📑 جدول الفروقات السريع
+> | الإعداد | الوظيفة الأساسية | البيئة (Environment) |
+> | :--- | :--- | :--- |
+> | **`STATIC_URL`** | العنوان اللي بيظهر في المتصفح (Prefix) | Development & Production |
+> | **`STATICFILES_DIRS`** | الأماكن اللي Django بيدور فيها على ملفاتك | Development (Only) |
+> | **`STATIC_ROOT`** | المخزن النهائي اللي بيتجمع فيه كل شيء | Production (Only) |
 >
-> الفخ: في الـ Development، `STATIC_ROOT` مش لازم. في الـ Production، `STATICFILES_DIRS` مش بيشتغل لوحده — لازم تعمل `collectstatic`.
+> ---
+> ### ⚙️ الميكانيزم الهندسي (The Workflow)
+> في الـ **Development**، الـ Server بتاع Django ذكي كفاية إنه يروح للـ `STATICFILES_DIRS` ويجيب الملفات مباشرة. 
+> لكن في الـ **Production**، السيرفر (زي Nginx) ملوش دعوة بـ Django، هو محتاج "فولدر واحد" فيه كل حاجة، وهنا بيجي دور **`STATIC_ROOT`**.
+>
+> ```mermaid
+> %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#fff3e0', 'lineColor': '#e65100'}}}%%
+> graph LR
+>     subgraph Dev ["بيئة التطوير (Development)"]
+>         DIR["📁 STATICFILES_DIRS"]:::devStyle
+>     end
+> 
+>     subgraph Tools ["الأداة السحرية"]
+>         CMD["⚡ python manage.py collectstatic"]:::cmdStyle
+>     end
+> 
+>     subgraph Prod ["بيئة التشغيل (Production)"]
+>         ROOT["📦 STATIC_ROOT"]:::prodStyle
+>     end
+> 
+>     DIR ==> CMD ==> ROOT
+> 
+>     classDef devStyle fill:#e3f2fd,stroke:#1565c0,color:#1565c0;
+>     classDef cmdStyle fill:#fff9c4,stroke:#fbc02d,color:#000,font-weight:bold;
+>     classDef prodStyle fill:#e8f5e9,stroke:#2e7d32,color:#2e7d32;
+> ```
+>
+> > [!danger] الفخ (The Trap)
+> > * **في الـ Dev:** لو عرفت `STATIC_ROOT` مش هتحس بأي فرق، لأنه مش بيستخدم أصلاً.
+> > * **في الـ Prod:** لو نسيت تعمل `collectstatic` بعد ما ترفع الكود، السيرفر مش هيشوف الـ CSS والـ Images حتى لو الـ `STATICFILES_DIRS` مظبوطة، لأن السيرفر بيدور في "المخزن النهائي" (`STATIC_ROOT`) فقط.
 
 ---
 
