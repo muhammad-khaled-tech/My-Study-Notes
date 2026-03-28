@@ -37,18 +37,48 @@ graph TD
 أنت عارف إنك لما بتفتح browser وبتكتب `google.com` بيحصل request — response cycle. بس إيه اللي بيحصل بالظبط جوه ده؟
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#2b6cb0', 'primaryTextColor': '#e2e8f0', 'lineColor': '#718096', 'secondaryColor': '#1a202c'}}}%%
-sequenceDiagram
-    participant م as المتصفح / Postman
-    participant س as الـ Server<br>(Django)
-    participant ق as قاعدة البيانات<br>(SQLite)
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e3f2fd', 'secondaryColor': '#fce4ec', 'tertiaryColor': '#fff3e0', 'mainBkg': '#ffffff'}}}%%
+graph TD
+    %% تعريف الستايلات
+    classDef requestAct fill:#81d4fa,stroke:#0277bd,stroke-width:2px,color:black,font-weight:bold;
+    classDef djangoProc fill:#fff59d,stroke:#fbc02d,stroke-width:2px,color:black,rx:5,ry:5;
+    classDef orm fill:#ce93d8,stroke:#8e24aa,stroke-width:2px,color:black;
+    classDef dbAct fill:#e0e0e0,stroke:#616161,stroke-width:3px,shape:cylinder,color:black,stroke-dasharray: 5 5;
+    classDef response fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:black,rx:10,ry:10;
 
-    م->>س: HTTP Request<br>(GET /students/)
-    Note over س: URL Resolver بيحدد<br>أي View تتشغل
-    س->>ق: SQL Query<br>(SELECT * FROM students)
-    ق-->>س: Raw Data
-    Note over س: View بيجهز الـ Response
-    س-->>م: HTTP Response<br>(HTML Page or JSON)
+    %% --- طلب المستخدم ---
+    subgraph UserRequest [" 1. طلب المستخدم (Request) "]
+        direction LR
+        UserIn([المتصفح / Postman]):::requestAct -- HTTP Request GET /students/ --> DjangoIn
+    end
+
+    UserRequest ==> DjangoProcess
+
+    %% --- معالجة Django الداخلية ---
+    subgraph DjangoProcess [" 2. معالجة Django الداخلية (The View) "]
+        direction TB
+        DjangoIn[Django الـ Server]:::djangoProc
+        DjangoIn --> URLhttps://cursos.alura.com.br/forum/topico-em-relacao-a-responsividade-209201:::djangoProc
+        URL --> ViewLogic["الـ View Function<br>بتجهز المنطق Logic"]:::djangoProc
+    end
+
+    DjangoProcess ==> DBInteraction
+
+    %% --- التفاعل مع قاعدة البيانات ---
+    subgraph DBInteraction [" 3. التفاعل مع قاعدة البيانات (ORM) "]
+        direction LR
+        ViewLogic -- ORM calls --> SQLite[(قاعدة البيانات SQLite)]:::dbAct
+        SQLite -- Raw Data --> ViewLogic
+    end
+
+    DBInteraction ==> ResponseGen
+
+    %% --- تجهيز الرد وإرساله ---
+    subgraph ResponseGen [" 4. تجهيز الرد وإرساله (Response) "]
+        direction TB
+        ViewLogic --> Render[Template Render / JSON Serialization]:::response
+        Render -- HTTP Response HTML/JSON --> UserOut([المتصفح / Postman]):::response
+    end
 ```
 
 الـ Browser بيبعت HTTP Request → الـ Django بيستقبله → بيرد بـ HTTP Response.
