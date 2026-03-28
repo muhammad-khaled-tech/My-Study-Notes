@@ -240,7 +240,8 @@ django-admin startproject iti_school .
 
 **ليه النقطة في الآخر؟**
 
-النقطة بتقول لـ Django "اعمل الـ project في الـ folder الحالي" بدل ما يعمل folder جديد جوا folder تاني. بدونها هيعمل:
+النقطة بتقول لـ Django "اعمل الـ project في الـ folder الحالي" بدل ما يعمل folder جديد جوا folder تاني.
+بدونها هيعمل:
 ```
 iti_school/
     iti_school/
