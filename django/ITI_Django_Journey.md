@@ -37,47 +37,48 @@ graph TD
 أنت عارف إنك لما بتفتح browser وبتكتب `google.com` بيحصل request — response cycle. بس إيه اللي بيحصل بالظبط جوه ده؟
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e3f2fd', 'secondaryColor': '#fce4ec', 'tertiaryColor': '#fff3e0', 'mainBkg': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#0d47a1', 'primaryTextColor': '#fff', 'lineColor': '#000'}}}%%
 graph TD
-    %% تعريف الستايلات
-    classDef requestAct fill:#81d4fa,stroke:#0277bd,stroke-width:2px,color:black,font-weight:bold;
-    classDef djangoProc fill:#fff59d,stroke:#fbc02d,stroke-width:2px,color:black,rx:5,ry:5;
-    classDef orm fill:#ce93d8,stroke:#8e24aa,stroke-width:2px,color:black;
-    classDef dbAct fill:#e0e0e0,stroke:#616161,stroke-width:3px,shape:cylinder,color:black,stroke-dasharray: 5 5;
-    classDef response fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:black,rx:10,ry:10;
+    %% تعريف ستايلات قوية (High Contrast)
+    classDef userBox fill:#0d47a1,stroke:#000,stroke-width:3px,color:#fff,font-weight:bold;
+    classDef djangoBox fill:#ffeb3b,stroke:#000,stroke-width:2px,color:#000;
+    classDef dbBox fill:#424242,stroke:#000,stroke-width:3px,color:#fff;
+    classDef outBox fill:#2e7d32,stroke:#000,stroke-width:2px,color:#fff;
 
-    %% --- طلب المستخدم ---
-    subgraph UserRequest [" 1. طلب المستخدم (Request) "]
+    %% --- المرحله الاولى ---
+    subgraph S1 ["مرحلة طلب المستخدم"]
         direction LR
-        UserIn([المتصفح / Postman]):::requestAct -- HTTP Request GET /students/ --> DjangoIn
+        Request(["المتصفح يرسل طلب"]):::userBox
     end
 
-    UserRequest ==> DjangoProcess
+    S1 ==> S2
 
-    %% --- معالجة Django الداخلية ---
-    subgraph DjangoProcess [" 2. معالجة Django الداخلية (The View) "]
+    %% --- المرحله الثانيه ---
+    subgraph S2 ["معالجة ديجانجو للطلب"]
         direction TB
-        DjangoIn[Django الـ Server]:::djangoProc
-        DjangoIn --> URLhttps://cursos.alura.com.br/forum/topico-em-relacao-a-responsividade-209201:::djangoProc
-        URL --> ViewLogic["الـ View Function<br>بتجهز المنطق Logic"]:::djangoProc
+        URL["مرحلة الـ URL Resolver"]:::djangoBox
+        View["مرحلة الـ View Logic"]:::djangoBox
+        URL --> View
     end
 
-    DjangoProcess ==> DBInteraction
+    S2 ==> S3
 
-    %% --- التفاعل مع قاعدة البيانات ---
-    subgraph DBInteraction [" 3. التفاعل مع قاعدة البيانات (ORM) "]
+    %% --- المرحله الثالثه ---
+    subgraph S3 ["التعامل مع قاعدة البيانات"]
         direction LR
-        ViewLogic -- ORM calls --> SQLite[(قاعدة البيانات SQLite)]:::dbAct
-        SQLite -- Raw Data --> ViewLogic
+        DB[("قاعدة بيانات SQLite")]:::dbBox
+        View -- "ORM Query" --> DB
+        DB -- "Data Result" --> View
     end
 
-    DBInteraction ==> ResponseGen
+    S3 ==> S4
 
-    %% --- تجهيز الرد وإرساله ---
-    subgraph ResponseGen [" 4. تجهيز الرد وإرساله (Response) "]
+    %% --- المرحله الرابعه ---
+    subgraph S4 ["تجهيز وإرسال الرد"]
         direction TB
-        ViewLogic --> Render[Template Render / JSON Serialization]:::response
-        Render -- HTTP Response HTML/JSON --> UserOut([المتصفح / Postman]):::response
+        Response["تجهيز الـ JSON أو الـ HTML"]:::outBox
+        Final([وصول الرد للمتصفح]):::outBox
+        View --> Response --> Final
     end
 ```
 
