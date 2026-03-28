@@ -37,47 +37,55 @@ graph TD
 أنت عارف إنك لما بتفتح browser وبتكتب `google.com` بيحصل request — response cycle. بس إيه اللي بيحصل بالظبط جوه ده؟
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#0d47a1', 'primaryTextColor': '#fff', 'lineColor': '#000'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'mainBkg': '#ffffff', 'lineColor': '#444'}}}%%
 graph TD
-    %% تعريف ستايلات قوية (High Contrast)
-    classDef userBox fill:#0d47a1,stroke:#000,stroke-width:3px,color:#fff,font-weight:bold;
-    classDef djangoBox fill:#ffeb3b,stroke:#000,stroke-width:2px,color:#000;
-    classDef dbBox fill:#424242,stroke:#000,stroke-width:3px,color:#fff;
-    classDef outBox fill:#2e7d32,stroke:#000,stroke-width:2px,color:#fff;
+    %% تعريف ستايلات مريحة للعين (Clean & Modern)
+    
+    %% ستايل المستخدم (أزرق هادي)
+    classDef userBox fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#1565c0,font-weight:bold;
+    
+    %% ستايل ديجانجو (بنفسجي فاتح)
+    classDef djangoBox fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#7b1fa2,font-weight:bold;
+    
+    %% ستايل قاعدة البيانات (رمادي احترافي)
+    classDef dbBox fill:#fafafa,stroke:#455a64,stroke-width:2px,color:#455a64;
+    
+    %% ستايل الرد النهائي (أخضر مينت)
+    classDef outBox fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#2e7d32,font-weight:bold;
 
-    %% --- المرحله الاولى ---
-    subgraph S1 ["مرحلة طلب المستخدم"]
+    %% --- طلب المستخدم ---
+    subgraph S1 [" مرحلة الطلب - Request "]
         direction LR
-        Request(["المتصفح يرسل طلب"]):::userBox
+        Request(["🌐 المتصفح يرسل طلب"]):::userBox
     end
 
     S1 ==> S2
 
-    %% --- المرحله الثانيه ---
-    subgraph S2 ["معالجة ديجانجو للطلب"]
+    %% --- معالجة ديجانجو ---
+    subgraph S2 [" محرك ديجانجو - Django Engine "]
         direction TB
-        URL["مرحلة الـ URL Resolver"]:::djangoBox
-        View["مرحلة الـ View Logic"]:::djangoBox
+        URL["🔍 URL Resolver"]:::djangoBox
+        View["⚙️ View Logic"]:::djangoBox
         URL --> View
     end
 
     S2 ==> S3
 
-    %% --- المرحله الثالثه ---
-    subgraph S3 ["التعامل مع قاعدة البيانات"]
+    %% --- قاعدة البيانات ---
+    subgraph S3 [" البيانات - SQLite "]
         direction LR
-        DB[("قاعدة بيانات SQLite")]:::dbBox
+        DB[("🗄️ Database")]:::dbBox
         View -- "ORM Query" --> DB
-        DB -- "Data Result" --> View
+        DB -- "Data" --> View
     end
 
     S3 ==> S4
 
-    %% --- المرحله الرابعه ---
-    subgraph S4 ["تجهيز وإرسال الرد"]
+    %% --- الرد النهائي ---
+    subgraph S4 [" الرد - Response "]
         direction TB
-        Response["تجهيز الـ JSON أو الـ HTML"]:::outBox
-        Final([وصول الرد للمتصفح]):::outBox
+        Response["📄 Template / JSON"]:::outBox
+        Final([✅ وصول الرد للمتصفح]):::outBox
         View --> Response --> Final
     end
 ```
