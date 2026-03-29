@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "django/ITI_Django_Journey.md",
+                "file": "django/django_journey_phase1_phase2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ITI_Django_Journey"
+              "title": "django_journey_phase1_phase2"
             }
           }
         ]
@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,8 +238,10 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
-    "JavaScript/JS_NodeJS_Elite_Vault_Part4_Module7.md",
+    "django/django_journey_phase3.md",
+    "django/Unconfirmed 220049.crdownload",
     "django/ITI_Django_Journey.md",
+    "JavaScript/JS_NodeJS_Elite_Vault_Part4_Module7.md",
     "django/Unconfirmed 289178.crdownload",
     "django",
     "JavaScript/JS_NodeJS_Elite_Vault_Part3_Modules5_6.md",
@@ -260,7 +263,6 @@
     "design patterns/04_L_Liskov_Substitution_Principle.md",
     "design patterns/Unconfirmed 763449.crdownload",
     "design patterns/03_O_Open_Closed_Principle.md",
-    "design patterns/Unconfirmed 314803.crdownload",
     "design patterns/02_S_Single_Responsibility_Principle.md",
     "design patterns/01_Why_SOLID.md",
     "backendproject/alaa/Sprint_A1_Divergence_Analyzer.md",
@@ -272,7 +274,6 @@
     "Aws practitioner/01_what is cloud computing?.md",
     "Aws practitioner/06_OtherCompute_Deployment.md",
     "Aws practitioner/05_S3_Databases.md",
-    "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
