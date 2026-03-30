@@ -52,7 +52,8 @@
     "django/ITI_Django_Journey.md": "rtl",
     "django/django_journey_phase1_phase2.md": "rtl",
     "django/django_journey_phase3.md": "rtl",
-    "backendproject/Sprint_02_CPP_Engine.md": "rtl"
+    "backendproject/Sprint_02_CPP_Engine.md": "rtl",
+    "DevArcheology_AI_MasterDoc.md": "auto"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,

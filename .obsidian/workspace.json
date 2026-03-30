@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "backendproject/Sprint_02_CPP_Engine.md",
+                "file": "DevArcheology_AI_MasterDoc.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Sprint_02_CPP_Engine"
+              "title": "DevArcheology_AI_MasterDoc"
             }
           }
         ]
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -238,10 +237,11 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
-    "DevArcheology_AI_MasterDoc.md",
-    "Unconfirmed 254825.crdownload",
-    "DevArcheology_Pitch_Template.md",
     "DevArcheology_AI_Presentation.md",
+    "DevArcheology_AI_MasterDoc.md",
+    "DevArcheology_Pitch_Template.md",
+    "backendproject/Sprint_02_CPP_Engine.md",
+    "Unconfirmed 254825.crdownload",
     "django/django_journey_phase3.md",
     "Unconfirmed 399960.crdownload",
     "django/django_journey_phase1_phase2.md",
@@ -273,7 +273,6 @@
     "backendproject/alaa/Alaa_Onboarding_Sentinel_Module.md",
     "Java Core/new notes/Sprint_4_Modifiers_Packages_Interfaces.md",
     "Java Core/new notes/Sprint_5_Wrappers_Autoboxing_InnerClasses.md",
-    "Java Core/new notes/Sprint_6_ExceptionHandling.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
