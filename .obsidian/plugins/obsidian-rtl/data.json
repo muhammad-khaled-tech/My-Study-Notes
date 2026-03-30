@@ -51,7 +51,8 @@
     "JavaScript/JS_NodeJS_Elite_Vault_Part3_Modules5_6.md": "rtl",
     "django/ITI_Django_Journey.md": "rtl",
     "django/django_journey_phase1_phase2.md": "rtl",
-    "django/django_journey_phase3.md": "rtl"
+    "django/django_journey_phase3.md": "rtl",
+    "backendproject/Sprint_02_CPP_Engine.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
