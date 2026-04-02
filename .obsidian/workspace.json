@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "DevArcheology_AI_MasterDoc.md",
+                "file": "DevArcheology_AI_Arabic.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "DevArcheology_AI_MasterDoc"
+              "title": "DevArcheology_AI_Arabic"
             }
           }
         ]
@@ -237,13 +237,15 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
+    "DevArcheology_AI_MasterDoc.md",
+    "DevArcheology_AI_Arabic.md",
+    "Unconfirmed 311913.crdownload",
     "DevArcheology_AI_Presentation.md",
     "DevArcheology_Pitch_Template.md",
     "Unconfirmed 394791.crdownload",
     "django/PROJECT_GUIDE_PART3.md",
     "django/PROJECT_GUIDE_PART2.md",
     "django/PROJECT_GUIDE_PART1.md",
-    "DevArcheology_AI_MasterDoc.md",
     "backendproject/Sprint_02_CPP_Engine.md",
     "Unconfirmed 254825.crdownload",
     "django/django_journey_phase3.md",
@@ -265,7 +267,6 @@
     "JavaScript/JavaScript interview preparation.md",
     "JavaScript/Unconfirmed 895478.crdownload",
     "backendproject/alaa/Sprint_A3_Sentinel_API.md",
-    "backendproject/alaa/Unconfirmed 503073.crdownload",
     "backendproject/alaa/Sprint_A2_PII_Shield.md",
     "design patterns/05_I_Interface_Segregation_Principle.md",
     "design patterns/04_L_Liskov_Substitution_Principle.md",
