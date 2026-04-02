@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "DevArcheology_AI_MasterDoc.md",
+                "file": "django/PROJECT_GUIDE_PART3.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "DevArcheology_AI_MasterDoc"
+              "title": "PROJECT_GUIDE_PART3"
             }
           }
         ]
@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,8 +238,10 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
-    "DevArcheology_AI_Presentation.md",
+    "django/PROJECT_GUIDE_PART2.md",
+    "django/PROJECT_GUIDE_PART1.md",
     "DevArcheology_AI_MasterDoc.md",
+    "DevArcheology_AI_Presentation.md",
     "DevArcheology_Pitch_Template.md",
     "backendproject/Sprint_02_CPP_Engine.md",
     "Unconfirmed 254825.crdownload",
@@ -271,8 +274,6 @@
     "design patterns/01_Why_SOLID.md",
     "backendproject/alaa/Sprint_A1_Divergence_Analyzer.md",
     "backendproject/alaa/Alaa_Onboarding_Sentinel_Module.md",
-    "Java Core/new notes/Sprint_4_Modifiers_Packages_Interfaces.md",
-    "Java Core/new notes/Sprint_5_Wrappers_Autoboxing_InnerClasses.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
