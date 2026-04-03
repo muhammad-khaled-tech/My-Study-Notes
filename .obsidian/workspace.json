@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,6 +238,10 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
+    "angular/new/10-Interview-Questions.md",
+    "angular/new/Unconfirmed 453954.crdownload",
+    "angular/new/1.5-Introduction-to-Angular.md",
+    "angular/new/Unconfirmed 828596.crdownload",
     "angular/new/02.5-Control-Flow-DI-Signals.md",
     "angular/new/02-Angular-Architecture.md",
     "angular/new/09-Custom-Directives-Pipes.md",
@@ -269,10 +274,6 @@
     "Unconfirmed 254825.crdownload",
     "django/django_journey_phase3.md",
     "Unconfirmed 399960.crdownload",
-    "django/django_journey_phase1_phase2.md",
-    "django/Unconfirmed 220049.crdownload",
-    "django/ITI_Django_Journey.md",
-    "django/Unconfirmed 289178.crdownload",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
