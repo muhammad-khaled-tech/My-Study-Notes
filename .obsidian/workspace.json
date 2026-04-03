@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "DevArcheology_AI_Arabic.md",
+                "file": "Java Core/Inner Classes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "DevArcheology_AI_Arabic"
+              "title": "Inner Classes"
             }
           }
         ]
@@ -53,7 +53,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "tag:#سؤال",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -74,7 +74,8 @@
               "title": "Bookmarks"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -237,13 +238,14 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
-    "React/react-session-notes.md",
-    "React/Unconfirmed 852939.crdownload",
+    "Java Core/Callback interface.md",
     "React/react-session-2-notes.md",
+    "React/react-session-notes.md",
+    "DevArcheology_AI_Arabic.md",
+    "React/Unconfirmed 852939.crdownload",
     "React/Unconfirmed 353295.crdownload",
     "React",
     "DevArcheology_AI_MasterDoc.md",
-    "DevArcheology_AI_Arabic.md",
     "Unconfirmed 311913.crdownload",
     "DevArcheology_AI_Presentation.md",
     "DevArcheology_Pitch_Template.md",
@@ -272,7 +274,6 @@
     "backendproject/alaa/Sprint_A2_PII_Shield.md",
     "design patterns/05_I_Interface_Segregation_Principle.md",
     "design patterns/04_L_Liskov_Substitution_Principle.md",
-    "design patterns/03_O_Open_Closed_Principle.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
