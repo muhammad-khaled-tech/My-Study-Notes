@@ -610,7 +610,7 @@ export class ShopComponent {
 <button (click)="clearCart()">Clear</button>
 ```
 
-> تمام. عندنا class فيها data ومethods. دلوقتي السؤال الجوهري: إزاي الـ data بتوصل للـ HTML؟ ده هو الـ Data Binding.
+> تمام. عندنا class فيها data وmethods. دلوقتي السؤال الجوهري: إزاي الـ data بتوصل للـ HTML؟ ده هو الـ Data Binding.
 
 ---
 
