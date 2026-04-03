@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Java Core/Inner Classes.md",
+                "file": "angular/new/02-Angular-Architecture.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Inner Classes"
+              "title": "02-Angular-Architecture"
             }
           }
         ]
@@ -53,8 +53,8 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "tag:#سؤال",
-                "matchingCase": false,
+                "query": "",
+                "matchingCase": true,
                 "explainSearch": false,
                 "collapseAll": false,
                 "extraContext": false,
@@ -74,8 +74,7 @@
               "title": "Bookmarks"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
@@ -238,6 +237,19 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
+    "angular/new/09-Custom-Directives-Pipes.md",
+    "angular/new/Unconfirmed 185246.crdownload",
+    "angular/new/01-TypeScript-For-Angular.md",
+    "angular/new/02-Angular-Architecture.md",
+    "angular/new/08-Routing-Deep.md",
+    "angular/new/07-Component-Communication.md",
+    "angular/new/06.5-Reactive-Forms-Real-Forms.md",
+    "angular/new/06-Reactive-Forms-Foundation.md",
+    "angular/new/05-Services-HTTP-Interceptors-Guards.md",
+    "angular/new/04-RxJS.md",
+    "angular/new/03-Template-Syntax-and-Lifecycle.md",
+    "angular/new/02.5-Control-Flow-DI-Signals.md",
+    "Java Core/Inner Classes.md",
     "Java Core/Callback interface.md",
     "React/react-session-2-notes.md",
     "React/react-session-notes.md",
@@ -260,20 +272,7 @@
     "django/django_journey_phase1_phase2.md",
     "django/Unconfirmed 220049.crdownload",
     "django/ITI_Django_Journey.md",
-    "JavaScript/JS_NodeJS_Elite_Vault_Part4_Module7.md",
     "django/Unconfirmed 289178.crdownload",
-    "django",
-    "JavaScript/JS_NodeJS_Elite_Vault_Part3_Modules5_6.md",
-    "JavaScript/JS_NodeJS_Elite_Vault_Part2_Modules3_4.md",
-    "backendproject/Sprint_01_Foundation.md",
-    "JavaScript/JS_Mastery_Module1_Module2.md",
-    "JavaScript/JS_NodeJS_Elite_Vault_Part1.md",
-    "JavaScript/JS_Engine_Internals.md",
-    "JavaScript/JavaScript interview preparation.md",
-    "backendproject/alaa/Sprint_A3_Sentinel_API.md",
-    "backendproject/alaa/Sprint_A2_PII_Shield.md",
-    "design patterns/05_I_Interface_Segregation_Principle.md",
-    "design patterns/04_L_Liskov_Substitution_Principle.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
