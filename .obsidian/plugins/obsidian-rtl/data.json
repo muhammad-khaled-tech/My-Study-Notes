@@ -55,7 +55,8 @@
     "backendproject/Sprint_02_CPP_Engine.md": "rtl",
     "DevArcheology_AI_MasterDoc.md": "auto",
     "DevArcheology_AI_Arabic.md": "rtl",
-    "React/react-chapter-05-routing.md": "rtl"
+    "React/react-chapter-05-routing.md": "rtl",
+    "React/04-The-Escape-Hatch-useEffect-useRef.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
