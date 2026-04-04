@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "React/04-The-Escape-Hatch-useEffect-useRef.md",
+                "file": "React/04-The-Escape-Hatch-useEffect-useRef-v2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "04-The-Escape-Hatch-useEffect-useRef"
+              "title": "04-The-Escape-Hatch-useEffect-useRef-v2"
             }
           }
         ]
@@ -237,6 +237,7 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
+    "React/04-The-Escape-Hatch-useEffect-useRef.md",
     "React/04-The-Escape-Hatch-useEffect-useRef-v2.md",
     "React/Unconfirmed 667638.crdownload",
     "React/05-Client-Side-Routing-React-Router.md",
@@ -245,7 +246,6 @@
     "React/sample-react-chapter-01.md",
     "React/react-chapter-05-routing.md",
     "React/react-chapter-04-useEffect.md",
-    "React/04-The-Escape-Hatch-useEffect-useRef.md",
     "React/Unconfirmed 399627.crdownload",
     "React/mohaq/react-session-2-notes.md",
     "React/mohaq/react-session-3-notes.md",
