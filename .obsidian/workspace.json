@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "React/react-session-3-notes.md",
+                "file": "React/react-chapter-04-useEffect.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "react-session-3-notes"
+              "title": "react-chapter-04-useEffect"
             }
           }
         ]
@@ -237,8 +237,10 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
-    "angular/new/02-Angular-Architecture.md",
+    "React/react-chapter-05-routing.md",
+    "React/Unconfirmed 351007.crdownload",
     "React/react-session-3-notes.md",
+    "angular/new/02-Angular-Architecture.md",
     "angular/new/10-Interview-Questions.md",
     "angular/new/Unconfirmed 453954.crdownload",
     "angular/new/1.5-Introduction-to-Angular.md",
@@ -270,9 +272,7 @@
     "django/PROJECT_GUIDE_PART3.md",
     "django/PROJECT_GUIDE_PART2.md",
     "django/PROJECT_GUIDE_PART1.md",
-    "backendproject/Sprint_02_CPP_Engine.md",
     "Unconfirmed 254825.crdownload",
-    "Unconfirmed 399960.crdownload",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
