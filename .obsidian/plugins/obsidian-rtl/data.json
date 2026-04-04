@@ -54,7 +54,8 @@
     "django/django_journey_phase3.md": "rtl",
     "backendproject/Sprint_02_CPP_Engine.md": "rtl",
     "DevArcheology_AI_MasterDoc.md": "auto",
-    "DevArcheology_AI_Arabic.md": "rtl"
+    "DevArcheology_AI_Arabic.md": "rtl",
+    "React/react-chapter-05-routing.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
