@@ -87,15 +87,15 @@ ALTER TABLE products ADD COLUMN isbn VARCHAR(20);      -- ← بس للكتب
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-| الجانب | SQL (MySQL/PostgreSQL) | MongoDB (NoSQL) |
-|---|---|---|
-| هيكل البيانات | جداول وصفوف (Tables & Rows) | Collections وDocuments |
-| الـ Schema | ثابت (Rigid) — بتعرّفه في الـ DB | مرن (Flexible) — في الكود |
-| العلاقات | JOIN بين الجداول في الـ DB | Embedding أو References في الـ app |
-| الـ Query Language | SQL — لغة موحدة ومعيارية | MongoDB Query Language (MQL) |
-| الـ Consistency | Full ACID transactions | Tunable: Eventual → Strong |
-| الـ Scaling | Vertical mainly (أصعب) | Horizontal Sharding (أسهل) |
-| مناسب لـ | بيانات منظمة، JOINs معقدة، Financial | بيانات مرنة، high write throughput، Hierarchical data |
+| الجانب             | SQL (MySQL/PostgreSQL)               | MongoDB (NoSQL)                                       |
+| ------------------ | ------------------------------------ | ----------------------------------------------------- |
+| هيكل البيانات      | جداول وصفوف (Tables & Rows)          | Collections وDocuments                                |
+| الـ Schema         | ثابت (Rigid) — بتعرّفه في الـ DB     | مرن (Flexible) — في الكود                             |
+| العلاقات           | JOIN بين الجداول في الـ DB           | Embedding أو References في الـ app                    |
+| الـ Query Language | SQL — لغة موحدة ومعيارية             | MongoDB Query Language (MQL)                          |
+| الـ Consistency    | Full ACID transactions               | Tunable: Eventual → Strong                            |
+| الـ Scaling        | Vertical mainly (أصعب)               | Horizontal Sharding (أسهل)                            |
+| مناسب لـ           | بيانات منظمة، JOINs معقدة، Financial | بيانات مرنة، high write throughput، Hierarchical data |
 
 > ⚠️ **انتبه:** مفيش "أحسن" بشكل مطلق. الـ interviewer هيحكم عليك من إجابتك على "امتى تختار كل واحدة" مش "إيهم أحسن." — الجواب الغلط هو "MongoDB أحسن دايماً."
 
