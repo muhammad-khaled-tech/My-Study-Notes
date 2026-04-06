@@ -197,7 +197,7 @@ JSON (الـ Text اللي بتشوفه)             BSON (اللي MongoDB بت
 | `Int32`      | `25`                     | 4 bytes                       | JSON مفيهوش فرق بين int وfloat          |
 | `Int64`      | `NumberLong(2500000000)` | 8 bytes                       | للأرقام الكبيرة جداً                    |
 | `Decimal128` | `Decimal128("99.99")`    | 16 bytes                      | للأسعار — بيتجنب floating point errors  |
-| `Binary`     | `BinData(0, "...")`      | binary + subtype              | للصور أو الـ hashed passwords           |
+|  `Binary`    | `BinData(0, "...")`      | binary + subtype              | للصور أو الـ hashed passwords           |
 
 > [!question] 🎯 سؤال انترفيو مشهور
 > **"إيه هو BSON وليه MongoDB بتستخدمه بدل JSON؟ وإيه الـ data types الإضافية اللي بيوفرها؟"**
