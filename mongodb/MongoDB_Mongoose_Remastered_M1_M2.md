@@ -190,14 +190,14 @@ JSON (الـ Text اللي بتشوفه)             BSON (اللي MongoDB بت
 
 **الـ Data Types اللي BSON بيدعمها وJSON لأ:**
 
-| BSON Type | مثال في الكود | اللي بيتخزن فعلاً | ليه مهم؟ |
-|---|---|---|---|
-| `ObjectId` | `ObjectId("64f8...")` | 12 bytes binary | الـ `_id` الافتراضي — unique عالمياً |
-| `Date` | `new Date()` | 64-bit integer (milliseconds) | مش string! بتقدر تعمل `$gt`, `$lt` عليه |
-| `Int32` | `25` | 4 bytes | JSON مفيهوش فرق بين int وfloat |
-| `Int64` | `NumberLong(2500000000)` | 8 bytes | للأرقام الكبيرة جداً |
-| `Decimal128` | `Decimal128("99.99")` | 16 bytes | للأسعار — بيتجنب floating point errors |
-| `Binary` | `BinData(0, "...")` | binary + subtype | للصور أو الـ hashed passwords |
+| BSON Type    | مثال في الكود            | اللي بيتخزن فعلاً             | ليه مهم؟                                |
+| ------------ | ------------------------ | ----------------------------- | --------------------------------------- |
+| `ObjectId`   | `ObjectId("64f8...")`    | 12 bytes binary               | الـ `_id` الافتراضي — unique عالمياً    |
+| `Date`       | `new Date()`             | 64-bit integer (milliseconds) | مش string! بتقدر تعمل `$gt`, `$lt` عليه |
+| `Int32`      | `25`                     | 4 bytes                       | JSON مفيهوش فرق بين int وfloat          |
+| `Int64`      | `NumberLong(2500000000)` | 8 bytes                       | للأرقام الكبيرة جداً                    |
+| `Decimal128` | `Decimal128("99.99")`    | 16 bytes                      | للأسعار — بيتجنب floating point errors  |
+| `Binary`     | `BinData(0, "...")`      | binary + subtype              | للصور أو الـ hashed passwords           |
 
 > [!question] 🎯 سؤال انترفيو مشهور
 > **"إيه هو BSON وليه MongoDB بتستخدمه بدل JSON؟ وإيه الـ data types الإضافية اللي بيوفرها؟"**
