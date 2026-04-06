@@ -57,8 +57,8 @@ ALTER TABLE products ADD COLUMN author VARCHAR(100);  -- ← بس للكتب
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  ShopFlow Database                   │
-│                                                      │
+│                  ShopFlow Database                  │
+│                                                     │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │
 │  │   users     │  │  products   │  │   orders    │  │
 │  │ Collection  │  │ Collection  │  │ Collection  │  │
