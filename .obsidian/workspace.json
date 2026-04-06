@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "mongodb/MongoDB_Mongoose_Crash_Course_M1_M2.md",
+                "file": "mongodb/MongoDB_Mongoose_Module5_Interview_Vault.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "MongoDB_Mongoose_Crash_Course_M1_M2"
+              "title": "MongoDB_Mongoose_Module5_Interview_Vault"
             }
           }
         ]
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -238,13 +237,13 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
+    "mongodb/MongoDB_Mongoose_Crash_Course_M1_M2.md",
+    "mongodb/MongoDB_Mongoose_Module6_HeavyWeights.md",
+    "mongodb/MongoDB_Mongoose_Vault.md",
     "mongodb/MongoDB_Mongoose_Module5_Interview_Vault.md",
     "mongodb/Unconfirmed 488473.crdownload",
     "mongodb/MongoDB_Mongoose_Crash_Course_M3_M4.md",
     "mongodb/Unconfirmed 857318.crdownload",
-    "mongodb/MongoDB_Mongoose_Module6_HeavyWeights.md",
-    "mongodb/MongoDB_Mongoose_Crash_Course_M1_M2.md",
-    "mongodb/MongoDB_Mongoose_Vault.md",
     "mongodb/Unconfirmed 573376.crdownload",
     "React/04-The-Escape-Hatch-useEffect-useRef-v2.md",
     "React/04-The-Escape-Hatch-useEffect-useRef.md",
