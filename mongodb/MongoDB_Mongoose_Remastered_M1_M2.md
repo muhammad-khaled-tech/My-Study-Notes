@@ -261,88 +261,123 @@ db.products.insertMany([
 > - الـ `__v` (versionKey) للـ optimistic concurrency
 
 ```javascript
-// ──────────────────────────────────────────────────────────
-// 1️⃣ الـ SCHEMA — بيتعمل في الـ memory لما الـ module يتـ load
-//    ده blueprint بحت — مفيهوش connection بالـ DB
-// ──────────────────────────────────────────────────────────
+/**
+ * SECTION 1: THE SCHEMA DEFINITION
+ * ----------------------------------------------------------
+ * The Schema is a blueprint stored in the application's memory when the module loads.
+ * It defines the shape of the documents, validation rules, and default values.
+ * Note: At this stage, there is NO active connection or operation with the Database.
+ * ----------------------------------------------------------
+ */
 const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'اسم المنتج مطلوب'],  // ← custom error message بدل الـ generic
-      trim: true,                               // ← بيشيل المسافات الزيادة قبل الحفظ
-      maxlength: [100, 'الاسم مش المفروض يعدى 100 حرف'],
+      // Custom error message instead of the generic Mongoose one
+      required: [true, 'Product name is mandatory'],
+      // Automatically removes whitespace from both ends of a string before saving
+      trim: true,
+      // Enforces a maximum character limit for data integrity
+      maxlength: [100, 'Name cannot exceed 100 characters'],
     },
     slug: {
       type: String,
-      unique: true,   // ← بيعمل Unique Index في الـ MongoDB تلقائياً
+      // Tells MongoDB to create a Unique Index for this field automatically
+      unique: true,
+      // Converts the string to lowercase before saving (ideal for SEO-friendly URLs)
       lowercase: true,
     },
     price: {
       type: Number,
-      required: [true, 'السعر مطلوب'],
-      min: [0, 'السعر مينفعش يبقى سالب — منطقياً كمان 😅'],
+      required: [true, 'Product price is required'],
+      // Validator to ensure price is never a negative value
+      min: [0, 'Price must be a positive number'],
     },
     comparePrice: {
-      type: Number,   // ← السعر الأصلي قبل الخصم
+      type: Number,
+      // Represents the original price before discount; defaults to null if not provided
       default: null,
     },
     category: {
       type: String,
+      // Enumeration: Restricts the field to specific allowed values
       enum: {
         values: ['electronics', 'clothing', 'books', 'home'],
-        message: '"{VALUE}" مش category صحيحة',  // ← {VALUE} بيتحط فيها القيمة الغلط
+        // {VALUE} is a Mongoose template injector that shows the invalid input in the error message
+        message: '"{VALUE}" is not a valid category',
       },
       required: true,
     },
     attributes: {
-      type: Map,          // ← ده اللي بيحل مشكلة الـ SQL اللي اتكلمنا عنها
-      of: mongoose.Schema.Types.Mixed,  // ← values ممكن تبقى أي type
+      /**
+       * Using a Map with Schema.Types.Mixed solves the "Dynamic Schema" problem.
+       * It allows us to store arbitrary key-value pairs (like RAM, Color, etc.) 
+       * without defining every possible property upfront.
+       */
+      type: Map,
+      of: mongoose.Schema.Types.Mixed,
     },
     inStock: {
       type: Boolean,
-      default: true,      // ← لو ماجاش في الـ request، هيبقى true تلقائياً
+      // If the field is missing in the request, Mongoose will default it to true
+      default: true,
     },
     seller: {
+      // Stores a reference ID pointing to another document
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',        // ← Reference للـ User model — هنشرحه في Module 3
+      // Specifies the model to link with (User model) - used for Population later
+      ref: 'User',
       required: true,
     },
     isDeleted: {
       type: Boolean,
-      default: false,     // ← الـ Soft Delete flag — هنشرحه في Module 2
+      // Soft Delete Flag: Instead of deleting from DB, we flip this to true
+      default: false,
     },
   },
   {
-    timestamps: true,     // ← Mongoose هتضيف createdAt وupdatedAt تلقائياً
+    /**
+     * Options Object: 
+     * 'timestamps: true' tells Mongoose to automatically manage 'createdAt' and 'updatedAt' fields.
+     */
+    timestamps: true,
   }
 );
 
-// ──────────────────────────────────────────────────────────
-// 2️⃣ الـ MODEL — بيتعمل مرة واحدة، بيتخزن في Mongoose Registry
-//    اسم الـ Collection هيبقى: 'products' (جمع + lowercase تلقائياً)
-// ──────────────────────────────────────────────────────────
+/**
+ * SECTION 2: THE MODEL
+ * ----------------------------------------------------------
+ * The Model is a constructor function compiled from the Schema.
+ * It provides the interface to the Database (CRUD operations).
+ * Mongoose automatically names the collection 'products' (lowercase + plural).
+ * ----------------------------------------------------------
+ */
 const Product = mongoose.model('Product', productSchema);
-//                            ↑              ↑
-//                        اسم الـ Model   الـ Schema اللي هيبني عليها
 
-// ──────────────────────────────────────────────────────────
-// 3️⃣ الـ DOCUMENT — instance في الـ memory، لسه مش في الـ DB
-// ──────────────────────────────────────────────────────────
+/**
+ * SECTION 3: THE DOCUMENT (INSTANCE)
+ * ----------------------------------------------------------
+ * An instance of the Model is called a Document.
+ * This object exists only in RAM and is NOT yet persisted to the MongoDB database.
+ * ----------------------------------------------------------
+ */
 const newProduct = new Product({
   name: 'iPhone 15 Pro',
   price: 45000,
   category: 'electronics',
-  seller: '64f8a2b3c1d2e3f4a5b6c7d8', // ← ObjectId بتاع الـ seller
+  seller: '64f8a2b3c1d2e3f4a5b6c7d8', // Example of a valid Hexadecimal ObjectId
   attributes: new Map([
     ['storage', '256GB'],
     ['color', 'Titanium'],
     ['ram', '8GB'],
   ]),
 });
-// ↑ ده لسه مش اتخزن في الـ DB خالص — بس Mongoose Document في الـ memory
-// لو عملت console.log(newProduct._id) هتلاقيه موجود رغم إن ما اتحفظش!
-// ← Mongoose بيولّد الـ ObjectId في الـ memory فوراً
+
+/**
+ * PRO TIP: 
+ * Even though 'newProduct' isn't saved yet, Mongoose generates the '_id' immediately
+ * in memory. You can access 'newProduct._id' before calling .save().
+ */
 ```
 
 > [!example] 🏗️ سيناريو من بيئة العمل (ShopFlow Project)
