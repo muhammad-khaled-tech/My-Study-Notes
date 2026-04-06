@@ -603,7 +603,7 @@ PORT=3000
 *Next → [[الفصل 2]] — CRUD & Validation Mastery: هتعرف إزاي تتكلم مع الـ DB صح — وهتفهم ليه مش كل الـ methods بتشتغل نفس الطريقة*
 
 ---
----
+
 
 # الفصل 2 — CRUD & Validation Mastery: التفاصيل اللي بتفرق بين Junior وSenior
 
