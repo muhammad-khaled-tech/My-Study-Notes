@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "bookstore-api-part1.md",
+                "file": "bookstore-api-part2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "bookstore-api-part1"
+              "title": "bookstore-api-part2"
             }
           }
         ]
@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,8 +238,8 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
-    "bookstore-api-part2.md",
     "bookstore-api-part1.md",
+    "bookstore-api-part2.md",
     "Unconfirmed 981268.crdownload",
     "bookstore_deep_dive_part1.md",
     "Shell_Scripting_Day1_Guide.md",

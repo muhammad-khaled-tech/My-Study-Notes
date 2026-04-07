@@ -61,7 +61,8 @@
     "mongodb/MongoDB_Mongoose_Module5_Interview_Vault.md": "rtl",
     "mongodb/MongoDB_Mongoose_Remastered_M1_M2.md": "rtl",
     "mongodb/NativeStore_Native_MongoDB_M1_M2.md": "rtl",
-    "bookstore-api-part1.md": "rtl"
+    "bookstore-api-part1.md": "rtl",
+    "bookstore-api-part2.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
