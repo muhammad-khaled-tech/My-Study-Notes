@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Untitled 3.md",
+                "file": "bookstore-api-part1.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 3"
+              "title": "bookstore-api-part1"
             }
           }
         ]
@@ -237,6 +237,9 @@
   },
   "active": "644ed106ea2d3d4e",
   "lastOpenFiles": [
+    "Untitled 3.md",
+    "bookstore-api-part1.md",
+    "Unconfirmed 981268.crdownload",
     "bookstore_deep_dive_part1.md",
     "Shell_Scripting_Day1_Guide.md",
     "Untitled 2.md",
@@ -270,9 +273,6 @@
     "React/mohaq/react-session-3-notes.md",
     "React/mohaq/react-session-notes.md",
     "React/mohaq",
-    "React/Unconfirmed 688316.crdownload",
-    "angular/new/02-Angular-Architecture.md",
-    "angular/new/10-Interview-Questions.md",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
