@@ -569,9 +569,6 @@ mongoose.connect(DB, {
 3. **ليه بنحط الـ MONGO_URI في الـ `.env` file بدل ما نكتبه مباشرةً في الكود؟**
 
 ---
-
----
-
 # Topic 3 — The Utils Layer (Your Custom Toolkit)
 
 ## `ApiError.js` + `ApiResponse.js` + `errorHelpers.js` + `pagination.js`
