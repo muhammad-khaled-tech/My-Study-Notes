@@ -462,8 +462,6 @@ Response
 
 ---
 
----
-
 # Topic 2 — Database Configuration & Connection Strategy
 
 ## `mongoose.connect()` — الـ DB Lifecycle
