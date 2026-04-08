@@ -69,12 +69,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "JavaScript/JS_Internals_Masterclass.md",
+                "file": "Untitled.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "JS_Internals_Masterclass"
+              "title": "Untitled"
             }
           },
           {
@@ -308,11 +308,13 @@
   },
   "active": "0a3dcb447648dda7",
   "lastOpenFiles": [
+    "Untitled 2.md",
+    "Untitled 1.md",
+    "Untitled 4.md",
     "JavaScript/JS_Functional_Programming_Masterclass.md",
+    "JavaScript/JS_Internals_Masterclass.md",
     "JavaScript/Unconfirmed 839204.crdownload",
     "JavaScript/JS_Engine_Internals.md",
-    "Untitled 4.md",
-    "JavaScript/JS_Internals_Masterclass.md",
     "JavaScript/Unconfirmed 767870.crdownload",
     "Nodejs/NodeJS_Internals_Masterclass.md",
     "Nodejs/Node.js_Interview_Prep_Arabic.md",
@@ -325,8 +327,6 @@
     "Unconfirmed 981268.crdownload",
     "bookstore_deep_dive_part1.md",
     "Shell_Scripting_Day1_Guide.md",
-    "Untitled 2.md",
-    "Untitled 1.md",
     "mongodb/MongoDB_Mongoose_Remastered_M1_M2.md",
     "bookstore_deep_dive_part3.md",
     "bookstore_deep_dive_part2.md",
