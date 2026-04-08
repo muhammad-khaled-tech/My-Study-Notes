@@ -69,12 +69,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Untitled 4.md",
+                "file": "JavaScript/JS_Internals_Masterclass.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 4"
+              "title": "JS_Internals_Masterclass"
             }
           },
           {
@@ -308,6 +308,10 @@
   },
   "active": "0a3dcb447648dda7",
   "lastOpenFiles": [
+    "JavaScript/JS_Functional_Programming_Masterclass.md",
+    "JavaScript/Unconfirmed 839204.crdownload",
+    "JavaScript/JS_Engine_Internals.md",
+    "Untitled 4.md",
     "JavaScript/JS_Internals_Masterclass.md",
     "JavaScript/Unconfirmed 767870.crdownload",
     "Nodejs/NodeJS_Internals_Masterclass.md",
@@ -338,12 +342,8 @@
     "mongodb/Unconfirmed 857318.crdownload",
     "mongodb/Unconfirmed 573376.crdownload",
     "React/04-The-Escape-Hatch-useEffect-useRef-v2.md",
-    "React/04-The-Escape-Hatch-useEffect-useRef.md",
     "React/Unconfirmed 667638.crdownload",
-    "React/05-Client-Side-Routing-React-Router.md",
     "React/Unconfirmed 486568.crdownload",
-    "React/react-chapter-03-events.md",
-    "React/Unconfirmed 399627.crdownload",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
