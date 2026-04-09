@@ -149,7 +149,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -308,6 +309,8 @@
   },
   "active": "0a3dcb447648dda7",
   "lastOpenFiles": [
+    "angular/new/Angular_TS_Interview_Vault.md",
+    "angular/new/Unconfirmed 890454.crdownload",
     "angular/new/01-TypeScript-For-Angular.md",
     "oop/OOP_Ultimate_Vault.md",
     "oop/Unconfirmed 349293.crdownload",
@@ -341,10 +344,8 @@
     "bookstore-api-part1.md",
     "Unconfirmed 981268.crdownload",
     "bookstore_deep_dive_part1.md",
-    "Shell_Scripting_Day1_Guide.md",
     "mongodb/Unconfirmed 776073.crdownload",
     "mongodb/Unconfirmed 959166.crdownload",
-    "mongodb/Unconfirmed 488473.crdownload",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",

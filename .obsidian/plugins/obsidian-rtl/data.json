@@ -63,7 +63,8 @@
     "mongodb/NativeStore_Native_MongoDB_M1_M2.md": "rtl",
     "bookstore-api-part1.md": "rtl",
     "bookstore-api-part2.md": "rtl",
-    "Untitled 4.md": "rtl"
+    "Untitled 4.md": "rtl",
+    "oop/OOP_Ultimate_Vault.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
