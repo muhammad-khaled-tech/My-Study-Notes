@@ -28,11 +28,25 @@
               "type": "markdown",
               "state": {
                 "file": "angular/new/Angular_TS_Interview_Vault.md",
-                "mode": "preview",
+                "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
               "title": "Angular_TS_Interview_Vault"
+            }
+          },
+          {
+            "id": "25dd94907789169b",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Nodejs/backend-interview-vault.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "backend-interview-vault"
             }
           }
         ],
@@ -254,10 +268,11 @@
   "active": "50897a4716f0edd7",
   "lastOpenFiles": [
     "Nodejs/backend-interview-vault.md",
+    "angular/new/Angular_TS_Interview_Vault.md",
+    "Nodejs/Unconfirmed 838208.crdownload",
     "Nodejs/Unconfirmed 369514.crdownload",
     "oop/OOP_Ultimate_Vault.md",
     "Nodejs/Node.js_Interview_Prep_Arabic.md",
-    "angular/new/Angular_TS_Interview_Vault.md",
     "angular/new/Unconfirmed 890454.crdownload",
     "angular/new/01-TypeScript-For-Angular.md",
     "oop/Unconfirmed 349293.crdownload",
@@ -287,9 +302,7 @@
     "Nodejs/commom modules.md",
     "Nodejs/ENV Variables.md",
     "bookstore-api-part2.md",
-    "bookstore-api-part1.md",
     "Unconfirmed 981268.crdownload",
-    "mongodb/Unconfirmed 776073.crdownload",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",

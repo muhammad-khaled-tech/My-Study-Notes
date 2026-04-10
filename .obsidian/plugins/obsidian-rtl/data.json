@@ -65,7 +65,8 @@
     "bookstore-api-part2.md": "rtl",
     "Untitled 4.md": "rtl",
     "oop/OOP_Ultimate_Vault.md": "rtl",
-    "angular/new/Angular_TS_Interview_Vault.md": "auto"
+    "angular/new/Angular_TS_Interview_Vault.md": "rtl",
+    "Nodejs/backend-interview-vault.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
