@@ -28,7 +28,7 @@
               "type": "markdown",
               "state": {
                 "file": "angular/new/Angular_TS_Interview_Vault.md",
-                "mode": "source",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
@@ -253,6 +253,8 @@
   },
   "active": "50897a4716f0edd7",
   "lastOpenFiles": [
+    "Nodejs/backend-interview-vault.md",
+    "Nodejs/Unconfirmed 369514.crdownload",
     "oop/OOP_Ultimate_Vault.md",
     "Nodejs/Node.js_Interview_Prep_Arabic.md",
     "angular/new/Angular_TS_Interview_Vault.md",
@@ -287,9 +289,7 @@
     "bookstore-api-part2.md",
     "bookstore-api-part1.md",
     "Unconfirmed 981268.crdownload",
-    "bookstore_deep_dive_part1.md",
     "mongodb/Unconfirmed 776073.crdownload",
-    "mongodb/Unconfirmed 959166.crdownload",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
