@@ -1,4 +1,4 @@
-# الفصل صفر-عشرة — Modules والـ Packages: تنظيم المشاريع الكبيرة
+# — Modules والـ Packages: تنظيم المشاريع الكبيرة
 
 > **المتطلبات:** [[09-Error-Handling-And-Debugging]] — لازم تكون فاهم إزاي تتعامل مع Exceptions وتبني Custom Exceptions. الفصل ده هيوريك إزاي تكسر الكود بتاعك لـ **Modules** و **Packages** عشان المشروع يبقى منظم وقابل للصيانة.
 
