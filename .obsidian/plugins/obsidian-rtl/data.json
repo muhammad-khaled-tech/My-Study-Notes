@@ -74,10 +74,10 @@
     "Untitled 8.md": "rtl",
     "Untitled 9.md": "rtl",
     "Untitled 11.md": "rtl",
-    "04-Python-Decorators.md": "rtl",
     "Untitled.md": "rtl",
     "Untitled 4.md": "rtl",
-    "python/01-Control-Flow.md": "rtl"
+    "python/01-Control-Flow.md": "rtl",
+    "python/00-Python-Syntax-And-DataTypes.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
