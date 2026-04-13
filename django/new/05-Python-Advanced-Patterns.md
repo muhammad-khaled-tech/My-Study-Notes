@@ -1,6 +1,6 @@
 # الفصل الخامس — Context Managers، Generators، والـ Type Hints الحديثة
 
-> **المتطلبات:** [[04-Python-Decorators]] — لازم تكون فاهم الـ closures والـ decorators كويس. الـ Context Manager والـ Generator هما امتداد طبيعي لنفس فكرة "كود بيتنفذ حوالين كود تاني" — بس كل واحد بطريقة مختلفة ولمشكلة مختلفة. الفصل ده بيختم Phase 1 ويجهّزك لـ Django.
+> **المتطلبات:** [[django/new/04-Python-Decorators]] — لازم تكون فاهم الـ closures والـ decorators كويس. الـ Context Manager والـ Generator هما امتداد طبيعي لنفس فكرة "كود بيتنفذ حوالين كود تاني" — بس كل واحد بطريقة مختلفة ولمشكلة مختلفة. الفصل ده بيختم Phase 1 ويجهّزك لـ Django.
 
 ---
 

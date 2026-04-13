@@ -1,7 +1,7 @@
 
 # الفصل الخامس — Context Managers، Generators، والـ Type Hints الحديثة
 
-> **المتطلبات:** [[04-Python-Decorators]] — لازم تكون فاهم إزاي الـ Decorators بيشتغلوا كـ Higher-Order Functions، وإزاي بيخلقوا بيئة مغلقة (Closure) حوالين الـ function الأصلية. الفصل ده هيستخدم نفس طريقة التفكير عشان يبني Generators وContext Managers من الصفر، ويضيف عليها Type Hints عشان الكود يبقى bulletproof.
+> **المتطلبات:** [[django/new/04-Python-Decorators]] — لازم تكون فاهم إزاي الـ Decorators بيشتغلوا كـ Higher-Order Functions، وإزاي بيخلقوا بيئة مغلقة (Closure) حوالين الـ function الأصلية. الفصل ده هيستخدم نفس طريقة التفكير عشان يبني Generators وContext Managers من الصفر، ويضيف عليها Type Hints عشان الكود يبقى bulletproof.
 
 ---
 

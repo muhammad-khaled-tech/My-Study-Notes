@@ -333,4 +333,4 @@ get_skill_category("python")   # cache hit — no print, instant return
 
 ---
 
-*Next → [[04-Python-Decorators]] — عرفنا الـ closures من الجذور. دلوقتي هنشوف الـ decorators من الداخل — مش بس إزاي تستخدمهم، إزاي تبنيهم من الصفر وتفهم ليه `@login_required` و`@cache_page` في Django هم بس decorators عاديين بنفس المنطق.*
+*Next → [[django/new/04-Python-Decorators]] — عرفنا الـ closures من الجذور. دلوقتي هنشوف الـ decorators من الداخل — مش بس إزاي تستخدمهم، إزاي تبنيهم من الصفر وتفهم ليه `@login_required` و`@cache_page` في Django هم بس decorators عاديين بنفس المنطق.*

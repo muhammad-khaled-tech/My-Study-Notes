@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Untitled 3.md",
+                "file": "04-Python-Decorators.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 3"
+              "title": "04-Python-Decorators"
             }
           },
           {
@@ -132,9 +132,19 @@
               "icon": "lucide-file",
               "title": "Untitled 12"
             }
+          },
+          {
+            "id": "043ac392564fd45c",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
           }
         ],
-        "currentTab": 8
+        "currentTab": 9
       }
     ],
     "direction": "vertical"
@@ -348,35 +358,35 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "1196a976676ddcb5",
+  "active": "043ac392564fd45c",
   "lastOpenFiles": [
-    "Untitled 11.md",
     "Untitled 12.md",
+    "Untitled 11.md",
+    "Untitled 1.md",
+    "Untitled 8.md",
+    "Untitled 7.md",
+    "Untitled 6.md",
+    "Untitled 5.md",
+    "04-Python-Decorators.md",
+    "Untitled 4.md",
+    "Untitled.md",
+    "Untitled 2.md",
     "Untitled 10.md",
     "Untitled 9.md",
     "django/new/11-DRF-Fundamentals.md",
-    "Untitled 8.md",
     "django/new/10-Django-Authentication-System.md",
     "django/new/09-Django-Signals.md",
-    "Untitled 5.md",
     "django/new/08-Django-Middleware.md",
     "django/new/07-Django-ORM-Under-The-Hood.md",
-    "Untitled 6.md",
-    "Untitled 7.md",
-    "Untitled 3.md",
     "django/new/04-Python-Decorators.md",
     "django/new/06-Django-MVT-Architecture.md",
     "django/new/05-Python-Advanced-Patterns.md",
-    "Untitled 1.md",
-    "Untitled.md",
     "oop/OOP_Ultimate_Vault.md",
     "django/new/02-Python-OOP-Deep-Dive.md",
     "django/new/03-Python-Functional-Paradigm.md",
     "django/03-Python-Functional-Paradigm.md",
     "django/Unconfirmed 615327.crdownload",
     "Nodejs-Merged-Vault/nodejs-internals-deep-dive.md",
-    "Nodejs-Merged-Vault/esm modules.md",
-    "Nodejs-Merged-Vault/commom modules.md",
     "Nodejs-Merged-Vault",
     "Nodejs/Unconfirmed 838208.crdownload",
     "Nodejs/Unconfirmed 369514.crdownload",
