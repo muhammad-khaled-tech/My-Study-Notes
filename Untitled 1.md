@@ -1,6 +1,3 @@
-Here is the complete content for **File 04: Python Decorators** delivered as a clean Markdown file, strictly following the established Egyptian mentorship format, the `\n` to `<br/>` conversion rule, and the theory-first pedagogical structure.
-
-
 # الفصل الرابع — الـ Decorators: "الطبقة السرية" فوق كودك
 
 > **المتطلبات:** [[03-Python-Functional-Paradigm]] — لازم تكون فاهم إن الـ functions في Python هي First-Class Objects، وفاهم إزاي الـ Closures بيشتغلوا (إن الـ inner function بتتذكر بيئة الـ outer function). الفصل ده هيبني فوقهم مباشرةً عشان يوريك إن الـ Decorator مش سحر — هو مجرد Closure عملي.
@@ -36,7 +33,8 @@ def apply_to_job(request):
 الـ Decorator في جوهره ليس أكثر من **Higher-Order Function** بتاخد function وترجع function جديدة. بس المشهد اللي إنت شايفه بـ `@` ده مجرد **Syntactic Sugar** (سكر نحوي) بيجمّل شكل الكود.
 
 إزاي ده شغال؟ بالضبط زي ما الـ Closure بيخلق "بيئة مغلقة" للـ inner function، الـ Decorator بيخلق بيئة مغلقة عشان يغلف الـ original function.
-لما بتكتب `@login_required` فوق `def view_job`، ده معناه حرفياً: `view_job = login_required(view_job)`.
+لما بتكتب `@login_required` فوق `def view_job`، ده معناه حرفياً: 
+`view_job = login_required(view_job)`.
 الـ Decorator بياخد الـ function بتاعتك، ويرجعلك نسخة جديدة منها "محسّنة" (أي ليها قدرات إضافية).
 
 الفكرة كلها قائمة على إنك بتدي الـ Wrapper function الفرصة تشتغل *قبل* أو *بعد* الـ function الأصلية. تقدر تمنع الـ function الأصلية من الشغل تماماً، تغير arguments بتاعتها، أو تعدل في النتيجة اللي رجعتها.
