@@ -531,4 +531,6 @@ def close_job(request, job_id):
 
 ---
 
-*Next → [[10-Django-Authentication-System]] — عرفنا إزاي نستمع للأحداث. دلوقتي هنتعمق في نظام الحماية: إزاي Django بتدير الـ Users والـ Permissions؟ إيه الفرق بين `AbstractUser` و `AbstractBaseUser`؟ وليه لازم تبدأ مشروعك بـ Custom User Model من أول يوم؟*
+*Next → [[10-Django-Authentication-System]] — عرفنا إزاي نستمع للأحداث. دلوقتي هنتعمق في نظام الحماية: إزاي Django بتدير الـ Users والـ Permissions؟ إيه الفرق بين `AbstractUser` و `AbstractBaseUser`؟ وليه لازم تبدأ مشروعك بـ Custom User Model من أول يوم؟*[^1]
+
+
