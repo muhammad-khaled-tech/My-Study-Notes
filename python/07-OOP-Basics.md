@@ -1,4 +1,4 @@
-# الفصل صفر-سبعة — OOP Basics: Classes و Objects
+#  OOP Basics: Classes و Objects
 
 > **المتطلبات:** [[06-Strings-And-Files]] — لازم تكون فاهم Functions كويس، وعارف إزاي تتعامل مع Lists, Dicts, و Strings. الفصل ده هيقدملك **Object-Oriented Programming (OOP)** — النموذج اللي هيغير طريقة تفكيرك في البرمجة.
 

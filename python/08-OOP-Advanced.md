@@ -1,4 +1,4 @@
-# الفصل صفر-ثمانية — OOP Advanced: الوراثة والـ Properties والـ Methods المتقدمة
+#  OOP Advanced: الوراثة والـ Properties والـ Methods المتقدمة
 
 > **المتطلبات:** [[07-OOP-Basics]] — لازم تكون فاهم Classes و Objects، `__init__` و `self`، Instance Methods، Class Attributes، و `__str__`/`__repr__`. الفصل ده هيبني فوقهم عشان يقدملك المفاهيم المتقدمة في OOP.
 
