@@ -76,9 +76,19 @@
               "icon": "lucide-file",
               "title": "Untitled 8"
             }
+          },
+          {
+            "id": "1ece863e780be4c7",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
           }
         ],
-        "currentTab": 4
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -292,11 +302,12 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "6a1a95e8492cd055",
+  "active": "1ece863e780be4c7",
   "lastOpenFiles": [
+    "django/new/11-DRF-Fundamentals.md",
+    "Untitled 8.md",
     "django/new/10-Django-Authentication-System.md",
     "django/new/09-Django-Signals.md",
-    "Untitled 8.md",
     "Untitled 5.md",
     "django/new/08-Django-Middleware.md",
     "django/new/07-Django-ORM-Under-The-Hood.md",
@@ -320,7 +331,6 @@
     "Nodejs-Merged-Vault/NodeJS_Internals_Masterclass.md",
     "Nodejs-Merged-Vault/NodeJS_Backend_Masterclass.md",
     "Nodejs-Merged-Vault/Node.js_Interview_Prep_Arabic.md",
-    "Nodejs-Merged-Vault/FreelanceFlow_Journey_nodejs_project.md",
     "Nodejs-Merged-Vault",
     "Nodejs/Unconfirmed 838208.crdownload",
     "Nodejs/Unconfirmed 369514.crdownload",
