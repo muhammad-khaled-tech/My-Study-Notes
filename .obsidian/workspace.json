@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "python/Untitled 2.md",
+                "file": "python/00-Python-Syntax-And-DataTypes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 2"
+              "title": "00-Python-Syntax-And-DataTypes"
             }
           }
         ]
@@ -237,10 +237,10 @@
   },
   "active": "433a11747cd6af4b",
   "lastOpenFiles": [
-    "python/Untitled 1.md",
-    "python/Untitled 2.md",
-    "python/Untitled.md",
-    "python/Phase 0- Python Zero to Hero.md",
+    "python/03-Lists-And-Tuples.md",
+    "python/02-Loops-And-Iterations.md",
+    "python/01-Control-Flow.md",
+    "python/00-Python-Syntax-And-DataTypes.md",
     "Untitled 10.md",
     "Untitled 14.md",
     "Untitled.md",
