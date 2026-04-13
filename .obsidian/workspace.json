@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "python/Untitled.md",
+                "file": "python/Untitled 2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled"
+              "title": "Untitled 2"
             }
           }
         ]
@@ -237,7 +237,10 @@
   },
   "active": "433a11747cd6af4b",
   "lastOpenFiles": [
+    "python/Untitled 1.md",
+    "python/Untitled 2.md",
     "python/Untitled.md",
+    "python/Phase 0- Python Zero to Hero.md",
     "Untitled 10.md",
     "Untitled 14.md",
     "Untitled.md",
@@ -261,9 +264,6 @@
     "django/new/10-Django-Authentication-System.md",
     "django/new/09-Django-Signals.md",
     "django/new/08-Django-Middleware.md",
-    "django/new/07-Django-ORM-Under-The-Hood.md",
-    "django/new/06-Django-MVT-Architecture.md",
-    "oop/OOP_Ultimate_Vault.md",
     "django/Unconfirmed 615327.crdownload",
     "Nodejs-Merged-Vault",
     "Nodejs/Unconfirmed 838208.crdownload",
