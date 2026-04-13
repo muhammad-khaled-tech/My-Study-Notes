@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Nodejs/backend-interview-vault.md",
+                "file": "django/new/01-Python-Memory-And-GIL.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "backend-interview-vault"
+              "title": "01-Python-Memory-And-GIL"
             }
           }
         ],
@@ -252,8 +252,8 @@
   },
   "active": "25dd94907789169b",
   "lastOpenFiles": [
-    "oop/OOP_Ultimate_Vault.md",
     "Nodejs/backend-interview-vault.md",
+    "oop/OOP_Ultimate_Vault.md",
     "angular/new/Angular_TS_Interview_Vault.md",
     "Nodejs/Unconfirmed 838208.crdownload",
     "Nodejs/Unconfirmed 369514.crdownload",
