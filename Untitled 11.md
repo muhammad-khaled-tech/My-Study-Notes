@@ -717,7 +717,7 @@ def login_view(request):
 > **الخلاصة:** بداية المشروع بـ Custom User Model بتاخد ٥ دقايق إضافية. إصلاح الموضوع بعد ٦ شهور بياخد أيام وصداع. ابدأ صح من الأول.
 
 ---
-
+> 
 ## 📝 خلاصة الدرس
 
 - **نظام الـ Authentication متعدد الطبقات:** مش مجرد `User` model. فيه `Authentication Backends` (الدماغ — إزاي تـ authenticate)، `Session/Cookie` system (التذكر بين requests)، و `Permissions/Groups` (الصلاحيات).
