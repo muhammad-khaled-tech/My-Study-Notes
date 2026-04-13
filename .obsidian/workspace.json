@@ -22,20 +22,6 @@
             }
           },
           {
-            "id": "50897a4716f0edd7",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "angular/new/Angular_TS_Interview_Vault.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Angular_TS_Interview_Vault"
-            }
-          },
-          {
             "id": "25dd94907789169b",
             "type": "leaf",
             "state": {
@@ -107,8 +93,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -265,13 +250,13 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "50897a4716f0edd7",
+  "active": "25dd94907789169b",
   "lastOpenFiles": [
+    "oop/OOP_Ultimate_Vault.md",
     "Nodejs/backend-interview-vault.md",
     "angular/new/Angular_TS_Interview_Vault.md",
     "Nodejs/Unconfirmed 838208.crdownload",
     "Nodejs/Unconfirmed 369514.crdownload",
-    "oop/OOP_Ultimate_Vault.md",
     "Nodejs/Node.js_Interview_Prep_Arabic.md",
     "angular/new/Unconfirmed 890454.crdownload",
     "angular/new/01-TypeScript-For-Angular.md",
