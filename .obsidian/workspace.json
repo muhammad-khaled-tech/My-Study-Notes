@@ -120,13 +120,17 @@
             }
           },
           {
-            "id": "73724339190ec27b",
+            "id": "1196a976676ddcb5",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Untitled 12.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "Untitled 12"
             }
           }
         ],
@@ -344,10 +348,11 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "73724339190ec27b",
+  "active": "1196a976676ddcb5",
   "lastOpenFiles": [
-    "Untitled 10.md",
+    "Untitled 12.md",
     "Untitled 11.md",
+    "Untitled 10.md",
     "Untitled 9.md",
     "django/new/11-DRF-Fundamentals.md",
     "Untitled 8.md",
@@ -372,7 +377,6 @@
     "Nodejs-Merged-Vault/nodejs-internals-deep-dive.md",
     "Nodejs-Merged-Vault/esm modules.md",
     "Nodejs-Merged-Vault/commom modules.md",
-    "Nodejs-Merged-Vault/backend-interview-vault.md",
     "Nodejs-Merged-Vault",
     "Nodejs/Unconfirmed 838208.crdownload",
     "Nodejs/Unconfirmed 369514.crdownload",
