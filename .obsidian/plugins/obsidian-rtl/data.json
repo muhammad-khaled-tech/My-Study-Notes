@@ -68,7 +68,9 @@
     "angular/new/Angular_TS_Interview_Vault.md": "rtl",
     "Nodejs/backend-interview-vault.md": "rtl",
     "django/new/01-Python-Memory-And-GIL.md": "rtl",
-    "django/new/02-Python-OOP-Deep-Dive.md": "rtl"
+    "django/new/02-Python-OOP-Deep-Dive.md": "rtl",
+    "Untitled 1.md": "rtl",
+    "django/new/04-Python-Decorators.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
