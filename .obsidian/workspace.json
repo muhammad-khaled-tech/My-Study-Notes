@@ -30,9 +30,23 @@
               "icon": "lucide-file",
               "title": "Untitled 15"
             }
+          },
+          {
+            "id": "9df0b807bd3a62c5",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Untitled 16.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Untitled 16"
+            }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -247,8 +261,9 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "df84ed157eea468a",
+  "active": "9df0b807bd3a62c5",
   "lastOpenFiles": [
+    "Untitled 16.md",
     "Untitled 15.md",
     "React/dev5-2day-plan.md",
     "React/05-Client-Side-Routing-React-Router.md",
@@ -275,7 +290,6 @@
     "Untitled 13.md",
     "Untitled 4.md",
     "Untitled 6.md",
-    "Untitled 3.md",
     "django/Unconfirmed 615327.crdownload",
     "Nodejs-Merged-Vault",
     "Nodejs/Unconfirmed 838208.crdownload",
