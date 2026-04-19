@@ -6,7 +6,7 @@ The Problem === >  الوقت
 slogan -- > لما يتقالك استناني ..  قول انا في حد بدالي
 The Solution --- اول تطبيق يقدر يتعامل مع الويتنج المتعب ويكون بدالك  ويجافظ على  وقت
 How It Works --- 
-Market Size (TAM/SAM/SOM)
+Market Size (TAM/SAM/SOM) ==== > 121 milion phone number ()
 Business Model & Pricing
 Competitive Landscape
 Traction / Validation Plan
