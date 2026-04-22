@@ -1,4 +1,4 @@
-<div dir="rtl">
+
 
 # CallMate: The Telephony AI Proxy — مستند البنية التحتية الشامل (Whitepaper)
 
@@ -320,4 +320,3 @@ CallMate في نسخته الحالية هو "Proxy ذكي" بيوفر وقت ا
 
 _CallMate مش مجرد تعديل بسيط في الـ UI لخدمة العملاء؛ ده fundamental architectural proxy (بروكسي معماري أساسي). عن طريق تسليح الـ LLMs ضد طوابير الانتظار القديمة بتاعت أنظمة الاتصالات، CallMate بيسترجع أغلى حاجة بتضيع بسبب روتين الشركات: وقت الإنسان._
 
-</div>
