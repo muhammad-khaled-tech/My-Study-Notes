@@ -37,12 +37,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Untitled 16.md",
+                "file": "python/projects/project1_pyvault_no_oop.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 16"
+              "title": "project1_pyvault_no_oop"
             }
           }
         ],
@@ -103,7 +103,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -262,6 +263,8 @@
   },
   "active": "9df0b807bd3a62c5",
   "lastOpenFiles": [
+    "python/projects/python_interview_60qa.md",
+    "python/projects/Unconfirmed 619268.crdownload",
     "Untitled 16.md",
     "Untitled 15.md",
     "React/dev5-2day-plan.md",
@@ -288,7 +291,6 @@
     "python",
     "Untitled 13.md",
     "Untitled 4.md",
-    "Untitled 6.md",
     "django/Unconfirmed 615327.crdownload",
     "Nodejs-Merged-Vault",
     "Nodejs/Unconfirmed 838208.crdownload",
@@ -298,7 +300,6 @@
     "oop",
     "Nodejs/Unconfirmed 591810.crdownload",
     "Pasted image 20260224214557.png",
-    "Nodejs/Unconfirmed 477429.crdownload",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
     "Aws practitioner/Notes/image-11.png",
