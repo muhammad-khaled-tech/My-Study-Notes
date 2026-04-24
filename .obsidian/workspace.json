@@ -37,12 +37,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "python/projects/python_revision.md",
+                "file": "medical_ai_agent_lab_guide (1).md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "python_revision"
+              "title": "medical_ai_agent_lab_guide (1)"
             }
           }
         ],
@@ -103,7 +103,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -262,10 +263,10 @@
   },
   "active": "9df0b807bd3a62c5",
   "lastOpenFiles": [
+    "python/projects/python_revision.md",
     "python/projects/django_drf_revision.md",
     "python/projects/project1_pyvault_no_oop.md",
     "python/projects/python_interview_60qa.md",
-    "python/projects/python_revision.md",
     "python/projects/django_drf_70qa.md",
     "python/projects/Unconfirmed 785195.crdownload",
     "python/projects/Unconfirmed 169256.crdownload",
