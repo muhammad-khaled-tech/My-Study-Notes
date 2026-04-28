@@ -35,8 +35,7 @@
               "title": "00-CrowdFund-Master-Revision"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -93,7 +92,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -221,7 +221,7 @@
             }
           }
         ],
-        "currentTab": 3
+        "currentTab": 8
       }
     ],
     "direction": "horizontal",
@@ -250,10 +250,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "ea2cc24f51cbe4dc",
+  "active": "6c16c4a7f6fc7db1",
   "lastOpenFiles": [
-    "python/projects/python_revision.md",
     "python/projects/00-CrowdFund-Master-Revision.md",
+    "python/projects/python_revision.md",
     "python/projects/Unconfirmed 22095.crdownload",
     "Aws practitioner/06_OtherCompute_Deployment.md",
     "Untitled 15.md",
