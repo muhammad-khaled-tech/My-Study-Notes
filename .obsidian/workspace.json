@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "php/Untitled.md",
+                "file": "php/PHP-Day03-Notes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled"
+              "title": "PHP-Day03-Notes"
             }
           }
         ]
@@ -237,8 +237,10 @@
   },
   "active": "6c16c4a7f6fc7db1",
   "lastOpenFiles": [
-    "php/PHP-2.md",
     "php/Untitled.md",
+    "php/PHP-Day03-Notes.md",
+    "php/Unconfirmed 866445.crdownload",
+    "php/PHP-2.md",
     "Untitled 16.md",
     "Untitled 8.md",
     "php/PHP-1.md",
@@ -267,12 +269,10 @@
     "python/09-Error-Handling-And-Debugging.md",
     "python/10-Modules-And-Packages.md",
     "python/08-OOP-Advanced.md",
-    "python/07-OOP-Basics.md",
     "python",
     "django/Unconfirmed 615327.crdownload",
     "Nodejs-Merged-Vault",
     "Nodejs/Unconfirmed 838208.crdownload",
-    "Nodejs/Unconfirmed 369514.crdownload",
     "Pasted image 20260224214557.png",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
