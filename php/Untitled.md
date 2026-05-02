@@ -40,14 +40,14 @@ echo "Name: " . $_POST['name'];
 
 ```mermaid
 flowchart TD
-    A[🔓 fopen\nفتح الملف] --> B{الملف موجود؟}
-    B -->|Yes| C[Resource Handle\nزي مفتاح الأوضة]
+    A[🔓 fopen</br>فتح الملف] --> B{الملف موجود؟}
+    B -->|Yes| C[Resource Handle</br>زي مفتاح الأوضة]
     B -->|No / Error| D[false + Warning]
-    C --> E[📖 fread / fgets\nقراءة]
-    C --> F[✍️ fwrite\nكتابة]
-    E --> G[🔒 fclose\nإغلاق الملف]
+    C --> E[📖 fread / fgets</br>قراءة]
+    C --> F[✍️ fwrite</br>كتابة]
+    E --> G[🔒 fclose</br>إغلاق الملف]
     F --> G
-    D --> H[Handle Error\nعرض رسالة للمستخدم]
+    D --> H[Handle Error</br>عرض رسالة للمستخدم]
 ```
 
 ---
@@ -246,7 +246,7 @@ readfile("welcome.txt"); // Outputs: I am writing using fwrite...
 
 // file() — reads file and returns each line as an array element
 $data = file("welcome.txt");
-var_dump($data); // array(5) { [0]=> 'line 1\n', [1]=> 'line 2\n', ... }
+var_dump($data); // array(5) { [0]=> 'line 1</br>', [1]=> 'line 2</br>', ... }
 
 // file_get_contents() — returns entire file as a string (most commonly used)
 $content = file_get_contents("welcome.txt");
@@ -327,10 +327,10 @@ var_dump(is_executable("welcome.txt")); // bool(false) — it's not a binary
 الساعة 12 الظهر، 1000 user بيسجلوا في نفس الوقت، وكلهم بيكتبوا في نفس الـ `customers.txt`. لو في concurrent writes من غير locking، ممكن يحصل ده:
 
 ```
-User A writes: "Ahmed,Cairo\n"
-User B writes: "Mohamed,Alex\n"
+User A writes: "Ahmed,Cairo</br>"
+User B writes: "Mohamed,Alex</br>"
 ↓
-File gets: "Ahmed,MohaCairo\nmed,Alex\n"  ← Data corruption! 💥
+File gets: "Ahmed,MohaCairo</br>med,Alex</br>"  ← Data corruption! 💥
 ```
 
 ده اسمه **Race Condition**.
@@ -345,7 +345,7 @@ $file = fopen("customers.txt", "a");
 // flock() BLOCKS (waits) until the lock is available
 if (flock($file, LOCK_EX)) {
     // Write only after we have exclusive access
-    fwrite($file, "Ahmed,Cairo\n");
+    fwrite($file, "Ahmed,Cairo</br>");
 
     // Release the lock so others can write
     flock($file, LOCK_UN);
@@ -375,11 +375,11 @@ fclose($file);
 
 ```mermaid
 flowchart LR
-    A[Flat File Problems] --> B[🐌 Performance\nكل search = O-n قراءة سطر سطر]
-    A --> C[🔍 Search\nمفيش indexes\nلازم تقرأ كل الملف]
-    A --> D[🔐 Access Control\nOS permissions بس\nمفيش row-level security]
-    A --> E[⚡ Concurrency\nflock bottleneck\nواحد بيكتب والكل بيستنى]
-    A --> F[📏 Sequential Access\nلازم تقرأ من الأول للآخر]
+    A[Flat File Problems] --> B[🐌 Performance</br>كل search = O-n قراءة سطر سطر]
+    A --> C[🔍 Search</br>مفيش indexes</br>لازم تقرأ كل الملف]
+    A --> D[🔐 Access Control</br>OS permissions بس</br>مفيش row-level security]
+    A --> E[⚡ Concurrency</br>flock bottleneck</br>واحد بيكتب والكل بيستنى]
+    A --> F[📏 Sequential Access</br>لازم تقرأ من الأول للآخر]
 ```
 
 ده بالظبط سبب وجود الـ **Relational Databases** — MySQL, PostgreSQL. بتحل كل المشاكل دي بشكل elegant. هنيجيلها في الـ sessions الجاية.
@@ -430,8 +430,8 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A[PHP Array] --> B[Indexed Array\nالـ keys هي integers تلقائياً]
-    A --> C[Associative Array\nالـ keys هي strings اختيارية]
+    A[PHP Array] --> B[Indexed Array</br>الـ keys هي integers تلقائياً]
+    A --> C[Associative Array</br>الـ keys هي strings اختيارية]
     B --> D["$arr = [3, 5, 'PHP', true]"]
     C --> E["$info = ['name' => 'Noha', 'track' => 'App']"]
 ```
@@ -600,10 +600,10 @@ var_dump($result);
 flowchart TD
     A[Array Sorting Functions] --> B[Indexed Arrays]
     A --> C[Associative Arrays]
-    B --> D[sort — ascending\nrsort — descending]
-    C --> E[asort — by value ascending\narsort — by value descending]
-    C --> F[ksort — by key ascending\nkrsort — by key descending]
-    A --> G[Custom Sort\nusort / uasort / uksort]
+    B --> D[sort — ascending</br>rsort — descending]
+    C --> E[asort — by value ascending</br>arsort — by value descending]
+    C --> F[ksort — by key ascending</br>krsort — by key descending]
+    A --> G[Custom Sort</br>usort / uasort / uksort]
 ```
 
 ```php
@@ -970,7 +970,7 @@ echo "</table>";
 
 ```mermaid
 flowchart TD
-    A[HTML Form\nfirstname, lastname, email, gender] -->|POST| B[PHP Server-Side Validation]
+    A[HTML Form</br>firstname, lastname, email, gender] -->|POST| B[PHP Server-Side Validation]
     B -->|Valid| C[Format data as CSV line]
     C --> D[fopen with 'a' + flock LOCK_EX]
     D --> E[fwrite the record]
