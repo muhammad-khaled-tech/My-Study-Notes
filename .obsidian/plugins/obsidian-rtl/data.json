@@ -85,7 +85,8 @@
     "python/projects/00-CrowdFund-Master-Revision.md": "rtl",
     "php/PHP-1.md": "rtl",
     "php/Untitled.md": "rtl",
-    "php/PHP-Day03-Notes.md": "rtl"
+    "php/PHP-Day03-Notes.md": "rtl",
+    "php/PHP-Day02-Notes.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
