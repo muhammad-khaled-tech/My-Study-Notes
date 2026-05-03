@@ -11,14 +11,10 @@
             "id": "6c16c4a7f6fc7db1",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "php/PHP-Day03-Notes.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "PHP-Day03-Notes"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
             }
           }
         ]
@@ -78,7 +74,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -206,12 +203,11 @@
             }
           }
         ],
-        "currentTab": 8
+        "currentTab": 6
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -237,8 +233,14 @@
   },
   "active": "6c16c4a7f6fc7db1",
   "lastOpenFiles": [
-    "php/PHP-Day02-Notes.md",
+    "Aws practitioner/01_what is cloud computing?.md",
+    "Aws practitioner/03_EC2.md",
+    "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
+    "Aws practitioner/05_S3_Databases.md",
+    "Aws practitioner/06_OtherCompute_Deployment.md",
+    "Aws practitioner/02_IAM.md",
     "php/PHP-Day03-Notes.md",
+    "php/PHP-Day02-Notes.md",
     "php/Unconfirmed 92218.crdownload",
     "php/Untitled.md",
     "php/Unconfirmed 866445.crdownload",
@@ -251,7 +253,6 @@
     "python/projects/python_revision.md",
     "python/projects/00-CrowdFund-Master-Revision.md",
     "python/projects/Unconfirmed 22095.crdownload",
-    "Aws practitioner/06_OtherCompute_Deployment.md",
     "Untitled 15.md",
     "medical_ai_agent_lab_guide (1).md",
     "python/projects/django_drf_revision.md",
@@ -265,11 +266,6 @@
     "React/dev5-2day-plan.md",
     "React/05-Client-Side-Routing-React-Router.md",
     "React/04-The-Escape-Hatch-useEffect-useRef-v2.md",
-    "React/sample-react-chapter-01.md",
-    "python/12-30-Interview-Questions.md",
-    "python/11-Virtual-Environments-And-PIP.md",
-    "python/09-Error-Handling-And-Debugging.md",
-    "python/10-Modules-And-Packages.md",
     "python",
     "django/Unconfirmed 615327.crdownload",
     "Nodejs-Merged-Vault",
