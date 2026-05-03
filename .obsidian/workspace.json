@@ -11,10 +11,14 @@
             "id": "6c16c4a7f6fc7db1",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "Aws practitioner/02_IAM.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "02_IAM"
             }
           }
         ]
@@ -74,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945,
-    "collapsed": true
+    "width": 260.51103591918945
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -234,12 +237,13 @@
   },
   "active": "6c16c4a7f6fc7db1",
   "lastOpenFiles": [
-    "Aws practitioner/01_what is cloud computing?.md",
     "Aws practitioner/03_EC2.md",
     "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
     "Aws practitioner/05_S3_Databases.md",
     "Aws practitioner/06_OtherCompute_Deployment.md",
+    "Aws practitioner/07_🌍 Global Infrastructure + 🚀 Global Applications.md",
     "Aws practitioner/02_IAM.md",
+    "Aws practitioner/01_what is cloud computing?.md",
     "php/PHP-Day03-Notes.md",
     "php/PHP-Day02-Notes.md",
     "php/Unconfirmed 92218.crdownload",
@@ -266,7 +270,6 @@
     "python/projects/Unconfirmed 619268.crdownload",
     "React/dev5-2day-plan.md",
     "React/05-Client-Side-Routing-React-Router.md",
-    "React/04-The-Escape-Hatch-useEffect-useRef-v2.md",
     "python",
     "django/Unconfirmed 615327.crdownload",
     "Nodejs-Merged-Vault",
