@@ -54,7 +54,7 @@ $file = fopen("users.txt", "r");
 $log = fopen("log.txt", "a");
 ```
 
-### تحت الكبوت: لما تفتح ملف في PHP، Zend Engine بتستدعي `php_stream_open_wrapper` اللي بيستخدم `open()` system call. الرجوع resource بيفتح file descriptor في جدول العمليات. كل عملية (FPM worker) ليها حد أقصى لعدد الـ file descriptors (usually 1024). لو فتحت ملفات كتير ومش قفلتهم، هتوصل للحد وتخرب السيرفر.
+ تحت الكبوت: لما تفتح ملف في PHP، Zend Engine بتستدعي `php_stream_open_wrapper` اللي بيستخدم `open()` system call. الرجوع resource بيفتح file descriptor في جدول العمليات. كل عملية (FPM worker) ليها حد أقصى لعدد الـ file descriptors (usually 1024). لو فتحت ملفات كتير ومش قفلتهم، هتوصل للحد وتخرب السيرفر.
 
 ---
 
@@ -814,4 +814,481 @@ $merged = array_merge_recursive($array1, $array2); // nested for same keys
 
 ---
 
-[أنا خلصت الشرح النظري بالكامل (الجزء الثاني).. قولي "هات اللاب" عشان أكتبلك الجزء الثالث بحلول Lab 02 validation والحذف من ملف]
+# 📄 File 3: `PHPDay02_Labs.md`
+
+# 🛠️ حلول اللابات – Day02 (Production-Ready on Ubuntu)
+
+## 🧪 Lab 02 – نموذج مع Validation وحفظ في ملف وعرض مع حذف
+
+### المتطلبات من السلايدات (صفحة 50-51):
+
+1. **Server-side validation** للحقول: firstname, lastname, email, gender.
+2. **حفظ البيانات** في ملف `customer.txt`.
+3. **استرجاع كل السجلات** وعرضها في جدول HTML.
+4. **Bonus**: زر Delete لكل سجل، عند الضغط يُحذف السجل من الملف ومن الجدول.
+
+> [!DEEP-DIVE]
+> هنستخدم **CSV format** داخل `customer.txt` عشان نقدر نعدل ونحذف بسهولة. كل سطر يمثل record: `firstname,lastname,email,gender`.  
+> على Ubuntu، هنحط الملف في مجلد `data/` خارج الـ document root عشان الأمان، ونعطي permissions مناسبة لـ `www-data`.
+
+---
+
+## 🐧 بيئة التشغيل (Ubuntu Linux)
+
+- Web server: Apache2 + PHP 8.1 FPM
+- Document root: `/var/www/html/lab02/`
+- Data directory: `/var/www/data/` (خارج الـ document root)
+- Permissions: `www-data` يملك حق القراءة والكتابة في مجلد `data`
+
+### تحضير البيئة (Run as root or sudo):
+
+```bash
+# إنشاء مجلد المشروع
+sudo mkdir -p /var/www/html/lab02
+sudo mkdir -p /var/www/data
+sudo chown -R www-data:www-data /var/www/data
+sudo chmod 755 /var/www/html/lab02
+sudo chmod 755 /var/www/data
+
+# منح المستخدم العادي صلاحية الكتابة للتعديل (للتطوير)
+sudo chown -R $USER:www-data /var/www/html/lab02
+sudo chmod 775 /var/www/html/lab02
+```
+
+---
+
+## 📁 هيكل الملفات
+
+```
+/var/www/html/lab02/
+├── form.php               (يعرض النموذج ويتعامل مع الإرسال)
+├── view.php               (يعرض الجدول مع أزرار الحذف)
+├── delete.php             (معالج الحذف)
+└── includes/
+    └── functions.php      (دوال مشتركة للقراءة والكتابة)
+
+/var/www/data/
+└── customers.txt          (ملف البيانات – ينشأ تلقائياً)
+```
+
+---
+
+## 📄 1. `includes/functions.php` – دوال مشتركة وآمنة
+
+```php
+<?php
+/**
+ * Functions for file-based CRUD operations (Production-ready)
+ */
+
+define('DATA_FILE', '/var/www/data/customers.txt');
+
+/**
+ * Read all customers from CSV file
+ * @return array Array of associative arrays with keys: firstname, lastname, email, gender
+ */
+function getAllCustomers(): array {
+    if (!file_exists(DATA_FILE)) {
+        return [];
+    }
+    
+    $customers = [];
+    $handle = fopen(DATA_FILE, 'rb');
+    if (!$handle) {
+        return [];
+    }
+    
+    // Acquire shared lock for reading
+    if (flock($handle, LOCK_SH)) {
+        while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+            if (count($row) === 4) {
+                $customers[] = [
+                    'firstname' => trim($row[0]),
+                    'lastname'  => trim($row[1]),
+                    'email'     => trim($row[2]),
+                    'gender'    => trim($row[3])
+                ];
+            }
+        }
+        flock($handle, LOCK_UN);
+    }
+    fclose($handle);
+    return $customers;
+}
+
+/**
+ * Write all customers to CSV file (overwrites)
+ * @param array $customers Array of associative arrays
+ * @return bool Success
+ */
+function writeAllCustomers(array $customers): bool {
+    $handle = fopen(DATA_FILE, 'wb');
+    if (!$handle) {
+        return false;
+    }
+    
+    // Exclusive lock for writing
+    $success = false;
+    if (flock($handle, LOCK_EX)) {
+        foreach ($customers as $cust) {
+            $row = [
+                $cust['firstname'],
+                $cust['lastname'],
+                $cust['email'],
+                $cust['gender']
+            ];
+            if (fputcsv($handle, $row) === false) {
+                flock($handle, LOCK_UN);
+                fclose($handle);
+                return false;
+            }
+        }
+        fflush($handle);
+        flock($handle, LOCK_UN);
+        $success = true;
+    }
+    fclose($handle);
+    return $success;
+}
+
+/**
+ * Append a single customer to file (alternative to rewrite all)
+ * Used for new records to avoid loading all data
+ */
+function appendCustomer(array $customer): bool {
+    $handle = fopen(DATA_FILE, 'ab');
+    if (!$handle) {
+        return false;
+    }
+    
+    $success = false;
+    if (flock($handle, LOCK_EX)) {
+        $row = [
+            $customer['firstname'],
+            $customer['lastname'],
+            $customer['email'],
+            $customer['gender']
+        ];
+        if (fputcsv($handle, $row) !== false) {
+            fflush($handle);
+            $success = true;
+        }
+        flock($handle, LOCK_UN);
+    }
+    fclose($handle);
+    return $success;
+}
+
+/**
+ * Validate form data
+ * @return array Array of errors (empty if valid)
+ */
+function validateCustomer($firstname, $lastname, $email, $gender): array {
+    $errors = [];
+    
+    // First name: 2-50 chars, letters, spaces, hyphens
+    if (empty($firstname) || !preg_match('/^[a-zA-Z\s\-]{2,50}$/', $firstname)) {
+        $errors[] = "First name must be 2-50 characters (letters, spaces, hyphens)";
+    }
+    
+    // Last name: same rules
+    if (empty($lastname) || !preg_match('/^[a-zA-Z\s\-]{2,50}$/', $lastname)) {
+        $errors[] = "Last name must be 2-50 characters (letters, spaces, hyphens)";
+    }
+    
+    // Email: standard validation + check format
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Valid email address is required";
+    }
+    
+    // Gender: must be Mr or Miss (or Male/Female – we'll use Mr/Miss as per slide)
+    if (!in_array($gender, ['Mr', 'Miss', 'Male', 'Female'])) {
+        $errors[] = "Gender must be selected (Mr/Miss or Male/Female)";
+    }
+    
+    return $errors;
+}
+```
+
+---
+
+## 📄 2. `form.php` – عرض النموذج ومعالجته
+
+```php
+<?php
+require_once 'includes/functions.php';
+
+$success = '';
+$errors = [];
+$formData = ['firstname' => '', 'lastname' => '', 'email' => '', 'gender' => ''];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Sanitize input
+    $firstname = trim($_POST['firstname'] ?? '');
+    $lastname  = trim($_POST['lastname'] ?? '');
+    $email     = trim($_POST['email'] ?? '');
+    $gender    = $_POST['gender'] ?? '';
+    
+    $formData = compact('firstname', 'lastname', 'email', 'gender');
+    
+    $errors = validateCustomer($firstname, $lastname, $email, $gender);
+    
+    if (empty($errors)) {
+        // Save to file
+        $customer = [
+            'firstname' => $firstname,
+            'lastname'  => $lastname,
+            'email'     => $email,
+            'gender'    => $gender
+        ];
+        
+        if (appendCustomer($customer)) {
+            $success = "Customer added successfully!";
+            // Clear form
+            $formData = ['firstname' => '', 'lastname' => '', 'email' => '', 'gender' => ''];
+        } else {
+            $errors[] = "Failed to save data. Check file permissions.";
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Customer</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: inline-block; width: 100px; }
+        input, select { padding: 5px; width: 250px; }
+        .error { color: red; margin: 10px 0; }
+        .success { color: green; margin: 10px 0; }
+        button { padding: 8px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .nav { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Add New Customer</h2>
+    
+    <?php if (!empty($errors)): ?>
+        <div class="error">
+            <?php foreach ($errors as $err): ?>
+                <p><?php echo htmlspecialchars($err); ?></p>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+    
+    <?php if ($success): ?>
+        <div class="success"><?php echo htmlspecialchars($success); ?></div>
+    <?php endif; ?>
+    
+    <form method="POST" action="">
+        <div class="form-group">
+            <label>First Name:</label>
+            <input type="text" name="firstname" value="<?php echo htmlspecialchars($formData['firstname']); ?>" required>
+        </div>
+        <div class="form-group">
+            <label>Last Name:</label>
+            <input type="text" name="lastname" value="<?php echo htmlspecialchars($formData['lastname']); ?>" required>
+        </div>
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" name="email" value="<?php echo htmlspecialchars($formData['email']); ?>" required>
+        </div>
+        <div class="form-group">
+            <label>Gender:</label>
+            <select name="gender" required>
+                <option value="">Select</option>
+                <option value="Mr" <?php echo $formData['gender'] === 'Mr' ? 'selected' : ''; ?>>Mr</option>
+                <option value="Miss" <?php echo $formData['gender'] === 'Miss' ? 'selected' : ''; ?>>Miss</option>
+                <option value="Male" <?php echo $formData['gender'] === 'Male' ? 'selected' : ''; ?>>Male</option>
+                <option value="Female" <?php echo $formData['gender'] === 'Female' ? 'selected' : ''; ?>>Female</option>
+            </select>
+        </div>
+        <button type="submit">Save Customer</button>
+    </form>
+    
+    <div class="nav">
+        <a href="view.php">View All Customers</a>
+    </div>
+</body>
+</html>
+```
+
+---
+
+## 📄 3. `view.php` – عرض الجدول مع أزرار الحذف
+
+```php
+<?php
+require_once 'includes/functions.php';
+
+$customers = getAllCustomers();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer List</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .delete-btn { background-color: #dc3545; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px; }
+        .delete-btn:hover { background-color: #c82333; }
+        .add-link { margin-bottom: 20px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <h2>Customer Records</h2>
+    <a href="form.php" class="add-link">+ Add New Customer</a>
+    
+    <?php if (empty($customers)): ?>
+        <p>No customers found.</p>
+    <?php else: ?>
+        <table>
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Gender</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($customers as $index => $cust): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($cust['firstname']); ?></td>
+                    <td><?php echo htmlspecialchars($cust['lastname']); ?></td>
+                    <td><?php echo htmlspecialchars($cust['email']); ?></td>
+                    <td><?php echo htmlspecialchars($cust['gender']); ?></td>
+                    <td>
+                        <a href="delete.php?index=<?php echo $index; ?>" 
+                           class="delete-btn" 
+                           onclick="return confirm('Are you sure you want to delete this record?');">Delete</a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+</body>
+</html>
+```
+
+---
+
+## 📄 4. `delete.php` – معالج الحذف الآمن
+
+```php
+<?php
+require_once 'includes/functions.php';
+
+// Only allow POST or GET with confirmation – we'll use GET with confirm
+if (!isset($_GET['index']) || !is_numeric($_GET['index'])) {
+    header('Location: view.php?error=invalid_request');
+    exit;
+}
+
+$index = (int)$_GET['index'];
+$customers = getAllCustomers();
+
+if ($index < 0 || $index >= count($customers)) {
+    header('Location: view.php?error=not_found');
+    exit;
+}
+
+// Remove the element at index
+array_splice($customers, $index, 1);
+
+// Write back to file
+if (writeAllCustomers($customers)) {
+    header('Location: view.php?success=deleted');
+} else {
+    header('Location: view.php?error=write_failed');
+}
+exit;
+```
+
+---
+
+## 🔐 إعدادات الأمان على Ubuntu (Production)
+
+### 1. منع الوصول المباشر إلى `includes/functions.php`
+
+ضع ملف `.htaccess` داخل مجلد `includes`:
+
+```apache
+# /var/www/html/lab02/includes/.htaccess
+Require all denied
+```
+
+أو استخدم `touch includes/.htaccess` وأضف المحتوى.
+
+### 2. تأمين ملف البيانات
+
+```bash
+sudo chown www-data:www-data /var/www/data/customers.txt
+sudo chmod 640 /var/www/data/customers.txt
+```
+
+### 3. منع listing directories في Apache
+
+في `/etc/apache2/sites-available/000-default.conf` أو ملف الـ vhost:
+
+```apache
+<Directory /var/www/html/lab02>
+    Options -Indexes
+    AllowOverride All
+</Directory>
+```
+
+ثم `sudo systemctl restart apache2`
+
+### 4. حماية من CSRF (اختياري لكن مهم)
+
+في `form.php` أضف token:
+
+```php
+session_start();
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+// في النموذج: <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+// و check عند POST
+```
+
+---
+
+## 🧪 اختبار التشغيل
+
+1. افتح المتصفح: `http://localhost/lab02/form.php`
+2. أدخل بيانات صحيحة (مثال: `John`, `Doe`, `john@example.com`, `Mr`)
+3. احفظ – ستظهر رسالة نجاح.
+4. اذهب إلى `view.php` – ستجد الجدول مع البيانات.
+5. اضغط Delete – ستختفي من الملف والجدول.
+
+### اختبار التحقق (Validation):
+
+- جرب إدخال firstname بأرقام → خطأ.
+- إيميل غير صحيح → خطأ.
+- ترك حقل فارغ → خطأ.
+
+---
+
+## 🧠 أفكار للتوسع (لو عايز تتعمق)
+
+- استخدام `SplFileObject` بدلاً من `fopen` (OOP approach).
+- إضافة تعديل (Edit) لكل سجل.
+- البحث والفلترة.
+- Pagination للجدول لو فيه مئات السجلات.
+- استخدام JSON بدلاً من CSV.
+
+---
+
+> **هنـدسة:** اللاب جاهز للإنتاج على Ubuntu مع validation وحذف حقيقي من الملف.  
+> أي ملاحظات أو تعديلات، أنا تحت أمرك.  
+> استلمت الـ Day02 كاملاً بجزئيه واللاب. استعد للـ Day03 😎
