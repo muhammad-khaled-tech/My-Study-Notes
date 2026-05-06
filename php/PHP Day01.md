@@ -668,4 +668,296 @@ exit;  // stop entire script
 
 ---
 
-[أنا خلصت الشرح النظري بالكامل.. قولي "هات اللاب" عشان أكتبلك حلول الـ Labs بأسلوب الـ Production]
+آسف يا هندسة، أنا مقيد بالبروتوكول اللي إنت بنفسه حددته: بعد الجزء الثاني لازم تطلب مني "هات اللاب" عشان أكتبلك الجزء الثالث (حلول الـ Labs).  
+لكن عشان احترم كلمة "كمل" من حضرتك، هبدأ على طول أكتب **الجزء الثالث**، وخلينا نقول دي استجابة استثنائية.
+
+---
+
+# 📄 File 3: `PHPDay01_Labs.md`
+
+# 🛠️ حلول اللابات (Production-Ready on Ubuntu)
+
+## 🧪 Lab 01 – إنشاء نموذج HTML وإرساله إلى PHP Server
+
+السلايدات صفحة 69-70 طالبة:
+
+- Construct HTML form (method POST أو GET)
+- إرسال البيانات إلى PHP server
+- طباعة البيانات منسقة:  
+  `Thanks (Mr./Miss) FirstName LastName`  
+  `Please Review Your Information`  
+  `Name: ...`  
+  `Address: ...`  
+  `Your Skills: ...`  
+  `Department: ...`
+
+> **ملاحظة المحاضر المحترف**: السلايدات مش موضحة كل الحقول بالتفصيل، لكن من صورة الـ output واضح فيه:  
+> - Gender (Mr/Miss)  
+> - First Name + Last Name  
+> - Address  
+> - Skills (possibly multiple)  
+> - Department  
+>  
+> هنفترض نموذج متكامل بأمان واحترافية.
+
+---
+
+## 🐧 بيئة التشغيل (Ubuntu Linux)
+
+- Web server: Apache2 + PHP 8.1 FPM
+- Document root: `/var/www/html` (أو `~/public_html` لو إعداد userdir)
+- Permissions: الملفات تكون مملوكة لـ `www-data` أو قابلة للقراءة بـ 644
+- Temporary directory للتخزين المؤقت: `/tmp` (بيستخدم لو في file uploads)
+
+**نصائح أمان Production**:
+- لا تستخدم `register_globals` (أتلغى من زماaan)
+- استخدم `htmlspecialchars()` عند طباعة أي بيانات من المستخدم
+- استخدم `filter_input()` للتحقق من صحة المدخلات
+
+---
+
+## 📁 هيكل الملفات
+
+```
+/var/www/html/lab01/
+├── form.html
+├── process.php
+└── assets/
+    └── (optional CSS)
+```
+
+---
+
+## 📄 1. `form.html` (نموذج HTML)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Registration Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+        label { display: inline-block; width: 120px; margin-top: 10px; }
+        input, select, textarea { margin-top: 5px; padding: 5px; width: 250px; }
+        .skills label { width: auto; margin-right: 10px; }
+        .buttons input { width: auto; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Registration Form</h2>
+    <form action="process.php" method="POST">
+        <!-- Gender + Name -->
+        <label>Title:</label>
+        <input type="radio" name="gender" value="Mr" required> Mr
+        <input type="radio" name="gender" value="Miss"> Miss
+        <br>
+
+        <label>First Name:</label>
+        <input type="text" name="first_name" required>
+        <br>
+
+        <label>Last Name:</label>
+        <input type="text" name="last_name" required>
+        <br>
+
+        <label>Address:</label>
+        <textarea name="address" rows="3" required></textarea>
+        <br>
+
+        <label>Skills (choose multiple):</label>
+        <div class="skills">
+            <input type="checkbox" name="skills[]" value="PHP"> PHP
+            <input type="checkbox" name="skills[]" value="JavaScript"> JavaScript
+            <input type="checkbox" name="skills[]" value="MySQL"> MySQL
+            <input type="checkbox" name="skills[]" value="Laravel"> Laravel
+        </div>
+        <br>
+
+        <label>Department:</label>
+        <select name="department" required>
+            <option value="">Select</option>
+            <option value="IT">IT</option>
+            <option value="HR">HR</option>
+            <option value="Sales">Sales</option>
+        </select>
+        <br><br>
+
+        <div class="buttons">
+            <input type="submit" value="Submit">
+            <input type="reset" value="Reset">
+        </div>
+    </form>
+</body>
+</html>
+```
+
+**ملاحظات أمانية**:
+- استخدمنا `method="POST"` عشان البيانات مش تظهر في URL.
+- استخدمنا `required` على الحقول الهامة (بس client-side validation مش كافية، لازم server-side برضه).
+- `skills[]` تخلي PHP تستقبل الـ checkboxes كمصفوفة.
+
+---
+
+## 📄 2. `process.php` (معالج البيانات بأمان)
+
+```php
+<?php
+/**
+ * Process registration form data securely.
+ * Production-ready on Ubuntu with Apache.
+ */
+
+// Prevent direct access if someone tries to load this script without POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Method Not Allowed');
+}
+
+// Sanitize and validate inputs
+$gender = isset($_POST['gender']) ? $_POST['gender'] : '';
+$firstName = trim($_POST['first_name'] ?? '');
+$lastName  = trim($_POST['last_name'] ?? '');
+$address   = trim($_POST['address'] ?? '');
+$skills    = $_POST['skills'] ?? [];
+$department = $_POST['department'] ?? '';
+
+// Validation (server-side)
+$errors = [];
+if (!in_array($gender, ['Mr', 'Miss'])) {
+    $errors[] = "Invalid gender selection.";
+}
+if (empty($firstName) || strlen($firstName) > 50) {
+    $errors[] = "First name is required and max 50 characters.";
+}
+if (empty($lastName) || strlen($lastName) > 50) {
+    $errors[] = "Last name is required and max 50 characters.";
+}
+if (empty($address) || strlen($address) > 500) {
+    $errors[] = "Address is required and max 500 characters.";
+}
+if (empty($skills)) {
+    $errors[] = "Please select at least one skill.";
+}
+if (empty($department)) {
+    $errors[] = "Department is required.";
+}
+
+// If any error, display them (in real app, redirect back with error messages)
+if (!empty($errors)) {
+    echo "<h3>Errors occurred:</h3><ul>";
+    foreach ($errors as $err) {
+        echo "<li>" . htmlspecialchars($err) . "</li>";
+    }
+    echo "</ul><a href='form.html'>Go back</a>";
+    exit;
+}
+
+// Escape output to prevent XSS
+$title = ($gender === 'Mr') ? 'Mr.' : 'Miss';
+$fullName = htmlspecialchars($firstName . ' ' . $lastName, ENT_QUOTES, 'UTF-8');
+$safeAddress = htmlspecialchars($address, ENT_QUOTES, 'UTF-8');
+$safeDepartment = htmlspecialchars($department, ENT_QUOTES, 'UTF-8');
+
+// Convert skills array to comma-separated string and escape
+$skillsStr = array_map(function($skill) {
+    return htmlspecialchars($skill, ENT_QUOTES, 'UTF-8');
+}, $skills);
+$skillsList = implode(', ', $skillsStr);
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Registration Summary</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+        .summary { background: #f4f4f4; padding: 20px; border-radius: 8px; }
+        .field { margin-bottom: 10px; }
+        .label { font-weight: bold; display: inline-block; width: 120px; }
+    </style>
+</head>
+<body>
+    <div class="summary">
+        <h2>Thanks <?php echo $title . ' ' . $fullName; ?></h2>
+        <h3>Please Review Your Information</h3>
+        <div class="field"><span class="label">Name:</span> <?php echo $fullName; ?></div>
+        <div class="field"><span class="label">Address:</span> <?php echo nl2br($safeAddress); ?></div>
+        <div class="field"><span class="label">Your Skills:</span> <?php echo $skillsList; ?></div>
+        <div class="field"><span class="label">Department:</span> <?php echo $safeDepartment; ?></div>
+    </div>
+</body>
+</html>
+```
+
+---
+
+## 🔧 تركيب وتشغيل على Ubuntu
+
+### خطوات التثبيت والإعداد
+
+```bash
+# 1. تثبيت LAMP (Apache, PHP, MySQL اختياري)
+sudo apt update
+sudo apt install apache2 php8.1 libapache2-mod-php8.1
+
+# 2. التأكد من أن mod_php شغال
+sudo a2enmod php8.1
+sudo systemctl restart apache2
+
+# 3. إنشاء مجلد المشروع
+sudo mkdir -p /var/www/html/lab01
+sudo chown -R $USER:$USER /var/www/html/lab01   # أعطيك ملكية للتعديل
+chmod 755 /var/www/html/lab01
+
+# 4. انسخ ملفات form.html و process.php إلى المجلد
+cp /path/to/form.html /var/www/html/lab01/
+cp /path/to/process.php /var/www/html/lab01/
+
+# 5. تأكد من صلاحية القراءة لـ www-data (الأباتشي)
+sudo chown -R www-data:www-data /var/www/html/lab01   # استخدم هذا في production
+# أو الأسهل: chmod 644 للملفات و 755 للمجلد
+sudo chmod 644 /var/www/html/lab01/*
+sudo chmod 755 /var/www/html/lab01
+```
+
+### اختبار التشغيل
+
+افتح المتصفح على: `http://localhost/lab01/form.html`
+
+---
+
+## 🛡️ ممارسات أمان إضافية (لـ Production حقيقي)
+
+1. **حماية من CSRF**  
+   أضف token hidden في form وتحقق منه في process.php.
+
+2. **Validation متقدمة**  
+   استخدم `filter_var($email, FILTER_VALIDATE_EMAIL)` لو فيه بريد.  
+   استخدم `preg_match` للتحقق من أسماء.
+
+3. **Logging**  
+   سجل أي محاولة اختراق (مثل حقن HTML) في ملفات log الأباتشي أو custom log.
+
+4. **استخدام Prepared Statements**  
+   لو البيانات هتتخزن في MySQL (السلايدات مش طالبة database بس احتياطي).
+
+5. **مكافحة XSS**  
+   احنا استخدمنا `htmlspecialchars` و `nl2br` بشكل آمن.
+
+6. **حماية الملفات الحساسة**  
+   ضع `.htaccess` يمنع الوصول المباشر لأي ملف PHP غير `process.php` لو حابب.
+
+---
+
+## 🧪 Lab إضافي (لو عايز تتعمق)
+
+- غيّر الطريقة من POST إلى GET وشوف الفرق في URL.  
+- أضف إمكانية رفع صورة profile باستخدام `$_FILES` (مع تحقق من نوع الملف وحجمه).  
+- خزن البيانات في session وعرضها في صفحة أخرى.
+
+---
+
+> **هنـدسة:** اللاب جاهز على Ubuntu بأمان الإنتاج. أي استفسار عن تعديل أو إضافة، أنا تحت أمرك.  
+> لو في لابات تانية في السلايدات مش واضحة، أرسل تفاصيلها وهعملها حلول محترمة.
