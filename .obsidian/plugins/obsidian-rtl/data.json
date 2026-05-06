@@ -88,7 +88,8 @@
     "php/PHP-Day03-Notes.md": "rtl",
     "php/PHP-Day02-Notes.md": "rtl",
     "Aws practitioner/07_ Global Infrastructure +  Global Applications.md": "rtl",
-    "php/PHP Day01.md": "rtl"
+    "php/PHP Day01.md": "rtl",
+    "php/PHP Day02.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
