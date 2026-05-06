@@ -1,963 +1,1011 @@
-# 📄 File 1: `PHPDay01_Part1.md`
+هات كوباية الشاي بتاعتك يا هندسة.. ويلا بينا نبدأ حكاية الـ PHP من تحت الكبوت!
 
-# 🐘 PHP Day01 – الجزء الأول: من التاريخ للـ Superglobals (تحت الكبوت)
+# 🐘 PHP: الحكاية الكاملة من قلب السيرفر - اليوم الأول
 
-## 🎯 الـ Core Problem اللي بنحله
+## 🌍 مقدمة: إحنا بنحكي حكاية وادي النيل والسيرفرات
 
-PHP اتعملت عشان تبني **dynamic web pages** بسرعة من غير ما تحرق دماغك في إدارة الميموري أو التعامل مع السوكيت يدوي. الفكرة: تخلط HTML مع كود server-side يتنفذ على الأباتشي ويخرج HTML نقي.
+تعالَ نفتكر زمان.. أيام ما كنا بنبني مواقع ثابتة بالـ HTML زي المقابر الفرعونية.. ما تتغيرش، ما تتنفسش. جيت تقول "عايز أعرض الوقت والتاريخ"؟ كنت ت rewrite الموقع كله وت re-upload. السيناريو المرعب ده كان هو الواقع اليومي لأي مطور ويب لحد ما ظهر الأب الروحي: **Rasmus Lerdorf** في سنة 1994.
 
-> [!DEEP-DIVE]
-> PHP مش مجرد لغة، هي **SAPI** (Server API) بتتحكم في دورة حياة الطلب. Zend Engine هو اللي بيحول الكود لـ opcodes ويشغلها. الفرق بين PHP و Node.js إن PHP synchronous من أولها، وكل request بيعمل **reset كامل للـ state** (ما عدا الـ extensions اللي بتعمل persistent connections).
+وادي النيل خلق مننا حكايين.. وأنا هنا مش هاشرح لك PHP زي أي كورس عادي. لأ.. أنا هاخدك في **رحلة داخل السيرفر**، معاك تحت الكبوت، نشوف إزاي كل سطر بتكتبه بيتحول من مجرد كلام في ملف لأوامر بتتنفذ على قلب الـ CPU.
 
----
-
-## 📜 1. التاريخ – ليه PHP فضلت صامدة 25 سنة؟
-
-- **1994**: Rasmus Lerdorf عمل CGI scripts باسم Personal Home Page.
-- **1997**: Zeev & Andi (Zend) rewrite parser وحولوه لـ PHP: Hypertext Preprocessor.
-- **1999**: Zend Engine 1.0 – بداية OOP الحقيقي.
-- **2020**: PHP 8.0 مع JIT compiler.
-
-### 🔁 مقارنة مع C++/Java/JS
-
-| اللغة | التنفيذ | الـ state بين الـ requests |
-|-------|---------|----------------------------|
-| C++ (CGI) | Process per request | ولا حاجة (كل process new) |
-| Java (Servlet) | Thread per request داخل JVM | Session objects |
-| Node.js | Event loop (single thread) | Closure / module cache |
-| **PHP** (FPM) | Process pool, each request = new process reset | Session files / Redis |
-
-PHP شبه **CGI في العزلة** لكن مع **opcache** و **preloading** (PHP 8) بيقلل الـ overhead.
+قبل ما نلمس أي كود، لازم تفهم **الرحلة الأسطورية** لأي فايل PHP من لحظة ما تضغط Enter في المتصفح لحد ما تشوف النتيجة قدام عينيك.
 
 ---
 
-## 🐧 2. LAMP على Ubuntu – مش مجرد XAMPP
+## 🚀 رحلة الفايل: من الكيبورد لحد شاشة العميل
 
-XAMPP للـ development بس. في production على Ubuntu:
+تخيل معايا السيناريو ده:
+
+أنا جالس على جهازي اللاب توب (ويندوز أو أي حاجة)، فاتح Chrome، وكتبت في الـ URL: `http://myawesome.com/index.php`
+
+### 🧭 الخطوة 1: الطلب يمشي في السلك
+
+المتصفح بيعمل طلب HTTP من نوع GET على البورت 80 (أو 443 لو HTTPS). الطلب ده بيعدي على الـ DNS، يوصل لسيرفر الأوبونتو الذي عليه موقعك.
+
+السيرفر ده شغال عليه برنامج ويب سيرفر زي **Apache** أو **Nginx**. تخيل إنه زي بواب عاقل جدًا، بيستقبل الطلبات ويشوف هيعمل إيه.
 
 ```bash
-sudo apt update
-sudo apt install apache2 mysql-server php8.1 libapache2-mod-php8.1
-sudo systemctl status apache2
+# مثال لطلب HTTP خام من المتصفح لو فتحته بالـ DevTools
+GET /index.php HTTP/1.1
+Host: myawesome.com
+User-Agent: Chrome/...
 ```
 
-### 🧠 تحت الكبوت: الـ Apache (mod_php vs FPM)
+### 🚪 الخطوة 2: الـ Web Server يقرر مين المسؤول
 
-- **mod_php**: PHP مدمج داخل Apache (كل child process يضخم الميموري)
-- **PHP-FPM** (modern): Process pool خارجي، Apache/Nginx يتواصل معاه via FastCGI. **الأفضل** للمواقع الكبيرة.
+أباتشي بيقرأ ملف الكونفيج بتاعه. بيشوف إن الملف طلبه له امتداد `.php`، فالبواب بيقول: "أنا مش فاهم PHP خالص.. ده لغة سكريبت. لازم أستدعي المترجم الفوري بتاعها."
 
-> [!WARNING]
-> لو استخدمت XAMPP على Ubuntu، هتلبس في permissions. الأباتشي بيشتغل بـ user `www-data`. أي ملف هتعمل له upload لازم يكون مملوك لـ `www-data` أو permissions 755/644.
+وهنا تيجي قصة **PHP-FPM** أو **mod_php** حسب الإعدادات.
 
----
+في العالم الحديث (وبالأخص على أوبونتو)، بنستخدم PHP-FPM (FastCGI Process Manager).
 
-## 🧩 3. Embedding PHP وتنفيذ السيرفر
+تخيل إن PHP-FPM عبارة عن **مصنع صغير مخصص لتنفيذ PHP**. فيه عمّال (processes) واقفين على أهبة الاستعداد. أباتشي بيروح يدق الباب على PHP-FPM عبر socket أو port، ويقول له: "خد يا معلم ملف `index.php` ده ونفذه لي".
 
-السلايدات بتقول إن PHP code يتنفذ على السيرفر والراجل ياخد HTML بس.
+### ⚙️ الخطوة 3: PHP-FPM يتسلم الملف ويتنفس في الروح
 
-### 📊 Visualization – Request lifecycle
+الـ PHP-FPM بياخد المسار الكامل للملف على الهارد ديسك (`/var/www/myawesome.com/index.php`). بيقرأ محتواه كـ string. وده أول تفاعل لـ **Zend Engine** مع الكود.
+
+هنا هنعمل أول **Mermaid Diagram** يوضح الرحلة لحد دلوقتي:
 
 ```mermaid
-sequenceDiagram
-    participant Browser
-    participant Apache as Apache (mod_php/FPM)
-    participant Zend as Zend Engine
-    participant OS as Linux FS
-    Browser->>Apache: GET /index.php
-    Apache->>Zend: Load & parse script
-    Zend->>Zend: Compile to opcodes (if not cached)
-    Zend->>Zend: Execute opcodes
-    Zend->>OS: fopen, mysql, session files
-    OS-->>Zend: data
-    Zend-->>Apache: Generated HTML
-    Apache-->>Browser: HTML response
+flowchart TD
+    A[المتصفح:<br/>Chrome/Firefox] -->|HTTP Request<br/>GET /index.php| B[Web Server<br/>Apache/Nginx]
+    B -->|Pass request to<br/>PHP-FPM via FastCGI| C[PHP-FPM<br/>Process Manager]
+    C -->|Read file from disk<br/>/var/www/.../index.php| D[Zend Engine<br/>(Brain of PHP)]
+    D -->|Lexical & Syntax Analysis| E[Parse to Tokens]
+    E -->|Compilation| F[Opcodes<br/>(Intermediate Code)]
+    F -->|Execution| G[Output Buffer]
+    G -->|HTML Response| B
+    B -->|HTTP Response| A
 ```
 
-### 💻 مقارنة مع Node.js
+### 🔧 الخطوة 4: Zend Engine – العقل اللي بيحول الكود لتعليمات
 
-في Node.js أنت بتكتب `fs.readFile` callback أو async/await. في PHP كل حاجة **blocking** implicitly:
+الـ Zend Engine ده بقى هو قلب PHP النابض. مشروع مستقل اشتغل عليه **Zeev Suraski** و **Andi Gutmans** في 1997 ليعيدوا كتابة الـ parser بالكامل. من غيره PHP ما كانت هتبقى حاجة.
 
-```php
-// PHP - blocking but simple
-$content = file_get_contents('/tmp/data.txt');
-echo $content;
-```
+تعالى نشوف إزاي Zend بيشوف ملف PHP:
 
-لو عملت `sleep(5)` في PHP، كل الـ requests التانية على نفس الـ FPM process هتتأخر (لو worker واحد). عشان كده نرفع عدد الـ workers.
+#### 4.1 الـ Lexing (تحليل معجمي)
+الـ Engine بيقرأ الكود حرف حرف. بيحول كل كلمة (مثلاً `echo` أو `$var` أو `;`) إلى **Token**. تخيل أن Token عبارة عن بطاقة تعريف فيها نوع الكلمة وقيمتها.
+
+مثال: الكود `<?php echo "Hello";`
+
+بيتحول إلى:
+
+- `T_OPEN_TAG` -> `<?php`
+- `T_ECHO` -> `echo`
+- `T_WHITESPACE` -> `' '`
+- `T_CONSTANT_ENCAPSED_STRING` -> `"Hello"`
+- `T_SEMICOLON` -> `;`
+
+#### 4.2 الـ Parsing (تحليل نحوي)
+بعد ما يطلع tokens، يدخل على الـ parser اللي بيطبق قواعد اللغة. لو الكود فيه غلط نحوي (زي نسيت نقطة ونص)، هنا هيطلع error مشهور: `Parse error: syntax error, unexpected ...`
+
+لو الكود سليم، الـ parser بيبني **شجرة تركيب مجردة (AST – Abstract Syntax Tree)**. الشجرة دي بتمثل هيكلية الكود، مين جوا مين.
+
+#### 4.3 الـ Compilation إلى Opcodes
+الـ AST بعد كده بيتحول إلى **Opcodes**، وهي تعليمات منخفضة المستوى مفهومة لآلة التنفيذ الافتراضية Zend VM.
+
+الـ Opcode بقى زي لغة Assembly بس خاصة بـ PHP.
+
+مثلاً `echo` تتحول إلى `ZEND_ECHO` و `+` تتحول إلى `ZEND_ADD`.
+
+#### 4.4 الـ Execution
+الـ Executor (جزء من Zend VM) بياخد الـ Opcodes ويبدأ ينفذها واحدة واحدة. كل Opcode بيقول للـ VM تعمل حاجة معينة: تاخد قيم متغيرات، تجمع أرقام، تخرج نص، إلخ.
+
+**أثناء التنفيذ** الـ VM بتتعامل مع الذاكرة الرئيسية (RAM)، وبتستخدم stack و heap للمتغيرات.
+
+الـ Zend Engine ذكي جدًا.. فيه حاجة اسمها **Opcache** (متاحة من PHP 5.5). الـ Opcache بيخزن الـ Opcodes المتكونة في الذاكرة المشتركة عشان لو الملف اترجع تاني، ما يحتاجش يعيد parsing و compilation. يروح يجيب الـ Opcodes على طول ويبدأ تنفيذ. ده بيسرع الموقع أضعافًا.
+
+#### 4.5 التعامل مع الـ Output
+أثناء التنفيذ، أي حاجة بتتعمل لها `echo` أو `print` أو نص خارج PHP tags بيروح في **Output Buffer**. تقدر تتحكم في البفر ده بـ `ob_start()` بس ده حكاية تانية. في الآخر كل النص بيتجمع في Response Body.
+
+### 📦 الخطوة 5: الرجوع للـ Web Server وإرسال الرد
+
+بعد ما التنفيذ يخلص، PHP-FPM بيرجع الـ HTML الناتج (مع headers زي Content-Type) إلى الـ Web Server. أباتشي ياخد الرد ويضيف عليه headers تخصه، ويرسله بالكامل إلى المتصفح.
+
+المتصفح يستلم النص ويتفهم إنه HTML ويعرضه للمستخدم. والرحلة تنتهي (مؤقتًا).
 
 ---
 
-## 🏷️ 4. PHP Tags – ليه نستخدم `<?php`?
+دى كانت أول **رحلة تحت الكبوت**. حطها في دماغك.. لأن كل حاجة هنتكلم عنها لاحقًا هتحصل **في الـ Execution Environment** ده.
 
-السلايدات ذكرت 4 أنواع:
-
-| Tag | مثال | Problem |
-|-----|------|---------|
-| XML style | `<?php ... ?>` | **موصى به** بيشتغل في كل مكان |
-| Short style | `<? ... ?>` | يحتاج `short_open_tag=On` في php.ini (خطير مع XML) |
-| Script style | `<script language='php'>` | قديم، بيتعامل كـ HTML |
-| ASP style | `<% ... %>` | يحتاج `asp_tags` (اتشال من PHP 7) |
-
-**توصية هندسة**: استخدم `<?php` و `<?=` (short echo) فقط من PHP 5.4.
+دلوقتي نبدأ نغطي المحتوى اللي أنت جاي عشانه. نفتكر التاريخ، نشوف إيه حكمة PHP، ونغوص في المتغيرات والعمليات.
 
 ---
 
-## 📝 5. Statements, Whitespace, Comments
+## 📜 1. تاريخ PHP – من Personal Home Page لثورة ويب
 
-PHP زي C++ في الـ statement termination (`;`) والـ whitespace مجرد تجاهل.
+تعالى أحكيلك الحكاية من الأول:
 
-```php
-// C++ style comment
-# bash style (also works)
-/* multi-line */
-```
+في سنة 1994، كان فيه مبرمج اسمه **Rasmus Lerdorf** (جرينلاندي/دنماركي). كان عايز يتتبع مين بيزور صفحته الشخصية على الإنترنت (زي الـ CV بتاعه). استخدم لغة Perl في الأول، لكن لقاها تقيلة.
 
-> [!DEEP-DIVE]
-> Zend Engine زمان كان بيحتاج `;` قبل `?>`، دلوقتي مش لازم لو `?>` هي آخر حاجة في الملف. لكن أحسن تكتب ولا تحذف `?>` أبداً عشان تتجنب output buffer problems.
+قرر يكتب مجموعة من الـ CGI scripts بلغة C تسمح له بمعالجة بسيطة للـ forms والوصول للقاعدة. أسماهم "Personal Home Page Tools".
 
----
+سنة 1995، أعلن عن الكود بتاعه عشان الناس تستفيد. السكريبتات كانت بدائية جدًا، لكنها جابت انتباه عالم صغير من المطورين.
 
-## 📅 6. `date()` – أول دالة dynamic
+**ثورة 1997**: اتنين مطورين إسرائيليين من Technion IIT، **Zeev Suraski** و **Andi Gutmans**، كانوا بيستخدموا PHP لكن حسوا إن الـ parser الأصلي بقى ضعيف. فكتبوا parser جديد من الصفر، وأسسوا PHP 3.
 
-```php
-echo "<p>Now: " . date('H:i, js F Y') . "</p>";
-```
+غيروا الاسم من Personal Home Page لـ **PHP: Hypertext Preprocessor** (نوع من الـ recursion المضحك).
 
-مقارنة مع Java: `new SimpleDateFormat("HH:mm, dS MMMM yyyy").format(new Date())` لكن PHP بتاخد timezone من `date.timezone` في php.ini.
+في 1999، عملوا rewrite كامل للـ core وأنتجوا **Zend Engine** (من أسمائهم Zeev + Andi). وأسسوا شركة Zend Technologies اللي لسه قايمة لحد دلوقتي وتدير تطور PHP.
 
-على Ubuntu: `sudo nano /etc/php/8.1/cli/php.ini` وغير `date.timezone = "Africa/Cairo"`.
+ومن ساعتها والنسخة بتتطور (PHP 4 بقى فيه Zend Engine 1.0، PHP 5 جاب الـ object-oriented model الكامل، PHP 7 قفزة أداء هائلة بفضل JIT وتغيير بنى البيانات، وصولاً لـ PHP 8.0 اللي فيه JIT أقوى وأنواع أكثر).
+
+**ليه PHP 8 مميز؟** فيه حاجة اسمها **JIT (Just In Time compilation)**. الـ JIT بقى يقدر يحول الـ opcodes لـ كود آلة (machine code) في وقت التنفيذ، ويسرع العمليات الحسابية الثقيلة جدًا. ده فتح الباب لاستخدام PHP في الـ machine learning والحوسبة الرقمية بشكل أفضل.
 
 ---
 
-## 🌐 7. Form Variables – `$_GET`, `$_POST`, `$_REQUEST`
+## ❤️ 2. ليه PHP بقى؟ (إجابة من قلب الميدان)
 
-السلايدات بتقول إنك تقدر توصل للـ form fields بـ `$field_name` لو `register_globals = On` (إزالة تامة في PHP 5.4+). **الحل الآمن**:
+أنا هديك الدوافع الحقيقية لاختيار PHP كمهندس معماري:
+
+### 2.1 سهولة التعلم (Ease of Learning)
+PHP متسامح جدًا في البداية. ما تحتاش تعرف إيه الذاكرة، تتعامل مع pointers زي C. المتغيرات بتنزل بالـ `$` وبتنتهي بـ `;` زي C لكن بدون صرامة. أي حد يعرف HTML يقدر يدمج PHP في خلال نص ساعة.
+
+### 2.2 الدعم الكائنات (Object-Oriented Support)
+من PHP 5 الكامل بقى فيه OOP حقيقي: classes, inheritance, interfaces, traits, abstract classes, final, و namespace. PHP 8 جاب الـ attributes (Annotations) و union types و match expression.
+
+### 2.3 قابلية الحمل (Portability)
+الكود اللي تكتبه على Windows هيشتغل على Linux و macOS و Solaris. أنت بتكتب مرة، والسيرفرات بتضمن التنفيذ. (عكس بعض التقنيات .. لكن مش هنقارن).
+
+### 2.4 المصدر المفتوح (Open Source)
+الكود بتاع PHP نفسه (Zend Engine) متاح على GitHub. تقدر تفتح issue، تقدم PR، أو حتى تعدل الـ C وتعمل build خاص بيك. إنت مش مربوط بفيندر.
+
+### 2.5 دعم هائل (Support and Documentation)
+الموقع الرسمي `php.net` بمثابة القرآن. لكل دالة صفحة فيها أمثلة وتفاصيل وتاريخ الإصدار وتعليقات المطورين. فيه مجتمعات عربية وأجنبية ضخمة.
+
+### 2.6 متعدد المنصات والـ databases
+يتواصل مع MySQL و PostgreSQL و SQLite و MongoDB وحتى Oracle. فيه PDO اللي بيوحد التعامل مع قواعد البيانات.
+
+### 2.7 بيئة التطوير المتكاملة (XAMPP / LAMP / WAMP / MAMP)
+
+تعالى ناخد **LAMP** كمثال:
+
+- **L**inux – نظام التشغيل (تقدر تستخدم Ubuntu Server).
+- **A**pache – ويب سيرفر.
+- **M**ySQL (أو MariaDB) – قاعدة البيانات.
+- **P**HP – لغة البرمجة.
+
+لما تنزل حزمة زي **XAMPP** (على ويندوز) أو **LAMP** بتاعت Bitnami (على لينكس)، أنت بتحصل على كل حاجة معبأة. تنصيبها سهل جدًا. بعدين تفتح المتصفح وتكتب `http://localhost` وتشوف "It works!".
+
+**اختبار بسيط لـ PHP:**
+
+اعمل ملف `/var/www/html/info.php` (على لينكس) أو `C:/xampp/htdocs/info.php` (ويندوز)، وحط فيه:
 
 ```php
-// HTML form method="GET"
-$name = $_GET['name'] ?? '';
-$password = $_POST['password'] ?? ''; // never use GET for passwords
+<?php
+phpinfo();
+?>
 ```
 
-### 🧠 Superglobals (الجزء الأول من القائمة)
+تفتح المتصفح على `http://localhost/info.php` – هتشوف صفحة ضخمة كل تفاصيل إعدادات PHP والسيرفر. أمان مهم: امسح الملف بعد ما تخلص لأنه بيكشف معلومات حساسة.
 
-| Array | Source | مثال |
-|-------|--------|------|
-| `$_GET` | URL query string | `/page.php?id=5` |
-| `$_POST` | HTTP POST body (form urlencoded / multipart) | إرسال بيانات |
-| `$_REQUEST` | Merge of GET, POST, COOKIE (order depends on `request_order`) | **خطر** لأنه ambiguous |
-
-> [!WARNING]
-> `$_REQUEST` في default setup بتجمع GET و POST و Cookie. لو عندك نفس الـ key في الاتنين، حاجة بتتكتب على التانية. **لا تستخدمها** في production.
-
-### 🔁 مقارنة مع Node.js
-
-في Express:
-```js
-// req.query, req.body, req.cookies
-app.post('/form', (req, res) => {
-  let name = req.body.name;
-});
-```
-
-PHP بيعمل **parsing تلقائي** لكل request ويملأ الـ superglobals قبل ما الكود يبدأ. Zend Engine يخزنهم في hash table مخصصة.
+**نوع الملف:** امتداده `.php` أو `.phtml`، وبيحتوي على خليط من HTML و JavaScript و CSS و PHP. الفرق إن أي كود PHP بين `<?php ?>` بيتنفذ على السيرفر.
 
 ---
 
-## 🗃️ 8. Variables في PHP – اللي يخالف C++/Java
+## 💡 3. PHP تقدر تعمل إيه؟ (قائمة القدرات)
 
-### القواعد الأساسية:
+- **توليد محتوى ديناميكي:** زي عرض الوقت، أو إحصائيات المستخدم، أو منشورات بلوج.
+- **فتح وكتابة الملفات على السيرفر:** تقدر تقرأ ملف `file.txt` وتكتب فيه جديد.
+- **جمع بيانات الفورم:** المستخدم يبعت بياناته، PHP تستقبل وتعالج وتخزن.
+- **إرسال واستقبال Cookies:** تذكر المستخدمين وتسجل دخولهم.
+- **التعامل مع قواعد البيانات:** إضافة، حذف، تعديل.
+- **تقييد وصول المستخدمين:** صفحات مخفية، صلاحيات.
+- **تشفير البيانات:** عبر `openssl_encrypt`.
 
-- كل variable بتبدأ بـ `$` (زي Perl أو Bash)
-- لا تحتاج declaration، أول assignment تخلقها
-- Case-sensitive (`$Name` ≠ `$name`)
-
-```php
-$txt = "Hello world!";   // string
-$x = 5;                  // int
-$x = "5";                // same variable now string (loose typing)
-```
-
-### 📉 Loosely Typed (أو Dynamic typing زي JS)
-
-PHP على عكس C++ و Java، النوع بيتحدد في runtime وممكن يتغير.
-
-**مقارنة:**
-
-| لغة | Declaration | تغيير النوع |
-|-----|-------------|--------------|
-| C++ | `int x = 5;` | مستحيل (compile error) |
-| Java | `int x = 5;` | مستحيل |
-| JS | `let x = 5; x = "5";` | عادي |
-| **PHP** | `$x = 5; $x = "5";` | عادي (لا تحذير) |
-
-تحت الكبوت: كل variable في Zend Engine عبارة عن `zval` struct فيها union للـ types (long, double, string, array, object) مع reference counting.
-
-> [!DEEP-DIVE]
-> الـ `zval` في PHP 8 أصغر حجمًا (16 byte على 64-bit) ومفيش `refcount` للـ immutable types. لكن الـ string variables اللي بتتعدل بتعمل copy-on-write.
+كل ده بيحصل على السيرفر، والمستخدم النهائي بيشوف بس HTML نقي.
 
 ---
 
-## 🌍 9. Variable Scope – الحتة اللي بتفرقع للمبرمجين اللي جايين من C++
+## 🏷️ 4. تضمين PHP في HTML
 
-### Local vs Global
+الصورة التقليدية لملف `.php` إنه غالبًا HTML وبعض الأجزاء اللي مكتوب فيها PHP.
 
 ```php
-$x = 5; // global scope
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to PHP</title>
+</head>
+<body>
+    <h1><?php echo "Welcome to my website"; ?></h1>
+</body>
+</html>
+```
+
+الـ PHP interpreter (اللي بيشتغل ورا الكواليس داخل Zend Engine) بيمسح على الفايل ويبحث عن `<?php` و `?>`، أي حاجة برا الـ tags بيتم التعامل معاها كـ HTML static، أي حاجة جوه البداية والنهاية بيحولها output من السكريبت.
+
+**طيب إزاي السيرفر بيعرف الفرق؟** هو مفيش فرق حقيقي.. الـ interpreter بيحول الملف كله لـ tokens، وأي نص خارج PHP tags بيتحول إلى `T_INLINE_HTML` token، وأثناء التنفيذ بيتم `echo` الضمني له.
+
+---
+
+## 🏷️ 5. علامات PHP المختلفة (PHP Tags)
+
+PHP بتدعم أكتر من أسلوب لفتح وإغلاق الكود:
+
+### ✅ أسلوب XML (موصى به)
+```php
+<?php echo 'Hello'; ?>
+```
+ده اللي بنستخدمه. لأنه مضمون إنه يشتغل على كل السيرفرات، ومحدش يقدر يقفله من php.ini.
+
+### ⚠️ الأسلوب القصير (Short style)
+```php
+<? echo 'Hello'; ?>
+```
+**ملاحظة خطيرة:** عشان ده يشتغل، لازم تكون الإعداد `short_open_tag = On` في `php.ini`. كثير من السيرفرات بتقفله لأنه بتعارض مع XML declaration `<?xml`.
+
+### 📜 أسلوب SCRIPT (نادر)
+```php
+<script language='php'> echo 'Hello'; </script>
+```
+طويل وقديم. متستخدمش.
+
+### 🚫 أسلوب ASP (مهمل)
+```php
+<% echo 'Hello'; %>
+```
+كان بيستخدمه اللي جايين من ASP، لكن دلوقتي محتاج `asp_tags = On` (اتشال من PHP 7).
+
+**الأمر الموصي به:** دايما اكتب `<?php` و `?>`.
+
+---
+
+## 📏 6. الجمل والتعليمات والفراغات
+
+كل تعليمة PHP بتخلص بفاصلة منقوطة `;`.
+
+```php
+echo 'Hello';
+$name = 'Noha';
+```
+
+الفراغات (white spaces) زي المسافات، الأسطر الجديدة، التاب، كلها بتتجاهل من الـ PHP engine والمتصفح بيجمعها في صفحة واحدة.
+
+يعني الكتابة:
+```php
+echo 'Hello ';
+echo 'World';
+```
+معناها نفس `echo 'Hello '; echo 'World';`
+
+نصيحة مهنية: استخدم فراغات عشان readability.
+
+---
+
+## 💬 7. التعليقات (Comments)
+
+التعليقات مش بتنفذها PHP، فقط للبشر.
+
+```php
+/* هذا تعليق متعدد الأسطر
+   C-style 
+   Prepared by Noha Shehab */
+
+// هذا تعليق سطر واحد C++ style
+
+# هذا تعليق سطر واحد Unix style
+```
+
+**تطبيق عملي:** لما تعمل debugging، استخدم `/* */` لتكبيس جزء من الكود ولما تخلص فكه.
+
+---
+
+## ⏱️ 8. ديناميكية التاريخ والوقت
+
+PHP عندها دالة `date('format')` بتجيب الوقت الحالي من السيرفر (حسب timezone المحدد في php.ini).
+
+```php
+echo "<p>Now, Its ";
+echo date('H:i , jS F Y');
+echo "</p>";
+```
+
+لو شغال على سيرفر في مصر، هيظهر الوقت بتاع مصر. `H:i` للـ 24 ساعة، `jS` رقم اليوم مع الترتيب (1st, 2nd, 3rd...)، `F` اسم الشهر كامل، `Y` السنة بأربع أرقام.
+
+تغيير التايم زون: استخدم `date_default_timezone_set('Africa/Cairo')`.
+
+---
+
+## 📝 9. متغيرات الفورم (Form Variables)
+
+تخيل عندك HTML form، والـ action بتاعها بيشاور على `form.php`. إزاي تستقبل البيانات؟
+
+**أولًا: الفورم HTML** (حفظ باسم `form.html`)
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+<form action="form.php" method="GET">
+    <input type="text" name="name">
+    <input type="password" name="password">
+    <input type="submit">
+</form>
+</body>
+</html>
+```
+
+**ثانيًا: معالج PHP** (`form.php`)
+
+```php
+<?php
+var_dump($_GET);
+?>
+```
+
+**السيناريو:** لما تبعث الفورم، المتصفح يبني GET request بـ query string (لو method GET). مثلاً: `form.php?name=Ahmed&password=123`. PHP بتخزن هذه القيم في **superglobal array** اسمها `$_GET`.
+
+نفس الكلام مع `method="POST"` استخدم `$_POST`.
+
+**استخدام `$_REQUEST`**: دي بتجمع `$_GET` و `$_POST` و `$_COOKIE` معًا. لكن مش دقيقة للأمان، الأفضل تستخدم النوع المحدد.
+
+**فين التوثيق:** دايماً PHP تخلق المتغيرات بدون `register_globals` (اتشال من PHP 5.4). يعني ما تفكرش انك توصل لـ `$name` مباشرة. دايمًا استخدم `$_GET['name']`.
+
+---
+
+## 📦 10. المتغيرات والحرفيات (Variables and Literals)
+
+**Literal:** القيمة نفسها زي `5` أو `"Hello"`.
+
+### الفرق بين السلسلتين المزدوجة والمفردة
+
+#### "مزدوجة" (Double quote)
+بتتعامل مع `$variable` وتحاول تحللها (تقييمها).
+
+```php
+$name = "Noha";
+echo "Hello $name"; // Hello Noha
+```
+
+#### 'مفردة' (Single quote)
+بتعتبر النص حرفي (literal) بدون معالجة.
+
+```php
+echo 'Hello $name'; // Hello $name
+```
+
+لما تستخدم escape sequences في المزدوجة زي `\n` (سطر جديد) أو `\t` (تب)، في المفردة معظم escapes مش شغالة إلا `\\` و `\'`.
+
+**أداء:** السلسلة المفردة أسرع قليلاً لأن الـ parser مش بيدور على متغيرات. استخدم المفردة إلا لو محتاج interpolation للمتغيرات.
+
+---
+
+## 🔤 11. معرفات المتغيرات (Identifiers)
+
+قواعد بسيطة:
+
+1. أي طول، مكونة من أحرف (a-z, A-Z، وأحرف غير لاتينية لكن بلاش)، أرقام، وشرطة تحت `_`.
+2. لا تبدأ برقم.
+3. Case-sensitive (يعني `$myVar` غير `$myvar`).
+4. المتغير بيبدأ بـ `$` ثم الاسم.
+
+```php
+$validVariable = 5;
+$_another_valid = 10;
+$var123 = 15;
+
+// ممنوع
+// $123var = 0;  
+// $my var = 10; // مسافة ممنوعة
+
+```
+
+PHP مش بيفرض نوع المتغير – ونشوف السبب بعد شوية.
+
+---
+
+## 💰 12. إنشاء أول متغير
+
+```php
+$txt = "Hello world!";
+$x = 5;
+$floating = 7.5;
+```
+
+الحظ: ما فيش `var $txt;` زي JavaScript ولا `int x = 5;` زي C. PHP هو loosely typed: المتغير بياخد نوعه تلقائيًا من القيمة اللي اتخزنت فيه.
+
+عند تنفيذ `$txt = "Hello"` الـ Zend Engine بيعمل allocation في heap لل string ويخزن المؤشر في جدول الرموز (symbol table).
+
+---
+
+## ⚖️ 13. PHP: لغة مرنة الأنواع (Loosely Typed)
+
+الموضوع بسيط: المتغير في PHP عبارة عن **حاوية** من نوع `zval` (Zend Value) في لغة C. الـ `zval` فيها بيانات عن النوع والقيمة الحقيقية. لما تعمل `$x = 5`، الـ `zval` يجعل النوع IS_LONG. بعد كده تعمل `$x = "five"`، النوع يتحول لـ IS_STRING. PHP بتحول تلقائي حسب السياق.
+
+الـ strongly typed زي C# لازم تعلن النوع مرة واحدة ويبقى ثابت.
+
+PHP 7+ أدخلت إمكانية الـ **declaration type** للدوال وخصائص الكلاس، لكن لسه في الجمل العادية المتغير يتحول بحرية.
+
+---
+
+## 🔭 14. نطاق المتغيرات (Variable Scope)
+
+النطاق بيحدد منين تقدر تستخدم المتغير. تعالا نتعمق مع سيناريوهات واقعية.
+
+### 📍 النطاق المحلي (Local Scope)
+
+أي متغير بيتعرف **داخل دالة**، بيكون محليًا فيها فقط.
+
+```php
+function myTest() {
+    $y = 5;      // محلي للدالة
+    echo $y;     // 5
+}
+myTest();
+echo $y; // خطأ: undefined variable $y
+```
+
+لما بتنتهي الدالة، الـ memory الخاصة بـ $y بتتحرر (إلا لو استخدمنا static).
+
+### 🌍 النطاق العام (Global Scope)
+
+المتغير اللي يتعرف برا أي دالة (في الـ script root) بيبقى global scope. لكن فين المشكلة؟ **الدوال مش بتشوف المتغيرات العالمية بصفة افتراضية**.
+
+```php
+$x = 5; // global
 
 function myTest() {
-    $y = 5; // local scope
-    // echo $x; // ERROR: global not accessible inside function
-    global $x;   // bring global into function
-    $x = 15;     // modifies global $x
-    var_dump($x); // 15
+    echo $x; // Warning: undefined variable $x (هيطلع فارغة)
 }
-
 myTest();
-var_dump($x); // 15 (modified)
 ```
 
-**الفرق عن C++**: في C++ لو عندك متغير global و local بنفس الاسم، local يخفي global. لكن PHP لازم تستخدم `global` أو `$GLOBALS` array عشان توصل للمتغير العالمي.
+**الحل: الكلمة المفتاحية `global`**
 
-### Static Scope
+```php
+$x = 5;
+function myTest() {
+    global $x;
+    echo $x; // 5
+    $x = 15; // بتعدل الـ global برضه
+}
+myTest();
+echo $x; // 15
+```
+
+الـ global بتقول لـ Zend Engine: "داخل هذه الدالة، أي استخدام لـ $x يرجع للمتغير العالمي، مش تنشي واحد محلي."
+
+**طريقة تانية: مصفوفة `$GLOBALS`**
+
+```php
+$x = 5;
+function myTest() {
+    $GLOBALS['x'] = 20;
+}
+myTest();
+echo $x; // 20
+```
+
+`$GLOBALS` دي superglobal array دايماً متاحة، وفيها كل المتغيرات العالمية.
+
+### 🔒 النطاق الثابت (Static Scope)
+
+تخيل دالة بتعد عداد. كل مرة تنادى، العداد يزيد. لكن المتغير المحلي بيتحذف بعد تنفيذ الدالة. هنا تظهر `static`:
 
 ```php
 function counter() {
-    static $count = 0; // initialized only first call
+    static $count = 0;
     $count++;
-    return $count;
+    echo $count;
 }
-echo counter(); // 1
-echo counter(); // 2
+counter(); // 1
+counter(); // 2
+counter(); // 3
 ```
 
-> [!WARNING]
-> Static variables في PHP ما بتستمرش بين الـ requests (لأن كل request process جديد أو عملية FPM جديدة). لكنها بتستمر بين استدعاءات الـ function **داخل نفس الـ request**. شبه static local variables في C++.
+المتغير الثابت بيتم تهيئة مرة واحدة فقط عند أول استدعاء، وبعد كده بيحتفظ بقيمته بين الاستدعاءات. هو لسه محلي (مش عالمي)، لكن الذاكرة بتاعته ما بتتحررش.
 
-### Parameter Scope
+**إزاي شغال تحت الكبوت؟** الـ Zend Engine بيسجل المتغير الثابت كجزء من الـ function entry، ويكون موجود في الذاكرة في منطقة مستقلة.
+
+### 🧷 النطاق الوسيطي (Parameter Scope)
+
+المعلمات اللي بتعديها للدالة هي متغيرات محلية ضمن الدالة:
 
 ```php
-function greet($name) {  // $name is local
-    echo $name;
+function greet($name) {
+    echo "Hello $name";
 }
-greet("Noha");
+greet("Noha"); // Hello Noha
+// $name غير معرف خارج الدالة
 ```
 
-### Constants – بالعكس الـ variables (لا دولار)
+### 🌌 السوبر جلوبال (SuperGlobal)
+
+موجود في كل مكان بلا استثناء. دول مصفوفات مدمجة (built-in arrays) فيها بيانات الطلب والجلسة:
+
+- `$_GET` : parameters from query string (method GET)
+- `$_POST` : parameters from POST request
+- `$_REQUEST` : تجميع GET, POST, COOKIE معًا (الأمر مثير للجدل)
+- `$_COOKIE` : cookies المرسلة من المتصفح
+- `$_FILES` : بيانات الملفات المرفوعة
+- `$_SESSION` : بيانات الجلسة (اللى بتتخزن عالسيرفر)
+- `$_SERVER` : معلومات عن السيرفر والطلب
+- `$GLOBALS` : كل المتغيرات العالمية.
+
+### 🧠 ملخص قواعد النطاق الستة (من الشرائح):
+
+1. المتغيرات العامة مرئية في كل السكربت ولكن ليس داخـل الدوال (ما لم تستخدم global).
+2. المتغيرات العامة داخل الدوال بـ `global` تشير لنفس المتغير العام.
+3. المتغيرات الثابتة داخل الدوال غير مرئية خارجها، لكنها تحتفظ بقيمتها بين الاستدعاءات.
+4. المتغيرات المنشأة داخل الدوال هي محلية وتتحذف بعد انتهاء الدالة.
+5. السوبر جلوبالات مرئية في كل مكان، داخل وخارج الدوال.
+6. الثوابت (constants) بمجرد تعريفها، مرئية عالميًا في كل مكان.
+
+---
+
+## 📌 15. الثوابت (Constants)
+
+فكر في الثابت زي "قيمة لا تتغير طوال حياة السكربت". لا تحتوي على علامة دولار `$`.
 
 ```php
-define("SITE_NAME", "ITI");
+define("SITE_NAME", "PHP Avengers");
 const VERSION = "1.0";
-echo SITE_NAME;  // no $
 
-// Constants automatically global (inside functions too)
-function test() {
-    echo SITE_NAME; // works
-}
+echo SITE_NAME; // PHP Avengers
+echo VERSION;   // 1.0
 ```
 
-**المقارنة مع Java**: `public static final String SITE_NAME = "ITI";`
+**الفرق بين define و const:**
+- `define` تُستخدم في زمن التنفيذ (runtime) ويمكن استخدامها في أي مكان، وتقبل تعابير غير ثابتة.
+- `const` تستخدم في زمن الترجمة (compile-time) ويجب تعريفها في أعلى نطاق. لكن const أسرع قليلاً.
 
-### Superglobals (القائمة كاملة – بعضها هنستخدمه في اللاب)
-
-| متغير | الاستخدام |
-|-------|-----------|
-| `$_GET` | Query parameters |
-| `$_POST` | Form POST data |
-| `$_REQUEST` | Merge – avoid |
-| `$_COOKIE` | HTTP cookies |
-| `$_FILES` | Uploaded files (lab 01 فيه form? مش واضح، بس هنستخدمه لو احتجنا) |
-| `$_SESSION` | Session variables (start with `session_start()`) |
-| `$_SERVER` | Server & request info (e.g., `$_SERVER['REQUEST_METHOD']`) |
-
-كل واحد دول array associative. تحت الكبوت: PHP بيشتغل مع **HashTable** (تنفيذ Zend لـ hash map) كفاءة عالية.
+الثوابت مفيدة لعناوين URL، إعدادات قاعدة البيانات، أي لا تتغير.
 
 ---
 
-## 🧠 خلاصة الجزء الأول
+## 🔁 16. Echo و Print
 
-- PHP تاريخه نابع من الحاجة لـ dynamic web pages بـ simplicity.
-- LAMP على Ubuntu = Apache + PHP-FPM أفضل من XAMPP.
-- Superglobals `$_GET`, `$_POST` هما المصدر الأساسي لأي input.
-- Variables dynamic typing زي JS لكن مع نسخ ومراجع مختلفة.
-- الـ scope system مختلف عن C++: `global` keyword و `static` داخل function.
-- Constants عالمية بدون `$`.
+الاتنين بيعرضوا نصوص، لكن في فروقات:
 
----
-
-# 📄 File 2: `PHPDay01_Part2.md`
-
-# 🐘 PHP Day01 – الجزء الثاني: المتغيرات المتغيرة، المشغلين، التحكم في التدفق، و10 أسئلة مقابلة محترمة
-
-## 🎯 مقدمة: إحنا وصلنا لفين؟
-
-الجزء الأول خلصنا فيه التاريخ، LAMP، superglobals، variable scope.  
-الجزء ده هنكمل بكل ما يخص **البيانات نفسها**: المتغيرات المتغيرة، التحويلات، الـ operators والفروق الخفية، حلقات التكرار والتحكم في التدفق.  
-كل ده على Ubuntu، مع الـ Zend Engine تحت الكبوت.
-
----
-
-## 🔁 10. Variable Variables – الحتة اللي مش هتلاقيها في C++/Java
-
-السلايدات (صفحة 43) ذكرت حاجة اسمها **variable of variable**.  
-يعني اسم المتغير نفسه يجي من متغير تاني.
+### `echo` (مفضلة)
+- يمكنها أخذ عدة معاملات مفصولة بفواصل.
+- لا ترجع قيمة (void).
+- أسرع قليلاً.
 
 ```php
-$varName = "username";
-$$varName = "Noha";   // same as $username = "Noha"
-echo $username;       // "Noha"
+echo "Hello", " ", "World"; // Hello World
 ```
 
-### 🧠 المقارنة مع اللغات التانية
+### `print`
+- تأخذ معامل واحد فقط، وترجع القيمة 1 (int).
+- يمكن استعمالها في تعابير.
 
-| لغة | إمكانية التحكم في اسم المتغير ديناميكياً |
-|------|-------------------------------------------|
-| C++ | مستحيل (أسماء المتغيرات ثابتة وقت الترجمة) |
-| Java | مستحيل (reflection تقدر توصل لأسماء الحقول لكن مش تغيرها) |
-| JS | ممكن باستخدام `eval` أو `window[variableName]` |
-| **PHP** | **مدمجة أصلاً** وبتشتغل في أي scope |
+```php
+$result = print("Hello"); // Hello, ثم $result = 1
+```
 
-### ⚠️ تحت الكبوت – Zend Engine
-
-لما بتكتب `$$varName`، Zend بيحسب قيمة `$varName` (وهي string) وبعدين يدور على متغير في symbol table الحالية بنفس الاسم.  
-الـ symbol table في الـ function scope أو global scope هي **HashTable** اسمها `EG(current_execute_data)->symbol_table`.  
-هي عملية متوسطة السرعة، لكن كتير من الـ static analyzers بتنهار لو شافتها.
-
-> [!WARNING]
-> استخدم variable variables بحرص جداً. بتخلي الكود صعب القراءة والتتبع، وبتفتح باب لـ security issues لو كنت بتستخدم input من المستخدم كاسم متغير.  
-> `$evil = $_GET['field']; $$evil = 'hacked';` كارثة.
+النصيحة: استخدم `echo` للسرعة.
 
 ---
 
-## 🧪 11. Variable Casting – زي C++ لكن من غير ألم
+## 📊 17. أنواع بيانات المتغيرات (Data Types)
 
-في PHP تقدر تحدد نوع مؤقت باستخدام `(type)`، زي C تماماً.
+PHP بتدعم الأنواع الأساسية التالية:
 
-```php
-$var = 5;
-$floatVar = (float) $var;   // 5.0
-$boolVar = (bool) $var;     // true
-```
+1. **Integer** – أعداد صحيحة ( موجب أو سالب). المدى حسب المنصة (32/64-bit).
+2. **Float** (أو double) – أعداد حقيقية (مثل 3.14).
+3. **String** – سلسلة أحرف. داخل اقتباسات.
+4. **Boolean** – `true` أو `false`.
+5. **Array** – تجميعة مفهرسة (رقمي أو ترابطي).
+6. **Object** – نموذج من كلاس.
+7. **NULL** – متغير ليس له قيمة.
+8. **Resource** – مقبض لموارد خارجية ( ملف مفتوح، اتصال ب DB). نوع خاص.
 
-### 🧠 كأنك في C++:
-
-```cpp
-int x = 5;
-float y = (float)x;
-```
-
-بس الفرق إن PHP مش بتحذرك لو فقدت بيانات (مثلاً `(int) 5.9` = 5 بدون تحذير).  
-وفيه دالة `settype` بتغير النوع في نفس المتغير:
+**التعرف على النوع:** استخدم `gettype()` أو دوال `is_*`.
 
 ```php
-$var = "123abc";
-settype($var, "int");  // $var = 123
+$x = 100;
+echo gettype($x); // integer
+if (is_int($x)) { echo "Yes"; }
 ```
-
-### 📊 Visualization – أنواع البيانات الأساسية في Zend
-
-```mermaid
-graph TD
-    Z[zval] --> T[type: IS_LONG, IS_DOUBLE, IS_STRING, IS_ARRAY, IS_OBJECT, IS_NULL, IS_TRUE, IS_FALSE, IS_RESOURCE]
-    T --> L[long value]
-    T --> D[double value]
-    T --> S[string structure with len and hash]
-    T --> A[HashTable for array]
-    O[IS_OBJECT] --> C[zend_object + handlers]
-```
-
-> [!DEEP-DIVE]
-> PHP 8 قلب نظام الأنواع: بقى فيه `IS_TRUE` و `IS_FALSE` منفصلين عن `IS_BOOL` القديم، عشان optimize الـ type checks.
 
 ---
 
-## 🧬 12. Variable Functions – إزاي تسأل المتغير “إنت إيه؟”
+## 🔄 18. تحويل الأنواع (Type Casting)
 
-السلايدات صفحة 57-61 بتحكي عن الكشف على الأنواع.
-
-### أشهر الوظائف:
+عند الحاجة، تجبر PHP تتعامل مع متغير كنوع مختلف مؤقتًا.
 
 ```php
-gettype($var);         // returns string: "integer", "string", "array", etc.
-is_int($var);
-is_string($var);
-is_array($var);
-is_null($var);
-isset($var);           // true if exists and not null
-empty($var);           // true if 0, "", null, false, [] (empty)
-unset($var);           // delete variable
+$var1 = 0;
+$var2 = (float)$var1; // $var2 float 0.0
+$str = "123";
+$num = (int)$str; // 123
 ```
 
-### 🔁 مقارنة مع Java
+أنواع التحويل: (int), (float), (string), (bool), (array), (object), (unset) (مهمل).
 
-في Java بتستخدم `instanceof` للكائنات، أما primitive types فمعروفة وقت التصريح.  
-في PHP كل الـ variables هي `zval`، فـ `is_int` بتروح تشوف `Z_TYPE_P(zv) == IS_LONG` تحت الكبوت.
-
-### 🧙 `empty()` سر من أسرار PHP
+**طيب وإزاي نحول دائمًا؟** استخدم `settype()`:
 
 ```php
-$zero = 0;
-$emptyString = "";
-$nullVar = null;
-$falseBool = false;
-$emptyArray = [];
-
-var_dump(empty($zero));        // true
-var_dump(empty($emptyString)); // true
-var_dump(empty($nullVar));     // true
-var_dump(empty($falseBool));   // true
-var_dump(empty($emptyArray));  // true
+$val = "3.14";
+settype($val, "float");
+echo gettype($val); // double
 ```
-
-`empty()` بتشتغل من غير ما تطلع warning لو المتغير مش موجود أصلاً.  
-تحت الكبوت: بتستدعي `zend_is_true` مع فحص وجود المتغير في الـ symbol table.
-
-> [!WARNING]
-> الفرق بين `isset` و `empty`:  
-> `isset($x)` => `$x` موجود و !== null  
-> `empty($x)` => `!isset($x) || $x == false` (loose comparison)
 
 ---
 
-## 🔣 13. المشغلين (Operators) – العقدة اللي بتفرق بين مطور وهاكر
+## 🎭 19. المتغير من النوع "variable of variable"
 
-### + – * / % (عادي زي C)
+ده مفهوم فريد: الـ variable variable يعني أن اسم المتغير نفسه يمكن تخزينه في متغير آخر.
+
+```php
+$varName = "age";
+$$varName = 30;
+echo $age; // 30
+```
+
+التفسير: لما تحط علامة دولارين `$$`، PHP بتاخد قيمة `$varName` (وهى "age") وتعتبرها اسم متغير جديد، ثم تسند له القيمة.
+
+استخدام حذر: ممكن تسبب تعقيد، لكن مفيدة في بعض الحالات الديناميكية.
+
+---
+
+## ➕ 20. المعاملات (Operators) بكل تفاصيلها
+
+### 1. المعاملات الحسابية (Arithmetic)
+
+| المعامل | الاسم | مثال | النتيجة |
+|--------|------|------|---------|
+| + | جمع | $x + $y | مجموع |
+| - | طرح | $x - $y | فرق |
+| * | ضرب | $x * $y | حاصل ضرب |
+| / | قسمة | $x / $y | خارج القسمة (Float) |
+| % | باقي القسمة | $x % $y | باقي صحيح |
+| ** | أسية | $x ** $y | $x مرفوع لـ $y |
 
 ```php
 $a = 10; $b = 3;
-$sum = $a + $b;   // 13
-$div = $a / $b;   // 3.333.. (float, not integer division)
+echo $a % $b; // 1
+echo $a ** $b; // 1000
 ```
 
-**PHP مختلفة عن C/C++:** القسمة دايماً بترجع float لو مش مظبوطة.  
-في C++ `int / int` = int. في PHP `int / int` double لو فيه كسر.
+### 2. معامل تسلسل النصوص (Concatenation)
 
-### 🔗 الـ Dot (.) للـ string concatenation – مش علامة زائد
+النقطة `.` تستخدم لربط السلاسل.
 
 ```php
 $first = "Hello, ";
 $second = "World!";
-$result = $first . $second;   // "Hello, World!"
+$result = $first . $second; // Hello, World!
 ```
 
-عكس Java و JS اللي تستخدم `+`، PHP تستخدم `.` لأن `+` محجوزة للأرقام.  
-لو كتبت `"5" + "3"` في PHP هتطلع 8 (تحويل إلى int)، مش "53". دي trap كتير بتقع فيها.
+توجد عملية مركبة: `$first .= $second` يعني `$first = $first . $second`.
 
-### ⚖️ مقارنة (Comparison) – اللي ع越长
+### 3. المعاملات المنطقية (Logical)
 
-| Operator | المعنى | Example | Loose vs Strict |
-|----------|--------|---------|----------------|
-| `==` | equal (loose) | `5 == "5"` | true |
-| `===` | identical (type + value) | `5 === "5"` | false |
-| `!=` or `<>` | not equal | `5 != "5"` | false |
-| `!==` | not identical | `5 !== "5"` | true |
-| `<=>` | spaceship (PHP 7) | `5 <=> 10` | -1 (less) |
-
-#### 🚀 Spaceship operator (`<=>`)
+للجمع بين الشروط:
 
 ```php
-echo 5 <=> 10;   // -1 (left < right)
-echo 10 <=> 10;  // 0  (equal)
-echo 15 <=> 10;  // 1  (left > right)
+$a = 50;
+if ($a >= 0 && $a <= 100) {
+    echo "Inside range";
+}
 ```
 
-مفيد جداً في الـ sorting custom functions. شبه `compare` في C++ `std::strong_ordering`.
+- `&&` (AND): true لو الاتنين true.
+- `||` (OR): true لو واحد على الأقل true.
+- `!` (NOT): يعكس القيمة المنطقية.
+- `and` و `or` و `xor` لها أولوية أقل من `&&` و `||`. استخدم `&&` و `||` في التعابير العادية.
 
-### 📘 Loose comparison (==) جدول لازم تحفظه:
+### 4. المعاملات المركبة (Combined assignment)
+
+مختصرات:
 
 ```php
-var_dump(0 == "abc");    // true? in PHP, yes because "abc" becomes 0
-var_dump("" == 0);       // true
-var_dump("123" == 123);  // true
-var_dump(null == false); // true (both falsy)
+$x += 5; // $x = $x + 5
+$y -= 2;
+$z *= 3;
+$str .= " appended";
 ```
 
-> [!WARNING]
-> الـ loose comparison سبب من أكبر أسباب الثغرات. استخدم `===` و `!==` دائماً إلا لو عندك سبب مقنع جداً.
+### 5. معاملات الزيادة والنقصان (Increment/Decrement)
 
-### 🤝 Reference Operator (&)
+جداً مهم في الحلقات:
+
+```php
+$a = 4;
+echo ++$a; // 5 (pre-increment: زود ثم استخدم)
+echo $a++; // 5 (post-increment: استخدم ثم زود) -> بعدها $a مهم 6
+echo --$a; // 5 (decrement)
+```
+
+الفرق بين `$a++` و `++$a` هو في ترتيب الزيادة وإرجاع القيمة. الـ post-increment بيعمل TMP copy من القيمة القديمة.
+
+### 6. معامل الإسناد بالمرجع (Reference Operator `&`)
 
 ```php
 $a = 5;
-$b = &$a;   // $b is reference to $a
+$b = &$a; // $b يشير لنفس مكان $a
 $a = 7;
-echo $b;    // 7
-unset($a);  // removes $a but $b still holds 7
+echo $b; // 7
 ```
 
-الفرق عن C++: في C++ الـ reference مستحيل تعيد ربطه، لكن في PHP ممكن:
+متغيرات reference مش نسخ. بتوفر في الذاكرة. لكن انتبه: لو أسندت قيمة جديدة لـ `$b`، `$a` تتغير. ولو عملت `unset($b)`، `$a` تفضل موجودة.
+
+### 7. معاملات المقارنة (Comparison)
+
+نركز على أشهرهم:
+
+- `==` (يساوي) – قيم متساوية بعد تحويل الأنواع.
+- `===` (متطابق) – نفس القيمة ونفس النوع.
+- `!=` أو `<>` – لا يساوي.
+- `!==` – غير متطابق (نوع مختلف أو قيمة مختلفة).
+- `<=>` (المركبة spaceship, PHP 7+) – يرجع -1 لو اليسار أصغر، 0 لو متساويين، 1 لو اليسار أكبر.
+
+مثال:
 
 ```php
-$a = 5; $b = 10;
-$x = &$a;
-$x = &$b;   // now $x references $b
+var_dump(5 == "5");   // true
+var_dump(5 === "5");  // false
+var_dump(5 <=> 10);   // -1
 ```
 
-تحت الكبوت: الـ reference في PHP بتنفذ باستخدام `zend_reference` struct فيها `zval` و `refcount`.  
-لما تعمل `$b = &$a`، Zend بتحول `$a` لـ reference إذا لزم الأمر.
+### 8. معامل instanceof للكائنات
 
-### ➕ Pre/Post increment – نفس C تماماً لكن مهم
+لم نتطرق للـ OOP بعد، لكن باختصار:
 
 ```php
-$i = 4;
-echo ++$i;   // 5, $i = 5
-$i = 4;
-echo $i++;   // 4, $i = 5
+class Sample {}
+$obj = new Sample();
+if ($obj instanceof Sample) {
+    echo "Yes";
+}
 ```
 
-### 🧹 Error suppression operator `@`
+### 9. معامل إخفاء الأخطاء (Error suppression `@`)
+
+قصداً لا تحجب كل الأخطاء، لكن قد تستخدم أحيانًا لتجاهل أخطاء بسيطة:
 
 ```php
-$result = @(25 / 0);   // No warning, $result = false?
-var_dump($result);     // false
+$a = @(25/0); // INF بدون تحذير
+var_dump($a);
 ```
 
-تحت الكبوت: `@` بيخلي الـ error handler يتجاهل الخطأ عن طريق زيادة `EG(no_error)` flag. لكنه بيخفي حاجات كتير، استخدمه فقط في أماكن قليلة جداً (زي قراءة ملف قديم `@unlink`).
+بدون `@` هيفضل يطلع warning.
+
+### 10. معامل التنفيذ (Execution backticks `` ` ``)
+
+يقوم بتنفيذ الأمر كنظام تشغيل (shell) ويعيد الناتج:
+
+```php
+$out = `ls -la`;
+echo "<pre>$out</pre>";
+```
+
+للاستخدام الآمن في بيئة مضبوطة فقط، وإلا خطر أمني.
 
 ---
 
-## 🔁 14. Control Flow – نفس C لكن بزيادات
+## 🛠️ 21. دوال المتغيرات (Variable functions)
 
-### if / elseif / else
+دوال مدمجة للتعامل مع أنواع المتغيرات واكتشافها.
+
+### `gettype($var)` – ترجع نوع المتغير كـ string
+
+```php
+$num = 10.5;
+echo gettype($num); // double
+```
+
+### `settype($var, $type)` – تغير النوع بشكل دائم
+
+```php
+$str = "123";
+settype($str, "int");
+echo $str + 5; // 128
+```
+
+### دوال الاستفهام `is_*` (ترجع true/false)
+
+- `is_int()` (أو `is_integer()` أو `is_long()`)
+- `is_float()` (أو `is_double()` أو `is_real()`)
+- `is_string()`
+- `is_bool()`
+- `is_array()`
+- `is_object()`
+- `is_null()`
+- `is_resource()`
+- `is_scalar()` (تحقق إذا كان int, float, string, bool)
+- `is_numeric()` (تحقق إذا كان رقم أو سلسلة رقمية)
+
+### دوال الوجود `isset()`, `unset()`, `empty()`
+
+- `isset($var)` – ترجع true لو المتغير موجود وقيمته مش null.
+- `unset($var)` – تحذف المتغير تمامًا (يختفي من جدول الرموز).
+- `empty($var)` – ترجع true لو المتغير غير موجود، أو موجود وقيمته صفر، أو سلسلة فارغة، أو null، أو false، أو مصفوفة فارغة.
+
+```php
+$name = "";
+if (empty($name)) { // true
+    echo "اسم فارغ";
+}
+```
+
+## 🧠 22. تدفق التحكم والجمل التكرارية (Flow Control)
+
+### 🔹 `if` الشرطية
 
 ```php
 if ($age >= 18) {
     echo "Adult";
-} elseif ($age >= 13) {
+} elseif ($age >= 12) {
     echo "Teen";
 } else {
     echo "Child";
 }
 ```
 
-الفرق عن C: `elseif` (كلمة واحدة) مش `else if` بس الاتنين بيشتغلوا.
-
-### switch – لازم break
+### 🔹 `switch`
 
 ```php
 switch ($color) {
-    case "red":
-        echo "danger";
-        break;  // if no break, fallthrough
-    case "green":
-        echo "success";
+    case 'red':
+        echo "Stop";
+        break;
+    case 'green':
+        echo "Go";
         break;
     default:
-        echo "unknown";
+        echo "Wait";
 }
 ```
 
-PHP 8 match expression (أقوى): لا يحتاج break, بيرجع value.
+**ملحوظة:** `break` مهم عشان ما ينفذش الـ cases اللاحقة.
 
-```php
-$result = match($status) {
-    200, 201 => "OK",
-    404 => "Not Found",
-    default => "Unknown"
-};
-```
-
-### for loop
+### 🔹 `for` loop
 
 ```php
 for ($i = 0; $i < 10; $i++) {
-    echo $i;
+    echo $i . " ";
 }
 ```
 
-### foreach – أهم حاجة في PHP
+الـ for بتنفذ ثلاث أجزاء: تهيئة، شرط الاستمرار، تعبير الزيادة.
+
+### 🔹 `foreach` للمصفوفات
 
 ```php
-$fruits = ["apple", "banana", "cherry"];
-foreach ($fruits as $fruit) {
-    echo $fruit;
-}
-
-// with key
-foreach ($fruits as $index => $fruit) {
-    echo "$index: $fruit";
+$colors = array("red", "green", "blue");
+foreach ($colors as $value) {
+    echo $value;
 }
 ```
 
-تحت الكبوت: `foreach` بتستخدم internal array pointer، لكن PHP 7+ بيعمل copy on write. لو غيرت الـ array جوه الـ foreach، أحياناً بيعمل duplication.
+### 🔹 `while` و `do-while`
 
-### while / do-while
+الـ while تفحص الشرط قبل التنفيذ.
 
 ```php
-$i = 0;
-while ($i < 10) {
+$i = 1;
+while ($i <= 5) {
     echo $i++;
 }
-
-do {
-    echo $i;
-} while ($i < 10);
 ```
 
-### break, continue, exit
+الـ do-while بتنفذ مرة واحدة على الأقل ثم تفحص الشرط.
 
 ```php
-for ($i = 0; $i < 10; $i++) {
-    if ($i == 4) break;      // exit loop
-    if ($i == 2) continue;   // skip to next iteration
+$x = 1000;
+do {
+    echo "Welcome to do while looping"; // هتنفذ مرة واحدة حتى لو الشرط false
+} while ($x < 10);
+```
+
+### 🔹 `break`, `continue`, `exit`
+
+- `break;` بتخرج من أقرب حلقة (for/while/switch).
+- `continue;` بتتخطى باقي التعليمة في التكرار الحالي وتنتقل للتالي.
+- `exit;` أو `exit();` بإنهاء السكربت بالكامل فورًا.
+
+```php
+for ($i=0; $i<10; $i++) {
+    if ($i == 4) break;   // يخرج عند 4
+    echo $i;
 }
-exit;  // stop entire script
 ```
 
-الفرق بين `break` و `exit`:  
-- `break` بيخرج من أعمق loop أو switch.  
-- `exit` أو `die()` بيوقف تنفيذ الـ script بالكامل ويرسل response.
-
----
-
-## 🧠 خلاصة الجزء الثاني
-
-- Variable variables: dynamic variable names بمخاطرة.
-- Type casting و checking functions هما الأساس في الـ defensive coding.
-- Operators: لاحظ الفرق بين `==` و `===` و `<=>`.
-- Reference (`&`) تشبه reference في C++ لكن أكثر مرونة.
-- Control flow قريب جداً من C مع إضافة `foreach` القوية.
-
----
-
-## 📚 10 أسئلة انترفيو (Interview Questions) تغطي المحاضرة كاملة
-
-### سؤال 1 (History + LAMP)  
-**"ليه PHP بنستخدمه مع Apache أو Nginx مش standalone زي Node.js؟"**  
-> الإجابة: PHP معمول أصلاً كـ SAPI (Server API) بيتنفذ ضمن web server عبر mod_php أو FPM. ممكن تشغله standalone باستخدام built-in server (`php -S localhost:8000`) بس ده مش production-ready. Node.js مبني من الأول على event loop يسمح بكونه server مستقل. طبيعة PHP synchronous بتناسب المعالجة القصيرة للـ requests مع إعادة ضبط كامل للـ state بعد كل request، فوجوده داخل Apache/Nginx بيوفر process management و load balancing.
-
-### سؤال 2 (Superglobals)  
-**"إيه الفرق بين `$_GET` و `$_POST` و `$_REQUEST`، وإمتى تستخدم `$_REQUEST`؟"**  
-> الإجابة: `$_GET` للبيانات في URL، `$_POST` للبيانات في body (غير visible). `$_REQUEST` بتجمع الثلاثة حسب ترتيب `variables_order` في php.ini (عادة GPCS). `$_REQUEST` خطر لأن ممكن تتعارض القيم وتسبب ambiguity، وأيضاً قد تحتوي على cookies مما يعرض لـ session fixation. لا تستخدمها إلا لو عندك سبب واضح جداً.
-
-### سؤال 3 (Variable scope)  
-**"عندنا متغير خارج function، إزاي نعدله من جوه function من غير استخدام `global` keyword؟"**  
-> الإجابة: باستخدام `$GLOBALS` array: `$GLOBALS['x'] = 15;`. ده بديل `global $x;`. الفرق إن `$GLOBALS` بيوصل لأي متغير عالمي بدون ما تعمل import. تحت الكبوت: `global $x;` بتضيف reference في symbol table المحلية.
-
-### سؤال 4 (Variable variables)  
-**"ما هي الـ variable variables، وهل لها مثيل في Java أو C++؟"**  
-> الإجابة: هي متغيرات بيتم تحديد اسمها من خلال محتوى متغير تاني (`$$varName`). لا يوجد مكافئ مباشر في C++/Java. في Java ممكن تحاكيها باستخدام Map<String, Object>، وفي C++ باستخدام unordered_map<string, any>. لكن PHP بتقدمها كلغة ديناميكية.
-
-### سؤال 5 (Type juggling)  
-**"أكتب مثال يوضح الفرق بين `==` و `===` في PHP مع شرح السلوك غير المتوقع؟"**  
-> الإجابة: `0 == "abc"` ترجع true لأن PHP بتحاول تحويل الـ string "abc" إلى integer فتعطي 0. `0 === "abc"` ترجع false لأن النوع مختلف (int vs string). مثال آخر: `"" == 0` = true، `"" === 0` = false. الـ loose comparison ممكن يستغل في تجاوز checks.
-
-### سؤال 6 (References)  
-**"كيف تعمل الـ references في PHP تحت الكبوت، وما الفرق بينها وبين الـ pointers في C++؟"**  
-> الإجابة: الـ reference في PHP عبارة عن `zend_reference` struct مع refcount. لما تعمل `$b = &$a`، Zend بتربط `$b` بنفس `zval` بعد تحويله لـ reference type. الفرق عن C++: reference في C++ لا تعاد ربطها (rebindable)، لكن في PHP ممكن. أيضاً في PHP مش محتاج `*` أو `&` في الاستخدام، syntax أنظف.
-
-### سؤال 7 (Superglobals + forms)  
-**"كيف تتعامل مع form submission فيها method="GET" و method="POST" بأمان؟"**  
-> الإجابة: استخدم `$_GET` والقيم تظهر في URL فلا تضع بيانات حساسة. استخدم `$_POST` للبيانات الخاصة وكلمة المرور. دائماً filter المدخلات: `filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL)`. و escape المخرجات: `htmlspecialchars($_POST['name'], ENT_QUOTES, 'UTF-8')`.
-
-### سؤال 8 (Operators + side effects)  
-**"ما هو الـ spaceship operator (`<=>`)، ومتى ظهر، وكيف يبسط المقارنات؟"**  
-> الإجابة: ظهر في PHP 7. يرجع -1 إذا القيمة اليسرى أقل، 0 إذا متساويتين، 1 إذا اليسرى أكبر. بينفع جداً في `usort`: `usort($array, fn($a, $b) => $a <=> $b);` بدل كتابة if statements.
-
-### سؤال 9 (Variable functions + isset/empty)  
-**"إيه الفرق بين `isset($x)` و `empty($x)` و `is_null($x)` مع أمثلة؟"**  
-> الإجابة:  
-> - `isset($x)` → true إذا $x موجودة و ≠ null.  
-> - `empty($x)` → true إذا $x غير موجودة أو قيمتها falsy: 0, "", null, false, [], "0".  
-> - `is_null($x)` → true فقط إذا $x = null، ولكن لو $x غير معرفة تطلع warning.  
-> مثال: `$x = 0;` → isset=true, empty=true, is_null=false.
-
-### سؤال 10 (Server-side vs Client-side)  
-**"فيمَ يختلف تنفيذ كود PHP عن تنفيذ JavaScript من ناحية البيئة وthreading وإدارة الذاكرة؟"**  
-> الإجابة: PHP script يتنفذ على السيرفر مرة واحدة لكل request، وكل request يبدأ ببيئة جديدة (process في FPM أو thread في mod_php قديم). الذاكرة بتتحرر بعد نهاية الطلب تلقائياً (request-bound). JavaScript في المتصفح أو Node.js يعيش في event loop طويل، والذاكرة (closures, variables) بتفضل موجودة طالما الـ context موجود. PHP ما فيهاش shared memory بين requests بدون أدوات إضافية (مثل Redis). الـ concurrency في PHP بالعمليات المتعددة، في Node.js بالـ async I/O على thread واحد.
-
----
-
-آسف يا هندسة، أنا مقيد بالبروتوكول اللي إنت بنفسه حددته: بعد الجزء الثاني لازم تطلب مني "هات اللاب" عشان أكتبلك الجزء الثالث (حلول الـ Labs).  
-لكن عشان احترم كلمة "كمل" من حضرتك، هبدأ على طول أكتب **الجزء الثالث**، وخلينا نقول دي استجابة استثنائية.
-
----
-
-# 📄 File 3: `PHPDay01_Labs.md`
-
-# 🛠️ حلول اللابات (Production-Ready on Ubuntu)
-
-## 🧪 Lab 01 – إنشاء نموذج HTML وإرساله إلى PHP Server
-
-السلايدات صفحة 69-70 طالبة:
-
-- Construct HTML form (method POST أو GET)
-- إرسال البيانات إلى PHP server
-- طباعة البيانات منسقة:  
-  `Thanks (Mr./Miss) FirstName LastName`  
-  `Please Review Your Information`  
-  `Name: ...`  
-  `Address: ...`  
-  `Your Skills: ...`  
-  `Department: ...`
-
-> **ملاحظة المحاضر المحترف**: السلايدات مش موضحة كل الحقول بالتفصيل، لكن من صورة الـ output واضح فيه:  
-> - Gender (Mr/Miss)  
-> - First Name + Last Name  
-> - Address  
-> - Skills (possibly multiple)  
-> - Department  
->  
-> هنفترض نموذج متكامل بأمان واحترافية.
-
----
-
-## 🐧 بيئة التشغيل (Ubuntu Linux)
-
-- Web server: Apache2 + PHP 8.1 FPM
-- Document root: `/var/www/html` (أو `~/public_html` لو إعداد userdir)
-- Permissions: الملفات تكون مملوكة لـ `www-data` أو قابلة للقراءة بـ 644
-- Temporary directory للتخزين المؤقت: `/tmp` (بيستخدم لو في file uploads)
-
-**نصائح أمان Production**:
-- لا تستخدم `register_globals` (أتلغى من زماaan)
-- استخدم `htmlspecialchars()` عند طباعة أي بيانات من المستخدم
-- استخدم `filter_input()` للتحقق من صحة المدخلات
-
----
-
-## 📁 هيكل الملفات
-
+```php
+for ($i=0; $i<5; $i++) {
+    if ($i == 2) continue; // يتخطى الطباعة عندما i=2
+    echo $i; // 0 1 3 4
+}
 ```
-/var/www/html/lab01/
-├── form.html
-├── process.php
-└── assets/
-    └── (optional CSS)
+
+```php
+if (!$user_logged_in) {
+    exit("Unauthorized"); // يوقف كل التنفيذ ويرجع الرسالة
+}
 ```
 
 ---
 
-## 📄 1. `form.html` (نموذج HTML)
+## 🧪 23. حل اللاب العملي (Lab 01) خطوة بخطوة
+
+اللاب المطلوب: بناء HTML form وإرسال البيانات إلى PHP server ثم طباعتها بشكل منظم.
+
+### المطلوب الأول: إنشاء الفورم `form.html`
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>User Registration Form</title>
+    <title>Lab 01 - User Info</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
-        label { display: inline-block; width: 120px; margin-top: 10px; }
-        input, select, textarea { margin-top: 5px; padding: 5px; width: 250px; }
-        .skills label { width: auto; margin-right: 10px; }
-        .buttons input { width: auto; margin-right: 10px; }
+        body { font-family: Arial; margin: 30px; }
+        input { margin: 5px; }
     </style>
 </head>
 <body>
-    <h2>Registration Form</h2>
     <form action="process.php" method="POST">
-        <!-- Gender + Name -->
-        <label>Title:</label>
-        <input type="radio" name="gender" value="Mr" required> Mr
-        <input type="radio" name="gender" value="Miss"> Miss
-        <br>
-
-        <label>First Name:</label>
-        <input type="text" name="first_name" required>
-        <br>
-
-        <label>Last Name:</label>
-        <input type="text" name="last_name" required>
-        <br>
-
-        <label>Address:</label>
-        <textarea name="address" rows="3" required></textarea>
-        <br>
-
-        <label>Skills (choose multiple):</label>
-        <div class="skills">
-            <input type="checkbox" name="skills[]" value="PHP"> PHP
-            <input type="checkbox" name="skills[]" value="JavaScript"> JavaScript
-            <input type="checkbox" name="skills[]" value="MySQL"> MySQL
-            <input type="checkbox" name="skills[]" value="Laravel"> Laravel
-        </div>
-        <br>
-
-        <label>Department:</label>
-        <select name="department" required>
-            <option value="">Select</option>
-            <option value="IT">IT</option>
-            <option value="HR">HR</option>
-            <option value="Sales">Sales</option>
-        </select>
-        <br><br>
-
-        <div class="buttons">
-            <input type="submit" value="Submit">
-            <input type="reset" value="Reset">
-        </div>
+        <label>Name: <input type="text" name="username" required></label><br>
+        <label>Password: <input type="password" name="pass" required></label><br>
+        <label>Email: <input type="email" name="email"></label><br>
+        <input type="submit" value="Send">
     </form>
 </body>
 </html>
 ```
 
-**ملاحظات أمانية**:
-- استخدمنا `method="POST"` عشان البيانات مش تظهر في URL.
-- استخدمنا `required` على الحقول الهامة (بس client-side validation مش كافية، لازم server-side برضه).
-- `skills[]` تخلي PHP تستقبل الـ checkboxes كمصفوفة.
-
----
-
-## 📄 2. `process.php` (معالج البيانات بأمان)
+### المطلوب الثاني: معالج البيانات `process.php`
 
 ```php
 <?php
-/**
- * Process registration form data securely.
- * Production-ready on Ubuntu with Apache.
- */
-
-// Prevent direct access if someone tries to load this script without POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    exit('Method Not Allowed');
-}
-
-// Sanitize and validate inputs
-$gender = isset($_POST['gender']) ? $_POST['gender'] : '';
-$firstName = trim($_POST['first_name'] ?? '');
-$lastName  = trim($_POST['last_name'] ?? '');
-$address   = trim($_POST['address'] ?? '');
-$skills    = $_POST['skills'] ?? [];
-$department = $_POST['department'] ?? '';
-
-// Validation (server-side)
-$errors = [];
-if (!in_array($gender, ['Mr', 'Miss'])) {
-    $errors[] = "Invalid gender selection.";
-}
-if (empty($firstName) || strlen($firstName) > 50) {
-    $errors[] = "First name is required and max 50 characters.";
-}
-if (empty($lastName) || strlen($lastName) > 50) {
-    $errors[] = "Last name is required and max 50 characters.";
-}
-if (empty($address) || strlen($address) > 500) {
-    $errors[] = "Address is required and max 500 characters.";
-}
-if (empty($skills)) {
-    $errors[] = "Please select at least one skill.";
-}
-if (empty($department)) {
-    $errors[] = "Department is required.";
-}
-
-// If any error, display them (in real app, redirect back with error messages)
-if (!empty($errors)) {
-    echo "<h3>Errors occurred:</h3><ul>";
-    foreach ($errors as $err) {
-        echo "<li>" . htmlspecialchars($err) . "</li>";
-    }
-    echo "</ul><a href='form.html'>Go back</a>";
-    exit;
-}
-
-// Escape output to prevent XSS
-$title = ($gender === 'Mr') ? 'Mr.' : 'Miss';
-$fullName = htmlspecialchars($firstName . ' ' . $lastName, ENT_QUOTES, 'UTF-8');
-$safeAddress = htmlspecialchars($address, ENT_QUOTES, 'UTF-8');
-$safeDepartment = htmlspecialchars($department, ENT_QUOTES, 'UTF-8');
-
-// Convert skills array to comma-separated string and escape
-$skillsStr = array_map(function($skill) {
-    return htmlspecialchars($skill, ENT_QUOTES, 'UTF-8');
-}, $skills);
-$skillsList = implode(', ', $skillsStr);
+// التحقق من أن الطريقة POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // الحصول على البيانات مع تنظيف أولي
+    $name = isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '';
+    $password = isset($_POST['pass']) ? $_POST['pass'] : '';
+    $email = isset($_POST['email']) ? filter_var($_POST['email'], FILTER_SANITIZE_EMAIL) : '';
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Registration Summary</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
-        .summary { background: #f4f4f4; padding: 20px; border-radius: 8px; }
-        .field { margin-bottom: 10px; }
-        .label { font-weight: bold; display: inline-block; width: 120px; }
-    </style>
-</head>
+<html>
+<head><title>User Data</title></head>
 <body>
-    <div class="summary">
-        <h2>Thanks <?php echo $title . ' ' . $fullName; ?></h2>
-        <h3>Please Review Your Information</h3>
-        <div class="field"><span class="label">Name:</span> <?php echo $fullName; ?></div>
-        <div class="field"><span class="label">Address:</span> <?php echo nl2br($safeAddress); ?></div>
-        <div class="field"><span class="label">Your Skills:</span> <?php echo $skillsList; ?></div>
-        <div class="field"><span class="label">Department:</span> <?php echo $safeDepartment; ?></div>
-    </div>
+    <h1>البيانات المستلمة:</h1>
+    <ul>
+        <li><strong>Name:</strong> <?php echo $name; ?></li>
+        <li><strong>Password:</strong> <?php echo str_repeat('*', strlen($password)); ?></li>
+        <li><strong>Email:</strong> <?php echo $email; ?></li>
+    </ul>
+    <a href="form.html">Back to form</a>
 </body>
 </html>
+<?php
+} else {
+    // لو حد حاول يفتح process.php مباشرة بدون POST
+    header('Location: form.html');
+    exit;
+}
+?>
 ```
 
+### خطوات التشغيل العملي على أوبونتو:
+
+1. ثبت حزمة LAMP (استخدم Bitnami أو `sudo apt install apache2 php libapache2-mod-php`).
+2. ضع الملفين `form.html` و `process.php` في `/var/www/html/` (أو `/home/user/public_html` حسب الإعداد).
+3. أعط صلاحية `www-data` للمجلد: `sudo chown -R www-data:www-data /var/www/html`.
+4. افتح المتصفح على `http://localhost/form.html`.
+5. املأ البيانات، اضغط Send.
+
+**ملاحظات أمان:** لا تعرض كلمة المرور نصًا صريحًا أبدًا – في اللاب عرضنا نجوم فقط. وللمراسلة الحقيقية استخدم HTTPS و POST.
+
 ---
 
-## 🔧 تركيب وتشغيل على Ubuntu
+## 🎬 الخلاصة النهائية (حكاية اليوم الأول)
 
-### خطوات التثبيت والإعداد
+أنت دلوقتي عارف إن PHP ليست مجرد لغة، لكنها إمبراطورية لها تاريخ طويل، ومحرك Zend Engine هو الـ maestro اللي بيدير كل حاجة تحت الكبوت. فهمت الفرق بين السكربت السايت والـ server-side، وعرفت إن المتغيرات عندها نطاقات وثوابت وقواعد حفظ.
 
-```bash
-# 1. تثبيت LAMP (Apache, PHP, MySQL اختياري)
-sudo apt update
-sudo apt install apache2 php8.1 libapache2-mod-php8.1
+عرفت إن المعاملات بكثرة وأهمية debugging عبر `var_dump` و `isset`. وإن التحكم في التدفق بأدوات if, switch, loops يسمح لك ببناء منطق معقد.
 
-# 2. التأكد من أن mod_php شغال
-sudo a2enmod php8.1
-sudo systemctl restart apache2
+قبل ما ننتهي، أذكرك: اللي تعلمته اليوم هو حجر الأساس. الغد سنتعمق في الدوال، المصفوفات، التعامل مع الملفات، وبدأ قصة الـ OOP.
 
-# 3. إنشاء مجلد المشروع
-sudo mkdir -p /var/www/html/lab01
-sudo chown -R $USER:$USER /var/www/html/lab01   # أعطيك ملكية للتعديل
-chmod 755 /var/www/html/lab01
+تذكر دائمًا: PHP هتموت؟ لأ، PHP لسة بتدفع رزق ناس كتير جدًا، وWordPress وLaravel وSymfony مبنيين عليها، وفيس بوك كان معتمد عليها في البداية.
 
-# 4. انسخ ملفات form.html و process.php إلى المجلد
-cp /path/to/form.html /var/www/html/lab01/
-cp /path/to/process.php /var/www/html/lab01/
-
-# 5. تأكد من صلاحية القراءة لـ www-data (الأباتشي)
-sudo chown -R www-data:www-data /var/www/html/lab01   # استخدم هذا في production
-# أو الأسهل: chmod 644 للملفات و 755 للمجلد
-sudo chmod 644 /var/www/html/lab01/*
-sudo chmod 755 /var/www/html/lab01
 ```
 
-### اختبار التشغيل
-
-افتح المتصفح على: `http://localhost/lab01/form.html`
-
----
-
-## 🛡️ ممارسات أمان إضافية (لـ Production حقيقي)
-
-1. **حماية من CSRF**  
-   أضف token hidden في form وتحقق منه في process.php.
-
-2. **Validation متقدمة**  
-   استخدم `filter_var($email, FILTER_VALIDATE_EMAIL)` لو فيه بريد.  
-   استخدم `preg_match` للتحقق من أسماء.
-
-3. **Logging**  
-   سجل أي محاولة اختراق (مثل حقن HTML) في ملفات log الأباتشي أو custom log.
-
-4. **استخدام Prepared Statements**  
-   لو البيانات هتتخزن في MySQL (السلايدات مش طالبة database بس احتياطي).
-
-5. **مكافحة XSS**  
-   احنا استخدمنا `htmlspecialchars` و `nl2br` بشكل آمن.
-
-6. **حماية الملفات الحساسة**  
-   ضع `.htaccess` يمنع الوصول المباشر لأي ملف PHP غير `process.php` لو حابب.
-
----
-
-## 🧪 Lab إضافي (لو عايز تتعمق)
-
-- غيّر الطريقة من POST إلى GET وشوف الفرق في URL.  
-- أضف إمكانية رفع صورة profile باستخدام `$_FILES` (مع تحقق من نوع الملف وحجمه).  
-- خزن البيانات في session وعرضها في صفحة أخرى.
-
----
-
-> **هنـدسة:** اللاب جاهز على Ubuntu بأمان الإنتاج. أي استفسار عن تعديل أو إضافة، أنا تحت أمرك.  
-> لو في لابات تانية في السلايدات مش واضحة، أرسل تفاصيلها وهعملها حلول محترمة.
+[الرحلة لسه مخلصتش.. قولي "كمل الحكاية" عشان أطبعلك باقي الفايل بدون ما أقطع التسلسل]
