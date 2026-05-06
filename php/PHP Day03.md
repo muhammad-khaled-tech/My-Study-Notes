@@ -1,1326 +1,1314 @@
-# 🐘 PHP Day 03 — الحكاية الكاملة
+# الفصل الثالث — PHP: الـ Strings، الـ Regex، الـ Files، والـ Sessions
 
-### _String Manipulation · Regex · File Upload · Sessions · Cookies_
+### _"من الكيبورد لحد شاشة العميل — وما بينهم من أسرار"_
 
-> **بقلم:** Master PHP Storyteller & Principal Architect **المصدر:** ITI — Prepared by Eng. Noha Shehab
-
----
-
-هات كوباية الشاي بتاعتك يا هندسة.. ويلا بينا نبدأ حكاية الـ PHP من تحت الكبوت!
+> **المتطلبات:** أساسيات PHP — Variables، Arrays، Functions، وأنت عارف إن السيرفر بيشغّل PHP بطريقة ما. الفصل ده هيخليك تعرف "الطريقة ما" دي بالظبط، وهيوديك جوّا String Manipulation والـ Regex والـ Sessions والـ Cookies.
 
 ---
 
-## 🗺️ خريطة الرحلة
+## 🏛️ رحلة الفايل: من الكيبورد لحد شاشة العميل
 
-```mermaid
-flowchart LR
-    A[🎯 رحلة الفايل<br/>من الكيبورد<br/>للشاشة] --> B[🧵 String<br/>Manipulation]
-    B --> C[🔍 Regular<br/>Expressions]
-    C --> D[📁 File<br/>Upload]
-    D --> E[🍪 Sessions &<br/>Cookies]
-    E --> F[🛠️ حل اللاب]
+تعالى أحكيلك الحكاية من الأول. قبل ما نتكلم عن أي `trim()` أو `session_start()`، لازم تفهم **الجزء اللي محدش بيشرحهوش** — إيه اللي بيحصل بالظبط لمّا المتصفح بتاعك يطلب صفحة PHP؟
+
+### المشهد: طلب بسيط... ولا هو كده؟
+
+تخيّل معايا السيناريو ده. أنت مستخدم عادي، فتحت المتصفح وكتبت:
+
+```
+https://mysite.com/index.php
 ```
 
----
-
-# 🚀 الفصل الأول: رحلة الفايل — من الكيبورد لحد شاشة العميل
-
-## تعالى أحكيلك الحكاية من الأول
-
-تخيل معايا السيناريو ده. أنت جالس في أوبونتو سيرفر، عندك فايل اسمه `index.php`. الفايل ده مش مجرد نص. هو وصية مكتوبة للمعالج، بس المعالج بيتكلم لغة واحدة بس: **Opcodes**. طيب، مين اللي يترجم؟ ومن فين بتبدأ الرحلة؟
-
-الرحلة بتبدأ مش من السيرفر... بتبدأ من **المتصفح بتاع العميل**.
+وضغطت Enter. في الـ 200 millisecond اللي بعدين دول، فيه حرب كاملة بتحصل جوّا السيرفر. ويلا نشوف.
 
 ---
 
-### المرحلة 1️⃣ — الـ HTTP Request بيولد
+### المرحلة الأولى: الـ HTTP Request بيتبعت
 
-العميل بيكتب في المتصفح: `http://mysite.com/index.php`
-
-في هذه اللحظة، المتصفح بيبني **HTTP GET Request** وبيبعته على الشبكة.
+المتصفح بتاعك — Chrome، Firefox، مش مهم — بيبعت **HTTP Request** للسيرفر. الـ Request ده بيبان كده:
 
 ```
 GET /index.php HTTP/1.1
 Host: mysite.com
+User-Agent: Mozilla/5.0 ...
 Accept: text/html
-Connection: keep-alive
 ```
 
-الباكيت ده بيسافر عبر TCP/IP، بيعدي الـ Router، بيوصل لـ **Ubuntu Server** على البورت **80** (HTTP) أو **443** (HTTPS).
+ده مجرد نص. مجرد رسالة. زي ما بتبعت رسالة واتساب لصاحبك. الرسالة دي بتوصل للـ **Network Card** بتاعت السيرفر على الـ Port 80 أو 443.
 
 ---
 
-### المرحلة 2️⃣ — الـ Web Server بيستقبل
+### المرحلة التانية: الـ Web Server (Apache / Nginx) يستقبل
 
-على السيرفر، في حارس بيصحى ليل نهار. اسمه **Apache** أو **Nginx**. هو بيستمع على البورت 80 ومش بيصحى إلا لما يجي Request.
+الـ Request وصل. مين بيستقبله؟ الـ **Web Server**. على أوبونتو السيرفر، في الغالب هيبقى **Nginx** أو **Apache**.
 
-```mermaid
-sequenceDiagram
-    participant C as 🌍 Client Browser
-    participant N as ⚙️ Nginx / Apache
-    participant F as 🔧 PHP-FPM
-    participant Z as 🧠 Zend Engine
-    participant DB as 🗄️ Database
+تخيّل Nginx زي **البوّاب** في مبنى الشركة. أي حد بيجي، البوّاب هو أول واحد بيشوفه. البوّاب مش بيشتغل بنفسه — هو بيسأل: "إيه اللي محتاجه؟"
 
-    C->>N: HTTP Request: GET /index.php
-    N->>N: هل الفايل static?<br/>(HTML/CSS/JS)؟
-    N->>F: لأ، الامتداد .php<br/>احنا بندي لـ PHP-FPM
-    F->>Z: الزيند عايز يشوف الكود
-    Z->>Z: Lexing → Parsing<br/>→ AST → Opcodes
-    Z->>DB: لو في استعلامات<br/>بروح للـ DB
-    DB-->>Z: البيانات
-    Z-->>F: HTML output جاهز
-    F-->>N: الرد الـ HTML
-    N-->>C: HTTP Response
+- لو الطلب لـ ملف Static (صورة، CSS، JS) → البوّاب يجيبه من الدرج مباشرةً.
+- لو الطلب لـ ملف `.php` → البوّاب بيقول "انتظر، هعدّيك للـ PHP".
+
 ```
-
-لما **Nginx** بيلاقي إن امتداد الفايل `.php`، بيعمل إيه؟ هو مش بيعرف يشغّل PHP بنفسه! بيبعته لحد تاني اسمه **PHP-FPM**.
+┌─────────────────────────────────────────────┐
+│              UBUNTU SERVER                  │
+│                                             │
+│  [Browser Request]                          │
+│       ↓                                     │
+│  [Nginx - Port 80/443]                      │
+│       ↓                                     │
+│  Static File? ──YES──→ [/var/www/html]      │
+│       ↓ NO                                  │
+│  [PHP-FPM via FastCGI]                      │
+│       ↓                                     │
+│  [Zend Engine]                              │
+│       ↓                                     │
+│  HTML Response → Back to Nginx → Browser    │
+└─────────────────────────────────────────────┘
+```
 
 ---
 
-### المرحلة 3️⃣ — PHP-FPM: الوسيط الذكي
+### المرحلة التالتة: PHP-FPM — الموظف المتخصص
 
-**PHP-FPM** = PHP FastCGI Process Manager.
+هنا بقى بيتدخل الـ **PHP-FPM** عشان ينقذ الموقف!
 
-تخيله زي مدير مصنع. عنده **pool** من الـ Worker Processes جاهزين يشتغلوا. لما Nginx بيبعتله Request، هو بيختار Worker فاضي وبيديه الشغل.
+الـ **FPM** = **FastCGI Process Manager**. تخيّله زي "مدير الإنتاج" في مصنع. Nginx بيبعتله الـ Request عبر **FastCGI protocol** (عبر Unix Socket في الغالب على أوبونتو: `/var/run/php/php8.2-fpm.sock`).
 
+PHP-FPM شايل **مجموعة من الـ Worker Processes** جاهزين. لمّا Request جديد بييجي، بياخد Worker حر ويبعتله الشغل.
+
+```bash
+# شوف الـ workers دول بنفسك على أوبونتو
+ps aux | grep php-fpm
+# هتلاقي زي ده:
+# www-data  1234  php-fpm: worker process
+# www-data  1235  php-fpm: worker process
+# www-data  1236  php-fpm: worker process
 ```
-# على السيرفر، بتلاقي العملية دي شغالة:
-$ ps aux | grep php-fpm
-www-data  1234  ... php-fpm: worker process
-www-data  1235  ... php-fpm: worker process
-root      1200  ... php-fpm: master process
-```
-
-الـ Master Process هو اللي بيدير الـ Workers. الـ `www-data` هو الـ user اللي بيشتغل بيه PHP على Ubuntu — ده مهم جداً لاحقاً في الـ File Upload.
 
 ---
 
-### المرحلة 4️⃣ — الـ Zend Engine: قلب PHP النابض
+### المرحلة الرابعة: الـ Zend Engine — قلب الموضوع
 
-هنا بقى بيتدخل الـ **Zend Engine** عشان ينقذ الموقف. الـ Zend Engine هو المحرك اللي PHP اتبنى عليه. هو اللي بياخد الكود الـ PHP اللي أنت كتبته ويحوله لحاجة المعالج يفهمها.
+اللي بيحصل هنا ده أهم جزء في الرحلة كلها. الـ **Zend Engine** هو المحرك الحقيقي لـ PHP. هو اللي بياخد ملف `index.php` بتاعك وبيشغّله.
 
-**الرحلة جوه الـ Zend Engine في 4 مراحل:**
+الـ Zend Engine بيعمل 4 خطوات:
 
-```mermaid
-flowchart TD
-    A["📄 index.php<br/>(نص عادي)"] --> B["🔤 Lexer / Tokenizer<br/>بيقسم الكود لـ Tokens"]
-    B --> C["🌳 Parser<br/>بيبني Abstract Syntax Tree"]
-    C --> D["⚙️ Compiler<br/>بيحول AST لـ Opcodes"]
-    D --> E["🚀 Executor<br/>بيشغل الـ Opcodes على الـ CPU"]
-    E --> F["📤 HTML Output<br/>بيرجع لـ PHP-FPM"]
+#### الخطوة 1: Lexing (التحليل المعجمي)
 
-    style A fill:#ffeeba
-    style B fill:#d1ecf1
-    style C fill:#d4edda
-    style D fill:#f8d7da
-    style E fill:#e2d9f3
-    style F fill:#ffeeba
-```
-
-#### **المرحلة الأولى: Lexing (التقطيع)**
-
-الـ Lexer بياخد الفايل كـ Stream من الـ characters وبيقسمه لـ **Tokens** زي:
+الـ Zend Lexer بياخد الـ Source Code النصي بتاعك ويحوّله لـ **Tokens**. تخيّل إنك بتكسّر جملة لكلمات.
 
 ```php
-<?php echo "Hello World"; ?>
+<?php echo "Hello"; ?>
 ```
 
-يتحول لـ:
+بتتحوّل لـ Tokens زي:
+
+- `T_OPEN_TAG` → `<?php`
+- `T_ECHO` → `echo`
+- `T_CONSTANT_ENCAPSED_STRING` → `"Hello"`
+- `;`
+- `T_CLOSE_TAG` → `?>`
+
+#### الخطوة 2: Parsing (البناء الهيكلي)
+
+الـ Tokens دي بتتحوّل لـ **AST — Abstract Syntax Tree**. شجرة منطقية بتمثّل البرنامج بتاعك. ده مش سحر — ده Compiler Theory عادي.
+
+#### الخطوة 3: Compilation to Opcodes
+
+هنا بقى الـ Zend Compiler بيحوّل الـ AST لـ **Opcodes** (Operation Codes). الـ Opcodes دي زي لغة Assembly بس للـ Zend Engine.
 
 ```
-T_OPEN_TAG      →  <?php
-T_ECHO          →  echo
-T_WHITESPACE    →  " "
-T_CONSTANT_ENCAPSED_STRING → "Hello World"
-T_SEMICOLON     →  ;
-T_CLOSE_TAG     →  ?>
+ECHO "Hello"
+RETURN null
 ```
 
-#### **المرحلة التانية: Parsing (البناء)**
+ده اللي بيتحوّل "فعلاً" للـ RAM.
 
-الـ Parser بياخد الـ Tokens دي ويبني منها **Abstract Syntax Tree (AST)**. تخيله زي شجرة نسب للكود.
+#### الخطوة 4: Execution
 
-```
-Program
-└── Echo Statement
-    └── StringLiteral: "Hello World"
-```
-
-#### **المرحلة التالتة: Compilation (الترجمة)**
-
-الـ Compiler بيحول الـ AST لـ **Opcodes** — التعليمات اللي الـ Executor بيفهمها:
-
-```
-ECHO "Hello World"
-RETURN
-```
-
-#### **المرحلة الرابعة: Execution (التنفيذ)**
-
-الـ Executor بيشغل الـ Opcodes واحدة واحدة. النتيجة؟ HTML بيتبعت لـ PHP-FPM، اللي بيبعته لـ Nginx، اللي بيبعته للعميل.
-
----
-
-### 🔑 OPcache: الحيلة الذكية
-
-كل مرة بيجي Request، الزيند بيعمل الـ 4 مراحل دول من الأول؟ ده بطيء! لكن PHP عندها حل اسمه **OPcache**.
-
-**OPcache** بيحفظ الـ Opcodes في الـ RAM. المرة الجاية، بيـskip الـ Lexing والـ Parsing والـ Compilation ويروح على طول للـ Execution!
+الـ **Zend Executor** بياخد الـ Opcodes دي ويشغّلها واحدة واحدة. وبيبعت الـ Output (HTML) للـ Buffer اللي بيرجع لـ PHP-FPM → Nginx → Browser.
 
 ```mermaid
-flowchart LR
-    R[Request] --> Q{OPcache<br/>موجود؟}
-    Q -- نعم --> E[⚡ Executor<br/>مباشرةً]
-    Q -- لأ --> L[Lexer → Parser<br/>→ Compiler → Cache]
-    L --> E
-    E --> O[HTML Output]
+graph TD
+    A["🌐 Browser Request<br/>/index.php"] --> B["🔒 Nginx<br/>Port 80/443"]
+    B --> C["⚡ PHP-FPM<br/>FastCGI Worker"]
+    C --> D["🔍 Zend Lexer<br/>Source → Tokens"]
+    D --> E["🌳 Zend Parser<br/>Tokens → AST"]
+    E --> F["⚙️ Zend Compiler<br/>AST → Opcodes"]
+    F --> G["🚀 Zend Executor<br/>Run Opcodes"]
+    G --> H["📄 HTML Output<br/>Buffer"]
+    H --> B
+    B --> A
 ```
 
----
-
-# 🧵 الفصل التاني: String Manipulation — فن التلاعب بالنصوص
-
-## الحكاية والمشكلة
-
-تخيل إنك بتبني نظام تسجيل على موقعك. المستخدم بعت اسمه: `" محمد "` — فيه spaces زيادة من الجنبين. لو حفظتها في الـ Database كده، هتكون مصيبة. الـ `strcmp` هتفشل، الـ Search هيتعب، والـ Profile هيبان غريب.
-
-هنا بتيجي دالة `trim()` لتنقذ الموقف.
+> **نصيحة الخبراء:** الـ **OPcache** extension بتخلي PHP يحفظ الـ Opcodes في الـ RAM ومش بيعيد عملية الـ Lexing/Parsing/Compilation في كل request. ده بيسرّع الموقع بنسبة 50-70% على أقل تقدير. في Production دايمًا enable الـ OPcache.
 
 ---
 
-## 🔪 دوال التقليم — Trim Functions
+## 🔡 String Manipulation — "لمّا النصوص تبقى سلاح"
+
+### البداية — المشكلة
+
+تخيّل معايا إنك بتبني نموذج تسجيل على موقع. المستخدم كتب اسمه: `" ahmed "` — بمسافات قبل وبعد. أو كتب الإيميل `"AHMED@GMAIL.COM"` — كله Caps. أو كتب في اسمه `O'Brien` — بـ apostrophe هتقلب الـ SQL query.
+
+لو ماعندكش أدوات معالجة الـ Strings، كل ده هيعمل مشاكل. PHP بتجيب معاها ترسانة كاملة من Functions جاهزة.
+
+---
+
+### الـ Trim Family — "شيلّ الهواء من جنبيّه"
+
+أول سؤال: ليه المستخدمين بيحطّوا مسافات زيادة؟ مش عارفين. المتصفح أحيانًا بيضيف. أحيانًا Ctrl+C بتجيب مسافة زيادة. المهم، `trim()` موجودة عشان تحل المشكلة دي.
 
 ```php
 <?php
-$text = "\t\tThese are a few words :) ...   \n";
+$input = "   ahmed@iti.gov.eg   "; // ← الإيميل بمسافات زيادة
 
-// trim() — بتشيل المسافات والـ whitespace من الجنبين
-$trimmed = trim($text);
-var_dump($trimmed);
-// string(24) "These are a few words :) ..."
+// trim() بتشيل المسافات من الجهتين
+$clean = trim($input); // "ahmed@iti.gov.eg"
 
-// ltrim() — Left Trim — من الشمال بس
-$ltrimmed = ltrim($text);
+// ltrim() بتشيل من الشمال بس (Left)
+$leftOnly = ltrim($input); // "ahmed@iti.gov.eg   "
 
-// rtrim() === chop() — Right Trim — من اليمين بس
-$rtrimmed = rtrim($text);
+// rtrim() === chop() بتشيل من اليمين بس (Right)
+$rightOnly = rtrim($input); // "   ahmed@iti.gov.eg"
 
-// trim() مع custom characters
-$trimmed2 = trim($text, "\tThe");
-// بتشيل الـ \t والـ T والـ h والـ e من الجنبين
-var_dump($trimmed2);
+// تقدر تحدد نفسك أنهي Chars تتشال
+$text = "\t\tThese are a few words :) ...  \n";
+$trimmed = trim($text, "\tThe"); // بتشيل tabs وحرف T وحرف h وحرف e
+var_dump($trimmed); // string(24) "se are a few words :) ..."
+?>
 ```
 
-> 💡 **ملاحظة:** `rtrim()` و `chop()` نفس الدالة تماماً. `chop` اسم alias قديم.
+لاحظ إن الـ `trim()` في المثال التاني مش بتشيل الـ Word "The" كـ Word — هي بتشيل الـ **Characters** `\t`، `T`، `h`، `e` بأي ترتيب من أطراف الـ String.
 
 ---
 
-## 🎨 التنسيق المتقدم — Sophisticated Formatting
-
-### nl2br() — محوّل الـ Newlines
-
-المشكلة: أنت كاتب paragraph في PHP فيه `\n` (newlines)، لكن الـ HTML مش بيعرف `\n`. بيشوفها كـ space عادي.
-
-**الحل:** `nl2br()` بتحول كل `\n` لـ `<br />`.
-
-```php
-<?php
-$str = "You came\nto me\nin that hour\nof need";
-
-echo $str . "<br>";
-// هيطبع كله في سطر واحد في الـ HTML
-
-echo "<h2>After applying the function</h2>";
-echo nl2br($str);
-// هيطبع:
-// You came<br />
-// to me<br />
-// in that hour<br />
-// of need
-```
-
-### printf() و sprintf() — تنسيق الـ Output
-
-**printf** = Print Formatted. زي `echo` بس بتحدد الـ format.
-
-```php
-<?php
-$txt = "welcome to day3 in php";
-printf("[%'#10s]\n", $txt);
-// [%'#10s] معناها:
-// % → بداية الـ format specifier
-// ' → الـ padding character اللي جاي بعده
-// # → الـ padding character (هنضيف # لو النص قصير)
-// 10 → minimum width
-// s → string
-
-$num = 5;
-$location = 'tree';
-$format = 'There are %d monkeys in the %s';
-echo sprintf($format, $num, $location);
-// Output: "There are 5 monkeys in the tree"
-// sprintf() بترجع String بدل ما تـprint
-```
-
-**الفرق بين printf و sprintf:**
-
-- `printf()` → بتطبع مباشرة
-- `sprintf()` → بترجع الـ String عشان تعمل بيها حاجة تانية
-
----
-
-## 🔠 الحروف الكبيرة والصغيرة
+### الـ Case Functions — "علّي وهوّد"
 
 ```php
 <?php
 $string = "welcome to iti";
 
-echo strtoupper($string) . "</br>";   // WELCOME TO ITI
-echo strtolower($string) . "</br>";   // welcome to iti
-echo ucfirst($string)    . "</br>";   // Welcome to iti
-echo ucwords($string)    . "</br>";   // Welcome To Iti
+echo strtoupper($string);  // ← WELCOME TO ITI
+echo strtolower($string);  // ← welcome to iti
+echo ucfirst($string);     // ← Welcome to iti  (أول حرف بس)
+echo ucwords($string);     // ← Welcome To Iti  (أول حرف في كل كلمة)
+?>
 ```
+
+`ucfirst()` و`ucwords()` بتشتغل مع الـ alphabetic characters بس. لو الـ String بدأت برقم أو symbol، مش هتعمل حاجة.
 
 ---
 
-## 🛡️ Escaping للـ Database — addslashes & stripslashes
+### nl2br() — "HTML مش بيعرف الـ Enter"
 
-**السيناريو المرعب:** مستخدم اسمه `O'Brien`. لو حطيت اسمه جوه SQL Query كده:
+ده سؤال إنترفيو كلاسيكي. إيه المشكلة مع الـ newlines في HTML؟
+
+```php
+<?php
+$poem = "You came\nto me\nin that hour\nof need";
+
+// لو عملت echo عادي، المتصفح هيعرضها في سطر واحد!
+echo $poem; // You came to me in that hour of need
+
+// nl2br() بتحوّل \n لـ <br />
+echo nl2br($poem);
+// You came<br />to me<br />in that hour<br />of need
+?>
+```
+
+> ⚠️ **انتبه:** `nl2br()` بتُضيف `<br />` **قبل** الـ newline مش بدلاً منها. يعني الـ `\n` لسّه موجود في الـ output، وبعديه `<br />`.
+
+---
+
+### printf() و sprintf() — "الـ Formatting المحترف"
+
+تخيّل معايا إنك محتاج تعمل تقرير مالي بأرقام منسّقة. `printf()` و`sprintf()` هما الحل.
+
+```php
+<?php
+// printf() بتطبع مباشرةً
+$txt = "welcome to day3 in php";
+printf("[%'#10s]\n", $txt); 
+// [%'#10s] يعني: حشو بـ # لحد 10 chars، لو النص أقصر
+
+// sprintf() بترجع String مش بتطبع
+$num = 5;
+$location = 'tree';
+$format = 'There are %d monkeys in the %s';
+$result = sprintf($format, $num, $location);
+echo $result; // There are 5 monkeys in the tree
+?>
+```
+
+الـ Format Specifiers المهمة:
+
+- `%s` → String
+- `%d` → Integer
+- `%f` → Float
+- `%05d` → Integer بـ leading zeros لحد 5 digits
+- `%.2f` → Float بـ 2 decimal places
+
+---
+
+### addslashes() و stripslashes() — "الدرع ضد الـ Database"
+
+تخيّل معايا السيناريو المرعب ده: المستخدم كتب اسمه `O'Brien`. لو حطيّت الاسم ده في SQL query كده:
 
 ```sql
 SELECT * FROM users WHERE name = 'O'Brien'
 ```
 
-الـ Database هتـcrash! الـ Quote الجوانية كسرت الـ SQL.
+الـ Quote الوسطانية كسرت الـ Query! وده الـ **SQL Injection** بأبسط صورة.
 
 ```php
 <?php
-$str = "What's your name?";
+$name = "O'Brien";
 
-// addslashes() — بتضيف backslash قبل الـ quotes
-$newString = addslashes($str);
-echo $newString . "<br>";
-// Output: What\'s your name?
+// addslashes() بتضيف Backslash قبل كل ' و " و \
+$safe = addslashes($name); // O\'Brien
+echo $safe; // ← آمن للـ Database
 
-// stripslashes() — بتشيل الـ backslashes
-echo stripslashes($newString) . "<br>";
-// Output: What's your name?
+// stripslashes() بتشيل الـ Backslashes تاني
+$original = stripslashes($safe); // O'Brien
+echo $original;
+?>
 ```
 
-> ⚠️ **ملاحظة مهمة:** في Production Code الحديث، استخدم **Prepared Statements** مع PDO بدل `addslashes()`. لكن لازم تعرف `addslashes()` لأنها موجودة في Legacy Code كتير.
+> ⚠️ **انتبه:** في المشاريع الحديثة، الحل الصح هو استخدام **Prepared Statements** مع PDO أو MySQLi، مش `addslashes()`. بس لازم تعرف `addslashes()` للإنترفيو وللكود القديم.
 
 ---
 
-## 🔗 ربط وتقطيع النصوص — Join & Split
+## 🔗 Joining & Splitting — "فرّق تسد، واجمع تقوى"
 
-### implode() / join() — الربط
+### implode() و join() — "لمّ الشتات"
+
+تخيّل عندك Array من الـ Tracks، وعايز تعرضها كـ String منفصلة بـ Dash.
 
 ```php
 <?php
-$InputArray = array('OS', 'Application', 'Track');
+$tracks = array('OS', 'Application', 'Cloud');
 
-// بدون separator
-print_r(implode($InputArray));
-// OSApplicationTrack
+// implode بدون Separator
+echo implode($tracks);          // OSApplicationCloud
 
-// مع separator
-print_r(implode("-", $InputArray));
-// OS-Application-Track
+// implode مع Separator
+echo implode(" - ", $tracks);   // OS - Application - Cloud
 
-// join() هو alias لـ implode()
-print_r(join("_", $InputArray));
-// OS_Application_Track
+// join() هي نفس implode() تمامًا
+echo join(" | ", $tracks);      // OS | Application | Cloud
+?>
 ```
 
-### explode() — التقطيع
+---
+
+### explode() — "شقّ الـ String"
 
 ```php
 <?php
-$str = "I love coffee so much";
+$sentence = "I love coffee so much";
 
-// تقطيع بالـ space
-$arrstr = explode(" ", $str);
-var_dump($arrstr);
-// array(4) { [0]=> "I" [1]=> "love" [2]=> "coffee" [3]=> "so" ... }
+// انفجار على المسافة
+$words = explode(" ", $sentence);
+var_dump($words);
+// array(5) { [0]=> "I" [1]=> "love" [2]=> "coffee" [3]=> "so" [4]=> "much" }
 
-// مع limit — بتاخد أول 2 قطعة بس
-$arrstr1 = explode(" ", $str, 2);
-var_dump($arrstr1);
+// مع Limit — بيديك أول N-1 قطعة والباقي في الأخيرة
+$limited = explode(" ", $sentence, 2);
+var_dump($limited);
 // array(2) { [0]=> "I" [1]=> "love coffee so much" }
+?>
 ```
 
-### strtok() — التقطيع التدريجي
+---
+
+### strtok() — "الـ Token اللي بييجي واحد واحد"
+
+`strtok()` مختلفة عن `explode()` في إنها **Stateful** — تفتكر مكانها في الـ String.
 
 ```php
 <?php
 $string = "My name is Noha, I works at ITI";
 
-// أول استدعاء: بتديه الـ string والـ delimiter
+// أول استدعاء: بتحدد الـ String والـ Delimiter
 $tok = strtok($string, " ");
 
+// كل استدعاء بعده: بس الـ Delimiter
 while ($tok !== false) {
-    echo "Word=$tok<br/>";
-    // كل استدعاء بعده: بس الـ delimiter (الـ string اتحفظ internally)
-    $tok = strtok(" \n\t");
+    echo "Word = $tok <br/>";
+    $tok = strtok(" \n\t"); // ← مش محتاج تبعتلها الـ String تاني
 }
+?>
 ```
 
-### substr() — جزء من الـ String
+الفرق العملي بين `strtok()` و`explode()`:
+
+||`explode()`|`strtok()`|
+|---|---|---|
+|الإرجاع|Array كاملة دفعة واحدة|Token واحد في كل مرة|
+|الذاكرة|أعلى (كل الـ Array في الـ RAM)|أقل (Token واحد بس)|
+|مناسب لـ|Strings صغيرة ومتوسطة|Strings ضخمة جدًا|
+
+---
+
+### substr() — "قصّ من النص"
 
 ```php
 <?php
-$phptxt = "PHP is simple";
+$text = "PHP is simple";
 
-echo substr($phptxt, 1);      // "HP is simple" — من index 1 للآخر
-echo substr($phptxt, 1, 5);   // "HP is" — من index 1 بطول 5
-echo substr($phptxt, -2);     // "le" — آخر حرفين (negative offset)
+echo substr($text, 1);     // ← "HP is simple" (من index 1 للآخر)
+echo substr($text, 1, 5);  // ← "HP is" (من index 1، طول 5)
+
+// Negative offset! بيحسب من الآخر
+echo substr($text, -2);    // ← "le" (آخر حرفين)
+echo substr($text, -6, 3); // ← "sim" (من -6، طول 3)
+?>
 ```
 
 ---
 
-## ⚖️ المقارنة — Comparing Strings
+## 🔍 Searching & Comparing — "دوّر وقارن"
+
+### strcmp() و strcasecmp() — "مقارنة بالمنطق مش بالعاطفة"
 
 ```php
 <?php
-// strcmp() — Case Sensitive
 $var1 = "Hello";
 $var2 = "hello";
 
+// strcmp() Case-Sensitive
 if (strcmp($var1, $var2) !== 0) {
-    // بترجع 0 لو متساويين، positive أو negative لو مختلفين
-    echo '$var1 is not equal to $var2 (case sensitive)';
+    echo "مش متساويين — الـ Case مختلف"; // ← هيطبع ده
 }
 
-// strcasecmp() — Case Insensitive
+// strcasecmp() Case-Insensitive
 if (strcasecmp($var1, $var2) === 0) {
-    echo '$var1 equals $var2 (case insensitive)';
+    echo "متساويين — الـ Case مش مهم"; // ← هيطبع ده
 }
+?>
 ```
+
+الـ `strcmp()` بترجع:
+
+- `0` لو متساويين
+- `< 0` لو الـ String الأولى "أصغر" أبجديًا
+- `> 0` لو الـ String الأولى "أكبر" أبجديًا
 
 ---
 
-## 🔎 البحث والاستبدال
-
-### strstr() / strchr() — البحث عن Pattern
+### strlen() و strstr() — "الطول والبحث"
 
 ```php
 <?php
+// strlen() — طول الـ String
+$str = "Welcome to php";
+var_dump(strlen($str)); // int(14)
+
+// strstr() === strchr() — بيدور على Pattern ويرجع من اللي وجده للآخر
 $email = 'name@example.com';
-
-// بترجع من أول الـ match للآخر
 $domain = strstr($email, '@');
-echo $domain . "<br>";
-// Output: @example.com
+echo $domain; // "@example.com"
+
+// لو مش عايز الجزء ده بالتحديد وعايز اللي قبليه
+$user = strstr($email, '@', true); // ← true للـ before_needle
+echo $user; // "name"
+?>
 ```
 
-### الـ Hashing و ord()
+---
+
+### الـ strpos() Family — "فين بالظبط؟"
 
 ```php
 <?php
-// md5() — One-way hash function
-$string = 'Hello World!';
-$hash = md5($string);
-echo $hash . "<br>";
-// Output: ed076287532e86365e841e92bfc50d8c
+$haystack = "Hello World Hello PHP";
 
-// ord() — بتاخد أول byte من الـ string وترجعه كـ ASCII value
-echo ord("Noha") . "<br>";
-// N = 78 في ASCII
+// strpos() — أول occurrence من الـ needle
+$pos = strpos($haystack, "Hello");
+echo $pos; // 0 (أول حرف!)
+
+// ⚠️ انتبه لـ Gotcha مشهور!
+if ($pos === false) { // ← لازم === مش ==
+    echo "مش موجود";
+} else {
+    echo "موجود في position $pos";
+}
+// لو استخدمت == بس، position 0 هتتعامل معاها كـ false!
+
+// strrpos() — آخر occurrence
+$lastPos = strrpos($haystack, "Hello");
+echo $lastPos; // 12
+
+// stripos() — نفس strpos بس Case-Insensitive
+$pos2 = stripos($haystack, "hello"); // 0 (بيلاقي "Hello")
+?>
 ```
 
-### str_repeat() و str_shuffle()
+> ⚠️ **انتبه:** ده من أكتر الأخطاء اللي الـ Juniors بيقعوا فيها. `strpos()` بترجع `0` لو الـ needle في أول الـ String، وبترجع `false` لو مش موجود. لو استخدمت `==` بدل `===`، `0 == false` هيبقى `true` وهتظن إن الـ String مش موجودة وهي موجودة!
+
+---
+
+### md5() و ord() و str_repeat() — "أدوات متنوعة"
 
 ```php
 <?php
-echo str_repeat("iti ", 5) . "<br>";
-// Output: iti iti iti iti iti
+// md5() — Hash الـ String (مش للأمان في الباسورد، للـ Integrity Checking)
+$password = 'Hello World!';
+echo md5($password); // 86fb269d190d2c85f6e0468ceca42a20
 
+// ord() — رقم الـ ASCII لأول Byte في الـ String
+echo ord("N"); // 78 (رقم حرف N في ASCII)
+echo ord("Noha"); // 78 (بياخد أول Byte بس)
+
+// str_repeat() — تكرار الـ String
+echo str_repeat("iti ", 5); // "iti iti iti iti iti "
+
+// str_shuffle() — خلط الحروف عشوائياً
 $str = 'abcdef';
-echo str_shuffle($str) . "<br>";
-// Output: مثلاً "cfbdea" (عشوائي)
+echo str_shuffle($str); // "fcbade" أو أي ترتيب عشوائي
+?>
 ```
 
-### str_replace() و substr_replace()
+---
+
+### str_replace() و substr_replace() — "استبدال بالجملة"
 
 ```php
 <?php
-// str_replace() — استبدال ذكي
-$vowels = array("a", "e", "i", "o", "u", "A", "E", "I", "O", "U");
-$onlyconsonants = str_replace($vowels, "", "Hello World of PHP");
-echo $onlyconsonants . "<br>";
-// Output: "Hll Wrld f PHP"
+// str_replace() — استبدال عادي
+$vowels = ["a", "e", "i", "o", "u", "A", "E", "I", "O", "U"];
+$result = str_replace($vowels, "", "Hello World of PHP");
+echo $result; // "Hll Wrld f PHP" (شيل كل الـ vowels)
 
-// substr_replace() — استبدال في موقع محدد
-$input = array('A: XXX', 'B: XXX', 'C: XXX');
-$input = substr_replace($input, 'YYY', 3, 3);
-// من index 3، بطول 3 حروف، استبدل بـ 'YYY'
-var_dump($input);
-echo implode('; ', $input);
-// Output: "A: YYY; B: YYY; C: YYY"
+// substr_replace() — استبدال جزء من الـ String
+$input = ['A: XXX', 'B: XXX', 'C: XXX'];
+// ابدأ من index 3، الطول 3، استبدل بـ YYY
+$output = substr_replace($input, 'YYY', 3, 3);
+echo implode('; ', $output); // "A: YYY; B: YYY; C: YYY"
+?>
 ```
 
 ---
 
-## 📊 Checkpoint: String Functions
+## 🎯 Regular Expressions — "اللغة السرية للـ Patterns"
 
-|الدالة|الوظيفة|مثال سريع|
-|---|---|---|
-|`trim()`|شيل whitespace|`trim(" hi ")` → `"hi"`|
-|`nl2br()`|`\n` → `<br />`|للعرض في HTML|
-|`sprintf()`|تنسيق String|`sprintf("%d items", 5)`|
-|`explode()`|String → Array|`explode(",", "a,b,c")`|
-|`implode()`|Array → String|`implode("-", ["a","b"])`|
-|`str_replace()`|استبدال|احذف الـ vowels|
-|`substr()`|جزء من الـ String|`substr("PHP", 1)` → `"HP"`|
-|`strcmp()`|مقارنة case-sensitive|0 = متساويين|
-|`md5()`|One-way hash|للـ passwords (مش موصى بيها لوحدها)|
+### البداية — المشكلة
 
-> **🫒 زتونة الإنترفيو:** `implode()` و `join()` نفس الدالة. `rtrim()` و `chop()` نفس الدالة. `strstr()` و `strchr()` نفس الدالة. الـ PHP فيها aliases كتير من التاريخ.
+تخيّل معايا إنك بتبني موقع والمستخدم بيسجّل. عايز تتأكد إن الإيميل اللي كتبه صح. ولا بس صح — عايز تتأكد إنه **فعلاً** بيشبه إيميل. الـ `@` موجودة؟ الـ Domain موجود؟ الـ Extension منطقي؟
+
+لو عملت ده بـ `strpos()` و`explode()` هيبقى كود ضخم ومعقد جدًا. هنا بيتدخل الـ Regular Expressions.
+
+الـ Regex هو **لغة وصف Patterns**. بدل ما تقول "دوّر على @ وبعدين تأكد إن بعدها نقطة وبعدها حروف"، بتكتب Pattern واحدة بتوصف ده كله.
 
 ---
 
-# 🔍 الفصل التالت: Regular Expressions — لغة وسط اللغة
-
-## الحكاية والمشكلة
-
-تخيل إنك بتبني نموذج تسجيل. المستخدم بيكتب الإيميل. إزاي تتأكد إن الإيميل ده صح؟ تـcheck إن فيه `@`؟ ممكن. تـcheck إن فيه `.`؟ ممكن. لكن إزاي تتأكد من شكل الإيميل كله؟
-
-هنا بيجي دور الـ **Regular Expressions** — لغة للـ Pattern Matching. زي إنك بتكتب "وصف" للشكل اللي عايزه، والـ Regex engine بيدور على أي حاجة تنطبق على الوصف ده.
-
----
-
-## بناء الـ Regex — Building Blocks
-
-```mermaid
-flowchart TD
-    R[Regex Pattern] --> A[Character Classes<br/>الأحرف المسموح بيها]
-    R --> B[Quantifiers<br/>كام مرة بتتكرر]
-    R --> C[Anchors<br/>فين في الـ String]
-    R --> D[Groups<br/>تجميع الـ Parts]
-```
-
-### الـ Character Classes
+### الـ Patterns الأساسية
 
 ```
-.         →  أي حرف واحد (عدا newline)
-[a-z]     →  أي حرف صغير من a لـ z
-[A-Z]     →  أي حرف كبير
-[0-9]     →  أي رقم
-[aeiou]   →  أي vowel
-[^a-z]    →  أي حرف مش صغير (^ = NOT)
-```
-
-### الـ Quantifiers
-
-```
-*   →  صفر أو أكتر مرة
-+   →  مرة أو أكتر
-?   →  صفر أو مرة واحدة (optional)
-{n} →  بالظبط n مرة
-{n,m} →  من n لـ m مرة
-```
-
-### الـ Anchors
-
-```
-^  →  بداية الـ String
-$  →  نهاية الـ String
+.          → أي حرف واحد (غير newline)
+[a-z]      → أي حرف صغير
+[A-Z]      → أي حرف كبير
+[0-9]      → أي رقم
+[aeiou]    → أي Vowel
+[^a-z]     → أي حرف مش صغير (الـ ^ جوّا [] معناها NOT)
+*          → صفر أو أكتر (Greedy)
++          → واحد أو أكتر
+?          → صفر أو واحد (اختياري)
+^          → بداية الـ String (برّا [])
+$          → نهاية الـ String
+{2,6}      → من 2 لـ 6 مرات
 ```
 
 ---
 
-## preg_match() — الـ Pattern Matching الأساسي
+### PHP وREGEX — الـ PCRE Functions
+
+PHP بتستخدم الـ **PCRE** (Perl Compatible Regular Expressions) عبر Functions بدأت بـ `preg_`.
+
+#### preg_match() — هل الـ Pattern موجود؟
 
 ```php
 <?php
+// التحقق من صحة الإيميل بـ Regex
 $email = 'nshehab@iti.gov.eg';
 
-// الـ pattern محاط بـ / / (delimiters)
-// الـ flags: i = case-insensitive, x = ignore whitespace
+// الـ Pattern ده بيشرح نفسه خطوة بخطوة:
+// ^ → ابدأ من الأول
+// [a-z0-9\+_\-]+ → جزء الـ username: حروف، أرقام، +، _، - (واحد على الأقل)
+// (\.[a-z0-9\+_\-]+)* → ممكن يكون فيه نقطة وبعدها حروف (للـ first.last format)
+// @ → الـ @ الإلزامية
+// ([a-z0-9\-]+\.)+ → الـ Domain: حروف وأرقام وـ، بعدها نقطة (واحد على الأقل)
+// [a-z]{2,6} → الـ TLD: من 2 لـ 6 حروف (com, eg, gov)
+// $ → انتهى هنا
+// /ix → i = case insensitive, x = ignore whitespace في الـ Pattern
 $pattern = "/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix";
 
 if (preg_match($pattern, $email)) {
-    echo "<br>well formed";
+    echo "✅ الإيميل صح";
 } else {
-    echo "<br>not well formed";
+    echo "❌ الإيميل غلط";
 }
+?>
 ```
 
-**تحليل الـ Pattern خطوة بخطوة:**
-
-```
-^                     →  ابدأ من أول الـ String
-([a-z0-9\+_\-]+)     →  الـ username: حروف/أرقام/+/_/- (مرة أو أكتر)
-(\.[a-z0-9\+_\-]+)*  →  ممكن يكون فيه .parts زي noha.shehab (صفر أو أكتر)
-@                     →  الـ @ الإلزامية
-([a-z0-9\-]+\.)+     →  الـ domain: كلمة.كلمة. (مرة أو أكتر — لـ subdomains)
-[a-z]{2,6}           →  الـ TLD: من 2 لـ 6 حروف (eg, com, gov)
-$                     →  نهاية الـ String
-```
-
----
-
-## preg_match_all() — البحث عن كل الـ Matches
+#### preg_match_all() — كمّ ما لقيت
 
 ```php
 <?php
 $str = "The rain in SPAIN falls mainly on the plains.";
-$pattern = "/ain/i"; // i = case-insensitive
+
+// دوّر على كل كلمة فيها "ain" (case insensitive)
+$pattern = "/ain/i";
 
 if (preg_match_all($pattern, $str, $matches)) {
-    print_r($matches);
-    // بيلاقي: rain, AIN, ain, ain
+    print_r($matches[0]); 
+    // Array ( [0] => ain [1] => AIN [2] => ain [3] => ain )
+    // لاقى 4 matches: rain, SPAIN, mainly, plains
 }
+?>
 ```
 
----
-
-## filter_var() — الـ Built-in Validation
-
-PHP عندها طريقة أسهل للـ Email validation:
+#### filter_var() — الطريقة الأسهل والموثوقة
 
 ```php
 <?php
-$email = "nohashehab.iti@gmail.com";
+$email = "noha@iti.gov.eg";
 
+// filter_var() بتستخدم Built-in Filters محطوطة في PHP نفسها
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $emailErr = "Invalid email format";
+    echo "❌ إيميل غلط";
 } else {
-    echo "<br>Checked by php functions and well formed";
+    echo "✅ إيميل صح";
 }
+
+// في Filters تانية كمان:
+// FILTER_VALIDATE_URL   → للـ URLs
+// FILTER_VALIDATE_INT   → للـ Integers
+// FILTER_VALIDATE_IP    → للـ IP Addresses
+// FILTER_SANITIZE_EMAIL → بتشيل الـ illegal chars من الإيميل
+?>
 ```
 
-**الـ Filters المتاحة:**
-
-|الـ Filter|الاستخدام|
-|---|---|
-|`FILTER_VALIDATE_EMAIL`|التحقق من الإيميل|
-|`FILTER_VALIDATE_URL`|التحقق من الـ URL|
-|`FILTER_VALIDATE_INT`|التحقق من الرقم الصحيح|
-|`FILTER_SANITIZE_STRING`|تنظيف الـ HTML tags|
-
-> **🫒 زتونة الإنترفيو:** `filter_var()` أبطأ من `preg_match()` بس أوضح وأكتر readable للـ common cases. في Production، استخدم `filter_var()` للـ basic validation وـ`preg_match()` للـ complex patterns.
+> **نصيحة الخبراء:** استخدم `filter_var()` في الـ Production دايمًا للـ Email Validation. الـ Regex اليدوي صعب يغطي كل حالات الإيميلات الصح، وـ`filter_var()` بيتحدّث مع PHP نفسها.
 
 ---
 
-# 📁 الفصل الرابع: File Uploading — رفع الملفات على السيرفر
+## 📤 File Uploading — "لمّا الـ Data أكبر من متغير"
 
-## السيناريو المرعب
+### البداية — المشكلة
 
-تخيل معايا السيناريو المرعب ده. موقعك بيخلي المستخدمين يرفعوا صورة الـ Profile. مستخدم خبيث رفع فايل اسمه `evil.php` بدل صورة. لو السيرفر حفظه وشغّله، المستخدم ده هيقدر يـexecute كود PHP على السيرفر بتاعك!
+الـ HTTP Request عادةً بيبعت نصوص وأرقام. بس إيه اللي بيحصل لو المستخدم عايز يبعت **صورة** أو **PDF**؟ الملفات دي Binary Data — مش نص عادي.
 
-ده اللي بيتسمى **Remote Code Execution (RCE)** — واحدة من أخطر الثغرات.
-
-عشان كده، الـ File Upload لازم يكون محمي بشكل صح.
+الحل هو **Multipart Form Data** — نوع خاص من الـ HTTP Request بيقسّم الـ Body لـ "Parts"، كل Part ممكن تبقى نص أو Binary.
 
 ---
 
-## المرحلة الأولى: الـ php.ini Settings
-
-```ini
-# في /etc/php/8.x/fpm/php.ini
-file_uploads = On          ; السماح بالرفع
-upload_max_filesize = 2M   ; أقصى حجم للفايل
-max_file_uploads = 20      ; أقصى عدد فايلات في نفس الوقت
-upload_tmp_dir = /tmp      ; المجلد المؤقت (www-data لازم يكون عنده write access)
-```
-
----
-
-## المرحلة التانية: الـ HTML Form
+### الـ HTML Part
 
 ```html
-<!-- enctype="multipart/form-data" — ضروري جداً للـ file upload -->
+<!-- 
+  enctype="multipart/form-data" ← لازم موجودة وإلا الملف مش هيتبعت
+  method="POST" ← GET مش بتدعم File Upload
+-->
 <form action="uploadingfiles.php" method="POST" enctype="multipart/form-data">
-    <h1>Please choose your file</h1>
-    <label>File</label>
+    <h1>اختار الملف اللي عايز ترفعه</h1>
+    <label>الملف:</label>
     <input type="file" name="file" />
-    <!-- MAX_FILE_SIZE: hint للمتصفح (مش security، بس UX) -->
-    <input type="hidden" name="MAX_FILE_SIZE" value="1000000"/>
-    <input type="text" name="opensource"/>
-    <input type="submit"/>
+    
+    <!-- MAX_FILE_SIZE: Hint للمتصفح (مش أمان حقيقي!)
+         الأمان الحقيقي بييجي من الـ PHP side -->
+    <input type="hidden" name="MAX_FILE_SIZE" value="2097152"/> <!-- 2MB -->
+    
+    <input type="submit" value="رفع الملف"/>
 </form>
 ```
 
-> ⚠️ **مهم:** لو نسيت `enctype="multipart/form-data"`، الـ `$_FILES` هيكون فاضي. الـ PHP مش هتشوف الفايل خالص.
-
 ---
 
-## المرحلة التالتة: الـ PHP Processing
+### الـ PHP Part — والـ $_FILES Magic
+
+لمّا الـ Form بتتبعت، PHP بتملأ الـ `$_FILES` SuperGlobal. تخيّل `$_FILES` زي طبق فيه معلومات الملف.
 
 ```php
 <?php
 if (isset($_FILES['file'])) {
-    $errors = array();
-
-    // $_FILES['file'] بيحتوي على:
-    // 'name'     → اسم الفايل على كمبيوتر المستخدم
-    // 'type'     → MIME type (مش موثوق — ممكن يتزوّر)
-    // 'tmp_name' → المسار المؤقت على السيرفر
-    // 'size'     → الحجم بالـ bytes
-    // 'error'    → كود الخطأ
-
-    $file_name = $_FILES['file']['name'];
-    $file_size = $_FILES['file']['size'];
-    $file_tmp  = $_FILES['file']['tmp_name'];
-    $file_type = $_FILES['file']['type'];
-
-    // ✅ الطريقة الصح لجيب الـ extension
-    $ext = explode('.', $_FILES['file']['name']);
-    $file_ext = strtolower(end($ext));
-    // أو بالطريقة الأنيقة:
-    $file_ext = strtolower(pathinfo($file_name)["extension"]);
-
-    // ✅ Whitelist — بس الامتدادات المسموح بيها
-    $extensions = array("jpeg", "jpg", "png", "pdf", "doc", "txt", "csv");
-
-    if (in_array($file_ext, $extensions) === false) {
-        $errors[] = "extension not allowed, please choose a JPEG or PNG file.";
+    $errors = [];
+    
+    // معلومات الملف اللي بعتها PHP-FPM
+    $file_name = $_FILES['file']['name'];      // ← الاسم الأصلي
+    $file_size = $_FILES['file']['size'];      // ← الحجم بالـ Bytes
+    $file_tmp  = $_FILES['file']['tmp_name']; // ← المكان المؤقت على السيرفر
+    $file_type = $_FILES['file']['type'];      // ← MIME Type (مش موثوق!)
+    
+    // ✅ الطريقة الصح لاستخراج الـ Extension
+    // مش موثوق في $file_type لأن المستخدم يقدر يزوّره
+    $ext = pathinfo($file_name)["extension"];
+    $file_ext = strtolower($ext); // ← حوّل لـ lowercase
+    
+    // Whitelist بدل Blacklist — أسلم كتير
+    $allowed_extensions = ["jpeg", "jpg", "png", "pdf", "doc", "txt", "csv"];
+    
+    if (!in_array($file_ext, $allowed_extensions)) {
+        $errors[] = "النوع ده مش مسموح به. اختار JPEG, PNG, PDF, أو غيرهم.";
     }
-
-    // ✅ Size check — 2MB maximum
-    if ($file_size > 2097152) { // 2 * 1024 * 1024
-        $errors[] = 'File size must be exactly 2 MB';
+    
+    // التحقق من الحجم (2 MB = 2 * 1024 * 1024 = 2097152 bytes)
+    if ($file_size > 2097152) {
+        $errors[] = "الملف أكبر من 2 MB.";
     }
-
-    if (empty($errors) == true) {
-        // move_uploaded_file() — الدالة الرسمية للنقل
-        // بتتأكد إن الفايل ده فعلاً جه من PHP upload
-        move_uploaded_file($file_tmp, "files/" . $file_name);
-        echo "Success";
+    
+    if (empty($errors)) {
+        // ← move_uploaded_file بتنقل من /tmp لـ مكانه الدائم
+        // لازم الـ folder يكون له permission مناسبة
+        move_uploaded_file($file_tmp, "uploads/" . $file_name);
+        echo "✅ تم رفع الملف بنجاح!";
     } else {
         print_r($errors);
     }
 }
+?>
+```
+
+```
+رحلة الملف المرفوع:
+Browser → [Binary Data في HTTP Body]
+          ↓
+     PHP-FPM يستقبله
+          ↓
+     يحطه مؤقتًا في /tmp/phpXXXXXX
+          ↓
+     PHP Script تشتغل
+          ↓
+     move_uploaded_file() تنقله لمكانه الدائم
+          ↓
+     /var/www/html/uploads/filename.jpg ✅
 ```
 
 ---
 
-## رحلة الفايل أثناء الـ Upload
+## 🌐 HTTP والـ Stateless Problem
 
-```mermaid
-sequenceDiagram
-    participant U as 👤 User Browser
-    participant W as 🌐 Web Server
-    participant T as 📂 /tmp (Temp Dir)
-    participant F as 📁 /files/ (Final Dir)
+### البداية — المشكلة الكبيرة
 
-    U->>W: POST Request + file data
-    W->>T: PHP يحفظ الفايل مؤقتاً<br/>كـ /tmp/phpXXXXXX
-    Note over T: الفايل موجود هنا<br/>طول فترة الـ Request
-    W->>W: PHP Script يشتغل<br/>validation يحصل
-    W->>F: move_uploaded_file()<br/>ينقله للمكانه الصح
-    Note over T: الفايل المؤقت<br/>بيتمسح أوتوماتيك
-    W-->>U: "Success" أو رسالة خطأ
-```
+تخيّل معايا السيناريو المرعب ده: انت بتتسوّق على موقع. اخترت منتج وضفته للـ Cart. روحت لصفحة تانية. الـ Cart فضي! ليه؟
 
-> 🔒 **Security Note:** الـ `/tmp` على Ubuntu ملكه `root` لكن أي user يقدر يكتب فيه. الـ `www-data` (اللي بيشغل PHP-FPM) عنده write permission هناك. أما مجلد `files/` اللي بتحط فيه الـ uploads، لازم تعطيه permission بشكل صريح:
-> 
-> ```bash
-> sudo chown www-data:www-data /var/www/html/files/
-> sudo chmod 755 /var/www/html/files/
-> ```
+لأن **HTTP Stateless**. كل Request بيروح للسيرفر كأنه أول مرة بيتكلم فيها. السيرفر مش بيتذكر حاجة. مفيش "ذاكرة" بين الـ Requests.
+
+ده مش Bug — ده Design متعمد عشان يخلي الـ Web Scalable. بس محتاجين نحل مشكلة الـ State.
+
+الحل: **Sessions** و**Cookies**.
 
 ---
 
-# 🍪 الفصل الخامس: Sessions & Cookies — هوية المستخدم على الإنترنت
+## 🗝️ Sessions — "الذاكرة على السيرفر"
 
-## المشكلة الأصلية: HTTP Stateless Protocol
+### الفكرة
 
-تخيل معايا السيناريو المرعب ده. أنت بتتسوق أونلاين. حطيت منتج في الـ Cart. انتقلت للصفحة التانية. **الـ Server نسيك!**
+الـ Session زي إنك بتدي المستخدم **باج** لمّا بيدخل الشركة. الباج عليه رقم (الـ Session ID). في المكتب عندك ملف بيه معلومات صاحب الباج ده. كل ما المستخدم يطلب حاجة، بيبعت باجه، والسيرفر بيجيب ملفه ويشوف المعلومات.
 
-ليه؟ لأن **HTTP Stateless Protocol**. كل Request مستقل عن اللي قبله. السيرفر مش بيتذكر مين أنت.
-
-```mermaid
-sequenceDiagram
-    participant C as 👤 Client
-    participant S as 🖥️ Server
-
-    C->>S: GET /page1.php
-    S-->>C: هاهو الـ HTML (ومش عارف مين أنت)
-    C->>S: GET /page2.php
-    S-->>C: هاهو الـ HTML (لسه مش عارف مين أنت!)
-    Note over S: كل Request مستقل تماماً
 ```
-
-الحل؟ نخلي السيرفر "يتذكر" المستخدم. وفي طريقتين:
-
-1. **Sessions** → الذاكرة على السيرفر
-2. **Cookies** → الذاكرة على المتصفح
+┌──────────────┐                    ┌──────────────────────┐
+│              │  1- First Request  │                      │
+│   Browser    │ ─────────────────→ │   PHP Server         │
+│              │                    │                      │
+│              │ ←───────────────── │  - ينشئ Session ID   │
+│              │  2- Set-Cookie:    │  - يحفظ Data على     │
+│  [Cookie]    │  PHPSESSID=abc123  │    السيرفر           │
+│  PHPSESSID=  │                    │                      │
+│  abc123      │  3- Next Request   │                      │
+│              │ ─────────────────→ │  - يقرأ الـ ID من   │
+│              │  Cookie: abc123    │    الـ Cookie        │
+│              │                    │  - يجيب Data         │
+│              │ ←───────────────── │    الخاصة بيه        │
+└──────────────┘                    └──────────────────────┘
+```
 
 ---
 
-## 🔐 Sessions — الذاكرة الآمنة على السيرفر
+### الخطوات العملية
 
-### إزاي الـ Sessions بتشتغل؟
-
-```mermaid
-flowchart TD
-    A[User يفتح الموقع] --> B[session_start()]
-    B --> C{هل في PHPSESSID<br/>في الـ Cookie؟}
-    C -- لأ --> D[PHP بتولد<br/>Session ID جديد<br/>مثال: abc123xyz]
-    C -- نعم --> E[PHP بتجيب البيانات<br/>من الـ Session File]
-    D --> F[بتحفظ الـ ID في Cookie<br/>على المتصفح]
-    D --> G[بتعمل File على السيرفر<br/>/var/lib/php/sessions/sess_abc123xyz]
-    F --> H[$_SESSION المتاح<br/>في الـ Script]
-    G --> H
-    E --> H
-```
-
-### الـ Session في الكود
+#### الخطوة الأولى: Start the Session
 
 ```php
 <?php
-// ⚠️ لازم تكون أول سطر قبل أي output
+// session_start() لازم تكون أول سطر في الـ Script
+// قبل أي echo أو HTML — لأنها بتبعت HTTP Headers
 session_start();
 
-echo "Welcome to the server";
+echo "أهلاً بيك على السيرفر";
 
-// تخزين في الـ Session
+// تخزين البيانات في الـ Session
 $_SESSION["username"] = "Noha";
 $_SESSION["course"]   = "PHP";
-$_SESSION["msg"]      = "Goodmorning";
+$_SESSION["msg"]      = "صباح الخير";
+?>
 ```
+
+#### الخطوة التانية: قرا الـ Session في صفحة تانية
 
 ```php
 <?php
-// في صفحة تانية — نفس الـ session_start()
+session_start(); // ← لازم في كل صفحة بتستخدم Session
+
+// PHP بتجيب الـ PHPSESSID من الـ Cookie تلقائياً
+// وبتملأ $_SESSION بالبيانات الخاصة بيه
+var_dump($_SESSION);
+// array(3) { ["username"]=> "Noha" ["course"]=> "PHP" ["msg"]=> "صباح الخير" }
+?>
+```
+
+#### الخطوة التالتة: تدمير الـ Session (Logout)
+
+```php
+<?php
 session_start();
 
-var_dump($_SESSION);
-// array(3) { ["username"]=> "Noha" ["course"]=> "PHP" ["msg"]=> "Goodmorning" }
+// الخطوة 1: شيل كل الـ Variables
+$_SESSION = []; // ← Reset the array
 
-// مسح متغير معين
-unset($_SESSION["msg"]);
+// لو عايز تشيل الـ Session Cookie كمان من الـ Browser
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(
+        session_name(), '', time() - 42000,
+        $params["path"], $params["domain"],
+        $params["secure"], $params["httponly"]
+    );
+}
 
-// مسح كل شيء وإنهاء الـ Session
-$_SESSION = array(); // امسح البيانات الأول
-session_destroy();   // امسح الـ Session File
-```
-
-### الـ Session File على السيرفر
-
-```bash
-# على Ubuntu، ملفات الـ Sessions موجودة هنا:
-ls /var/lib/php/sessions/
-# sess_abc123xyzdef456
-
-# محتوى الفايل:
-cat /var/lib/php/sessions/sess_abc123xyzdef456
-# username|s:4:"Noha";course|s:3:"PHP";msg|s:10:"Goodmorning";
+// الخطوة 2: دمّر الـ Session على السيرفر
+session_destroy();
+echo "تم تسجيل الخروج بنجاح";
+?>
 ```
 
 ---
 
-## 🍪 Cookies — الذاكرة على المتصفح
+## 🍪 Cookies — "الذاكرة على الـ Client"
 
-### إزاي الـ Cookies بتشتغل؟
+### الفرق بين Session وCookie
 
-```mermaid
-sequenceDiagram
-    participant C as 🌍 Client Browser
-    participant S as 🖥️ PHP Server
+الـ Session بيحفظ الـ Data على **السيرفر**. الـ Cookie بتحفظ الـ Data على **الـ Browser**.
 
-    C->>S: GET /index.php (أول مرة — بدون cookies)
-    S->>S: setcookie() بيتنفذ
-    S-->>C: HTTP Response + Set-Cookie: name=Noha; expires=...
-    Note over C: المتصفح بيحفظ الـ Cookie
-
-    C->>S: GET /page2.php
-    Note over C: المتصفح بيبعت الـ Cookie أوتوماتيك
-    S-->>C: "Welcome Noha!"
-```
-
-### setcookie() — إزاي تعمل Cookie
-
-```php
-<?php
-// setcookie(name, value, expires, path, domain, secure, httponly)
-setcookie("name", "Noha Shehab", time() + 3600, "/", "", 0);
-setcookie("age",  "28",          time() + 3600, "/", "", 0);
-
-// time() + 3600 = الـ Cookie تنتهي بعد ساعة
-// "/" = متاحة على كل الـ paths في الـ domain
-```
-
-### قراءة ومسح الـ Cookies
-
-```php
-<?php
-// قراءة الـ Cookie
-if (isset($_COOKIE["name"])) {
-    echo "Welcome " . $_COOKIE["name"] . "<br />";
-
-    // مسح الـ Cookie: اضبط الـ expires في الماضي
-    setcookie("name", "", time() - 60, "/", "", 0);
-} else {
-    echo 'no name cookie here' . "<br />";
-}
-
-if (isset($_COOKIE["age"])) {
-    echo "Your age is " . $_COOKIE["age"] . "<br />";
-    setcookie("age", "", time() - 60, "/", "", 0);
-} else {
-    echo 'no age cookie here' . "<br />";
-}
-```
-
----
-
-## Sessions vs Cookies — المقارنة النهائية
-
-```mermaid
-flowchart LR
-    subgraph SESSION["🔐 Sessions"]
-        S1[البيانات على السيرفر]
-        S2[أكتر أمان]
-        S3[بتنتهي لما المتصفح يقفل<br/>أو بعد timeout]
-        S4[محدودة بمساحة السيرفر]
-    end
-
-    subgraph COOKIE["🍪 Cookies"]
-        C1[البيانات على المتصفح]
-        C2[أقل أمان - قابلة للتلاعب]
-        C3[ممكن تفضل شهور أو سنين]
-        C4[محدودة بـ 4KB]
-    end
-```
-
-|المعيار|Session|Cookie|
+||Session|Cookie|
 |---|---|---|
-|**مكان التخزين**|السيرفر|المتصفح|
-|**الأمان**|عالي|منخفض (قابل للتلاعب)|
-|**المدة**|محدودة (timeout)|ممكن تطول|
-|**الحجم**|غير محدود عملياً|4KB فقط|
-|**الاستخدام المثالي**|بيانات Login وأي بيانات حساسة|تفضيلات المستخدم، ذكر تسجيل الدخول|
-
-> **🫒 زتونة الإنترفيو:** الـ Session ID بيتخزن في Cookie اسمه `PHPSESSID` على المتصفح. يعني الـ Sessions بتستخدم Cookies عشان تعمل! الفرق إن البيانات الحساسة على السيرفر، مش في الـ Cookie نفسها.
+|مكان الـ Data|السيرفر `/tmp/sess_xxx`|الـ Browser|
+|الـ Size|غير محدودة عملياً|4KB max|
+|الأمان|أأمن (Data على السيرفر)|أقل أمانًا (قابلة للقراءة)|
+|مناسب لـ|بيانات حساسة (User ID)|تفضيلات غير حساسة (اللغة، الـ Theme)|
 
 ---
 
-# 🛠️ حل اللاب عملي على أوبونتو
-
-## المطلوب من اللاب
-
-1. فورم PHP مع validation على الإيميل بطريقتين
-2. Room Number كـ dropdown
-3. Upload صورة Profile مع validation
-4. حفظ بيانات المستخدم في فايل
-5. صفحة Login تقرأ من الفايل
-6. بعد الـ Login، ابدأ Session وعرض رسالة ترحيب
-7. **Bonus:** Validation على الـ Password
-
----
-
-## هيكل الملفات
-
-```
-lab03/
-├── register.php       ← صفحة التسجيل
-├── login.php          ← صفحة الـ Login
-├── welcome.php        ← صفحة الترحيب (محمية بـ Session)
-├── users.txt          ← ملف تخزين المستخدمين
-└── uploads/           ← مجلد صور الـ Profile
-```
-
----
-
-## register.php — صفحة التسجيل
+### كيفية استخدام الـ Cookies
 
 ```php
 <?php
+// setcookie() لازم تتبعت قبل أي output
+// setcookie(name, value, expire, path, domain, secure, httponly)
+
+setcookie(
+    "username",        // ← اسم الـ Cookie
+    "Noha Shehab",     // ← القيمة
+    time() + 3600,     // ← انتهاء الصلاحية: دلوقتي + ساعة
+    "/",               // ← متاحة على كل الـ Pages
+    "",                // ← نفس الـ Domain
+    0                  // ← مش HTTPS Only (في Production: 1)
+);
+
+setcookie("age", "28", time() + 3600, "/", "", 0);
+
+// في نفس الـ Request ده، $_COOKIE لسّه مش فيها القيمة الجديدة!
+// هتظهر في الـ Request الجاي بس
+var_dump($_COOKIE); // هيبقى فاضي أو بـ Cookies القديمة بس
+?>
+```
+
+```php
+<?php
+// في الـ Request التاني: القراءة
+if (isset($_COOKIE["username"])) {
+    echo "أهلاً " . $_COOKIE["username"]; // ← "أهلاً Noha Shehab"
+    
+    // حذف الـ Cookie: بتحط Expiry في الماضي
+    setcookie("username", "", time() - 60, "/", "", 0);
+} else {
+    echo "لا يوجد Cookie للـ username";
+}
+?>
+```
+
+> ⚠️ **انتبه:** `setcookie()` زي `header()` تمامًا — لازم تتبعت قبل أي HTML Output أو `echo`. لو عملت `echo` قبلها هتجيب `Cannot modify header information — headers already sent`.
+
+---
+
+## 🗺️ خريطة الـ PHP Day 03 كاملة
+
+```mermaid
+mindmap
+  root((PHP Day 03))
+    String Functions
+      Trim Family
+        trim
+        ltrim
+        rtrim
+      Case Functions
+        strtoupper
+        strtolower
+        ucfirst
+        ucwords
+      Formatting
+        printf
+        sprintf
+        nl2br
+      Search
+        strstr
+        strpos
+        stripos
+        strlen
+      Split and Join
+        explode
+        implode
+        strtok
+        substr
+      Replace
+        str_replace
+        substr_replace
+      Hashing
+        md5
+        ord
+        str_repeat
+    Regular Expressions
+      PCRE Functions
+        preg_match
+        preg_match_all
+        filter_var
+      Patterns
+        Anchors
+        Character Classes
+        Quantifiers
+    File Upload
+      HTML Form
+        enctype multipart
+        POST method only
+      PHP Processing
+        FILES superglobal
+        Validation
+        move_uploaded_file
+    HTTP State
+      Sessions
+        session_start
+        SESSION superglobal
+        session_destroy
+      Cookies
+        setcookie
+        COOKIE superglobal
+        Expiry Time
+```
+
+---
+
+## ✅ Checkpoint — أسئلة إنترفيو
+
+**س: إيه الفرق بين `==` و`===` في `strpos()`؟**
+
+> `strpos()` بترجع `0` لو الـ Needle في أول الـ String، وبترجع `false` لو مش موجودة. لو استخدمت `==`، الـ PHP بتعمل Type Juggling وبتعتبر `0 == false` هو `true`، فبتفكر إن الـ String مش موجودة وهي موجودة. الحل دايمًا استخدم `=== false` عند التحقق من الـ Return Value بتاعت `strpos()`.
+
+**س: إيه الفرق بين Session وCookie؟**
+
+> الـ Session بيخزّن الـ Data على السيرفر ويبعت بس الـ Session ID للـ Browser عبر Cookie. الـ Cookie بتخزّن الـ Data نفسها في المتصفح. الـ Session أأمن للبيانات الحساسة لأن الـ Data مش موجودة عند المستخدم. الـ Cookie مناسبة للبيانات غير الحساسة زي اللغة المفضلة، لأنها بتستمر حتى بعد إغلاق المتصفح.
+
+**س: ليه `session_start()` لازم تبقى أول سطر في الـ Script؟**
+
+> لأن `session_start()` بتبعت **HTTP Header** اسمه `Set-Cookie` يحتوي على الـ `PHPSESSID`. الـ HTTP Headers لازم تتبعت **قبل** أي HTTP Body (يعني قبل أي HTML أو `echo`). لو عملت أي Output قبلها، PHP بتديك Error: `Cannot modify header information — headers already sent`.
+
+**س: إزاي الـ Zend Engine بيشتغل؟**
+
+> بياخد ملف الـ PHP ويعمله Lexing (بيحوّله لـ Tokens)، بعدين Parsing (بيحوّل الـ Tokens لـ AST — Abstract Syntax Tree)، بعدين Compilation (بيحوّل الـ AST لـ Opcodes)، وأخيرًا Execution (بيشغّل الـ Opcodes). الـ OPcache Extension بتخلي PHP يحفظ الـ Opcodes في الـ RAM فمش بيعيد الـ 3 خطوات الأولى في كل Request.
+
+**س: إيه أكبر غلطة في الـ File Upload؟**
+
+> الاعتماد على `$_FILES['file']['type']` للتحقق من النوع. القيمة دي بتيجي من المتصفح وممكن تتزوّر. الصح هو استخدام `pathinfo()` لاستخراج الـ Extension من اسم الملف، ومقارنتها بـ **Whitelist** من الـ Extensions المسموحة. للتحقق الأقوى، استخدم `finfo_file()` لقراءة الـ MIME Type الحقيقي من الـ File Content نفسه.
+
+**س: إيه الفرق بين `preg_match()` و`preg_match_all()`؟**
+
+> `preg_match()` بتوقف بعد ما تلاقي أول Match وبترجع `1` أو `0`. `preg_match_all()` بتكمل في الـ String كلها وبتجمع **كل** الـ Matches في Array وبترجع عدد الـ Matches. لو عايز بس تتحقق من وجود Pattern، استخدم `preg_match()`. لو عايز تجمع كل الـ Occurrences، استخدم `preg_match_all()`.
+
+---
+
+## 🛠️ حل اللاب عملي على أوبونتو
+
+### الـ Lab Requirements
+
+1. Form بـ Validation للـ Email (طريقتين)
+2. Room Number كـ Dropdown (Application1, Application2, Cloud)
+3. Upload صورة Profile مع التأكد إنها صورة
+4. حفظ البيانات في ملف
+5. Login Page بيقرأ من الملف
+6. Session بعد Login مع Welcome Message
+7. Bonus: Validation للـ Password
+
+---
+
+### الملف الأول: `register.php`
+
+```php
+<?php
+// ← بدأنا الـ Session عشان نقدر نبعت رسائل Error بين الصفحات
 session_start();
 
 $errors = [];
-$success = "";
-
-// --- Password Regex (Bonus) ---
-// Only lowercase + underscore, exactly 8 chars
-$passwordPattern = '/^[a-z_]{8}$/';
+$success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    // =============================
-    // 1. Email Validation (طريقتين)
-    // =============================
-    $email = trim($_POST['email'] ?? '');
-
-    // الطريقة الأولى: filter_var
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Email not valid (filter_var method)";
-    }
-
-    // الطريقة التانية: preg_match
-    $emailPattern = "/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix";
-    if (!preg_match($emailPattern, $email)) {
-        $errors[] = "Email not valid (regex method)";
-    }
-
-    // =============================
-    // 2. Username & Password
-    // =============================
+    
+    // ── Sanitize الـ Inputs أول حاجة ──────────────────────────
     $username = trim($_POST['username'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
+    $room     = trim($_POST['room'] ?? '');
     $password = trim($_POST['password'] ?? '');
-
-    if (empty($username)) {
-        $errors[] = "Username is required";
+    
+    // ── Email Validation — الطريقة الأولى: filter_var ──────────
+    if (empty($email)) {
+        $errors[] = "الإيميل مطلوب.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "الإيميل غير صحيح (filter_var).";
     }
-
-    // Bonus Password Validation
-    if (strlen($password) !== 8) {
-        $errors[] = "Password must be exactly 8 characters";
+    
+    // ── Email Validation — الطريقة التانية: Regex ───────────────
+    $emailPattern = "/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/i";
+    if (!empty($email) && !preg_match($emailPattern, $email)) {
+        $errors[] = "الإيميل غير صحيح (Regex).";
     }
-    if (!preg_match($passwordPattern, $password)) {
-        $errors[] = "Password: only lowercase letters and underscore allowed";
-    }
-
-    // =============================
-    // 3. Room Number Dropdown
-    // =============================
+    
+    // ── Room Validation ──────────────────────────────────────────
     $allowed_rooms = ['Application1', 'Application2', 'Cloud'];
-    $room = $_POST['room'] ?? '';
     if (!in_array($room, $allowed_rooms)) {
-        $errors[] = "Invalid room selection";
+        $errors[] = "اختار Room صحيحة.";
     }
-
-    // =============================
-    // 4. Profile Picture Upload
-    // =============================
-    $profile_pic = "";
-    if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
-        $pic_name     = $_FILES['profile_pic']['name'];
-        $pic_tmp      = $_FILES['profile_pic']['tmp_name'];
-        $pic_size     = $_FILES['profile_pic']['size'];
-        $pic_ext      = strtolower(pathinfo($pic_name)["extension"]);
-
-        // Whitelist: صور فقط
-        $allowed_exts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-
-        if (!in_array($pic_ext, $allowed_exts)) {
-            $errors[] = "Profile picture must be an image (jpg, jpeg, png, gif, webp)";
-        }
-
-        // Size check: max 2MB
-        if ($pic_size > 2097152) {
-            $errors[] = "Profile picture must be less than 2MB";
-        }
-
-        if (empty($errors)) {
-            // Save with unique name to avoid overwrite
-            $unique_name = uniqid("user_", true) . "." . $pic_ext;
-            $upload_path = __DIR__ . "/uploads/" . $unique_name;
-            if (move_uploaded_file($pic_tmp, $upload_path)) {
-                $profile_pic = $unique_name;
-            } else {
-                $errors[] = "Failed to save profile picture. Check uploads/ permissions.";
-            }
-        }
+    
+    // ── Password Validation (Bonus) ──────────────────────────────
+    // a. بالظبط 8 حروف
+    // b. مش بيقبل Special Chars غير الـ underscore
+    // c. مش بيقبل Capital Letters
+    $passPattern = "/^[a-z0-9_]{8}$/";
+    // ^ → ابدأ من الأول
+    // [a-z0-9_] → حروف صغيرة، أرقام، underscore فقط
+    // {8} → بالظبط 8 characters
+    // $ → انتهى هنا
+    if (empty($password)) {
+        $errors[] = "الـ Password مطلوب.";
+    } elseif (!preg_match($passPattern, $password)) {
+        $errors[] = "الـ Password لازم يكون 8 حروف صغيرة أو أرقام أو underscore فقط.";
+    }
+    
+    // ── Profile Picture Upload ────────────────────────────────────
+    if (!isset($_FILES['profile_pic']) || $_FILES['profile_pic']['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = "لازم ترفع صورة.";
     } else {
-        $errors[] = "Profile picture is required";
+        $pic_tmp  = $_FILES['profile_pic']['tmp_name'];
+        $pic_name = $_FILES['profile_pic']['name'];
+        $pic_ext  = strtolower(pathinfo($pic_name, PATHINFO_EXTENSION));
+        $pic_size = $_FILES['profile_pic']['size'];
+        
+        // ← Whitelist للـ Image Extensions
+        $img_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        
+        if (!in_array($pic_ext, $img_extensions)) {
+            $errors[] = "الصورة لازم تكون JPG, PNG, GIF, أو WebP.";
+        }
+        
+        // ← التحقق من الـ MIME Type الحقيقي باستخدام finfo (أأمن!)
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime  = finfo_file($finfo, $pic_tmp);
+        finfo_close($finfo);
+        $allowed_mimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        
+        if (!in_array($mime, $allowed_mimes)) {
+            $errors[] = "الملف ده مش صورة حقيقية.";
+        }
+        
+        if ($pic_size > 2 * 1024 * 1024) {
+            $errors[] = "الصورة لازم تكون أصغر من 2MB.";
+        }
     }
-
-    // =============================
-    // 5. Save to users.txt
-    // =============================
+    
+    // ── لو مافيش Errors: احفظ البيانات ───────────────────────────
     if (empty($errors)) {
-        $users_file = __DIR__ . "/users.txt";
-
-        // Check if username already exists
+        // ← انقل الصورة
+        $upload_dir = __DIR__ . '/uploads/';
+        // تأكد إن الـ Directory موجودة
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        $new_pic_name = uniqid() . '.' . $pic_ext; // ← اسم فريد منعاً للتعارض
+        move_uploaded_file($pic_tmp, $upload_dir . $new_pic_name);
+        
+        // ← Hash الـ Password قبل الحفظ
+        // md5() مش كافي للإنتاج — استخدم password_hash()
+        $hashed_pass = password_hash($password, PASSWORD_BCRYPT);
+        
+        // ← احفظ في الـ File كـ JSON Line
+        $user_data = [
+            'username'    => $username,
+            'email'       => $email,
+            'room'        => $room,
+            'password'    => $hashed_pass,
+            'profile_pic' => $new_pic_name,
+        ];
+        
+        $users_file = __DIR__ . '/users.json';
+        $users = [];
+        
         if (file_exists($users_file)) {
-            $lines = file($users_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            foreach ($lines as $line) {
-                $parts = explode("|", $line);
-                if ($parts[0] === $username) {
-                    $errors[] = "Username already taken";
-                    break;
-                }
-            }
+            $content = file_get_contents($users_file);
+            $users   = json_decode($content, true) ?? [];
         }
-
-        if (empty($errors)) {
-            // Format: username|password_hash|email|room|profile_pic
-            $line = implode("|", [
-                $username,
-                password_hash($password, PASSWORD_DEFAULT), // ✅ آمن
-                $email,
-                $room,
-                $profile_pic
-            ]) . PHP_EOL;
-
-            file_put_contents($users_file, $line, FILE_APPEND | LOCK_EX);
-            $success = "Registration successful! <a href='login.php'>Login here</a>";
-        }
+        
+        $users[] = $user_data;
+        file_put_contents($users_file, json_encode($users, JSON_PRETTY_PRINT));
+        
+        $success = true;
     }
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Register - Lab 03</title>
+    <title>تسجيل مستخدم جديد</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; }
+        .error { color: red; background: #fee; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .success { color: green; background: #efe; padding: 10px; border-radius: 5px; }
+        input, select { width: 100%; padding: 8px; margin: 5px 0 15px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
 </head>
 <body>
-<h2>Register</h2>
-
-<?php if (!empty($errors)): ?>
-    <ul style="color:red;">
-        <?php foreach ($errors as $e): ?>
-            <li><?= htmlspecialchars($e) ?></li>
-        <?php endforeach; ?>
-    </ul>
-<?php endif; ?>
-
-<?php if ($success): ?>
-    <p style="color:green;"><?= $success ?></p>
-<?php endif; ?>
-
-<form method="POST" enctype="multipart/form-data">
-    <label>Username: <input type="text" name="username" required></label><br><br>
-
-    <label>Email: <input type="email" name="email" required></label><br><br>
-
-    <label>Password (8 chars, lowercase + underscore only):
-        <input type="password" name="password" required>
-    </label><br><br>
-
-    <label>Room:
+    <h1>تسجيل جديد</h1>
+    
+    <?php if (!empty($errors)): ?>
+        <div class="error">
+            <ul>
+                <?php foreach ($errors as $err): ?>
+                    <li><?= htmlspecialchars($err) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+    
+    <?php if ($success): ?>
+        <div class="success">✅ تم التسجيل بنجاح! <a href="login.php">سجّل دخول</a></div>
+    <?php else: ?>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <label>اسم المستخدم:</label>
+        <input type="text" name="username" required 
+               value="<?= htmlspecialchars($_POST['username'] ?? '') ?>"/>
+        
+        <label>الإيميل:</label>
+        <input type="email" name="email" required 
+               value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"/>
+        
+        <label>الـ Room:</label>
         <select name="room">
-            <option value="">-- Select Room --</option>
+            <option value="">-- اختار --</option>
             <option value="Application1">Application 1</option>
             <option value="Application2">Application 2</option>
             <option value="Cloud">Cloud</option>
         </select>
-    </label><br><br>
-
-    <label>Profile Picture:
-        <input type="file" name="profile_pic" accept="image/*" required>
-    </label><br><br>
-
-    <input type="submit" value="Register">
-</form>
+        
+        <label>كلمة المرور (8 حروف صغيرة/أرقام/underscore):</label>
+        <input type="password" name="password" required/>
+        
+        <label>صورة الـ Profile:</label>
+        <input type="file" name="profile_pic" accept="image/*" required/>
+        
+        <button type="submit">تسجيل</button>
+    </form>
+    
+    <?php endif; ?>
 </body>
 </html>
 ```
 
 ---
 
-## login.php — صفحة الـ Login
+### الملف التاني: `login.php`
 
 ```php
 <?php
 session_start();
 
-// لو user اتسجل دخول خلاص، روح على welcome
+// لو المستخدم logged in بالفعل، ودّيه للـ Welcome Page
 if (isset($_SESSION['username'])) {
-    header("Location: welcome.php");
+    header('Location: welcome.php');
     exit;
 }
 
-$error = "";
+$error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
-
-    $users_file = __DIR__ . "/users.txt";
-
+    
+    $users_file = __DIR__ . '/users.json';
+    
     if (!file_exists($users_file)) {
-        $error = "No users registered yet.";
+        $error = "لا يوجد مستخدمون مسجلون بعد.";
     } else {
+        $users = json_decode(file_get_contents($users_file), true) ?? [];
         $found = false;
-        $lines = file($users_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-        foreach ($lines as $line) {
-            $parts = explode("|", $line);
-            // Format: username|password_hash|email|room|profile_pic
-            if (count($parts) < 5) continue;
-
-            list($stored_user, $stored_hash, $stored_email, $stored_room, $stored_pic) = $parts;
-
-            if ($stored_user === $username && password_verify($password, $stored_hash)) {
-                $found = true;
-                // Start session and store user info
-                $_SESSION['username']    = $stored_user;
-                $_SESSION['email']       = $stored_email;
-                $_SESSION['room']        = $stored_room;
-                $_SESSION['profile_pic'] = $stored_pic;
+        
+        foreach ($users as $user) {
+            if ($user['username'] === $username) {
+                // ← password_verify() بتقارن الـ Plain Password بالـ Hash المحفوظ
+                if (password_verify($password, $user['password'])) {
+                    $found = true;
+                    // ← ابدأ الـ Session وخزّن معلومات المستخدم
+                    $_SESSION['username']    = $user['username'];
+                    $_SESSION['email']       = $user['email'];
+                    $_SESSION['room']        = $user['room'];
+                    $_SESSION['profile_pic'] = $user['profile_pic'];
+                    
+                    header('Location: welcome.php');
+                    exit;
+                }
                 break;
             }
         }
-
-        if ($found) {
-            header("Location: welcome.php");
-            exit;
-        } else {
-            $error = "Invalid username or password.";
+        
+        if (!$found) {
+            $error = "اسم المستخدم أو كلمة المرور غلط.";
         }
     }
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Lab 03</title>
+    <title>تسجيل الدخول</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; padding: 20px; }
+        .error { color: red; background: #fee; padding: 10px; border-radius: 5px; }
+        input { width: 100%; padding: 8px; margin: 5px 0 15px; box-sizing: border-box; }
+        button { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
 </head>
 <body>
-<h2>Login</h2>
-
-<?php if ($error): ?>
-    <p style="color:red;"><?= htmlspecialchars($error) ?></p>
-<?php endif; ?>
-
-<form method="POST">
-    <label>Username: <input type="text" name="username" required></label><br><br>
-    <label>Password: <input type="password" name="password" required></label><br><br>
-    <input type="submit" value="Login">
-</form>
-
-<p>Don't have an account? <a href="register.php">Register</a></p>
+    <h1>تسجيل الدخول</h1>
+    
+    <?php if ($error): ?>
+        <div class="error"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
+    
+    <form method="POST">
+        <label>اسم المستخدم:</label>
+        <input type="text" name="username" required/>
+        
+        <label>كلمة المرور:</label>
+        <input type="password" name="password" required/>
+        
+        <button type="submit">دخول</button>
+    </form>
+    
+    <p><a href="register.php">مسجلتش بعد؟ سجّل دلوقتي</a></p>
 </body>
 </html>
 ```
 
 ---
 
-## welcome.php — صفحة الترحيب (محمية بـ Session)
+### الملف التالت: `welcome.php`
 
 ```php
 <?php
 session_start();
 
-// حماية الصفحة — لو مش logged in، ارجع للـ Login
+// ← لو مش Logged In، ودّيه للـ Login
 if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
+    header('Location: login.php');
     exit;
 }
 
-$username    = $_SESSION['username'];
-$email       = $_SESSION['email'];
-$room        = $_SESSION['room'];
-$profile_pic = $_SESSION['profile_pic'];
+// ← Logout
+if (isset($_GET['logout'])) {
+    $_SESSION = [];
+    session_destroy();
+    header('Location: login.php');
+    exit;
+}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome - Lab 03</title>
+    <title>أهلاً بيك</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        .card { background: #f8f9fa; border-radius: 10px; padding: 30px; text-align: center; }
+        img { border-radius: 50%; width: 100px; height: 100px; object-fit: cover; }
+        .logout { color: red; text-decoration: none; }
+    </style>
 </head>
 <body>
-<h2>🎉 Welcome, <?= htmlspecialchars($username) ?>!</h2>
-<p>Email: <?= htmlspecialchars($email) ?></p>
-<p>Room: <?= htmlspecialchars($room) ?></p>
-
-<?php if ($profile_pic): ?>
-    <img src="uploads/<?= htmlspecialchars($profile_pic) ?>" 
-         alt="Profile Picture" 
-         style="width:150px; height:150px; border-radius:50%; object-fit:cover;">
-<?php endif; ?>
-
-<br><br>
-<form method="POST" action="logout.php">
-    <button type="submit">Logout</button>
-</form>
+    <div class="card">
+        <h1>🎉 أهلاً وسهلاً يا <?= htmlspecialchars($_SESSION['username']) ?>!</h1>
+        
+        <?php if (!empty($_SESSION['profile_pic'])): ?>
+            <img src="uploads/<?= htmlspecialchars($_SESSION['profile_pic']) ?>" 
+                 alt="Profile Picture"/>
+        <?php endif; ?>
+        
+        <p>📧 الإيميل: <?= htmlspecialchars($_SESSION['email']) ?></p>
+        <p>🏢 الـ Room: <?= htmlspecialchars($_SESSION['room']) ?></p>
+        
+        <br/>
+        <a href="?logout=1" class="logout">🚪 تسجيل الخروج</a>
+    </div>
 </body>
 </html>
 ```
 
 ---
 
-## Setup على Ubuntu (File Permissions)
+### إعداد الأذونات على Ubuntu
 
 ```bash
-# 1. إنشاء مجلد الـ uploads مع الـ permissions الصح
-sudo mkdir -p /var/www/html/lab03/uploads
-sudo chown www-data:www-data /var/www/html/lab03/uploads
-sudo chmod 755 /var/www/html/lab03/uploads
+# ← روح لـ Directory بتاع الـ Project
+cd /var/www/html/phpday03
 
-# 2. الـ users.txt لازم يكون قابل للكتابة من www-data
-sudo touch /var/www/html/lab03/users.txt
-sudo chown www-data:www-data /var/www/html/lab03/users.txt
-sudo chmod 644 /var/www/html/lab03/users.txt
+# ← إنشاء الـ Directories المطلوبة
+mkdir -p uploads
 
-# 3. تأكد إن PHP-FPM شغال
-sudo systemctl status php8.x-fpm
+# ← الـ www-data هو الـ User اللي PHP-FPM بيشتغل بيه
+# هو محتاج يكتب في uploads/
+sudo chown -R www-data:www-data uploads/
+sudo chmod -R 755 uploads/
 
-# 4. تأكد إن الـ upload_tmp_dir في php.ini صح
-grep "upload_tmp_dir" /etc/php/8.x/fpm/php.ini
-# upload_tmp_dir = /tmp
+# ← الـ users.json محتاج يتنشأ لو مش موجود
+# وPHP محتاجة تكتب فيه
+touch users.json
+sudo chown www-data:www-data users.json
+sudo chmod 664 users.json
+
+# ← تأكد إن PHP-FPM شغّال
+sudo systemctl status php8.2-fpm
+
+# ← تأكد إن Nginx شغّال
+sudo systemctl status nginx
+
+# ← شوف الـ Error Log لو في مشكلة
+sudo tail -f /var/log/nginx/error.log
+sudo tail -f /var/log/php8.2-fpm.log
 ```
 
 ---
 
-## الـ Bonus: Password Regex — تفصيل
+## 🫒 زتونة الإنترفيو
 
-```php
-<?php
-function validatePassword(string $password): array {
-    $errors = [];
-
-    // a. Only 8 chars
-    if (strlen($password) !== 8) {
-        $errors[] = "Password must be exactly 8 characters";
-    }
-
-    // b. No special chars — only underscore allowed
-    // c. No capital letters
-    // Pattern: only [a-z] and [_], exactly 8 times
-    if (!preg_match('/^[a-z_]{8}$/', $password)) {
-        $errors[] = "Password: only lowercase letters and underscore allowed, no capitals";
-    }
-
-    return $errors;
-}
-
-// Test cases:
-var_dump(validatePassword("hello_wo"));  // ✅ Valid
-var_dump(validatePassword("Hello_wo"));  // ❌ Capital H
-var_dump(validatePassword("hel@lo_w"));  // ❌ Special char @
-var_dump(validatePassword("hi"));        // ❌ Too short
-```
+> **"الـ PHP بيشتغل عبر رحلة من 4 مراحل داخل الـ Zend Engine: Lexing، Parsing، Compilation للـ Opcodes، وExecutor بيشغّل الـ Opcodes دي. الـ PHP بيقدر يتعامل مع الـ Strings بترسانة Functions قوية من `trim()` للـ Sanitization، `explode()`/`implode()` للتقسيم والتجميع، `strpos()` للبحث، و`preg_match()` للـ Patterns المعقدة. لحل مشكلة الـ HTTP اللي Stateless بطبيعته، في طريقتين: الـ Sessions اللي بتخزّن الـ Data على السيرفر وبتبعت بس Session ID للـ Browser، والـ Cookies اللي بتخزّن الـ Data على المتصفح نفسه. لما أتكلم عن الـ File Upload، الأمان الحقيقي مش في `$_FILES['type']` لأنه من المتصفح وممكن يتزوّر، الأمان في Whitelist من الـ Extensions وـ`finfo_file()` للتحقق من الـ MIME Type الحقيقي من الـ Content بتاع الملف نفسه."**
 
 ---
 
-## 🗺️ Flow الـ Lab كله
-
-```mermaid
-flowchart TD
-    A[User يفتح register.php] --> B[يملا الـ Form]
-    B --> C{Validation}
-    C -- فشل --> D[عرض الأخطاء]
-    C -- نجح --> E[حفظ في users.txt]
-    E --> F[User يفتح login.php]
-    F --> G[يدخل username + password]
-    G --> H{التحقق من users.txt}
-    H -- فشل --> I[رسالة خطأ]
-    H -- نجح --> J[session_start<br/>حفظ بيانات في $_SESSION]
-    J --> K[Redirect لـ welcome.php]
-    K --> L[عرض Welcome Message<br/>+ صورة الـ Profile]
-    L --> M[User يضغط Logout]
-    M --> N[session_destroy<br/>Redirect للـ Login]
-```
-
----
-
-## 🎯 الـ Checkpoint النهائي — Interview Questions
-
-|السؤال|الإجابة|
-|---|---|
-|الفرق بين `Session` و `Cookie`؟|Session على السيرفر، Cookie على المتصفح|
-|ليه `enctype="multipart/form-data"` مهم؟|بدونها `$_FILES` هيكون فاضي|
-|الفرق بين `printf` و `sprintf`؟|printf بتطبع، sprintf بترجع String|
-|ليه `password_hash()` أحسن من `md5()`؟|md5 سريع جداً وقابل للـ brute force، password_hash بطيء عمداً|
-|إزاي بتمسح Cookie؟|`setcookie("name", "", time() - 60)` — expires في الماضي|
-|الـ `$_FILES['file']['error']` بيرجع إيه لو كل حاجة تمام؟|`UPLOAD_ERR_OK` = 0|
-|ليه `move_uploaded_file()` أحسن من `copy()`؟|بتتأكد إن الفايل جه فعلاً من PHP upload process|
-
----
-
-> **🫒 زتونة الإنترفيو النهائية:** الـ PHP بتشتغل على Ubuntu كـ `www-data` user. أي فايل أو فولدر محتاج PHP تكتب فيه، لازم `www-data` يكون عنده write permission. أشهر مشكلة في الـ File Upload على Production = **Permissions Error**.
-
----
-
-_"كل سطر كود PHP بتكتبه، الـ Zend Engine بيرفعله سلام قبل ما يشغله."_
-
-**—** يا هندسة، الرحلة خلصت! كل الـ Day 03 موجود هنا من الـ String Manipulation للـ Regex للـ File Upload للـ Sessions والـ Cookies، والـ Lab محلول بـ Production-Ready Code. 🚀
+_Next → الفصل الرابع — PHP & MySQL: بناء الـ Database Layer — هنوصّل كل اللي اتعلمناه ده بـ Database حقيقية باستخدام PDO والـ Prepared Statements، وهنشوف ليه الـ Raw Queries خطر حقيقي على أي موقع._

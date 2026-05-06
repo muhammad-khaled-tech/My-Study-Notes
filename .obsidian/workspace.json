@@ -41,12 +41,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "php/PHP Day03.md",
+                "file": "php/PHP Day01.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "PHP Day03"
+              "title": "PHP Day01"
             }
           }
         ],
@@ -266,10 +266,10 @@
   },
   "active": "67272b6d7d44d73b",
   "lastOpenFiles": [
-    "php/Untitled.md",
-    "php/PHP Day03.md",
-    "Untitled 18.md",
     "php/PHP Day02.md",
+    "php/PHP Day03.md",
+    "php/Untitled.md",
+    "Untitled 18.md",
     "php/PHP Day01.md",
     "php/PHP-Day02-Notes.md",
     "php/PHP-Day03-Notes.md",
