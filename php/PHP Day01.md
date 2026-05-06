@@ -102,10 +102,10 @@ PHP-FPM Pool:
 ┌────────────────────────────────────────┐
 │              php-fpm master            │
 │                                        │
-│  Worker 1 [BUSY - processing request] │
-│  Worker 2 [IDLE - waiting]            │
-│  Worker 3 [IDLE - waiting]            │
-│  Worker 4 [IDLE - waiting]            │
+│  Worker 1 [BUSY - processing request]  │
+│  Worker 2 [IDLE - waiting]             │
+│  Worker 3 [IDLE - waiting]             │
+│  Worker 4 [IDLE - waiting]             │
 │  ...                                   │
 └────────────────────────────────────────┘
 ```
