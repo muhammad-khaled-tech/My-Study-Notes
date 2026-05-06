@@ -83,11 +83,8 @@
     "medical_ai_agent_lab_guide (1).md": "rtl",
     "python/projects/python_revision.md": "rtl",
     "python/projects/00-CrowdFund-Master-Revision.md": "rtl",
-    "php/PHP-1.md": "rtl",
-    "php/PHP-Day03-Notes.md": "rtl",
-    "php/PHP-Day02-Notes.md": "rtl",
     "Aws practitioner/07_ Global Infrastructure +  Global Applications.md": "rtl",
-    "php/PHP Day01.md": "auto",
+    "php/PHP Day01.md": "rtl",
     "php/PHP Day02.md": "rtl"
   },
   "defaultDirection": "auto",
