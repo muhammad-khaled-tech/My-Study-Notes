@@ -1,524 +1,352 @@
-# 📄 File 1: `PHPDay02_Part1.md`
+تخيل معايا السيناريو ده: عندك موقع بيجمع بيانات عملاء، عايز تخزنها عشان بعدين ترجع تعرضها، وتحذفها، تعدلها. أكيد متقدرش تخلي البيانات في الهوا (متغيرات السكربت) لأن السكربت لما يخلص، كل المتغيرات تموت. إذن إيه الحل؟ يا إما تخزن في **ملف flat file** (زي text file)، يا إما في **قاعدة بيانات**. النهاردة هنبدأ بالملفات – الطريق البسيط.
 
-# 🗃️ PHP Day02 – الجزء الأول: التعامل مع الملفات (Files) تحت الكبوت
+المصفوفات بقى .. دي حاجة سحرية في PHP. تقدر تخزن فيها أي حاجة: أرقام، نصوص، حتى مصفوفات تانية. هنشوف إزاي ننشئها، نلف عليها، نرتبها، ونستخدم دوال مذهلة تغني الكود بتاعك.
 
-## 🎯 الـ Core Problem
-
-إيه المشكلة الأساسية؟ تخزين البيانات بشكل مؤقت أو دائم بدون قاعدة بيانات.  
-حل PHP: **Flat files** (text files). لكن الـ flat files مش مجرد `fopen` وخلاص. لازم تفهم الـ file descriptors، الـ locking، الـ buffering، وفروق الـ modes على Linux.
-
-> [!DEEP-DIVE]
-> PHP بتستخدم نفس system calls اللي في C: `open()`, `read()`, `write()`, `close()`, `lseek()`, `flock()`. كل ملف بتفتحه في PHP بيستلم **resource** (وهو رقم file descriptor في الـ OS). الفرق إن PHP بتضيف طبقة من الـ buffering (user-space) عشان تقلل عدد الـ syscalls.
+**يلا بسم الله..**
 
 ---
 
-## 🐧 1. فتح الملف – `fopen()` وإختيار الـ mode الصح
-
-```php
-$handle = fopen("/var/www/data/users.txt", "r");
-if ($handle === false) {
-    // فشل الفتح – غالباً permissions أو الملف مش موجود
-    error_log("Cannot open file");
-    exit;
-}
+```mermaid
+flowchart LR
+    subgraph Day02_Roadmap
+        A[Files] --> A1[Open<br/>fopen modes]
+        A1 --> A2[Read fread<br/>fgets fgetcsv]
+        A1 --> A3[Write fwrite]
+        A2 --> A4[Close fclose]
+        A3 --> A4
+        A4 --> A5[Locks flock]
+        B[Arrays] --> B1[Indexed<br/>Associative]
+        B1 --> B2[Sorting<br/>sort,asort,ksort<br/>usort]
+        B2 --> B3[Array functions<br/>merge, chunk, walk<br/>filter, map]
+        B3 --> B4[Extract, List]
+    end
+    Day02_Roadmap --> Lab[Lab 02<br/>Form validation + save to file + display table + delete]
 ```
-
-### جدول الـ modes المهمة على Ubuntu (Linux):
-
-| Mode | المعنى | تحت الكبوت (system call flags) |
-|------|--------|--------------------------------|
-| `r`  | قراءة فقط، المؤشر في البداية | `O_RDONLY` |
-| `r+` | قراءة وكتابة، المؤشر في البداية | `O_RDWR` |
-| `w`  | كتابة فقط، إنشاء ملف جديد أو مسح المحتوى الموجود | `O_WRONLY | O_CREAT | O_TRUNC` |
-| `w+` | قراءة وكتابة، مسح المحتوى | `O_RDWR | O_CREAT | O_TRUNC` |
-| `a`  | كتابة فقط، إلحاق في النهاية (append) | `O_WRONLY | O_CREAT | O_APPEND` |
-| `a+` | قراءة وكتابة، إلحاق | `O_RDWR | O_CREAT | O_APPEND` |
-| `x`  | كتابة فقط، يفشل لو الملف موجود (cautious) | `O_WRONLY | O_CREAT | O_EXCL` |
-| `x+` | قراءة وكتابة، يفشل لو الملف موجود | `O_RDWR | O_CREAT | O_EXCL` |
-| `b`  | ثنائي (في Windows مهم، في Linux ممكن تتجاهله) | لا يغير شيئاً في Linux |
-
-> [!WARNING]
-> في Linux، الـ `b` (binary) لا معنى له لأن Linux ما بيفرقش بين text و binary. لكن للـ portability، خليها عادة: `"rb"`, `"wb"`.
-
-### مقارنة مع C++:
-
-```cpp
-// C++
-std::ifstream file("users.txt");  // r
-std::ofstream out("log.txt", std::ios::app); // a
-```
-
-```php
-// PHP
-$file = fopen("users.txt", "r");
-$log = fopen("log.txt", "a");
-```
-
- تحت الكبوت: لما تفتح ملف في PHP، Zend Engine بتستدعي `php_stream_open_wrapper` اللي بيستخدم `open()` system call. الرجوع resource بيفتح file descriptor في جدول العمليات. كل عملية (FPM worker) ليها حد أقصى لعدد الـ file descriptors (usually 1024). لو فتحت ملفات كتير ومش قفلتهم، هتوصل للحد وتخرب السيرفر.
 
 ---
 
-## 📝 2. الكتابة في الملف – `fwrite()` و `fputs()`
+# 📂 **الفصل الأول: حكاية الملفات – مستودع البيانات النصي**
 
+## 1. المقدمة: ليه نحتاج الملفات؟
+
+لما المستخدم يبعتلك بيانات من فورم، إنت عايز تحفظها. ممكن تحفظها في **flat file**، وهو ببساطة ملف نصي (`.txt`، `.csv`، أو أي امتداد). Flat دي معناها "مسطح" – بدون تعقيد قواعد البيانات.
+
+**مميزات الملفات البسيطة:**
+- سهلة في الفتح والكتابة.
+- ما تحتاجش تثبت خادم قاعدة بيانات.
+- مناسبة للبيانات الصغيرة (زي إعدادات، سجلات صغيرة).
+
+**عيوبها (والسلايدات ذكرتها بوضوح):**
+- بطيئة جدًا لو الملف كبير (هتقرأه كله كل مرة).
+- البحث عن سجل معين صعب – لازم تقرا سطر سطر وتقارن.
+- التحكم في الصلاحيات محدود.
+- الوصول المتزامن (concurrent access) من مستخدمين كتير بيسبب مشاكل، رغم إمكانية الـ locking لكنه يسبب زحمة.
+
+لذلك، الفلات فايلز مناسبة للتطبيقات الصغيرة أو اللوقات. أما المشاريع الكبيرة فمحتاجة قاعدة بيانات.
+
+## 2. فتح الملف: `fopen()` – البوابة السحرية
+
+فتح الملف هو أول خطوة. شبه ما بتدخل البناية، لازم تستأذن البواب وتقولله عايز تعمل إيه: تقرأ بس؟ تكتب بس؟ تكتب في الآخر (append)؟
+
+**الصيغة العامة:**
 ```php
-$handle = fopen("log.txt", "a");
-fwrite($handle, "New entry at " . date('Y-m-d H:i:s') . "\n");
-fclose($handle);
+fopen(string $filename, string $mode) // returns resource or false on failure
 ```
 
-الـ `fwrite()` بترجع عدد البايتات اللي اكتبتها فعلاً.
+هي بترجع **resource** – نوع خاص في PHP، زي مقبض (handle) يشير إلى الملف المُفتح.
 
-### مقارنة مع Java:
+### وضعيات الفتح (Modes)
 
-```java
-// Java
-try (FileWriter fw = new FileWriter("log.txt", true);
-     BufferedWriter bw = new BufferedWriter(fw)) {
-    bw.write("New entry...");
-}
-```
+السلايدات وضحت الجدول، لكن دعني أحكيها كقصص:
 
-PHP أقصر بكتير، لكنه مش asynchronous. كل `fwrite` بتنفذ syscall write (ما لم يكن buffering داخلي).
+- **`r` (read):** للقراءة فقط. المؤشر يبدأ من أول الملف. لو الملف مش موجود؟ `fopen` ترجع `false` وتطلع warning. عشان تتجنب الـ warning، استخدم `@` (مش أحسن حاجة) أو تحقق قبلها بـ `file_exists()`.
 
-> [!DEEP-DIVE]
-> PHP بتستخدم **user-space buffering** افتراضي 8192 bytes (يعني مش كل `fwrite` تعمل syscall على طول). عشان تفرض الكتابة فوراً، استخدم `fflush($handle);` أو قفل الملف.
+- **`r+` (read + write):** تقرأ وتكتب من البداية. لو كتبت، بتكتب فوق المحتوى الموجود من أول المؤشر.
 
----
+- **`w` (write):** للكتابة فقط. بيفتح الملف، ولو موجود، يمسح كل محتواه (يقطع الرقبة). لو مش موجود، يحاول يخلقه. **خطر:** لو استخدمته بالغلط، تضيع بيانات.
 
-## 📖 3. القراءة من الملف – طرق متعددة لكل سيناريو
+- **`w+` (write + read):** زي `w` لكن تقدر تقرأ بعد الكتابة.
 
-### 3.1 `fread()` – القراءة بالبايتات
+- **`x` (cautious write):** للكتابة لكن بحذر. لو الملف موجود، `fopen` ترجع `false` وتطلع warning. مفيد لو عايز تضمن إنك مش هتتلف ملف موجود.
 
-```php
-$handle = fopen("bigfile.log", "rb");
-$content = fread($handle, filesize("bigfile.log"));
-fclose($handle);
-```
+- **`x+` (cautious write + read):** نفس الشيء مع قراءة.
 
-**الخطورة**: لو الملف كبير (مثلاً 100 MB)، `fread` هتقرأ كل حاجة في الذاكرة مرة واحدة. هتلبس في memory_limit.
+- **`a` (append):** للكتابة في نهاية الملف. المؤشر في الآخر. لو مش موجود، يخلقه. مناسب للسجلات (logs).
 
-### 3.2 `fgets()` – قراءة سطر بسطر (الأفضل للملفات الكبيرة)
+- **`a+` (append + read):** زي `a` مع إمكانية القراءة.
 
-```php
-$handle = fopen("access.log", "r");
-while (($line = fgets($handle)) !== false) {
-    // كل سطر في $line, مع retained newline
-    processLine($line);
-}
-fclose($handle);
-```
+- **`b` (binary):** تُضاف لوضع آخر، زي `"rb"`، `"wb"`. ضروري في أنظمة ويندوز عشان تفرق بين النص والباينري. في لينكس مش فارقة، لكن عشان البورتبلتي، استخدمها دايمًا: `"rb"`, `"wb"`.
 
-تحت الكبوت: `fgets` بتقرأ من الـ buffer الحالي، لو خلصت بتطلب syscall جديدة. كفاءة عالية جداً.
+- **`t` (text):** لويندوز بس، مش مستحسن.
 
-### 3.3 `feof()` – التحقق من نهاية الملف
+**تحت الكبوت:** لما تنادي `fopen("file.txt", "r")`، PHP بتعمل syscall على مستوى OS زي `open()` في C. الـ OS ترجع file descriptor (رقم صحيح). PHP بتغلفه في resource. وبتخزن في جدول الموارد عشان تتعقبه.
+
+### مثال توثيقي:
 
 ```php
 $handle = fopen("data.txt", "r");
+if ($handle === false) {
+    die("فشل فتح الملف: إما مش موجود أو صلاحيات خاطئة");
+}
+// بقى الـ handle جاهز
+fclose($handle);
+```
+
+## 3. القراءة من الملف: `fread()` و `fgets()` و `fgetcsv()`
+
+### `fread()`: القراءة الكمية (حسب عدد البايتات)
+
+```php
+$handle = fopen("welcome.txt", "rb");
+$size = filesize("welcome.txt");
+$content = fread($handle, $size);
+fclose($handle);
+echo $content;
+```
+
+**ملاحظة:** `filesize()` بترجع حجم الملف بالبايت. لو الملف كبير جدًا (مئات الميجا)، متستخدمش `fread` بالحجم الكامل هتستهلك RAM. الأفضل تقرأ بالقطع.
+
+### `fgets()`: قراءة سطر واحد في كل مرة
+
+مفيد لو الملف فيه أسطر نصية. بيقرأ حتى يوصل لـ newline (`\n`) أو طول محدد.
+
+```php
+$handle = fopen("welcome.txt", "rb");
 while (!feof($handle)) {
     $line = fgets($handle);
-    // don't assume $line always has data
+    echo $line . "<br>";
 }
+fclose($handle);
 ```
 
-> [!WARNING]
-> `feof` بترجع true فقط بعد محاولة قراءة ما بعد النهاية. أحسن استخدام `while (($line = fgets($handle)) !== false)`.
+**ما هو `feof()`؟** بتفحص إذا وصلنا لنهاية الملف (end of file). لازم تستخدمها عشان ما تدخلش loop لا نهائية.
 
-### 3.4 `fgetcsv()` – للملفات المفصولة بفواصل (Excel-like)
+### `fgetcsv()`: قراءة ملف CSV (مفصول بفواصل أو أي محدد)
+
+لما يكون عندك ملف بهيكل جدول: `name,email,track`. `fgetcsv` بتفك السطر إلى array حسب المحدد.
 
 ```php
-$handle = fopen("users.csv", "r");
+$handle = fopen("users.csv", "rb");
 while (($row = fgetcsv($handle, 1000, ",")) !== false) {
-    // $row is array of columns
-    var_dump($row);
+    echo "Name: " . $row[0] . ", Email: " . $row[1];
 }
 fclose($handle);
 ```
 
-مقارنة مع Node.js: في Node لازم تستخدم مكتبة خارجية `csv-parser`. في PHP موجودة في القلب.
+المعاملات: `fgetcsv(handle, length, delimiter, enclosure, escape)`
 
-### 3.5 قراءة كل الملف مرة واحدة – `file_get_contents()`, `readfile()`, `file()`
+لو عايز تقرا ملف بعلامة تبويب كـ delimiter، استخدم `"\t"`.
 
-| الدالة | الإرجاع | مناسب لـ |
-|--------|---------|----------|
-| `file_get_contents("file.txt")` | string (كل المحتوى) | ملفات صغيرة |
-| `readfile("file.txt")` | عدد البايتات، ويطبع مباشرة | خدمة ملفات static |
-| `file("file.txt")` | array (كل سطر عنصر) | معالجة سطور معينة |
+## 4. الكتابة إلى الملف: `fwrite()` (و`fputs()` هو مرادف)
 
 ```php
-$config = file_get_contents("/etc/php/8.1/cli/php.ini"); // صغير
-$lines = file("log.txt"); // كل سطر في array
+$handle = fopen("output.txt", "wb");
+$bytes = fwrite($handle, "Hello, PHP Files!");
+if ($bytes === false) {
+    echo "فشلت الكتابة";
+}
+fclose($handle);
 ```
 
-> [!DEEP-DIVE]
-> `file_get_contents` بتستخدم memory mapping (`mmap`) لو كان الملف كبيراً والـ OS بيدعم، لكن في الغالب بتحمل الملف في الذاكرة. لملفات كبيرة جداً، استخدم `fopen` + `fread` بحجم chunk صغير.
-
----
-
-## 🔒 4. Locking الملفات – `flock()` عشان ما تبوظش البيانات
-
-لما أكتب من أكتر من عملية (FPM workers) في نفس الملف، لازم lock.
+تقدر تحدد طول الكتابة (معامل تالت اختياري):
 
 ```php
-$handle = fopen("counter.txt", "r+");
-if (flock($handle, LOCK_EX)) {  // Exclusive lock (write)
-    $count = (int) fread($handle, 100);
-    $count++;
-    rewind($handle);
-    fwrite($handle, $count);
-    fflush($handle);
+fwrite($handle, "Long text", 5); // يكتب أول 5 حروف "Long "
+```
+
+**تحت الكبوت:** `fwrite` بتستدعي `write()` system call. الـ OS بيكتب البيانات في buffer ثم يفرغها على القرص. لو عايز تفرغ فورًا، تستخدم `fflush()` لكن مش ضروري.
+
+## 5. إغلاق الملف: `fclose()` – باب الخروج
+
+دايمًا أقفل الملف بعد ما تخلص. لأن الموارد محدودة، والسيرفر ممكن يفشل في فتح ملفات جديدة لو وصل للحد الأقصى.
+
+```php
+fclose($handle);
+```
+
+## 6. دوال القراءة في خطوة واحدة (بدون `fopen` / `fclose`)
+
+PHP بتقدم دوال بتقرأ الملف كله في خطوة:
+
+### `readfile()`
+
+بتقرأ الملف وتطبعه مباشرة على output buffer. بترجع عدد البايتات المقروءة.
+
+```php
+readfile("welcome.txt"); // بيطبع محتوى الملف
+```
+
+### `file()`
+
+بتقرأ الملف كله وتعيده كمصفوفة (array)، كل سطر عنصر.
+
+```php
+$lines = file("data.txt");
+foreach ($lines as $line) {
+    echo $line;
+}
+```
+
+### `file_get_contents()`
+
+بتجيب المحتوى كـ string. مثالية لقراءة الملفات الصغيرة.
+
+```php
+$content = file_get_contents("config.json");
+$config = json_decode($content, true);
+```
+
+**فرق الأداء:** `file_get_contents` أسرع من `fopen` + `fread` لأنها بتعمل كل حاجة في داخل النواة مع buffering محسّن.
+
+## 7. دوال مفيدة على الملفات
+
+- `rewind($handle)` – ترجع المؤشر لأول الملف (زي `reset` للـ pointer).
+- `ftell($handle)` – تقولك إنت فين بالبايت (position).
+- `fseek($handle, $offset)` – تتحرك لمكان معين.
+- `file_exists($path)` – بتفحص إذا الملف موجود.
+- `unlink($path)` – تحذف الملف (زي `rm`).
+- `copy($source, $dest)` – تنسخ ملف.
+- `is_file()`, `is_dir()`, `is_readable()`, `is_writable()` – دوال استفهام.
+- `basename($path)` – تستخرج اسم الملف من المسار الكامل.
+
+```php
+$path = "/var/www/html/index.php";
+echo basename($path); // index.php
+```
+
+## 8. قفل الملفات (Locking) – لمسألة التزامن
+
+تخيل مستخدمين بيكتبوا في نفس الملف في نفس الوقت. هيحصل فساد بيانات. الحل: **القفل** باستخدام `flock()`.
+
+أنواع الأقفال:
+- `LOCK_SH` (قفل قراءة) – مشارك: أكتر من عملية تقدر تقرأ.
+- `LOCK_EX` (قفل كتابة) – حصري: عملية واحدة بس تكتب.
+- `LOCK_UN` – إطلاق القفل.
+
+```php
+$handle = fopen("data.txt", "ab");
+if (flock($handle, LOCK_EX)) {
+    fwrite($handle, "سطر جديد");
     flock($handle, LOCK_UN);
+} else {
+    echo "تعذر القفل";
 }
 fclose($handle);
 ```
 
-### أنواع الـ locks:
+**تنبيه:** `flock` بتعمل advisory lock (تنسيقي). لازم كل العمليات تلتزم به. وليست مضمونة على أنظمة الملفات الشبكية (NFS).
 
-| Constant | المعنى | تحت الكبوت |
-|----------|--------|------------|
-| `LOCK_SH` | قراءة مشتركة (read lock) | `flock(fd, LOCK_SH)` |
-| `LOCK_EX` | كتابة حصرية (write lock) | `flock(fd, LOCK_EX)` |
-| `LOCK_UN` | فتح القفل | `flock(fd, LOCK_UN)` |
-| `LOCK_NB` | عدم الانتظار (غير blocking) | `LOCK_EX \| LOCK_NB` |
-
-> [!WARNING]
-> `flock` في Linux بتعمل **advisory locking**، يعني لو برنامج تاني مش بيستخدم `flock`، هو هيكتب في الملف برضه. لا تحمي 100%. لضمان حقيقي استخدم `sqlite` أو قاعدة بيانات.
-
-### مقارنة مع Node.js (نفس المشكلة):
-
-في Node، `fs.createWriteStream` مع `'wx'` flag, أو استخدم `lockfile` package. لكن PHP أسهل.
-
----
-
-## 🧠 5. وظائف مفيدة إضافية للملفات
-
-| الدالة | الـ استخدام | مثال على Ubuntu |
-|--------|-------------|------------------|
-| `file_exists($path)` | هل الملف موجود؟ | `if (!file_exists("/tmp/session.txt"))` |
-| `is_file($path)`, `is_dir()` | نوع الملف | `is_dir("/var/www")` |
-| `is_readable()`, `is_writable()` | صلاحيات | `if (!is_writable("data/"))` |
-| `unlink($path)` | حذف الملف | `unlink("/tmp/cache.tmp");` |
-| `copy($src, $dest)` | نسخ | `copy("backup.txt", "backup2.txt");` |
-| `rename($old, $new)` | نقل/إعادة تسمية | `rename("upload.tmp", "uploads/photo.jpg");` |
-| `filesize($path)` | حجم الملف بالبايت | `$size = filesize("bigfile.log");` |
-| `fileperms($path)` | الصلاحيات (octal) | `chmod($file, 0644);` |
-| `rewind($handle)` | المؤشر للبداية | `rewind($handle);` |
-| `ftell($handle)` | مكان المؤشر الحالي (بايت) | |
-| `fseek($handle, $offset, $whence)` | نقل المؤشر | `fseek($handle, 10, SEEK_SET);` |
-
-### مثال: قراءة جزء معين من ملف كبير
-
-```php
-$handle = fopen("huge.log", "rb");
-fseek($handle, 1024 * 1024, SEEK_SET); // ابدأ من الميجابايت 1
-$chunk = fread($handle, 4096);
-fclose($handle);
-```
-
-تحت الكبوت: `fseek` بتستخدم `lseek()` system call.
-
----
-
-## ⚠️ 6. مشاكل الـ flat files (ليه أتجنبها لقاعدة بيانات)
-
-السلايدات ذكرت المشاكل:
-
-1. **بطء مع الملفات الكبيرة** – كل عملية قراءة sequential.
-2. **صعوبة البحث** – مافيش indexes.
-3. **صلاحيات محدودة** – بس permissions بتاعت الملف (قراءة/كتابة لكل الـ workers).
-4. **التزامن** – الـ flock بيعمل bottleneck.
-
-**متى أستخدم flat files?**
-- Config files (small, read rarely)
-- Logs (append only)
-- Caching (but prefer Redis)
-- Import/Export CSV
-
-**متى أستخدم قاعدة بيانات?**
-- Concurrent writes
-- Complex queries
-- Relationships
-
----
-
-## 📊 Visualization – دورة حياة ملف في PHP على Ubuntu
+## 9. الملخص الرسومي لمعالجة الملفات
 
 ```mermaid
-sequenceDiagram
-    participant PHP as PHP Script
-    participant Stream as php_stream
-    participant LibC as glibc (stdio)
-    participant Kernel as Linux Kernel
-    participant Disk as Disk
-
-    PHP->>Stream: fopen("file.txt", "r")
-    Stream->>LibC: fopen()
-    LibC->>Kernel: open() syscall
-    Kernel-->>LibC: fd 3
-    LibC-->>Stream: FILE*
-    Stream-->>PHP: resource
-
-    PHP->>Stream: fread($handle, 1024)
-    Stream->>LibC: fread()
-    LibC->>Kernel: read(fd, buf, 1024)
-    Kernel-->>LibC: data
-    LibC-->>Stream: buffer
-    Stream-->>PHP: string
-
-    PHP->>Stream: fclose($handle)
-    Stream->>LibC: fclose()
-    LibC->>Kernel: close(fd)
+flowchart TD
+    Start[ابدأ] --> Open[فتح الملف بـ fopen]
+    Open --> Check{الملف موجود؟}
+    Check -- لا --> Fail[تعامل مع الخطأ<br/> أو أنشئه إذا وضع الكتابة]
+    Check -- نعم --> Operation[قراءة أو كتابة<br/> fread, fwrite, fgets, ...]
+    Operation --> Lock[إذا كنت تكتب، <br/>استخدم flock]
+    Lock --> Close[أغلق الملف بـ fclose]
+    Close --> End[انتهى]
 ```
 
 ---
 
-## 🧪 ميكرو-أمثلة (Production-ready snippets)
+# 🧩 **الفصل الثاني: المصفوفات – صندوق الكنوز السحري**
 
-### مثال 1: كتابة log آمنة مع lock
+المصفوفة في PHP هي **ordered map** (خريطة مرتبة). عبارة عن تجميعة من أزواج **key => value**. المفاتيح ممكن تكون أرقام (indexed) أو نصوص (associative).
 
+## 1. أنواع المصفوفات:
+
+### Indexed Arrays (رقمية)
+
+المفاتيح أرقام تبدأ من 0 افتراضيًا.
+
+طرق الإنشاء:
 ```php
-function writeLog($message) {
-    $logFile = "/var/log/myapp.log";
-    $handle = fopen($logFile, "a");
-    if (!$handle) return false;
-    
-    if (flock($handle, LOCK_EX)) {
-        fwrite($handle, "[" . date('c') . "] " . $message . PHP_EOL);
-        fflush($handle);
-        flock($handle, LOCK_UN);
-    }
-    fclose($handle);
-    return true;
-}
+$arr = [3, 5, "Application", true, "PHP"];
+$arr2 = array("Noha", "Engineering", "ITI");
 ```
 
-### مثال 2: قراءة ملف CSV كبير بدون استهلاك ذاكرة
-
+لو عايز تبدأ من رقم معين:
 ```php
-function processLargeCSV($filename, callable $callback) {
-    if (!is_readable($filename)) {
-        throw new Exception("File not readable");
-    }
-    $handle = fopen($filename, "rb");
-    if ($handle === false) return;
-    
-    while (($row = fgetcsv($handle, 0, ",")) !== false) {
-        $callback($row);
-    }
-    fclose($handle);
-}
+$arr3 = [1 => "Ali", "Mostafa"]; // المفتاح 1 = Ali، والمفتاح 2 = Mostafa تلقائي.
 ```
 
-### مثال 3: نسخ ملف مع تقدم (للملفات الكبيرة)
+### Associative Arrays
 
-```php
-function copyFileWithProgress($src, $dest, $chunkSize = 8192) {
-    $srcHandle = fopen($src, "rb");
-    $destHandle = fopen($dest, "wb");
-    if (!$srcHandle || !$destHandle) return false;
-    
-    while (!feof($srcHandle)) {
-        $chunk = fread($srcHandle, $chunkSize);
-        fwrite($destHandle, $chunk);
-        // optional: flush every X MB
-    }
-    fclose($srcHandle);
-    fclose($destHandle);
-    return true;
-}
-```
-
----
-
-## 🧠 خلاصة الجزء الأول (Files)
-
-- PHP تدعم flat files بنفس system calls بتاعت C.
-- `fopen()` + modes مهمين جداً على Linux (`a` للـ append، `x` للحماية من overwrite).
-- `flock()` ضروري للتزامن، لكنه advisory.
-- لملفات كبيرة: `fgets()` أو `fgetcsv()` سطر بسطر. تجنب `file_get_contents()`.
-- دوال `file_exists`, `is_writable`, `unlink` هي أساس الـ file management.
-
----
-
-# 📄 File 2: `PHPDay02_Part2.md`
-
-# 🐘 PHP Day02 – الجزء الثاني: Arrays زي ما تشوفها في C++/Java/JS بس بقوة PHP
-
-## 🎯 الـ Core Problem
-
-المصفوفات في PHP مش زي أي لغة تانية. هي **ordered map** (خريطة مرتبة) بتحتوي على (key, value) والـ key ممكن يكون integer أو string. هتشتغل كـ list, hash table, stack, queue, heap, dictionary في نفس الوقت. تحت الكبوت: **HashTable** من Zend Engine.
-
-> [!DEEP-DIVE]
-> في C++ عندك `std::vector` و `std::unordered_map` و `std::map` أنواع مختلفة. في PHP، **نوع واحد** هو `array` والـ Zend Engine بيقرر إمتى يستخدم الـ packed array (vector) وإمتى يستخدم hash table. PHP 7+ بقى فيه optimisation جامد: الـ **packed arrays** (keys من 0 متتالية) بتخزن كـ packed C array بدون overhead بتاع الـ hash table.
-
----
-
-## 🧩 1. Indexed Arrays (المصفوفات ذات الفهارس الرقمية)
-
-### التعريف:
-
-```php
-// Old style
-$arr1 = array(3, 5, "Application", true, "PHP");
-
-// Short syntax (PHP 5.4+)
-$arr2 = ["Noha", "Engineering", "ITI"];
-```
-
-الفهرس يبدأ من 0 زي C++/Java/JS.
-
-```php
-echo $arr2[0]; // "Noha"
-echo $arr2[1]; // "Engineering"
-```
-
-### `range()` – توليد متتالية رقمية أو حروفية
-
-```php
-$numbers = range(0, 10, 2);   // [0,2,4,6,8,10]
-$letters = range("A", "Z", 4); // ["A","E","I","M","Q","U","Y"]
-```
-
-مقارنة مع Python: `range(0,11,2)` وفي PHP بترجع array فعلاً.
-
-### تحت الكبوت: `range` بتحجز الـ HashTable وتسيب Zend Engine يملأها.
-
----
-
-## 🔄 2. Looping على indexed arrays
-
-### For loop تقليدي:
-
-```php
-for ($i = 0; $i < count($arr); $i++) {
-    echo $arr[$i] . " ";
-}
-```
-
-### `foreach` – الأكثر شيوعاً وفعالية:
-
-```php
-foreach ($arr as $value) {
-    echo $value;
-}
-
-foreach ($arr as $index => $value) {
-    echo "$index: $value";
-}
-```
-
-> [!DEEP-DIVE]
-> `foreach` في PHP 7+ بيشتغل على **copy on write** وبيحسن الأداء. لو غيرت الـ array جوه اللوب، Zend ممكن يعمل duplication، فالأفضل تعديل array جديدة أو استخدام `for` مع الـ index.
-
-### مقارنة مع JavaScript:
-
-```js
-// JS: forEach method
-arr.forEach((value, index) => console.log(index, value));
-
-// PHP: foreach
-foreach ($arr as $index => $value) { echo "$index: $value"; }
-```
-
----
-
-## 🗺️ 3. Associative Arrays (المصفوفات الترابطية)
-
-الـ key عبارة عن string (أو integer). شبه الـ object في JavaScript أو `Map` في Java/C++.
-
+المفاتيح نصوص:
 ```php
 $info = [
     "Name" => "Noha",
     "Email" => "nshehab@iti.gov.eg",
     "Track" => "Application"
 ];
-
-echo $info["Name"]; // Noha
 ```
 
-### إضافة عنصر جديد:
+## 2. التكرار على المصفوفات
 
+### باستخدام `for`:
 ```php
-$info["Intake"] = 35;
+for ($i = 0; $i < count($arr); $i++) {
+    echo $arr[$i] . " ";
+}
 ```
 
-### Loop على key-value:
-
+### `foreach` – الأكثر فصاحة:
 ```php
 foreach ($info as $key => $value) {
     echo "$key : $value<br>";
 }
 ```
 
-### تحت الكبوت: الـ associative array بتستخدم **hash table** مع دالة hash للـ string keys. Zend Engine تحافظ على ترتيب الإدخال (insertion order) لأن الـ hash table بتخزن الـ buckets في قائمة مرتبطة doubly-linked.
-
-### مقارنة مع C++ و Java:
-
-| اللغة | نوع البيانات | ترتيب العناصر |
-|-------|--------------|----------------|
-| C++ | `std::unordered_map` | غير مرتب (بس ممكن `std::map` مرتب) |
-| Java | `HashMap` | غير مضمون، `LinkedHashMap` يحافظ على الترتيب |
-| PHP | `array` | **يحافظ على ترتيب الإدخال** افتراضياً |
-| JS | `Object` / `Map` | Object يحافظ على ترتيب properties (ES2015) لكن Map يحافظ على insertion order |
-
-الفلسفة: PHP array تجمع بين `std::vector` (للوصول السريع بالرقم) و `std::map` (للوصول بالـ string key) وتحافظ على الترتيب.
-
----
-
-## 🧬 4. Creating Array from Variables – `compact()`
+## 3. `range()` – توليد تسلسل
 
 ```php
-$name = "Noha Shehab";
-$email = "nshehab@iti.gov.eg";
-$info = compact("name", "email");
-// $info = ["name" => "Noha Shehab", "email" => "nshehab@iti.gov.eg"]
+$numbers = range(1, 10);      // [1,2,3,...,10]
+$letters = range('A', 'Z', 4); // ['A','E','I','M','Q','U','Y']
 ```
 
-مفيد جداً لما تكون عندك متغيرات كتير وعايز تبني array بدون كتابة key-value يدوي.
+الخطوة التالتة اختيارية (step).
 
-### تحت الكبوت: `compact` بتاخد أسماء المتغيرات، وتروح تشوف symbol table الحالية وتجيب القيم.
+## 4. دوال إنشاء مصفوفات من متغيرات: `compact()`
 
----
+عندك متغيرات منفصلة وعايز تحولها لمصفوفة associative بأسماء المتغيرات كمفاتيح وقيمها كقيم.
 
-## 🧮 5. Array Operators (اللي بتفرق عن أي لغة تانية)
+```php
+$name = "Noha";
+$city = "Cairo";
+$data = compact("name", "city");
+// ['name' => 'Noha', 'city' => 'Cairo']
+```
 
-| Operator | Name | مثال | النتيجة |
-|----------|------|------|---------|
-| `+` | Union | `$a + $b` | يدمج الـ arrays، مع إعطاء الأولوية لـ `$a` في حالة keys متكررة |
-| `==` | Equality | `$a == $b` | true إذا نفس key/value pairs (نفس المحتوى) |
-| `===` | Identity | `$a === $b` | true إذا نفس key/value pairs **وبنفس الترتيب** |
-| `!=` أو `<>` | Inequality | عكس `==` |
-| `!==` | Non-identity | عكس `===` |
+مفيدة جدًا عند تمرير بيانات إلى view.
 
-### مثال الـ Union (`+`):
+## 5. معاملات المصفوفات (Array Operators)
 
+- `+` (الاتحاد): يدمج المصفوفتين، لكن المفاتيح الموجودة في اليسار لا تتغير.
+```php
+$a = [0 => 'a', 1 => 'b'];
+$b = [1 => 'x', 2 => 'c'];
+$result = $a + $b; // [0=>'a', 1=>'b', 2=>'c'] -> الـ x أُهمل لأن المفتاح 1 موجود في $a.
+```
+
+- `==` (مساواة): true لو نفس أزواج المفتاح/القيمة (بغض النظر عن الترتيب).
+- `===` (تطابق): true لو نفس الأزواج ونفس الترتيب ونفس الأنواع.
+
+لاحظ المثال من السلايدات:
 ```php
 $num = [2,4,6,8,10];
 $alphas = ["a","b","c","d"];
-$arr3 = $num + $alphas;
-var_dump($arr3);
-// النتيجة: [2,4,6,8,10] لأن keys 0,1,2,3,4 موجودة في $num فما بتضافش من $alphas
+$arr3 = $num + $alphas; // [2,4,6,8,10] + ['a','b','c','d'] = [2,4,6,8,10] لأن المفاتيح 0-4 موجودة بالفعل في $num
 ```
 
-> [!WARNING]
-> الـ `+` مش بيضيف القيم الجديدة لو key موجود أصلاً. عشان تدمج فعلاً وتستبدل، استخدم `array_merge($a, $b)`.
+## 6. المصفوفات متعددة الأبعاد (Multi-dimensional)
 
-### `array_merge`:
-
-```php
-$merged = array_merge($num, $alphas); // [2,4,6,8,10,"a","b","c","d"]
-```
-
-الفرق: `array_merge` بتعيد فهرسة الـ indexed arrays من 0، أما `+` بتحافظ على الـ keys الأصلية.
-
----
-
-## 🧩 6. Multi-dimensional Arrays
-
-PHP تقدر تخزن array داخل array، فتبني مصفوفة ثنائية أو ثلاثية الأبعاد.
+أي عنصر في المصفوفة ممكن يكون مصفوفة أخرى.
 
 ```php
 $students = [
-    1 => ["Ali", "IoT"],
+    1 => ["Ali", "IOT"],
     2 => ["Mostafa", "Cloud"],
     3 => ["Noha", "Application"]
 ];
@@ -526,769 +354,384 @@ $students = [
 echo $students[1][0]; // Ali
 ```
 
-### Loop في 2D:
+## 7. ترتيب المصفوفات (Sorting)
 
-```php
-foreach ($students as $id => $data) {
-    echo "ID: $id, Name: $data[0], Track: $data[1]<br>";
-}
-```
+### للمصفوفات الرقمية:
+- `sort($arr)` – ترتيب تصاعدي (يفقد المفاتيح الأصلية).
+- `rsort($arr)` – تنازلي.
 
-مقارنة مع Java: `int[][] matrix = new int[3][3];` لكن PHP مفيش أبعاد محددة.
+### للمصفوفات الترابطية:
+- `asort($arr)` – ترتيب تصاعدي حسب **القيم** مع الاحتفاظ بالمفاتيح.
+- `arsort($arr)` – تنازلي حسب القيم.
+- `ksort($arr)` – ترتيب حسب **المفاتيح**.
+- `krsort($arr)` – تنازلي حسب المفاتيح.
 
----
-
-## 🔄 7. Sorting Arrays – من البسيط للمتقدم
-
-### 7.1 `sort()` – indexed array تصاعدي
-
-```php
-$names = ["noha", "Fatma", "Dina", "Andrew", "Shimaa", "suliman"];
-sort($names);
-// النتيجة: ["Andrew","Dina","Fatma","Shimaa","noha","suliman"]
-// ملاحظة: A-Z يأتي قبل a-z (ASCII)
-```
-
-> [!WARNING]
-> `sort` حساس لحالة الأحرف. `"noha"` (تبدأ بحرف صغير) تجي بعد `"Shimaa"` لأن `'S'` (83) أكبر من `'n'` (110)? لا بالعكس: ASCII `'A'=65, 'Z'=90, 'a'=97`. الحروف الكبيرة أصغر من الصغيرة. `'Z'` (90) أقل من `'a'` (97). لذا `"Andrew"` يأتي أولاً لأنه يبدأ بحرف كبير `A`. `"Shimaa"` يأتي ثم `"noha"` لأن `'n'` 97 > `'S'` 83؟ لحظة: `'S'` = 83، `'n'` = 110، إذن `'S'` أصغر فـ `"Shimaa"` يأتي قبل `"noha"`. الناتج: Andrew, Dina, Fatma, Shimaa, noha, suliman. صحيح.
-
-### 7.2 `rsort()` – تنازلي
-
-### 7.3 `asort()` – ترتيب associative array حسب القيمة (مع الاحتفاظ بالkeys)
-
-```php
-$prices = ["meat" => 100, "sugar" => 10, "tea" => 8];
-asort($prices);
-// ["tea"=>8, "sugar"=>10, "meat"=>100]
-```
-
-### 7.4 `ksort()` – ترتيب حسب المفتاح
-
-```php
-$info = ["Name"=>"Noha", "Email"=>"nshehab@iti.gov.eg", "Track"=>"Application"];
-ksort($info);
-// ["Email"=>..., "Name"=>..., "Track"=>...]
-```
-
-### 7.5 `arsort()`, `krsort()` – عكس (تنازلي)
-
-### 7.6 **User-defined sort** – `usort()` (زي `qsort` في C)
+### ترتيب مخصص (User-defined) بـ `usort()`:
+بتكتب دالة مقارنة (comparator) ترجع -1، 0، أو 1.
 
 ```php
 function cmp($a, $b) {
-    if ($a == $b) return 0;
-    return ($a < $b) ? -1 : 1;
+    return $a <=> $b; // spaceship operator
 }
-$arr = [3,2,5,6,1];
-usort($arr, "cmp");
-// [1,2,3,5,6]
+usort($numbers, 'cmp');
 ```
 
-في PHP 7+ تقدر تستخدم spaceship operator:
+## 8. إعادة ترتيب عشوائي وعكسي
+
+- `shuffle($arr)` – يخلط العناصر عشوائيًا (مفيد للعبة أو إظهار عشوائي).
+- `array_reverse($arr)` – يرجع مصفوفة جديدة بترتيب معكوس.
+
+## 9. إضافة وحذف عناصر من النهايات
+
+- `array_push($arr, $value)` – تضيف عنصر في الآخر (أو تستخدم `$arr[] = $value` مباشرة – أسرع).
+- `array_pop($arr)` – تزيل آخر عنصر وترجع قيمته.
+- `array_shift($arr)` – تزيل أول عنصر (باهظ الثمن لأنه يعيد فهرسة المصفوفة).
+- `array_unshift($arr, $value)` – تضيف في البداية.
+
+## 10. قلب المفاتيح والقيم: `array_flip()`
+
+لو عندك مصفوفة key-value، تبدل الأدوار.
 
 ```php
-usort($arr, fn($a,$b) => $a <=> $b);
+$colors = ['one' => 'red', 'two' => 'blue'];
+$flipped = array_flip($colors); // ['red' => 'one', 'blue' => 'two']
 ```
 
-### تحت الكبوت: دوال الـ sorting بتستخدم خوارزمية **Quicksort** (مع تحسينات) في Zend Engine. الـ user-defined callback بتتنادى كتير، فخليها سريعة.
+## 11. تحميل محتويات ملف في مصفوفة باستخدام `file()`
 
----
-
-## 🔧 8. Array Functions (المشهورة والسحرية)
-
-### 8.1 `array_reverse()`
+شوفناها في جزء الملفات – بترجع كل سطر كعنصر.
 
 ```php
-$reversed = array_reverse($arr);
+$lines = file("csvfile.csv");
+foreach ($lines as $record) {
+    $data = explode(",", $record);
+    // $data[0] => Name, $data[1] => Track...
+}
 ```
 
-### 8.2 `shuffle()` – عشوائي
+السلايدات تعرض مثال لعرضها في جدول HTML.
+
+## 12. التنقل في المصفوفة (Array Pointers)
+
+كل مصفوفة لها مؤشر داخلي يشير للعنصر الحالي.
+
+- `current($arr)` – العنصر الحالي.
+- `next($arr)` – يقدم المؤشر ويرجع العنصر الجديد.
+- `prev($arr)` – يرجعه للخلف.
+- `reset($arr)` – يعيد المؤشر لأول عنصر.
+- `end($arr)` – يذهب لآخر عنصر.
 
 ```php
-shuffle($deck); // يعدل الـ array نفسه
+$fruits = ['banana', 'apple', 'kiwi'];
+echo current($fruits); // banana
+next($fruits);
+echo current($fruits); // apple
+reset($fruits);
+echo current($fruits); // banana
 ```
 
-### 8.3 `array_push()`, `array_pop()`, `array_shift()`, `array_unshift()`
+## 13. `array_walk()` – تطبيق دالة على كل عنصر
 
-| الدالة | الوصف | مثال |
-|--------|-------|------|
-| `array_push($arr, $val)` | يضيف للنهاية | `$stack[] = $val` أسرع |
-| `array_pop($arr)` | يزيل من النهاية ويرجع القيمة | |
-| `array_shift($arr)` | يزيل من البداية (يعيد فهرسة keys) | مكلف O(n) |
-| `array_unshift($arr, $val)` | يضيف في البداية | أيضاً مكلف |
-
-> [!DEEP-DIVE]
-> `array_shift` بتعمل إعادة فهرسة لكل العناصر، فاستخدامه على array كبيرة بيبطئ. الأفضل استخدام `array_reverse` ثم `array_pop` لو عايز تنتهي من البداية.
-
-### 8.4 `array_flip()` – تبادل المفاتيح مع القيم
+بتغير المصفوفة (إذا مررت reference) أو بتؤدي إجراء.
 
 ```php
-$flipped = array_flip($info); // لو القيم مش unique، آخر قيمة تكسب
+function print_with_br($value, $key) {
+    echo "$key => $value<br>";
+}
+array_walk($fruits, 'print_with_br');
 ```
 
-مفيد جداً لعمل reverse lookup.
+## 14. دمج وتقطيع المصفوفات
 
-### 8.5 `array_combine($keys, $values)` – دمج مصفوفتين key-value
+- `array_merge($arr1, $arr2)` – يدمج المصفوفات. مع المفاتيح الرقمية يعيد الفهرسة. مع associative يدمج.
+
+- `array_chunk($arr, $size)` – يقسم المصفوفة لمجموعات صغيرة.
+
+```php
+$chunks = array_chunk(['a','b','c','d','e'], 2);
+// [['a','b'], ['c','d'], ['e']]
+```
+
+## 15. `array_map()` – تطبيق دالة على عناصر مصفوفات متعددة
+
+مثال السلايدات رائع: يربط بين قائمتين.
 
 ```php
 $instructors = ["Eng. Shery", "Noha", "Andrew"];
-$courses = ["Admin", "PHP", "Node"];
-$combined = array_combine($instructors, $courses);
-// ["Eng. Shery"=>"Admin", "Noha"=>"PHP", "Andrew"=>"Node"]
+$courses = ['Admin', 'PHP', 'Node'];
+$result = array_map(function($inst, $course) {
+    return "$inst teaches $course";
+}, $instructors, $courses);
 ```
 
-### 8.6 `array_filter()` – إزالة القيم الفارغة
+## 16. `array_combine()` – يدمج مصفوفة مفاتيح ومصفوفة قيم
 
 ```php
-$arr = [1,90,2,null,3,'',55,[]];
-$filtered = array_filter($arr); // يزيل null, '', [], false, 0
+$keys = ['name', 'age'];
+$values = ['Ahmed', 25];
+$combined = array_combine($keys, $values); // ['name'=>'Ahmed', 'age'=>25]
 ```
 
-### 8.7 `array_intersect_key()` – تصفية حسب مفاتيح مسموحة
+## 17. `array_filter()` – تصفية القيم
+
+يزيل أي عنصر قيمته `false` في السياق المنطقي (null, 0, '', []).
 
 ```php
-$source = ['a'=>123, 'b'=>213, 'c'=>321];
-$allowed = ['b','c'];
-$result = array_intersect_key($source, array_flip($allowed));
-// ['b'=>213, 'c'=>321]
+$input = [1, 0, 2, null, 3];
+$filtered = array_filter($input); // [0=>1, 2=>2, 4=>3]
 ```
 
-### 8.8 `count()`, `sizeof()`, `array_count_values()`
+تقدر تمرر دالة رد (callback) لتصفية مخصصة.
+
+## 18. التقاطعات: `array_intersect_key()`
+
+ترجع العناصر الموجودة في المصفوفة الأولى التي تمتلك مفاتيح موجودة أيضًا في المصفوفة الثانية.
 
 ```php
-count($arr); // عدد العناصر
-sizeof($arr); // alias
-array_count_values($arr); // يرجع array key=original value, count = عدد التكرارات
+$arr1 = ['blue' => 1, 'red' => 2, 'green' => 3];
+$arr2 = ['green' => 5, 'blue' => 6];
+$intersect = array_intersect_key($arr1, $arr2); // ['blue'=>1, 'green'=>3]
 ```
 
-### 8.9 `extract()` – تحويل array ترابطي إلى متغيرات (خطر)
+## 19. `array_count_values()` – عد تكرار القيم
 
 ```php
-$info = ["username"=>"Noha", "email"=>"nshehab@iti.gov.eg"];
-extract($info);
-echo $username; // "Noha"
+$arr = ["Ali", "Ahmed", "Ali"];
+$counts = array_count_values($arr); // ['Ali'=>2, 'Ahmed'=>1]
 ```
 
-> [!WARNING]
-> `extract` خطير لو بتستخدم data من المستخدم، لأنه يخلق متغيرات dynamic ويمكن يعمل overwrite لمتغيرات موجودة. تجنبه إلا في حالات محددة جداً مع flags مناسبة.
+## 20. تحويل مصفوفة إلى متغيرات مستقلة
 
-### 8.10 `list()` – تفكيك array إلى متغيرات
+### `extract()` (للمصفوفات الترابطية)
+
+يحول كل مفتاح إلى متغير باسم المفتاح.
 
 ```php
-$info = ['coffee', 'brown', 'caffeine'];
-list($drink, $color, $power) = $info;
-echo "$drink is $color and $power makes it special.";
+$info = ["username" => "Noha", "email" => "n@iti.com"];
+extract($info); // $username = 'Noha', $email = 'n@iti.com'
 ```
 
-في PHP 7.1+ تقدر تستخدم short syntax `[$drink, $color, $power] = $info;`
+**تحذير:** `extract` قد يكون خطيرًا إذا كان المصفوفة مصدرها مستخدم (تسبب overwrite للمتغيرات الموجودة). استخدمها بحذر.
+
+### `list()` (للمصفوفات الرقمية)
+
+يفك عناصر المصفوفة إلى متغيرات.
+
+```php
+$data = ['coffee', 'brown', 'caffeine'];
+list($drink, $color, $power) = $data; // $drink='coffee'...
+```
+
+من PHP 7.1، تقدر تستخدم `[$drink, $color, $power] = $data;`
+
+منعًا للالتباس: `list` هي `language construct` وليست دالة.
 
 ---
 
-## 📊 Visualization – Array في الذاكرة (Zend Engine HashTable)
+# 🛠️ **حل اللاب العملي (Lab 02) بطريقة احترافية**
 
-```mermaid
-graph TD
-    HT[HashTable] --> B[bucket 0]
-    HT --> B1[bucket 1 ...]
-    HT --> BN[bucket n]
-    
-    B --> K0[key]
-    B --> V0[value zval]
-    B --> P0[pointer to next]
-    
-    BN --> KN[key]
-    BN --> VN[value]
-    BN --> PN[pointer to next in collision chain]
-    
-    subgraph "Ordered list (insertion order)"
-        O1[first inserted] --> O2[second] --> O3[third]
-    end
-    
-    HT -.-> O1
-```
+**المطلوب:**
+1. إنشاء فورم HTML به حقول: firstname, lastname, email, gender.
+2. Server-side validation لهذه الحقول (لا تترك فارغة، إيميل صحيح).
+3. عند submit ناجح، يتم حفظ البيانات في ملف `customer.txt` (كل سطر يمثل سجل، مفصول بفواصل مثلاً).
+4. صفحة أخرى أو نفس الصفحة تعرض كل السجلات في جدول HTML.
+5. **Bonus:** زر Delete بجانب كل سجل، عند الضغط عليه يحذف السجل من الملف ويعيد عرض الجدول.
 
-- الـ HashTable فيها array من buckets.
-- كل bucket يحتوي على key, value, و مؤشر للعنصر التالي في حالة التصادم.
-- بالإضافة إلى قائمة doubly-linked تحافظ على ترتيب الإدخال.
+هنا هطبق الحل بطريقة آمنة ومنظمة، مع مراعاة استخدام المصفوفات والملفات.
 
----
-
-## 🧪 ميكرو-أمثلة (Production-ready snippets)
-
-### مثال 1: تحويل CSV إلى array ترابطي باستخدام first row كـ headers
-
-```php
-function csvToAssoc($filename) {
-    $handle = fopen($filename, "rb");
-    if (!$handle) return [];
-    $headers = fgetcsv($handle, 0, ",");
-    $result = [];
-    while (($row = fgetcsv($handle, 0, ",")) !== false) {
-        $result[] = array_combine($headers, $row);
-    }
-    fclose($handle);
-    return $result;
-}
-```
-
-### مثال 2: تقسيم array إلى أجزاء (chunk) لمعالجة batch
-
-```php
-$largeData = range(1, 1000);
-$chunks = array_chunk($largeData, 100);
-foreach ($chunks as $batch) {
-    processBatch($batch);
-}
-```
-
-### مثال 3: إزالة العناصر المكررة (unique)
-
-```php
-$unique = array_values(array_unique($array));
-```
-
-### مثال 4: دمج مصفوفتين مع الحفاظ على keys
-
-```php
-$merged = $array1 + $array2; // union, first wins
-$merged = array_merge($array1, $array2); // reindex numeric
-$merged = array_merge_recursive($array1, $array2); // nested for same keys
-```
-
----
-
-## 🧠 خلاصة الجزء الثاني (Arrays)
-
-- Array في PHP هي ordered map تجمع بين vector و hash table.
-- Indexed arrays تشبه C++ vector، Associative تشبه unordered_map مع ترتيب إدخال.
-- العمليات: `+` للunion، `===` مقارنة بالترتيب.
-- Sorting: `sort`, `asort`, `ksort`, `usort` مع callback.
-- وظائف قوية: `array_filter`, `array_map`, `array_reduce` (مش موجودة في السلايدات لكن مهمة).
-- `extract` خطر، `list` مفيد.
-
----
-
-## ❓ 10 أسئلة انترفيو تغطي Day02 (Files + Arrays)
-
-### أسئلة عن Files
-
-1. **"What is the difference between `fopen($file, "w")` and `fopen($file, "x")` on Ubuntu? When would you use `"x"`?"**  
-   > الإجابة: `"w"` يفتح الملف للكتابة، ويخلقه إذا لم يكن موجوداً، و**يمسح المحتوى** إذا كان موجوداً. `"x"` يحاول خلقه للكتابة، ويفشل (يرجع false) إذا كان الملف موجوداً بالفعل. يستخدم `"x"` للحماية من overwriting عن طريق الخطأ، مثلاً في create-only operations.
-
-2. **"Explain the concept of file locking with `flock()`. Why is it considered advisory? How do you implement a blocking exclusive lock?"**  
-   > الإجابة: `flock()` باستخدام `LOCK_EX` يعمل lock كتابة حصري. هو advisory لأن النظام لا يمنع العمليات الأخرى من الوصول للملف طالما لا تستخدم `flock()` بنفسها. لتنفيذ blocking exclusive lock: `flock($handle, LOCK_EX)` يحظر حتى يتحرر الـ lock. يمكن استخدام `LOCK_NB` لجعل غير blocking.
-
-3. **"You have a 2GB log file. Compare `file_get_contents()`, `fread()` with `filesize()`, and `fgets()` in a loop. Which one would you use and why?"**  
-   > الإجابة: `file_get_contents()` سيحاول تحميل 2GB في الذاكرة مما يسبب memory exhaustion. `fread()` مع `filesize()` أيضاً يستهلك ذاكرة. الأفضل هو `fgets()` في حلقة تقرأ سطراً بسطر، مما يقلل استخدام الذاكرة إلى حجم buffer صغير (عادة 8KB). أو `fread()` ب chunks ثابتة.
-
-4. **"How does PHP handle file uploads on Ubuntu? What are the relevant `php.ini` directives and Linux permissions?"**  
-   > الإجابة: (على الرغم من أن Day02 لم يذكر uploads، لكنه سؤال شائع). `upload_max_filesize`, `post_max_size`, `tmp_upload_dir`. الملفات ترفع إلى `/tmp` ثم تنقل. صلاحيات المجلد الوجهة يجب أن تكون قابلة للكتابة من user `www-data`. وأيضاً `move_uploaded_file()` تُستخدم للأمان.
-
-5. **"Write a function that reads a CSV file and returns an associative array where the first row becomes the keys."**  
-   > الإجابة: (تم تقديمها في الأمثلة أعلاه).
-
-### أسئلة عن Arrays
-
-6. **"What is the internal difference between an indexed array and an associative array in PHP? How does Zend Engine optimize packed arrays?"**  
-   > الإجابة: Indexed array إذا كانت keys من 0 متتالية، Zend تخزنها كـ packed array (C array) بدون hash table overhead. Associative array أو indexed مع وجود gaps تستخدم hash table. PHP 7+ يحسن packed arrays في الأداء واستهلاك الذاكرة.
-
-7. **"Explain the array union operator `+` vs `array_merge()`. When does `+` produce unexpected results?"**  
-   > الإجابة: `$a + $b` يضيف عناصر `$b` فقط إذا لم تكن keys الموجودة موجودة في `$a`. أما `array_merge()` فيضيف كل العناصر، ويعيد فهرسة الـ numeric keys؛ مع associative keys، القيم من `$b` تستبدل قيم `$a` إذا تكرر key. `+` قد يخفي بيانات لو key متكرر.
-
-8. **"How does `usort()` work with a comparison function? Give an example sorting a 2D array by a specific column."**  
-   > الإجابة: `usort` يقبل callback يقارن عنصرين ويرجع -1,0,1. مثال: `usort($students, fn($a,$b) => $a['score'] <=> $b['score']);`
-
-9. **"What is the difference between `array_shift()` and `array_pop()` in terms of performance on a large array?"**  
-   > الإجابة: `array_pop()` يزيل من النهاية O(1). `array_shift()` يزيل من البداية ويحتاج إلى إعادة فهرسة كل العناصر، لذا O(n). استخدام `array_shift` على array كبيرة ضار جدا.
-
-10. **"Write code that flips an associative array and handles duplicate values without losing data (e.g., keep all keys in an array)."**  
-    > الإجابة:  
-    ```php
-    $original = ['a'=>1, 'b'=>2, 'c'=>1];
-    $flipped = [];
-    foreach ($original as $key => $value) {
-        $flipped[$value][] = $key;
-    }
-    // $flipped = [1=>['a','c'], 2=>['b']]
-    ```
-
----
-
-# 📄 File 3: `PHPDay02_Labs.md`
-
-# 🛠️ حلول اللابات – Day02 (Production-Ready on Ubuntu)
-
-## 🧪 Lab 02 – نموذج مع Validation وحفظ في ملف وعرض مع حذف
-
-### المتطلبات من السلايدات (صفحة 50-51):
-
-1. **Server-side validation** للحقول: firstname, lastname, email, gender.
-2. **حفظ البيانات** في ملف `customer.txt`.
-3. **استرجاع كل السجلات** وعرضها في جدول HTML.
-4. **Bonus**: زر Delete لكل سجل، عند الضغط يُحذف السجل من الملف ومن الجدول.
-
-> [!DEEP-DIVE]
-> هنستخدم **CSV format** داخل `customer.txt` عشان نقدر نعدل ونحذف بسهولة. كل سطر يمثل record: `firstname,lastname,email,gender`.  
-> على Ubuntu، هنحط الملف في مجلد `data/` خارج الـ document root عشان الأمان، ونعطي permissions مناسبة لـ `www-data`.
-
----
-
-## 🐧 بيئة التشغيل (Ubuntu Linux)
-
-- Web server: Apache2 + PHP 8.1 FPM
-- Document root: `/var/www/html/lab02/`
-- Data directory: `/var/www/data/` (خارج الـ document root)
-- Permissions: `www-data` يملك حق القراءة والكتابة في مجلد `data`
-
-### تحضير البيئة (Run as root or sudo):
-
-```bash
-# إنشاء مجلد المشروع
-sudo mkdir -p /var/www/html/lab02
-sudo mkdir -p /var/www/data
-sudo chown -R www-data:www-data /var/www/data
-sudo chmod 755 /var/www/html/lab02
-sudo chmod 755 /var/www/data
-
-# منح المستخدم العادي صلاحية الكتابة للتعديل (للتطوير)
-sudo chown -R $USER:www-data /var/www/html/lab02
-sudo chmod 775 /var/www/html/lab02
-```
-
----
-
-## 📁 هيكل الملفات
-
+## هيكل الملفات (على أوبونتو)
 ```
 /var/www/html/lab02/
-├── form.php               (يعرض النموذج ويتعامل مع الإرسال)
-├── view.php               (يعرض الجدول مع أزرار الحذف)
-├── delete.php             (معالج الحذف)
-└── includes/
-    └── functions.php      (دوال مشتركة للقراءة والكتابة)
-
-/var/www/data/
-└── customers.txt          (ملف البيانات – ينشأ تلقائياً)
+├── index.html (أو customer_form.php)
+├── save_customer.php (لحفظ البيانات وعرض الجدول)
+├── delete_customer.php (لحذف سجل)
+└── customer.txt (يتم إنشاؤه تلقائيًا)
 ```
 
----
-
-## 📄 1. `includes/functions.php` – دوال مشتركة وآمنة
-
+### 1. نموذج الإدخال `customer_form.php`
 ```php
-<?php
-/**
- * Functions for file-based CRUD operations (Production-ready)
- */
-
-define('DATA_FILE', '/var/www/data/customers.txt');
-
-/**
- * Read all customers from CSV file
- * @return array Array of associative arrays with keys: firstname, lastname, email, gender
- */
-function getAllCustomers(): array {
-    if (!file_exists(DATA_FILE)) {
-        return [];
-    }
-    
-    $customers = [];
-    $handle = fopen(DATA_FILE, 'rb');
-    if (!$handle) {
-        return [];
-    }
-    
-    // Acquire shared lock for reading
-    if (flock($handle, LOCK_SH)) {
-        while (($row = fgetcsv($handle, 1000, ',')) !== false) {
-            if (count($row) === 4) {
-                $customers[] = [
-                    'firstname' => trim($row[0]),
-                    'lastname'  => trim($row[1]),
-                    'email'     => trim($row[2]),
-                    'gender'    => trim($row[3])
-                ];
-            }
-        }
-        flock($handle, LOCK_UN);
-    }
-    fclose($handle);
-    return $customers;
-}
-
-/**
- * Write all customers to CSV file (overwrites)
- * @param array $customers Array of associative arrays
- * @return bool Success
- */
-function writeAllCustomers(array $customers): bool {
-    $handle = fopen(DATA_FILE, 'wb');
-    if (!$handle) {
-        return false;
-    }
-    
-    // Exclusive lock for writing
-    $success = false;
-    if (flock($handle, LOCK_EX)) {
-        foreach ($customers as $cust) {
-            $row = [
-                $cust['firstname'],
-                $cust['lastname'],
-                $cust['email'],
-                $cust['gender']
-            ];
-            if (fputcsv($handle, $row) === false) {
-                flock($handle, LOCK_UN);
-                fclose($handle);
-                return false;
-            }
-        }
-        fflush($handle);
-        flock($handle, LOCK_UN);
-        $success = true;
-    }
-    fclose($handle);
-    return $success;
-}
-
-/**
- * Append a single customer to file (alternative to rewrite all)
- * Used for new records to avoid loading all data
- */
-function appendCustomer(array $customer): bool {
-    $handle = fopen(DATA_FILE, 'ab');
-    if (!$handle) {
-        return false;
-    }
-    
-    $success = false;
-    if (flock($handle, LOCK_EX)) {
-        $row = [
-            $customer['firstname'],
-            $customer['lastname'],
-            $customer['email'],
-            $customer['gender']
-        ];
-        if (fputcsv($handle, $row) !== false) {
-            fflush($handle);
-            $success = true;
-        }
-        flock($handle, LOCK_UN);
-    }
-    fclose($handle);
-    return $success;
-}
-
-/**
- * Validate form data
- * @return array Array of errors (empty if valid)
- */
-function validateCustomer($firstname, $lastname, $email, $gender): array {
-    $errors = [];
-    
-    // First name: 2-50 chars, letters, spaces, hyphens
-    if (empty($firstname) || !preg_match('/^[a-zA-Z\s\-]{2,50}$/', $firstname)) {
-        $errors[] = "First name must be 2-50 characters (letters, spaces, hyphens)";
-    }
-    
-    // Last name: same rules
-    if (empty($lastname) || !preg_match('/^[a-zA-Z\s\-]{2,50}$/', $lastname)) {
-        $errors[] = "Last name must be 2-50 characters (letters, spaces, hyphens)";
-    }
-    
-    // Email: standard validation + check format
-    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Valid email address is required";
-    }
-    
-    // Gender: must be Mr or Miss (or Male/Female – we'll use Mr/Miss as per slide)
-    if (!in_array($gender, ['Mr', 'Miss', 'Male', 'Female'])) {
-        $errors[] = "Gender must be selected (Mr/Miss or Male/Female)";
-    }
-    
-    return $errors;
-}
+<!DOCTYPE html>
+<html>
+<head><title>Customer Form</title></head>
+<body>
+    <h2>إضافة عميل جديد</h2>
+    <form method="POST" action="save_customer.php">
+        First Name: <input type="text" name="firstname" required><br>
+        Last Name: <input type="text" name="lastname" required><br>
+        Email: <input type="email" name="email" required><br>
+        Gender: 
+        <select name="gender" required>
+            <option value="">اختر</option>
+            <option>Male</option>
+            <option>Female</option>
+        </select><br>
+        <input type="submit" value="Save">
+    </form>
+    <hr>
+    <?php include 'display_customers.php'; ?>
+</body>
+</html>
 ```
 
----
-
-## 📄 2. `form.php` – عرض النموذج ومعالجته
-
+### 2. معالج الحفظ والعرض `save_customer.php`
 ```php
 <?php
-require_once 'includes/functions.php';
+session_start(); // optional for messages
 
-$success = '';
-$errors = [];
-$formData = ['firstname' => '', 'lastname' => '', 'email' => '', 'gender' => ''];
-
+// التحقق من أن الطريقة POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize input
     $firstname = trim($_POST['firstname'] ?? '');
     $lastname  = trim($_POST['lastname'] ?? '');
     $email     = trim($_POST['email'] ?? '');
-    $gender    = $_POST['gender'] ?? '';
-    
-    $formData = compact('firstname', 'lastname', 'email', 'gender');
-    
-    $errors = validateCustomer($firstname, $lastname, $email, $gender);
-    
-    if (empty($errors)) {
-        // Save to file
-        $customer = [
-            'firstname' => $firstname,
-            'lastname'  => $lastname,
-            'email'     => $email,
-            'gender'    => $gender
-        ];
-        
-        if (appendCustomer($customer)) {
-            $success = "Customer added successfully!";
-            // Clear form
-            $formData = ['firstname' => '', 'lastname' => '', 'email' => '', 'gender' => ''];
-        } else {
-            $errors[] = "Failed to save data. Check file permissions.";
+    $gender    = trim($_POST['gender'] ?? '');
+
+    // Validation
+    $errors = [];
+    if ($firstname === '') $errors[] = 'First name required';
+    if ($lastname === '') $errors[] = 'Last name required';
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Invalid email';
+    if (!in_array($gender, ['Male', 'Female'])) $errors[] = 'Invalid gender';
+
+    if (!empty($errors)) {
+        echo "<ul><li>" . implode("</li><li>", $errors) . "</li></ul>";
+        echo '<a href="customer_form.php">Back</a>';
+        exit;
+    }
+
+    // Save to file: each record as "firstname,lastname,email,gender" newline
+    $record = $firstname . ',' . $lastname . ',' . $email . ',' . $gender . PHP_EOL;
+    // use FILE_APPEND | LOCK_EX for atomic append
+    file_put_contents('customer.txt', $record, FILE_APPEND | LOCK_EX);
+    echo "<p style='color:green'>Customer saved successfully!</p>";
+}
+// بعد الحفظ أو إذا كان GET فقط، نعرض الجدول
+include 'display_customers.php';
+?>
+```
+
+### 3. عرض العملاء في جدول `display_customers.php`
+```php
+<h3>قائمة العملاء</h3>
+<table border="1" cellpadding="8">
+    <tr>
+        <th>First Name</th><th>Last Name</th><th>Email</th><th>Gender</th><th>Action</th>
+    </tr>
+<?php
+$filename = 'customer.txt';
+if (file_exists($filename) && filesize($filename) > 0) {
+    $lines = file($filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $index => $line) {
+        $fields = explode(',', $line);
+        // التأكد من عدد الحقول (قد يكون هناك أسطر تالفة)
+        if (count($fields) == 4) {
+            list($fname, $lname, $email, $gender) = $fields;
+            echo "<tr>
+                    <td>" . htmlspecialchars($fname) . "</td>
+                    <td>" . htmlspecialchars($lname) . "</td>
+                    <td>" . htmlspecialchars($email) . "</td>
+                    <td>" . htmlspecialchars($gender) . "</td>
+                    <td><a href='delete_customer.php?line=$index' onclick='return confirm(\"Are you sure?\")'>Delete</a></td>
+                  </tr>";
         }
     }
-}
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Add Customer</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: inline-block; width: 100px; }
-        input, select { padding: 5px; width: 250px; }
-        .error { color: red; margin: 10px 0; }
-        .success { color: green; margin: 10px 0; }
-        button { padding: 8px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
-        .nav { margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <h2>Add New Customer</h2>
-    
-    <?php if (!empty($errors)): ?>
-        <div class="error">
-            <?php foreach ($errors as $err): ?>
-                <p><?php echo htmlspecialchars($err); ?></p>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
-    
-    <?php if ($success): ?>
-        <div class="success"><?php echo htmlspecialchars($success); ?></div>
-    <?php endif; ?>
-    
-    <form method="POST" action="">
-        <div class="form-group">
-            <label>First Name:</label>
-            <input type="text" name="firstname" value="<?php echo htmlspecialchars($formData['firstname']); ?>" required>
-        </div>
-        <div class="form-group">
-            <label>Last Name:</label>
-            <input type="text" name="lastname" value="<?php echo htmlspecialchars($formData['lastname']); ?>" required>
-        </div>
-        <div class="form-group">
-            <label>Email:</label>
-            <input type="email" name="email" value="<?php echo htmlspecialchars($formData['email']); ?>" required>
-        </div>
-        <div class="form-group">
-            <label>Gender:</label>
-            <select name="gender" required>
-                <option value="">Select</option>
-                <option value="Mr" <?php echo $formData['gender'] === 'Mr' ? 'selected' : ''; ?>>Mr</option>
-                <option value="Miss" <?php echo $formData['gender'] === 'Miss' ? 'selected' : ''; ?>>Miss</option>
-                <option value="Male" <?php echo $formData['gender'] === 'Male' ? 'selected' : ''; ?>>Male</option>
-                <option value="Female" <?php echo $formData['gender'] === 'Female' ? 'selected' : ''; ?>>Female</option>
-            </select>
-        </div>
-        <button type="submit">Save Customer</button>
-    </form>
-    
-    <div class="nav">
-        <a href="view.php">View All Customers</a>
-    </div>
-</body>
-</html>
-```
-
----
-
-## 📄 3. `view.php` – عرض الجدول مع أزرار الحذف
-
-```php
-<?php
-require_once 'includes/functions.php';
-
-$customers = getAllCustomers();
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Customer List</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .delete-btn { background-color: #dc3545; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px; }
-        .delete-btn:hover { background-color: #c82333; }
-        .add-link { margin-bottom: 20px; display: inline-block; }
-    </style>
-</head>
-<body>
-    <h2>Customer Records</h2>
-    <a href="form.php" class="add-link">+ Add New Customer</a>
-    
-    <?php if (empty($customers)): ?>
-        <p>No customers found.</p>
-    <?php else: ?>
-        <table>
-            <thead>
-                <tr>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Email</th>
-                    <th>Gender</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($customers as $index => $cust): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($cust['firstname']); ?></td>
-                    <td><?php echo htmlspecialchars($cust['lastname']); ?></td>
-                    <td><?php echo htmlspecialchars($cust['email']); ?></td>
-                    <td><?php echo htmlspecialchars($cust['gender']); ?></td>
-                    <td>
-                        <a href="delete.php?index=<?php echo $index; ?>" 
-                           class="delete-btn" 
-                           onclick="return confirm('Are you sure you want to delete this record?');">Delete</a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
-</body>
-</html>
-```
-
----
-
-## 📄 4. `delete.php` – معالج الحذف الآمن
-
-```php
-<?php
-require_once 'includes/functions.php';
-
-// Only allow POST or GET with confirmation – we'll use GET with confirm
-if (!isset($_GET['index']) || !is_numeric($_GET['index'])) {
-    header('Location: view.php?error=invalid_request');
-    exit;
-}
-
-$index = (int)$_GET['index'];
-$customers = getAllCustomers();
-
-if ($index < 0 || $index >= count($customers)) {
-    header('Location: view.php?error=not_found');
-    exit;
-}
-
-// Remove the element at index
-array_splice($customers, $index, 1);
-
-// Write back to file
-if (writeAllCustomers($customers)) {
-    header('Location: view.php?success=deleted');
 } else {
-    header('Location: view.php?error=write_failed');
+    echo "<tr><td colspan='5'>No customers yet.</td></tr>";
 }
+?>
+</table>
+```
+
+### 4. حذف سجل `delete_customer.php`
+```php
+<?php
+$filename = 'customer.txt';
+if (!file_exists($filename)) {
+    header('Location: customer_form.php');
+    exit;
+}
+
+// قراءة كل الأسطر
+$lines = file($filename, FILE_IGNORE_NEW_LINES);
+$lineToDelete = isset($_GET['line']) ? (int)$_GET['line'] : -1;
+
+if ($lineToDelete >= 0 && $lineToDelete < count($lines)) {
+    unset($lines[$lineToDelete]);   // إزالة السطر
+    // إعادة كتابة الملف بدون السطر المحذوف
+    $newContent = implode(PHP_EOL, $lines);
+    // إضافة سطر جديد في النهاية إذا كان المحتوى غير فارغ
+    file_put_contents($filename, $newContent . PHP_EOL, LOCK_EX);
+}
+
+// إعادة التوجيه إلى الصفحة الرئيسية لتحديث الجدول
+header('Location: customer_form.php');
 exit;
 ```
 
+### ملاحظات إضافية على الحل:
+
+- استخدمت `file_put_contents` مع `FILE_APPEND | LOCK_EX` عشان الكتابة الذرية. ده بيفتح الملف، يقفله، ويكتب.
+- لعرض الجدول، استخدمت `file()` لتحميل كل السطور في مصفوفة، ثم `explode` لكل سطر. هذا مناسب لعدد سجلات صغير (لابات تعليمية). في الإنتاج لو الملف كبير، الأفضل تقرا باستخدام `fgets` لكن هنا بنفهم المصفوفات.
+- زر الحذف يرسل رقم السطر (index). **ملاحظة أمنية**: أي مستخدم ممكن يعدل رقم السطر في الـ URL ويحذف أي سطر. في تطبيق حقيقي، لازم تستخدم معرف فريد (UUID) لكل عميل، أو تزود التحقق من الصلاحيات. لكن للاب، مقبول.
+- استخدمت `htmlspecialchars` عند العرض لمنع XSS.
+- كل العمليات بتستخدم `LOCK_EX` أثناء الكتابة لتجنب التلف في حالة concurrent requests (نادرة لكن جيدة).
+
 ---
 
-## 🔐 إعدادات الأمان على Ubuntu (Production)
-
-### 1. منع الوصول المباشر إلى `includes/functions.php`
-
-ضع ملف `.htaccess` داخل مجلد `includes`:
-
-```apache
-# /var/www/html/lab02/includes/.htaccess
-Require all denied
-```
-
-أو استخدم `touch includes/.htaccess` وأضف المحتوى.
-
-### 2. تأمين ملف البيانات
+## 🎯 **تجربة السيناريو على أوبونتو حقيقة:**
 
 ```bash
-sudo chown www-data:www-data /var/www/data/customers.txt
-sudo chmod 640 /var/www/data/customers.txt
+# إنشاء المجلد
+sudo mkdir -p /var/www/html/lab02
+sudo chown -R www-data:www-data /var/www/html/lab02
+# إنشاء الملفات أعلاه باستخدام nano أو vim
+sudo nano /var/www/html/lab02/customer_form.php
+# ثم save_customer.php, display_customers.php, delete_customer.php
+# ثم افتح المتصفح: http://localhost/lab02/customer_form.php
 ```
 
-### 3. منع listing directories في Apache
+---
 
-في `/etc/apache2/sites-available/000-default.conf` أو ملف الـ vhost:
+## 🧠 **تحت الكبوت: المصفوفات في PHP** (توسعة معرفية)
 
-```apache
-<Directory /var/www/html/lab02>
-    Options -Indexes
-    AllowOverride All
-</Directory>
-```
+المصفوفة في PHP في الحقيقة هي **Hash Table** (جدول هاش) مع قائمة مرتبطة مزدوجة للحفاظ على الترتيب. كل عنصر هو `Bucket` يحتوي على المفتاح (key) وقيمته (value) ومؤشرين للعنصر التالي والسابق.
 
-ثم `sudo systemctl restart apache2`
+هذا الترتيب جعل PHP تستطيع أن تدعم المصفوفات الترابطية (أي مفتاح) مع الحفاظ على ترتيب الإدراج.
 
-### 4. حماية من CSRF (اختياري لكن مهم)
+**لماذا `foreach` سريع جدًا؟** لأنه يمشي على القائمة المرتبطة الداخلية مباشرة، ولا يحتاج لحساب الهاش.
 
-في `form.php` أضف token:
+**تعقيد العمليات:**
+- الوصول `$arr[$key]` – O(1) في المتوسط (بفضل الهاش).
+- الإضافة `$arr[] = $value` – O(1).
+- `array_shift` – O(n) لأنها تعيد فهرسة المفاتيح الرقمية.
+- `in_array` – O(n) للتفتيش الخطي بينما `array_key_exists` O(1).
+
+---
+
+## ✨ **ختام اليوم الثاني**
+
+النهاردة تعلمت:
+- **فتح الملفات** بـ `fopen` وأنماطها.
+- **القراءة** بـ `fread`, `fgets`, `fgetcsv` والقراءة بخطوة واحدة بـ `file_get_contents()`.
+- **الكتابة** بـ `fwrite` و `file_put_contents`.
+- **القفل** بـ `flock` للحماية من التزامن.
+- **المصفوفات** الرقمية والترابطية، وكل دوالها السحرية: `sort`, `asort`, `array_map`, `array_filter`, `extract`, `list` وغيرها.
+- **حل اللاب** بتطبيق عملي يجمع كل المفاهيم.
+
+إنت دلوقتي قادر تخزن بيانات الفورم في ملف نصي، وتسترجعها وتعرضها في جدول، وتحذف سجلات. ده أساسي لأي مشروع صغير.
+
+في **اليوم الثالث** هنبدأ نغوص في **الدوال** (Functions) و**النطاقات** بشكل أعمق، وهنلمس **المكتبات** (Require / Include) و**التعامل مع الأخطاء**.
+
+جهز نفسك.. وعايز تقولي "أفتح الباب الثالث" لما تكون جاهز. وإلى ذلك الحين، جرب الكود، غيّر فيه، وكسره واصلحه. دي الطريقة الوحيدة إنك تبقى أسطورة PHP.
+
+مع خالص تحياتي،  
+**المهندس القصصي – تحت الكبوت**  
+ومتنساش تشكر الأستاذة **Noha Shehab** على إعداد المحتوى الأصلي. 😎🐘
 
 ```php
-session_start();
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+// رمز اليوم: الاستمرارية
+while ($you->isLearning()) {
+    $you->practice()->files();
+    $you->master()->arrays();
+    $you->build()->lab02();
 }
-// في النموذج: <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-// و check عند POST
 ```
-
----
-
-## 🧪 اختبار التشغيل
-
-1. افتح المتصفح: `http://localhost/lab02/form.php`
-2. أدخل بيانات صحيحة (مثال: `John`, `Doe`, `john@example.com`, `Mr`)
-3. احفظ – ستظهر رسالة نجاح.
-4. اذهب إلى `view.php` – ستجد الجدول مع البيانات.
-5. اضغط Delete – ستختفي من الملف والجدول.
-
-### اختبار التحقق (Validation):
-
-- جرب إدخال firstname بأرقام → خطأ.
-- إيميل غير صحيح → خطأ.
-- ترك حقل فارغ → خطأ.
-
----
-
-## 🧠 أفكار للتوسع (لو عايز تتعمق)
-
-- استخدام `SplFileObject` بدلاً من `fopen` (OOP approach).
-- إضافة تعديل (Edit) لكل سجل.
-- البحث والفلترة.
-- Pagination للجدول لو فيه مئات السجلات.
-- استخدام JSON بدلاً من CSV.
-
----
-
-> **هنـدسة:** اللاب جاهز للإنتاج على Ubuntu مع validation وحذف حقيقي من الملف.  
-> أي ملاحظات أو تعديلات، أنا تحت أمرك.  
-> استلمت الـ Day02 كاملاً بجزئيه واللاب. استعد للـ Day03 😎

@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "php/PHP Day01.md",
+                "file": "php/PHP Day02.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "PHP Day01"
+              "title": "PHP Day02"
             }
           }
         ],
@@ -93,7 +93,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -252,11 +253,11 @@
   },
   "active": "feff3cc2ddd5b864",
   "lastOpenFiles": [
+    "php/PHP Day01.md",
+    "php/PHP Day02.md",
     "php/PHP-Day02-Notes.md",
     "php/PHP-Day03-Notes.md",
-    "php/PHP Day02.md",
     "Untitled 17.md",
-    "php/PHP Day01.md",
     "php/PHP-1.md",
     "Aws practitioner/07_ Global Infrastructure +  Global Applications.md",
     "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
