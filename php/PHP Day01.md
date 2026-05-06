@@ -1006,6 +1006,253 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 تذكر دائمًا: PHP هتموت؟ لأ، PHP لسة بتدفع رزق ناس كتير جدًا، وWordPress وLaravel وSymfony مبنيين عليها، وفيس بوك كان معتمد عليها في البداية.
 
+هلا والله يا هندسة.. جبت الكوباية التانية؟ يلا بينا نكمل الحكاية من حيث ما وقفنا.
+
+دلوقتي إحنا فاهمين إن PHP لغة server-side، وفاهمين الرحلة بتاعة الفايل من الكيبورد لحد الشاشة، وعرفنا ننشيء متغيرات ونستقبل فورم ونطبع بيانات. لكن لسة في حاجات عميقة جدًا محتاجين نغوص فيها عشان نقدر نقول "أنا فاهم PHP".
+
+---
+
+## 🔁 24. تكملة: معاملات المقارنة المتقدمة والـ Ternary Operator (مش موجود في السلايدات لكن أساسي)
+
+السلايدات ذكرت المعاملات الأساسية، بس أنا كـ راوي محترف لازم أضيف الحاجات اللي هتخليك تشتغل زي المحترفين.
+
+### 24.1 Ternary Operator `? :`
+
+ده اختصار لـ `if-else` في تعبير واحد.
+
+```php
+$age = 20;
+$status = ($age >= 18) ? "Adult" : "Minor";
+echo $status; // Adult
 ```
 
-[الرحلة لسه مخلصتش.. قولي "كمل الحكاية" عشان أطبعلك باقي الفايل بدون ما أقطع التسلسل]
+**تحت الكبوت:** الـ ternary operator بيتم تحويله بواسطة Zend Engine إلى opcode `ZEND_JMP` مع شرط. بيفيد في الكود القصير.
+
+### 24.2 Null Coalescing Operator `??` (PHP 7+)
+
+لو المتغير موجود ومش null، استخدمه، وإلا استخدم البديل.
+
+```php
+$name = $_GET['name'] ?? 'Guest';
+// يعني لو $_GET['name'] مش موجود، خلي $name = 'Guest'
+```
+
+قبل PHP 7 كنت هتعمل:
+```php
+$name = isset($_GET['name']) ? $_GET['name'] : 'Guest';
+```
+
+`??` أسرع وأوضح.
+
+### 24.3 Nullsafe Operator `?->` (PHP 8)
+
+لما تشتغل مع objects (وهنوصلها قريب)، ده بيحميك من error لو الكائن null.
+
+```php
+$user = null;
+$city = $user?->address?->city ?? 'Unknown';
+```
+
+مش هنعمق فيه دلوقتي، لكن خلينا عارفين إنه موجود.
+
+---
+
+## 🧪 25. فهم الـ Superglobals بالتفصيل (عشان مفيش حاجة أهم)
+
+السلايدات ذكرتهم بس سريعًا. خليني أشرح كل واحد مع سيناريو واقعي.
+
+### `$_SERVER`
+مصفوفة فيها بيانات عن السيرفر والطلب.
+
+```php
+echo $_SERVER['REQUEST_METHOD']; // GET or POST
+echo $_SERVER['HTTP_USER_AGENT']; // المتصفح
+echo $_SERVER['REMOTE_ADDR']; // عنوان IP الزائر
+echo $_SERVER['SCRIPT_FILENAME']; // المسار الكامل للملف الحالي
+```
+
+### `$_GET` و `$_POST` و `$_REQUEST`
+- `$_GET`: البيانات تظهر في الـ URL (مثلاً `page.php?id=5`). تستخدم للقراءة فقط، وليست آمنة للبيانات الحساسة.
+- `$_POST`: البيانات تنتقل في body الطلب، لا تظهر في URL، تستخدم للإرسال (تسجيل دخول، تعليقات).
+- `$_REQUEST`: تجمع الـ GET و POST و COOKIE. **ملحوظة:** ممكن تسبب تضارب، الأفضل تختار النوع المناسب.
+
+### `$_COOKIE`
+الكوكيز اللي المتصفح بعتها للسيرفر. متنساش إنها بتتبعت مع كل طلب.
+
+```php
+setcookie('user', 'Noha', time()+3600); // يرسل كوكيز للمتصفح
+$user = $_COOKIE['user'] ?? '';
+```
+
+### `$_SESSION`
+بتخزن بيانات على السيرفر نفسه، وتبعت بس session id في كوكيز للمتصفح.
+
+```php
+session_start();
+$_SESSION['user_id'] = 5;
+```
+
+بعد كده تقدر ترجع البيانات في أي صفحة تانية بعد `session_start()`.
+
+### `$_FILES`
+لرفع الملفات.
+
+```php
+$uploaded_file = $_FILES['myfile']['tmp_name'];
+move_uploaded_file($uploaded_file, '/uploads/'.$_FILES['myfile']['name']);
+```
+
+---
+
+## 🧠 26. النوع Resource – المقبض السري
+
+نوع `resource` هو مؤشر لموارد خارجية لا يمكن تمثيلها كقيمة PHP عادية. مثال: فتح ملف، اتصال قاعدة بيانات، صورة.
+
+```php
+$file = fopen('data.txt', 'r'); // $file هو resource
+echo gettype($file); // resource
+fclose($file);
+```
+
+الـ resource يتحرر تلقائيًا بعد انتهاء السكربت، لكن من الأفضل إغلاقه يدويًا لتوفير الذاكرة.
+
+---
+
+## 🔁 27. تكملة عامة: المتغيرات الثابتة (Static Variables) في سياق متقدم
+
+التكملة: المتغير الثابت لا يقتصر فقط على العدادات. تقدر تخزن أي حاجة تحتاج تحتفظ بقيمتها بين استدعاءات الدالة، مثل اتصال بقاعدة بيانات نستخدمه كـ singleton.
+
+```php
+function getDB() {
+    static $connection = null;
+    if ($connection === null) {
+        $connection = new PDO('mysql:...');
+    }
+    return $connection;
+}
+```
+
+---
+
+## 🔄 28. الـ Include و Require – (لم تذكر في السلايدات لكنها حجر الأساس)
+
+رغم إن السلايدات ما ذكرتهمش، لكن أي مشروع PHP محترم بيستخدمهم. أنت محتاج تقسم الكود على عدة ملفات.
+
+- `include 'file.php';` لو الملف مش موجود، يطلع warning ويكمل السكربت.
+- `require 'file.php';` لو مش موجود، يطلع fatal error ويوقف السكربت.
+- `include_once` و `require_once` بيضمنوا إن الملف يتضمن مرة واحدة فقط (مفيد للمكتبات).
+
+```php
+// config.php
+define('DB_HOST', 'localhost');
+
+// index.php
+require_once 'config.php';
+echo DB_HOST;
+```
+
+**تحت الكبوت:** الـ include بيتم تنفيذه في زمن التنفيذ (runtime) داخل نطاق الـ function الحالي لو اتضمن جوه function. Zend Engine بيفتح الملف ويحول محتواه لـ opcodes ويدمجه في التنفيذ.
+
+---
+
+## 🧪 29. حل اللاب العملي (Lab 01) – رؤية معمقة
+
+أنا حليت اللاب بطريقة بسيطة، لكن دعنا نضيف عليها تغليف بقواعد أمان حقيقية عشان تكون جاهز للإنتاج.
+
+### improved `process.php` مع حماية:
+
+```php
+<?php
+declare(strict_types=1); // يفرض types صارمة في الدوال (لسه مشروحة)
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Method Not Allowed');
+}
+
+// التطهير والتحقق
+$name = trim($_POST['username'] ?? '');
+if ($name === '') {
+    die('Name is required');
+}
+$password = $_POST['pass'] ?? '';
+if (strlen($password) < 4) {
+    die('Weak password');
+}
+$email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
+if (!$email) {
+    $email = 'No valid email provided';
+}
+
+// الآن اطبعها بأمان ضد XSS
+?>
+<!DOCTYPE html>
+<html>
+<head><title>User Data</title></head>
+<body>
+    <h1>Welcome, <?= htmlspecialchars($name) ?>!</h1>
+    <p>Email: <?= htmlspecialchars($email) ?></p>
+    <p>Password length: <?= strlen($password) ?> characters (stored securely in real app)</p>
+</body>
+</html>
+```
+
+**ملاحظات أمنية:**
+- `htmlspecialchars()` بتمنع حقن HTML (XSS).
+- `filter_input` بتنقي البريد الإلكتروني.
+- أبدًا متخزنش كلمة المرور نص عادي؛ استخدم `password_hash()`.
+
+---
+
+## 🧭 30. المسار الكامل للمبتدئ: الخلاصة النهائية لليوم الأول
+
+تعالا نرتب أفكارك:
+
+1. **إيه PHP؟** لغة سيرفر سايد، حرة، مفتوحة المصدر، بتتنفذ بواسطة Zend Engine.
+2. **إزاي تشتغل؟** تنصب XAMPP أو LAMP، تفتح localhost، تكتب كود جوه `<?php ?>`.
+3. **المتغيرات:** بتبدأ بـ `$`، case-sensitive، loosely typed.
+4. **النطاقات:** global، local، static، parameter, superglobal.
+5. **الثوابت:** بتتعرف بـ `define()` أو `const`، مفيش دولار.
+6. **الإدخال من المستخدم:** عبر `$_GET` و `$_POST`.
+7. **التحكم في التدفق:** if, switch, for, foreach, while, do-while.
+8. **المعاملات:** +, -, *, /, %, ., =, ==, ===, &&, ||, !, ??, <=>.
+9. **دوال المتغيرات:** `isset()`, `unset()`, `empty()`, `gettype()`, `settype()`.
+10. **أساسيات الأمان:** `htmlspecialchars()`, `filter_input`, لا تثق في أي إدخال.
+
+---
+
+## 📚 المصادر والأدوات اللي محتاجها بعد اليوم
+
+- `php.net/manual` – المرجع الرسمي (اقرأ عن كل دالة قبل ما تستخدمها).
+- Xdebug – أداة debugging عظيمة.
+- PHP_CodeSniffer – لكتابة كود نظيف.
+- Composer – مدير حزم PHP (ليهنأ بيه قريب).
+
+---
+
+## ✨ كلمة أخيرة من الراوي
+
+انت النهارده أخدت الخطوة الأولى في عالم الـ PHP. مش مجرد "عرفت syntax" لأ.. أنت عرفت إيه بيحصل جوه السيرفر، عرفت الـ Zend Engine بيزفر كده إزاي، وعرفت ليه `localhost/info.php` بيعرض كل الأسرار.
+
+تذكر: PHP مش قديمة ولا ميتة. هي مثل النيل، قديم لكنه يجري ومتجدد. كل يوم فيه تحديثات وإصدارات جديدة ومكتبات أقوى. أنت بقى ليك مكان في وادي الـ PHP يا معلم.
+
+لو عايزني أفتحلك اليوم الثاني بتاع الدوال والمصفوفات والـ OOP، قولي "إفتح الباب". وإلى ذلك الحين، جرب تكتب كود كتير، غير فيه، اغلط وتعلم.
+
+السلايد بتاعة النهاردة اتعملت بمساعدة الأستاذة **Noha Shehab**، اللي بتشجعنا نحكي القصص التقنية دي. شكرًا لها، ولك يا صديقي على طول البال في القراية.
+
+**وبكده يختتم اليوم الأول من حكاية PHP تحت الكبوت.**
+
+```php
+<?php
+// رمز اليوم: استمرارية
+while ($alive) {
+    $you->learn();
+    $you->practice();
+    $you->becomeBetter();
+}
+?>
+```
+
+يلا بينا ننام على معلومة دلع 😴💤. الليلة جاية نكمل بقى مع المصفوفات والدوال، ونبدأ نلمس الـ Object-Oriented.
+
+**أطلبوا الخير، وكملوا الحكاية لما تشتهوا.** سلام.
