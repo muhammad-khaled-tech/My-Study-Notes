@@ -35,8 +35,7 @@
               "title": "Untitled 19"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -93,7 +92,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -250,8 +250,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "233667f44a95da2d",
+  "active": "1040297d1e8965ae",
   "lastOpenFiles": [
+    "Aws practitioner/aws_domain1_cloud_concepts.md",
+    "Aws practitioner/Unconfirmed 280331.crdownload",
     "Untitled 19.md",
     "php/PHP Day02.md",
     "php/PHP Day01.md",
@@ -285,10 +287,8 @@
     "php/PHP-2.md",
     "Untitled 16.md",
     "Untitled 8.md",
-    "backendproject/Sprint_01_Foundation.md",
     "python/projects/Unconfirmed 22095.crdownload",
     "python/projects/Unconfirmed 785195.crdownload",
-    "python/projects/Unconfirmed 169256.crdownload",
     "Pasted image 20260224214557.png",
     "Aws practitioner/Notes/image-14.png",
     "Aws practitioner/Notes/image-13.png",
