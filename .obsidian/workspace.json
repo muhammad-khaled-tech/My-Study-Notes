@@ -63,8 +63,7 @@
               "title": "Untitled 20"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "vertical"
@@ -121,7 +120,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -278,10 +278,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "ec8aa99f5a9eec74",
+  "active": "1040297d1e8965ae",
   "lastOpenFiles": [
-    "Aws practitioner/03_EC2.md",
     "Untitled 20.md",
+    "Aws practitioner/03_EC2.md",
     "Aws practitioner/02_IAM.md",
     "Aws practitioner/01_what is cloud computing?.md",
     "Aws practitioner/Untitled.md",
