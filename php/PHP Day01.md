@@ -763,13 +763,13 @@ function getUsername() {
 ```
 جدول الـ Scope:
 ┌──────────────────┬───────────────────┬─────────────────┐
-│  النوع           │  داخل Function   │  خارج Function  │
+│  النوع   │            داخل Function  │  خارج Function  │
 ├──────────────────┼───────────────────┼─────────────────┤
-│  Local Variable  │  ✅ Visible       │  ❌ Not visible  │
-│  Global Variable │  ❌ (بدون global) │  ✅ Visible      │
-│  Static Variable │  ✅ Visible       │  ❌ Not visible  │
-│  Constant        │  ✅ Visible       │  ✅ Visible      │
-│  SuperGlobal     │  ✅ Visible       │  ✅ Visible      │
+│  Local Variable  │  ✅ Visible       │  ❌ Not visible │
+│  Global Variable │  ❌ (بدون global) │  ✅ Visible     │
+│  Static Variable │  ✅ Visible       │  ❌ Not visible │
+│  Constant        │  ✅ Visible       │  ✅ Visible     │
+│  SuperGlobal     │  ✅ Visible       │  ✅ Visible     │
 └──────────────────┴───────────────────┴─────────────────┘
 ```
 
