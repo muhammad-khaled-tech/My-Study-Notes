@@ -496,7 +496,7 @@ echo date('H:i , jS F Y');
 <script language="php"> echo "Hello!"; </script>
 
 // 4. ASP Style ← محتاج asp_tags في php.ini — منسوخ خالص
-<% echo "Hello!"; %>
+ <% echo "Hello!"; %>
 ```
 
 **ليه XML Style هي المعيار؟**
