@@ -85,7 +85,8 @@
     "python/projects/00-CrowdFund-Master-Revision.md": "rtl",
     "Aws practitioner/07_ Global Infrastructure +  Global Applications.md": "rtl",
     "php/PHP Day01.md": "rtl",
-    "php/PHP Day02.md": "rtl"
+    "php/PHP Day02.md": "rtl",
+    "php/PHP_Interview_Questions_Obsidian.md": "ltr"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
