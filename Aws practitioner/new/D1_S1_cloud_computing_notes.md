@@ -183,16 +183,16 @@ AWS فيها **3 محاور تسعير** بس:
 كل Region فيها **عادةً 3 AZs** (الحد الأدنى 3، الأقصى 6). كل AZ هي Data Center أو أكتر معزولة عن غيرها. لو حريق في AZ واحدة — الـ AZs التانية مش بتتأثر. بيتوصلوا ببعض بـ High Bandwidth, Ultra-Low Latency network.
 
 ```
-┌─────────────────────────── AWS Region: ap-southeast-2 (Sydney) ──┐
-│                                                                    │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐            │
-│  │  ap-seast-2a │  │  ap-seast-2b │  │  ap-seast-2c │            │
-│  │  (AZ 1)      │  │  (AZ 2)      │  │  (AZ 3)      │            │
-│  │  Data Center │  │  Data Center │  │  Data Center │            │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘            │
-│         └──────────────────┴──────────────────┘                   │
-│              High-speed private fiber connection                   │
-└────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────── AWS Region: ap-southeast-2 (Sydney) ────────────────┐
+│                                                                                │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                          │
+│  │  ap-seast-2a │  │  ap-seast-2b │  │  ap-seast-2c │                          │
+│  │  (AZ 1)      │  │  (AZ 2)      │  │  (AZ 3)      │                          │
+│  │  Data Center │  │  Data Center │  │  Data Center │                          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                          │
+│         └──────────────────┴──────────────────┘                                │
+│              High-speed private fiber connection                               │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### الـ Edge Locations (Points of Presence)
@@ -224,14 +224,14 @@ AWS عندها **+400 Edge Location** في أكتر من 90 مدينة في 40+ 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    YOU (الكلياتن)                       │
-│        Security IN the Cloud (الأمان داخل الـ Cloud)    │
-│  - Data Encryption                                       │
+│        Security IN the Cloud (الأمان داخل الـ Cloud)     │
+│  - Data Encryption                                      │
 │  - IAM Users & Permissions                              │
 │  - Network Configuration (Security Groups)              │
-│  - Operating System Patches (لو بتستخدم EC2)           │
+│  - Operating System Patches (لو بتستخدم EC2)            │
 ├─────────────────────────────────────────────────────────┤
 │                      AWS                                │
-│        Security OF the Cloud (الأمان الـ Cloud نفسه)   │
+│        Security OF the Cloud (الأمان الـ Cloud نفسه)     │
 │  - Physical Data Centers                                │
 │  - Hardware & Networking                                │
 │  - Hypervisor & Virtualization Layer                    │
