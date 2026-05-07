@@ -375,7 +375,7 @@ LAMP Stack:
 │  L = Linux      → نظام التشغيل              │
 │  A = Apache     → Web Server                │
 │  M = MySQL      → Database                  │
-│  P = PHP        → Server-Side Language       │
+│  P = PHP        → Server-Side Language      │
 └─────────────────────────────────────────────┘
 
 WAMP = Windows + Apache + MySQL + PHP
