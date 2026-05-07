@@ -653,15 +653,15 @@ foreach ($fields as $field) {
 ```
 PHP Variable Scope:
 ┌─────────────────────────────────────────┐
-│            الـ Script (الشارع العام)     │
+│            الـ Script (الشارع العام)    │
 │                                         │
-│  $x = 5;  ← Global Scope               │
+│  $x = 5;  ← Global Scope                │
 │                                         │
 │  ┌───────────────────────────────────┐  │
 │  │         function myFunc()         │  │
-│  │   ← Local Scope                  │  │
-│  │   $y = 10;  ← Local Variable     │  │
-│  │   $x مش موجودة هنا بدون global!  │  │
+│  │   ← Local Scope                   │  │
+│  │   $y = 10;  ← Local Variable      │  │
+│  │   $x مش موجودة هنا بدون global!   │  │
 │  └───────────────────────────────────┘  │
 └─────────────────────────────────────────┘
 ```
