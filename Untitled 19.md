@@ -33,10 +33,12 @@ For EACH service, always mention:
 - Shared Responsibility (AWS مسؤول عن إيه؟ أنت مسؤول عن إيه؟)
 
 ## 📊 MANDATORY Sections for each Domain:
-1. Services Mindmap (Mermaid diagram)
-2. Comparison Tables for similar services
-3. Interview/Exam Checkpoint (Q&A format)
-4. "زتونة الامتحان" — أهم 5 نقط هتيجي في الامتحان من الـ Domain ده
+1. Services Mindmap (Mermaid diagram) with <br/> as line break instead of \n
+2. for block of codes : all the content should be in English even the comments 
+3. various mermaid diagrams for explanations
+4. Comparison Tables for similar services
+5. Interview/Exam Checkpoint (Q&A format)
+6. "زتونة الامتحان" — أهم 5 نقط هتيجي في الامتحان من الـ Domain ده
 
 ## ⚠️ Output Constraint
 - Write extremely detailed and rich explanation
