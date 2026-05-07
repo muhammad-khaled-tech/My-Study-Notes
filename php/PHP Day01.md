@@ -437,8 +437,8 @@ Client Side (Browser):              Server Side (Server):
 ┌──────────────────┐                ┌──────────────────┐
 │  HTML            │                │  PHP Code        │
 │  CSS             │     ←──────    │  بيتنفذ هنا      │
-│  JavaScript      │   HTML only    │  والـ Browser     │
-│  (هنا بيتنفذوا) │                │  بيشوف HTML فقط  │
+│  JavaScript      │   HTML only    │  والـ Browser    │
+│  (هنا بيتنفذوا)  │                │  بيشوف HTML فقط  │
 └──────────────────┘                └──────────────────┘
 ```
 
