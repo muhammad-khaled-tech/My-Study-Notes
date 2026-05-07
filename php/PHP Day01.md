@@ -341,16 +341,16 @@ timeline
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│                   ليه PHP؟                              │
+│                   ليه PHP؟                             │
 │                                                        │
-│  1. سهلة التعلم           → Syntax بسيط ومنطقي        │
-│  2. مجانية تماماً         → Open Source — php.net      │
+│  1. سهلة التعلم           → Syntax بسيط ومنطقي         │
+│  2. مجانية تماماً         → Open Source — php.net       │
 │  3. Cross-Platform        → Linux, Windows, Mac        │
-│  4. بتشتغل مع كل Server  → Apache, Nginx, IIS         │
+│  4. بتشتغل مع كل Server  → Apache, Nginx, IIS          │
 │  5. بتدعم كل DB           → MySQL, PostgreSQL, SQLite  │
 │  6. OOP Support           → Classes, Interfaces, Traits│
-│  7. Community ضخمة       → توثيق ودعم هائل            │
-│  8. تشغّل أكبر المواقع    → WordPress, Facebook (زمان)│
+│  7. Community ضخمة       → توثيق ودعم هائل             │
+│  8. تشغّل أكبر المواقع    → WordPress, Facebook (زمان)  │
 └────────────────────────────────────────────────────────┘
 ```
 
