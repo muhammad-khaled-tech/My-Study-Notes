@@ -86,7 +86,8 @@
     "Aws practitioner/07_ Global Infrastructure +  Global Applications.md": "rtl",
     "php/PHP Day01.md": "rtl",
     "php/PHP Day02.md": "rtl",
-    "php/PHP_Interview_Questions_Obsidian.md": "ltr"
+    "php/PHP_Interview_Questions_Obsidian.md": "ltr",
+    "Aws practitioner/aws_domain1_cloud_concepts.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
