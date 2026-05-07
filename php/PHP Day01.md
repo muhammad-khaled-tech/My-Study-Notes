@@ -1243,12 +1243,12 @@ do {
 while vs do-while:
 ┌──────────────────────────────────────────┐
 │  while:                                  │
-│  CHECK condition → إذا true → EXECUTE   │
-│  (ممكن مش ينفذ خالص لو condition false) │
+│  CHECK condition → إذا true → EXECUTE    │
+│  (ممكن مش ينفذ خالص لو condition false)  │
 │                                          │
-│  do-while:                              │
-│  EXECUTE → CHECK condition              │
-│  (بينفذ مرة واحدة على الأقل)           │
+│  do-while:                               │
+│  EXECUTE → CHECK condition               │
+│  (بينفذ مرة واحدة على الأقل)              │
 └──────────────────────────────────────────┘
 ```
 
