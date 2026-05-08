@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/new/AWS_CLF-C02_Domain1_EliteGuide.md",
+                "file": "php/PHP Day03.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "AWS_CLF-C02_Domain1_EliteGuide"
+              "title": "PHP Day03"
             }
           },
           {
@@ -265,8 +265,8 @@
   },
   "active": "1040297d1e8965ae",
   "lastOpenFiles": [
-    "php/PHP Day02.md",
     "Aws practitioner/new/AWS_CLF-C02_Domain1_EliteGuide.md",
+    "php/PHP Day02.md",
     "Aws practitioner/new/Unconfirmed 333434.crdownload",
     "Aws practitioner/new/aws_ec2_storage_notes.md",
     "Aws practitioner/new/Unconfirmed 68129.crdownload",
