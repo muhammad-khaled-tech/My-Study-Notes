@@ -24,9 +24,13 @@
 
 في 2002، داخل شركة **Amazon** نفسها، كانت في مشكلة مشابهة. فرق الـ Engineering المختلفة كل واحدة بتبني الـ Infrastructure بتاعتها من الصفر. Jeff Bezos وفريقه لاحظوا إن الـ Infrastructure دي هي في حد ذاتها "Core Competency" — يعني حاجة يمكن يبنوها كويس ويبيعوها للناس التانية.
 
-في **2006**، أطلقوا للعالم ثلاث خدمات غيّرت وجه التقنية: **S3** للتخزين، **EC2** للسيرفرات، و**SQS** للـ Messaging. وكان ده الـ Launch الحقيقي لـ **Amazon Web Services (AWS)**.
+في **2006**، أطلقوا للعالم ثلاث خدمات غيّرت وجه موضع السيرفرات ده وهما :
+**S3** للتخزين،
+**EC2** للسيرفرات،
+و**SQS** للـ Messaging. 
+وكان ده الـ Launch الحقيقي لـ **Amazon Web Services (AWS)**.
 
-التعريف الرسمي اللي لازم تحفظه:
+التعريف الرسمي اللي لازم تحفظه بجد عن ظهر قلب عشان الامتحان :
 
 > **Cloud Computing هو الـ On-Demand Delivery لـ Compute Power، Database Storage، Applications، وغيرها من الـ IT Resources — عبر Platform بنموذج Pay-as-you-go.**
 
