@@ -34,6 +34,7 @@
 
 > **Cloud Computing هو الـ On-Demand Delivery لـ Compute Power، Database Storage، Applications، وغيرها من الـ IT Resources — عبر Platform بنموذج Pay-as-you-go.**
 
+![[Pasted image 20260514021047.png]]
 كل كلمة في التعريف ده بتيجي في الـ Exam. 
 **On-Demand** يعني متاح فوراً عند الطلب من غير ما تكلم حد أو تستنى. **Pay-as-you-go** يعني بتدفع بس على اللي استخدمته — زي فاتورة الكهرباء بالظبط. و**AWS owns and maintains the hardware** يعني هي اللي بتدير الأجهزة الفيزيائية، إنت مش شايفها ومش متعب نفسك بيها.
 
