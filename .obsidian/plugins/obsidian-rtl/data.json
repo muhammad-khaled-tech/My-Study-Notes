@@ -94,7 +94,8 @@
     "Aws practitioner/new/AWS_CLF-C02_Domain1_EliteGuide.md": "rtl",
     "php/PHP Day04.md": "rtl",
     "Aws practitioner/new/domain1_cloud_concepts_elite_notes.md": "rtl",
-    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md": "rtl"
+    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md": "rtl",
+    "Aws practitioner/new/domain2_security_part1.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,

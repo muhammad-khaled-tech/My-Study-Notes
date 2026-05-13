@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
+                "file": "Aws practitioner/new/domain2_security_part1.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "domain1_part1_cloud_fundamentals"
+              "title": "domain2_security_part1"
             }
           },
           {
@@ -277,11 +277,14 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "1040297d1e8965ae",
+  "active": "a4263eb0ef45c795",
   "lastOpenFiles": [
-    "Aws practitioner/domain2_security_part2.md",
+    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
+    "Aws practitioner/new/D1_s2_global_infrastructure_notes.md",
+    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
+    "Aws practitioner/new/domain2_security_part2.md",
     "Aws practitioner/Unconfirmed 643748.crdownload",
-    "Aws practitioner/domain2_security_part1.md",
+    "Aws practitioner/new/domain2_security_part1.md",
     "Aws practitioner/Unconfirmed 893914.crdownload",
     "Aws practitioner/05_S3_Databases.md",
     "Aws practitioner/new/Unconfirmed 565918.crdownload",
@@ -290,10 +293,7 @@
     "Aws practitioner/03_EC2.md",
     "Aws practitioner/02_IAM.md",
     "Aws practitioner/01_what is cloud computing?.md",
-    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
-    "Aws practitioner/new/D1_s2_global_infrastructure_notes.md",
     "Aws practitioner/new/domain1_cloud_concepts_elite_notes.md",
-    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "Aws practitioner/new/Unconfirmed 50820.crdownload",
     "Aws practitioner/new/Unconfirmed 985210.crdownload",
     "Aws practitioner/new/claude_aws_clf_c_02_storytelling_master_prompt.md",
