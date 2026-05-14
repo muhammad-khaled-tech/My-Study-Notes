@@ -225,13 +225,7 @@ graph TD
 |**Amazon CloudFront** (CDN)|**AWS Lambda** (Serverless Compute)|
 |**AWS WAF** (Web Application Firewall)|**Amazon S3** (التخزين)|
 
-```
-***
 
-كده الفايل بيور وجاهز للـ Copy-Paste. تحب ندخل على طول في الـ **Shared Responsibility Model** (مين بيشيل مسؤولية إيه في الـ Security) ولا نمسك الـ **Well-Architected Framework** ونفصص الـ 6 Pillars بتوعه بعقلية الـ System Design؟
-```
-
----
 
 ## 🤝 الـ Shared Responsibility Model — مين مسؤول عن إيه؟
 
