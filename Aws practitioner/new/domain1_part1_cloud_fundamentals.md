@@ -178,7 +178,8 @@ graph TD
     B --> E[Data Center 1]
     B --> F[Data Center 2]
     style A fill:#ff9900,stroke:#232f3e,stroke-width:2px,color:#232f3e
-````
+```
+
 
 ## 3. الطبقة التالتة: Edge Locations (نقاط التواجد الطرفية)
 
