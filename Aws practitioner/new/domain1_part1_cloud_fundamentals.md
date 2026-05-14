@@ -121,6 +121,7 @@
 في **SaaS (Software as a Service)** — المثال هو **Gmail** أو **AWS Rekognition** — الـ Provider مسؤول عن كل الـ 9 طوابق. إنت بس بتستخدم الـ Software جاهز من غير ما تفكر في أي حاجة تقنية.
 
 الـ Trade-off واضح: كل ما روحت من IaaS لـ SaaS، قلّت مسؤوليتك وقلّت كمان مرونتك في التخصيص.
+![[Pasted image 20260514030119.png]]
 
 ---
 
