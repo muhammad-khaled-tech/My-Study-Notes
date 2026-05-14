@@ -234,7 +234,8 @@ graph TD
 
 > **AWS مسؤولة عن Security OF the Cloud.** **إنت (Customer) مسؤول عن Security IN the Cloud.**
 
-AWS مسؤولة عن كل الـ Physical Infrastructure — المباني، الأجهزة، الشبكات الفيزيائية، الـ Hypervisor، والـ Managed Services اللي هي بتديرها. إنت مسؤول عن البيانات بتاعتك وتشفيرها، الـ OS على الـ EC2 وتحديثاته، الـ Network Configuration زي الـ Security Groups، الـ IAM وصلاحيات المستخدمين، والـ Application Code بتاعك.
+AWS مسؤولة عن كل الـ Physical Infrastructure — المباني، الأجهزة، الشبكات الفيزيائية، الـ Hypervisor، والـ Managed Services اللي هي بتديرها. 
+إنت مسؤول عن البيانات بتاعتك وتشفيرها، الـ OS على الـ EC2 وتحديثاته، الـ Network Configuration زي الـ Security Groups، الـ IAM وصلاحيات المستخدمين، والـ Application Code بتاعك.
 
 التشبيه البسيط: صاحب العمارة (AWS) مسؤول عن الأساسات والمصعد والحراسة. إنت الساكن (Customer) مسؤول عن قفل بابك، نضافة شقتك، ومين بتدخله.
 
