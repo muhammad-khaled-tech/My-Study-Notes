@@ -243,22 +243,6 @@ AWS مسؤولة عن كل الـ Physical Infrastructure — المباني، �
 
 ---
 
-## 🎯 فخاخ الـ Exam
-
-**الـ Trap الأول — Data Transfer:** "كام تكلفة رفع بيانات لـ AWS؟" — الإجابة: صفر. مجاناً. اللي بيكلف هو الـ Transfer OUT فقط.
-
-**الـ Trap التاني — Shared Responsibility:** "مين مسؤول عن تحديث الـ OS على EC2؟" — إنت، مش AWS. هي بتدير الـ Hardware فقط.
-
-**الـ Trap التالت — Global vs Regional:** "IAM هو Global أم Regional؟" — Global. كمان Route 53 وCloudFront وWAF = Global. EC2 وS3 وRDS = Regional.
-
-**الـ Trap الرابع — Elasticity vs Scalability:** Scalability = تقدر تكبر. Elasticity = بتكبر وبتصغر **تلقائياً** حسب الـ Demand.
-
-**الـ Trap الخامس — Region Selection:** لو السؤال قال "data must remain within the country" — الإجابة دايماً **Compliance** كأول عامل.
-
-**الـ Trap السادس — AZ:** الـ AZ مش Data Center واحدة بالضرورة — ممكن مجموعة. واللي بيحقق الـ High Availability هو الـ Multi-AZ، مش الـ Multi-Region اللي ده Disaster Recovery.
-
----
-
 ## 📝 أسئلة الـ Exam
 
 ### Q1. Which of the following BEST defines Cloud Computing according to AWS?
