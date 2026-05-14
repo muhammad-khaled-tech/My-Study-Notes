@@ -10,5 +10,6 @@
   "alwaysUpdateLinks": true,
   "showLineNumber": false,
   "showInlineTitle": true,
-  "readableLineLength": false
+  "readableLineLength": false,
+  "rightToLeft": true
 }
