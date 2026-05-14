@@ -28,9 +28,27 @@ A["المستخدم يكتب<br/>myapp.com"] --> B["Route 53<br/>DNS Lookup"]
 B --> C["Region الأقرب<br/>للمستخدم"]
 ```
 
-**الـ DNS Record Types** اللي لازم تعرفهم للـ Exam: الـ **A Record** بيربط Domain بـ IPv4 Address. الـ **AAAA Record** بيربط Domain بـ IPv6. الـ **CNAME** بيربط Hostname بـ Hostname تاني. والـ **Alias Record** — وده الأهم في AWS — بيربط Domain بـ AWS Resource زي Load Balancer أو CloudFront Distribution مباشرة.
+# AWS Route 53 Notes
 
-**الأهم من كده هو الـ Routing Policies.** Route 53 مش بس بيعمل DNS — هو بيعمل **Intelligent Routing** بناءً على منطق محدد. الـ **Simple Routing** بيروح لـ IP ثابت. الـ **Weighted Routing** بيوزع الـ Traffic بنسب — مثلاً 90% على الـ Version الجديدة و10% للـ Testing. الـ **Latency Routing** بيروح تلقائياً للـ Region الأقرب للمستخدم. والـ **Failover Routing** بيتحول تلقائياً للـ Backup لو الـ Primary فشل — ده هو الـ Disaster Recovery.
+
+
+> [!important] الـ **DNS Record Types** اللي لازم تعرفهم للـ **Exam**:
+> * الـ **A Record** بيربط **Domain** بـ **IPv4 Address**.
+> * الـ **AAAA Record** بيربط **Domain** بـ **IPv6**.
+> * الـ **CNAME** بيربط **Hostname** بـ **Hostname** تاني.
+> * والـ **Alias Record** — وده الأهم في **AWS** — بيربط **Domain** بـ **AWS Resource** زي **Load Balancer** أو **CloudFront Distribution** مباشرة.
+
+---
+
+### الأهم من كده هو الـ **Routing Policies**
+
+
+
+> [!abstract] **Route 53** مش بس بيعمل **DNS** — هو بيعمل **Intelligent Routing** بناءً على منطق محدد:
+> * الـ **Simple Routing** بيروح لـ **IP** ثابت.
+> * الـ **Weighted Routing** بيوزع الـ **Traffic** بنسب — مثلاً **90%** على الـ **Version** الجديدة و**10%** للـ **Testing**.
+> * الـ **Latency Routing** بيروح تلقائياً للـ **Region** الأقرب للمستخدم.
+> * والـ **Failover Routing** بيتحول تلقائياً للـ **Backup** لو الـ **Primary** فشل — ده هو الـ **Disaster Recovery**.
 
 > [!important] Route 53 هو Global Service
 > مش مرتبط بـ Region معين. الـ DNS Records بتاعتك متاحة للعالم كله تلقائياً.
