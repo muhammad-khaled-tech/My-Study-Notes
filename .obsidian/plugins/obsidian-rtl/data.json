@@ -79,7 +79,8 @@
     "php/PHP Day04.md": "rtl",
     "Aws practitioner/new/domain1_part1_cloud_fundamentals.md": "rtl",
     "Aws practitioner/new/domain2_security_part1.md": "rtl",
-    "Aws practitioner/new/domain1_part2_global_wellarchitected.md": "rtl"
+    "Aws practitioner/new/domain1_part2_global_wellarchitected.md": "rtl",
+    "laravel/الفصل_الرابع_DB_Eloquent_Complete.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,

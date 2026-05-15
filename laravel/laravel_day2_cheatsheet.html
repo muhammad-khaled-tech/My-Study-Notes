@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laravel Day 2 — Mega Cheat Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --red: #FF2D20;
+    --red-dim: rgba(255,45,32,0.15);
+    --orange: #f97316;
+    --orange-dim: rgba(249,115,22,0.13);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.13);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.13);
+    --violet: #a855f7;
+    --violet-dim: rgba(168,85,247,0.13);
+    --yellow: #eab308;
+    --yellow-dim: rgba(234,179,8,0.13);
+    --cyan: #06b6d4;
+    --cyan-dim: rgba(6,182,212,0.13);
+    --pink: #ec4899;
+    --pink-dim: rgba(236,72,153,0.13);
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --code: #f0883e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  /* ─── CANVAS WRAPPER ─────────────────────────────────────────────── */
+  #canvas-wrap {
+    padding: 24px;
+    min-width: 1400px;
+  }
+
+  /* ─── HEADER ─────────────────────────────────────────────────────── */
+  .header {
+    background: linear-gradient(135deg, #FF2D20 0%, #ff6b35 60%, #a855f7 100%);
+    border-radius: 12px;
+    padding: 20px 32px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 0 40px rgba(255,45,32,0.4);
+  }
+  .header-logo {
+    font-size: 48px;
+    line-height: 1;
+  }
+  .header-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+  .header-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .tag {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #fff;
+  }
+
+  /* ─── GRID LAYOUT ───────────────────────────────────────────────── */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .span2 { grid-column: span 2; }
+  .span3 { grid-column: span 3; }
+
+  /* ─── CARDS ────────────────────────────────────────────────────── */
+  .card {
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .card-body { padding: 12px 14px; }
+
+  /* colour variants */
+  .c-red    { border-color: var(--red);    background: var(--red-dim); }
+  .c-red    .card-header { background: rgba(255,45,32,0.25); color: #ff8a7a; }
+  .c-orange { border-color: var(--orange); background: var(--orange-dim); }
+  .c-orange .card-header { background: rgba(249,115,22,0.22); color: #fdba74; }
+  .c-blue   { border-color: var(--blue);   background: var(--blue-dim); }
+  .c-blue   .card-header { background: rgba(59,130,246,0.22); color: #93c5fd; }
+  .c-green  { border-color: var(--green);  background: var(--green-dim); }
+  .c-green  .card-header { background: rgba(34,197,94,0.22); color: #86efac; }
+  .c-violet { border-color: var(--violet); background: var(--violet-dim); }
+  .c-violet .card-header { background: rgba(168,85,247,0.22); color: #d8b4fe; }
+  .c-yellow { border-color: var(--yellow); background: var(--yellow-dim); }
+  .c-yellow .card-header { background: rgba(234,179,8,0.22); color: #fde68a; }
+  .c-cyan   { border-color: var(--cyan);   background: var(--cyan-dim); }
+  .c-cyan   .card-header { background: rgba(6,182,212,0.22); color: #a5f3fc; }
+  .c-pink   { border-color: var(--pink);   background: var(--pink-dim); }
+  .c-pink   .card-header { background: rgba(236,72,153,0.22); color: #f9a8d4; }
+
+  /* ─── CODE BLOCKS ──────────────────────────────────────────────── */
+  pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .kw  { color: #ff7b72; }   /* keywords: class, function, return */
+  .fn  { color: #d2a8ff; }   /* function/method names */
+  .str { color: #a5d6ff; }   /* strings */
+  .var { color: #ffa657; }   /* variables / $ */
+  .cmt { color: #8b949e; font-style: italic; }  /* comments */
+  .op  { color: #ff7b72; }   /* operators */
+  .num { color: #79c0ff; }   /* numbers */
+  .cls { color: #7ee787; }   /* class names */
+  .art { color: var(--red); font-weight: 700; }  /* artisan commands */
+
+  /* ─── SECTION DIVIDERS ─────────────────────────────────────────── */
+  .section-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 20px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── BADGES ───────────────────────────────────────────────────── */
+  .badge {
+    display: inline-block;
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .b-warn  { background: rgba(234,179,8,0.25); color: #fde68a; border: 1px solid rgba(234,179,8,0.4); }
+  .b-ok    { background: rgba(34,197,94,0.2);  color: #86efac; border: 1px solid rgba(34,197,94,0.4); }
+  .b-info  { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.4); }
+  .b-danger{ background: rgba(255,45,32,0.2);  color: #ff8a7a; border: 1px solid rgba(255,45,32,0.4); }
+
+  /* ─── COMPARISON TABLE ──────────────────────────────────────────── */
+  .cmp-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .cmp-table th { padding: 5px 8px; text-align: left; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .cmp-table td { padding: 5px 8px; border-bottom: 1px solid rgba(48,54,61,0.5); vertical-align: top; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .cmp-table tr:last-child td { border-bottom: none; }
+  .cmp-table .col-a { color: #fdba74; }
+  .cmp-table .col-b { color: #86efac; }
+
+  /* ─── CHECKLIST ─────────────────────────────────────────────────── */
+  .checklist { list-style: none; }
+  .checklist li { padding: 4px 0; font-size: 11.5px; display: flex; gap: 8px; align-items: flex-start; }
+  .checklist li::before { content: '✓'; color: var(--green); flex-shrink: 0; }
+  .checklist .bonus::before { content: '⭐'; }
+
+  /* ─── FLOW STEP ──────────────────────────────────────────────────── */
+  .flow { display: flex; gap: 0; align-items: stretch; flex-wrap: wrap; }
+  .flow-step { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 11px; flex: 1; min-width: 120px; }
+  .flow-step .step-title { color: var(--cyan); font-weight: 700; font-size: 10px; margin-bottom: 2px; }
+  .flow-arrow { display: flex; align-items: center; padding: 0 6px; color: var(--muted); font-size: 14px; }
+
+  /* ─── ZOOM CONTROLS ──────────────────────────────────────────────── */
+  .toolbar {
+    position: fixed; top: 16px; right: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    gap: 6px;
+    z-index: 100;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .toolbar button {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 5px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    transition: background 0.1s;
+  }
+  .toolbar button:hover { background: rgba(255,255,255,0.12); }
+  #scale-label { font-size: 11px; color: var(--muted); display: flex; align-items: center; padding: 0 4px; }
+
+  #main-canvas {
+    transform-origin: top left;
+    transition: transform 0.15s;
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button onclick="zoom(-0.15)">−</button>
+  <span id="scale-label">100%</span>
+  <button onclick="zoom(0.15)">+</button>
+  <button onclick="resetZoom()">⊡</button>
+</div>
+
+<div id="canvas-wrap">
+<div id="main-canvas">
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!--  HEADER                                                           -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="header">
+  <div class="header-logo">🔴</div>
+  <div>
+    <div class="header-title">LARAVEL DAY 2 — MEGA CHEAT SHEET</div>
+    <div class="header-sub">Database Architecture Reference · All Code Patterns</div>
+    <div class="header-tags">
+      <span class="tag">DB Facade</span>
+      <span class="tag">Eloquent ORM</span>
+      <span class="tag">Migrations</span>
+      <span class="tag">Models</span>
+      <span class="tag">Relationships</span>
+      <span class="tag">Factory</span>
+      <span class="tag">Seeder</span>
+      <span class="tag">Tinker</span>
+      <span class="tag">Lab 2</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!--  ROW 1: ARTISAN · MIGRATIONS · MODELS · DB FACADE READ           -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="section-label">Core Setup & Read Operations</div>
+<div class="grid-4">
+
+  <!-- ARTISAN COMMANDS -->
+  <div class="card c-violet">
+    <div class="card-header">⚡ ARTISAN COMMANDS</div>
+    <div class="card-body">
+      <pre><span class="cmt">// ── Migrations ──</span>
+<span class="art">php artisan make:migration</span> create_posts_table
+<span class="art">php artisan make:model</span> Post <span class="str">-m</span>
+<span class="art">php artisan migrate</span>
+<span class="art">php artisan migrate:rollback</span>  <span class="cmt">// last batch</span>
+<span class="art">php artisan migrate:reset</span>     <span class="cmt">// ALL back</span>
+<span class="art">php artisan migrate:fresh</span>     <span class="cmt">// drop+re-run</span>
+<span class="art">php artisan migrate:refresh</span>   <span class="cmt">// down()+up()</span>
+<span class="art">php artisan migrate:status</span>    <span class="cmt">// show status</span>
+
+<span class="cmt">// ── Models / Factory / Seeder ──</span>
+<span class="art">php artisan make:model</span> Post
+<span class="art">php artisan make:factory</span> PostFactory
+<span class="art">php artisan make:seeder</span> PostSeeder
+<span class="art">php artisan db:seed</span>
+<span class="art">php artisan db:seed</span> <span class="str">--class=UserSeeder</span>
+
+<span class="cmt">// ── Power Combos ──</span>
+<span class="art">php artisan migrate:fresh --seed</span>
+<span class="art">php artisan tinker</span></pre>
+      <br>
+      <div style="margin-top:8px">
+        <span class="badge b-danger">fresh</span> <span style="font-size:11px;color:var(--muted)"> DROP ALL → re-run (no rollback)</span><br>
+        <span class="badge b-ok">refresh</span> <span style="font-size:11px;color:var(--muted)"> down() + up() (safe)</span><br>
+        <span class="badge b-warn">rollback</span> <span style="font-size:11px;color:var(--muted)"> only last batch</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIGRATIONS -->
+  <div class="card c-blue">
+    <div class="card-header">📋 MIGRATIONS <span style="font-size:10px;color:var(--muted);margin-left:auto">database/migrations/</span></div>
+    <div class="card-body">
+      <pre><span class="kw">return new class extends</span> <span class="cls">Migration</span> {
+  <span class="kw">public function</span> <span class="fn">up</span>() {
+    <span class="cls">Schema</span>::<span class="fn">create</span>(<span class="str">'posts'</span>, <span class="kw">function</span> (<span class="cls">Blueprint</span> <span class="var">$t</span>) {
+      <span class="var">$t</span>-><span class="fn">id</span>();              <span class="cmt">// PK, auto-increment</span>
+      <span class="var">$t</span>-><span class="fn">string</span>(<span class="str">'title'</span>);   <span class="cmt">// VARCHAR(255)</span>
+      <span class="var">$t</span>-><span class="fn">text</span>(<span class="str">'description'</span>);<span class="cmt">// TEXT</span>
+      <span class="var">$t</span>-><span class="fn">timestamps</span>();     <span class="cmt">// created_at, updated_at</span>
+
+      <span class="cmt">// ── Foreign Key ──</span>
+      <span class="var">$t</span>-><span class="fn">unsignedBigInteger</span>(<span class="str">'author_id'</span>);
+      <span class="var">$t</span>-><span class="fn">foreign</span>(<span class="str">'author_id'</span>)
+         -><span class="fn">references</span>(<span class="str">'id'</span>)
+         -><span class="fn">on</span>(<span class="str">'users'</span>);
+    });
+  }
+
+  <span class="kw">public function</span> <span class="fn">down</span>() {
+    <span class="cls">Schema</span>::<span class="fn">dropIfExists</span>(<span class="str">'posts'</span>);
+  }
+};</pre>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <span class="badge b-info">string</span>
+        <span class="badge b-info">text</span>
+        <span class="badge b-info">integer</span>
+        <span class="badge b-info">boolean</span>
+        <span class="badge b-info">json</span>
+        <span class="badge b-info">enum</span>
+        <span class="badge b-info">timestamp</span>
+        <span class="badge b-info">softDeletes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODELS -->
+  <div class="card c-green">
+    <div class="card-header">🏗️ MODELS <span style="font-size:10px;color:var(--muted);margin-left:auto">app/Models/Post.php</span></div>
+    <div class="card-body">
+      <pre><span class="kw">namespace</span> <span class="cls">App\Models</span>;
+<span class="kw">use</span> <span class="cls">Illuminate\Database\Eloquent\Model</span>;
+
+<span class="kw">class</span> <span class="cls">Post</span> <span class="kw">extends</span> <span class="cls">Model</span> {
+
+  <span class="cmt">// Auto maps: Post → posts table</span>
+  <span class="cmt">// (Laravel pluralizes class name)</span>
+
+  <span class="cmt">// ✅ WHITELIST (recommended)</span>
+  <span class="kw">protected</span> <span class="var">$fillable</span> = [
+    <span class="str">'title'</span>, <span class="str">'description'</span>, <span class="str">'author_id'</span>,
+  ];
+
+  <span class="cmt">// OR: BLACKLIST approach</span>
+  <span class="kw">protected</span> <span class="var">$guarded</span> = [<span class="str">'is_admin'</span>];
+}
+
+<span class="cmt">// ── Without $fillable ──</span>
+<span class="cmt">// Post::create([...]) throws:</span>
+<span class="cmt">// MassAssignmentException!</span>
+
+<span class="cmt">// ── Safe alternative (no $fillable) ──</span>
+<span class="var">$post</span> = <span class="kw">new</span> <span class="cls">Post</span>();
+<span class="var">$post</span>->title = <span class="str">'Hello World'</span>;
+<span class="var">$post</span>-><span class="fn">save</span>();</pre>
+    </div>
+  </div>
+
+  <!-- DB FACADE READ -->
+  <div class="card c-orange">
+    <div class="card-header">🔍 DB FACADE — READ</div>
+    <div class="card-body">
+      <pre><span class="kw">use</span> <span class="cls">Illuminate\Support\Facades\DB</span>;
+
+<span class="cmt">// Find by PK → stdClass|null</span>
+<span class="var">$post</span> = <span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)-><span class="fn">find</span>(<span class="num">20</span>);
+
+<span class="cmt">// Get ALL → Collection&lt;stdClass&gt;</span>
+<span class="var">$posts</span> = <span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)-><span class="fn">get</span>();
+
+<span class="cmt">// WHERE + first match</span>
+<span class="var">$post</span> = <span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)
+           -><span class="fn">where</span>(<span class="str">'slug'</span>, <span class="str">'first-post'</span>)
+           -><span class="fn">first</span>();
+
+<span class="cmt">// Very first row</span>
+<span class="var">$first</span> = <span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)-><span class="fn">first</span>();
+
+<span class="cmt">// Chain wheres</span>
+<span class="var">$posts</span> = <span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)
+           -><span class="fn">where</span>(<span class="str">'author_id'</span>, <span class="num">5</span>)
+           -><span class="fn">where</span>(<span class="str">'status'</span>, <span class="str">'published'</span>)
+           -><span class="fn">get</span>();
+
+<span class="cmt">// ORDER + LIMIT</span>
+<span class="var">$posts</span> = <span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)
+   -><span class="fn">orderBy</span>(<span class="str">'created_at'</span>, <span class="str">'desc'</span>)
+   -><span class="fn">limit</span>(<span class="num">10</span>)-><span class="fn">get</span>();</pre>
+    </div>
+  </div>
+
+</div><!-- /grid-4 -->
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!--  ROW 2: DB FACADE WRITE · ELOQUENT · RELATIONS · FACTORY         -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="section-label">Write Operations & Relationships</div>
+<div class="grid-4">
+
+  <!-- DB FACADE WRITE -->
+  <div class="card c-orange">
+    <div class="card-header">✏️ DB FACADE — CREATE / UPDATE / DELETE</div>
+    <div class="card-body">
+      <pre><span class="cmt">// ── CREATE → returns bool ──</span>
+<span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)-><span class="fn">insert</span>([
+  <span class="str">'title'</span> => <span class="str">'First Post'</span>,
+  <span class="str">'desc'</span>  => <span class="str">'Some description'</span>,
+]);
+
+<span class="cmt">// ── UPDATE → returns affected rows ──</span>
+<span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)
+  -><span class="fn">where</span>(<span class="str">'id'</span>, <span class="num">1</span>)
+  -><span class="fn">update</span>([<span class="str">'title'</span> => <span class="str">'New Title'</span>]);
+
+<span class="cmt">// Update multiple columns:</span>
+<span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)
+  -><span class="fn">where</span>(<span class="str">'id'</span>, <span class="num">1</span>)
+  -><span class="fn">update</span>([
+    <span class="str">'title'</span> => <span class="str">'New Title'</span>,
+    <span class="str">'desc'</span>  => <span class="str">'New Desc'</span>,
+  ]);
+
+<span class="cmt">// ── DELETE → returns affected rows ──</span>
+<span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)
+  -><span class="fn">where</span>(<span class="str">'id'</span>, <span class="num">1</span>)
+  -><span class="fn">delete</span>();
+
+<span class="cmt">// Delete with condition:</span>
+<span class="cls">DB</span>::<span class="fn">table</span>(<span class="str">'posts'</span>)
+  -><span class="fn">where</span>(<span class="str">'votes'</span>, <span class="str">'&lt;'</span>, <span class="num">5</span>)
+  -><span class="fn">delete</span>();</pre>
+    </div>
+  </div>
+
+  <!-- ELOQUENT ORM -->
+  <div class="card c-green">
+    <div class="card-header">💎 ELOQUENT ORM — FULL CRUD</div>
+    <div class="card-body">
+      <pre><span class="kw">use</span> <span class="cls">App\Models\Post</span>;
+
+<span class="cmt">// ── READ ──</span>
+<span class="cls">Post</span>::<span class="fn">all</span>();           <span class="cmt">// Collection&lt;Post&gt;</span>
+<span class="cls">Post</span>::<span class="fn">find</span>(<span class="num">20</span>);        <span class="cmt">// Post|null</span>
+<span class="cls">Post</span>::<span class="fn">where</span>(<span class="str">'slug'</span>, <span class="str">'x'</span>)-><span class="fn">first</span>();
+<span class="cls">Post</span>::<span class="fn">where</span>(<span class="str">'author_id'</span>, <span class="num">5</span>)-><span class="fn">get</span>();
+
+<span class="cmt">// ── CREATE ──</span>
+<span class="cmt">// Requires $fillable in Model!</span>
+<span class="cls">Post</span>::<span class="fn">create</span>([
+  <span class="str">'title'</span>       => <span class="str">'My Post'</span>,
+  <span class="str">'description'</span> => <span class="str">'Content here'</span>,
+  <span class="str">'author_id'</span>   => <span class="num">3</span>,
+]);
+
+<span class="cmt">// ── UPDATE ──</span>
+<span class="cls">Post</span>::<span class="fn">find</span>(<span class="num">25</span>)-><span class="fn">update</span>([
+  <span class="str">'title'</span> => <span class="str">'Updated Title'</span>
+]);
+<span class="cmt">// OR: find → set → save</span>
+<span class="var">$p</span> = <span class="cls">Post</span>::<span class="fn">find</span>(<span class="num">25</span>);
+<span class="var">$p</span>->title = <span class="str">'New'</span>;
+<span class="var">$p</span>-><span class="fn">save</span>();
+
+<span class="cmt">// ── DELETE ──</span>
+<span class="cls">Post</span>::<span class="fn">where</span>(<span class="str">'votes'</span>, <span class="num">23</span>)-><span class="fn">delete</span>();
+<span class="cls">Post</span>::<span class="fn">find</span>(<span class="num">25</span>)-><span class="fn">delete</span>();</pre>
+      <div style="margin-top:8px;padding:6px 8px;background:rgba(34,197,94,0.1);border-radius:5px;border-left:2px solid var(--green);font-size:11px">
+        <strong>Eloquent</strong> returns <strong>Model objects</strong> (not stdClass).<br>
+        Models carry relationships, accessors, casts, events.
+      </div>
+    </div>
+  </div>
+
+  <!-- RELATIONSHIPS -->
+  <div class="card c-cyan">
+    <div class="card-header">🔗 ELOQUENT RELATIONSHIPS</div>
+    <div class="card-body">
+      <pre><span class="cmt">// ── 1-to-Many ──</span>
+
+<span class="cmt">// User Model (the "1" side):</span>
+<span class="kw">class</span> <span class="cls">User</span> <span class="kw">extends</span> <span class="cls">Model</span> {
+  <span class="kw">public function</span> <span class="fn">posts</span>() {
+    <span class="kw">return</span> <span class="var">$this</span>-><span class="fn">hasMany</span>(
+      <span class="cls">Post</span>::class, <span class="str">'author_id'</span>
+    );
+  }
+}
+
+<span class="cmt">// Post Model (the "Many" side):</span>
+<span class="kw">class</span> <span class="cls">Post</span> <span class="kw">extends</span> <span class="cls">Model</span> {
+  <span class="kw">public function</span> <span class="fn">user</span>() {
+    <span class="kw">return</span> <span class="var">$this</span>-><span class="fn">belongsTo</span>(
+      <span class="cls">User</span>::class, <span class="str">'author_id'</span>
+    );
+  }
+  <span class="kw">public function</span> <span class="fn">sections</span>() {
+    <span class="kw">return</span> <span class="var">$this</span>-><span class="fn">hasMany</span>(<span class="cls">Section</span>::class);
+  }
+}
+
+<span class="cmt">// ── Using Relations in Controller ──</span>
+<span class="var">$user</span>->posts;           <span class="cmt">// Collection&lt;Post&gt;</span>
+<span class="var">$post</span>->user;            <span class="cmt">// User object</span>
+<span class="cls">Post</span>::<span class="fn">find</span>(<span class="num">23</span>)->sections;<span class="cmt">// Collection</span>
+
+<span class="cmt">// ── Eager Load (N+1 fix) ──</span>
+<span class="cls">Post</span>::<span class="fn">with</span>(<span class="str">'user'</span>)-><span class="fn">get</span>();
+<span class="cls">Post</span>::<span class="fn">with</span>([<span class="str">'user'</span>, <span class="str">'sections'</span>])-><span class="fn">get</span>();</pre>
+    </div>
+  </div>
+
+  <!-- FACTORY -->
+  <div class="card c-yellow">
+    <div class="card-header">🏭 DATABASE FACTORY <span style="font-size:10px;color:var(--muted);margin-left:auto">database/factories/</span></div>
+    <div class="card-body">
+      <pre><span class="cmt">// php artisan make:factory PostFactory</span>
+
+<span class="kw">class</span> <span class="cls">PostFactory</span> <span class="kw">extends</span> <span class="cls">Factory</span> {
+  <span class="kw">public function</span> <span class="fn">definition</span>(): array {
+    <span class="kw">return</span> [
+      <span class="str">'title'</span>       => <span class="var">$this</span>->faker-><span class="fn">sentence</span>(),
+      <span class="str">'description'</span> => <span class="var">$this</span>->faker-><span class="fn">paragraph</span>(),
+      <span class="str">'author_id'</span>   => <span class="var">$this</span>->faker
+                          -><span class="fn">numberBetween</span>(<span class="num">1</span>, <span class="num">100</span>),
+      <span class="str">'created_at'</span>  => <span class="fn">now</span>(),
+    ];
+  }
+}
+
+<span class="cmt">// ── Faker Helpers ──</span>
+<span class="var">$this</span>->faker-><span class="fn">sentence</span>()       <span class="cmt">// "Lorem ipsum..."</span>
+<span class="var">$this</span>->faker-><span class="fn">paragraph</span>()      <span class="cmt">// multi-sentence</span>
+<span class="var">$this</span>->faker-><span class="fn">name</span>()           <span class="cmt">// "John Doe"</span>
+<span class="var">$this</span>->faker-><span class="fn">email</span>()          <span class="cmt">// "john@example.com"</span>
+<span class="var">$this</span>->faker-><span class="fn">url</span>()
+<span class="var">$this</span>->faker-><span class="fn">imageUrl</span>(<span class="num">640</span>, <span class="num">480</span>)
+<span class="var">$this</span>->faker-><span class="fn">randomElement</span>([<span class="str">'a'</span>,<span class="str">'b'</span>])
+
+<span class="cmt">// ── Usage ──</span>
+<span class="cls">Post</span>::<span class="fn">factory</span>()-><span class="fn">create</span>();
+<span class="cls">Post</span>::<span class="fn">factory</span>()-><span class="fn">count</span>(<span class="num">500</span>)-><span class="fn">create</span>();</pre>
+    </div>
+  </div>
+
+</div><!-- /grid-4 -->
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!--  ROW 3: SEEDERS · TINKER · REQUEST · DB vs ELOQUENT COMPARISON   -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="section-label">Seeders · Tinker · Request Handling · Quick Reference</div>
+<div class="grid-4">
+
+  <!-- SEEDERS -->
+  <div class="card c-yellow">
+    <div class="card-header">🌱 DATABASE SEEDERS <span style="font-size:10px;color:var(--muted);margin-left:auto">database/seeders/</span></div>
+    <div class="card-body">
+      <pre><span class="cmt">// php artisan make:seeder PostSeeder</span>
+
+<span class="kw">class</span> <span class="cls">PostSeeder</span> <span class="kw">extends</span> <span class="cls">Seeder</span> {
+  <span class="kw">public function</span> <span class="fn">run</span>(): void {
+    <span class="cls">Post</span>::<span class="fn">factory</span>()
+         -><span class="fn">count</span>(<span class="num">500</span>)
+         -><span class="fn">create</span>();
+  }
+}
+
+<span class="cmt">// ── Master Seeder ──</span>
+<span class="kw">class</span> <span class="cls">DatabaseSeeder</span> <span class="kw">extends</span> <span class="cls">Seeder</span> {
+  <span class="kw">public function</span> <span class="fn">run</span>(): void {
+    <span class="var">$this</span>-><span class="fn">call</span>([
+      <span class="cls">UserSeeder</span>::class, <span class="cmt">// first (FK dep)</span>
+      <span class="cls">PostSeeder</span>::class,
+    ]);
+  }
+}
+
+<span class="cmt">// ── Run Commands ──</span>
+<span class="art">php artisan db:seed</span>
+<span class="art">php artisan db:seed --class=UserSeeder</span>
+<span class="art">php artisan migrate:fresh --seed</span></pre>
+      <div style="margin-top:8px;padding:6px 8px;background:rgba(234,179,8,0.08);border-radius:5px;border-left:2px solid var(--yellow);font-size:11px">
+        ⚠️ Run <strong>UserSeeder before PostSeeder</strong> — posts.author_id references users.id!
+      </div>
+    </div>
+  </div>
+
+  <!-- TINKER -->
+  <div class="card c-violet">
+    <div class="card-header">🔧 ARTISAN TINKER — REPL</div>
+    <div class="card-body">
+      <pre><span class="cmt">// Enter the Tinker REPL:</span>
+<span class="art">php artisan tinker</span>
+
+<span class="cmt">// ── Inside Tinker ──</span>
+
+<span class="cmt">// Count records:</span>
+> <span class="cls">App\Models\Post</span>::<span class="fn">count</span>();
+= <span class="num">500</span>
+
+<span class="cmt">// Get first post:</span>
+> <span class="var">$post</span> = <span class="cls">App\Models\Post</span>::<span class="fn">first</span>();
+
+<span class="cmt">// Access property:</span>
+> <span class="var">$post</span>->title;
+
+<span class="cmt">// Create fake data:</span>
+> <span class="cls">App\Models\User</span>::<span class="fn">factory</span>()
+    -><span class="fn">count</span>(<span class="num">5</span>)-><span class="fn">create</span>();
+
+<span class="cmt">// Chain queries:</span>
+> <span class="cls">App\Models\Post</span>::
+    <span class="fn">where</span>(<span class="str">'author_id'</span>, <span class="num">1</span>)-><span class="fn">get</span>();
+
+<span class="cmt">// Test relationship:</span>
+> <span class="var">$user</span> = <span class="cls">App\Models\User</span>::<span class="fn">find</span>(<span class="num">1</span>);
+> <span class="var">$user</span>->posts;
+
+<span class="cmt">// Delete records:</span>
+> <span class="cls">App\Models\Post</span>::<span class="fn">truncate</span>();
+
+> <span class="fn">exit</span></pre>
+    </div>
+  </div>
+
+  <!-- REQUEST HANDLING -->
+  <div class="card c-blue">
+    <div class="card-header">📥 HTTP REQUEST HANDLING</div>
+    <div class="card-body">
+      <pre><span class="kw">use</span> <span class="cls">Illuminate\Http\Request</span>;
+
+<span class="kw">public function</span> <span class="fn">store</span>(<span class="cls">Request</span> <span class="var">$request</span>) {
+
+  <span class="cmt">// all() → ALL inputs as array</span>
+  <span class="cmt">// ⚠️ Needs $fillable in Model!</span>
+  <span class="cls">Post</span>::<span class="fn">create</span>(<span class="var">$request</span>-><span class="fn">all</span>());
+
+  <span class="cmt">// only() → WHITELIST specific keys</span>
+  <span class="cls">Post</span>::<span class="fn">create</span>(<span class="var">$request</span>-><span class="fn">only</span>([
+    <span class="str">'title'</span>, <span class="str">'description'</span>, <span class="str">'author_id'</span>,
+  ]));
+
+  <span class="cmt">// except() → BLACKLIST specific keys</span>
+  <span class="cls">Post</span>::<span class="fn">create</span>(<span class="var">$request</span>-><span class="fn">except</span>([<span class="str">'_token'</span>]));
+
+  <span class="cmt">// Single value:</span>
+  <span class="var">$title</span> = <span class="var">$request</span>-><span class="fn">input</span>(<span class="str">'title'</span>);
+  <span class="var">$title</span> = <span class="var">$request</span>->title; <span class="cmt">// magic prop</span>
+
+  <span class="cmt">// Check existence:</span>
+  <span class="kw">if</span> (<span class="var">$request</span>-><span class="fn">has</span>(<span class="str">'title'</span>)) { <span class="cmt">/* ... */</span> }
+
+  <span class="cmt">// Redirect after save:</span>
+  <span class="kw">return</span> <span class="fn">redirect</span>()
+    -><span class="fn">route</span>(<span class="str">'posts.index'</span>)
+    -><span class="fn">with</span>(<span class="str">'success'</span>, <span class="str">'Saved!'</span>);
+}</pre>
+    </div>
+  </div>
+
+  <!-- DB FACADE vs ELOQUENT COMPARISON -->
+  <div class="card c-pink">
+    <div class="card-header">⚖️ DB FACADE vs ELOQUENT</div>
+    <div class="card-body">
+      <table class="cmp-table">
+        <tr>
+          <th>Operation</th>
+          <th class="col-a">DB Facade</th>
+          <th class="col-b">Eloquent</th>
+        </tr>
+        <tr>
+          <td>All rows</td>
+          <td class="col-a">DB::table('posts')->get()</td>
+          <td class="col-b">Post::all()</td>
+        </tr>
+        <tr>
+          <td>By ID</td>
+          <td class="col-a">->find(20)</td>
+          <td class="col-b">Post::find(20)</td>
+        </tr>
+        <tr>
+          <td>Where</td>
+          <td class="col-a">->where('k','v')->first()</td>
+          <td class="col-b">Post::where('k','v')->first()</td>
+        </tr>
+        <tr>
+          <td>Insert</td>
+          <td class="col-a">->insert([...])</td>
+          <td class="col-b">Post::create([...])</td>
+        </tr>
+        <tr>
+          <td>Update</td>
+          <td class="col-a">->where()->update([...])</td>
+          <td class="col-b">Post::find(n)->update([...])</td>
+        </tr>
+        <tr>
+          <td>Delete</td>
+          <td class="col-a">->where()->delete()</td>
+          <td class="col-b">Post::where()->delete()</td>
+        </tr>
+        <tr>
+          <td>Returns</td>
+          <td class="col-a">stdClass / bool / int</td>
+          <td class="col-b">Model object / Collection</td>
+        </tr>
+        <tr>
+          <td>Relations</td>
+          <td class="col-a">❌ Manual joins</td>
+          <td class="col-b">✅ hasMany, belongsTo</td>
+        </tr>
+        <tr>
+          <td>$fillable</td>
+          <td class="col-a">❌ Not needed</td>
+          <td class="col-b">✅ Required for create()</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /grid-4 -->
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!--  ROW 4: LAB 2 + PAGINATION + POLYMORPHIC + CARBON                -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="section-label">Lab 2 Requirements & Advanced Patterns</div>
+<div class="grid-4">
+
+  <!-- LAB 2 REQUIREMENTS -->
+  <div class="card c-red" style="grid-column:span 2">
+    <div class="card-header">🧪 LAB 2 — FULL REQUIREMENTS</div>
+    <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">REQUIRED</div>
+        <ul class="checklist">
+          <li>Create migrations &amp; Model for posts table</li>
+          <li>Full CRUD on Posts stored in DB</li>
+          <li>Delete: confirmation dialog before deleting<br><span style="color:var(--muted);font-size:10px">use Route::delete</span></li>
+          <li>Index &amp; Show: format created_at with Carbon<br><pre style="font-size:10.5px;margin-top:2px"><span class="var">$post</span>->created_at-><span class="fn">format</span>(<span class="str">'d M Y'</span>)
+<span class="var">$post</span>->created_at-><span class="fn">diffForHumans</span>()</pre></li>
+          <li>Edit/Create: author = &lt;select&gt; dropdown of all users</li>
+          <li>PostSeeder + PostFactory → seeds 500 posts<br><pre style="font-size:10.5px;margin-top:2px"><span class="art">php artisan db:seed</span></pre></li>
+          <li>Pagination on Index page<br><pre style="font-size:10.5px;margin-top:2px"><span class="cls">Post</span>::<span class="fn">paginate</span>(<span class="num">15</span>)
+{{ <span class="var">$posts</span>->links() }}  <span class="cmt">// in Blade</span></pre></li>
+          <li>CRUD Comments on show page using Polymorphic relation<br><span style="color:var(--muted);font-size:10px">Simple form submissions, no AJAX</span></li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:6px">BONUS ⭐</div>
+        <ul class="checklist">
+          <li class="bonus">Soft Delete + Restore button on Index<br><pre style="font-size:10.5px;margin-top:2px"><span class="var">$t</span>-><span class="fn">softDeletes</span>(); <span class="cmt">// in migration</span>
+<span class="kw">use</span> <span class="cls">SoftDeletes</span>;  <span class="cmt">// in Model</span>
+<span class="cls">Post</span>::<span class="fn">onlyTrashed</span>()-><span class="fn">get</span>();
+<span class="cls">Post</span>::<span class="fn">withTrashed</span>()-><span class="fn">find</span>(<span class="num">1</span>)-><span class="fn">restore</span>();</pre></li>
+          <li class="bonus">Vue.js ViewAjax component (Modal + axios)<br><pre style="font-size:10.5px;margin-top:2px">&lt;ViewAjax :id=<span class="str">"5"</span> /&gt;
+<span class="cmt">// Check Responsable interface</span></pre></li>
+          <li class="bonus">Inertia.js posts page (posts/index)</li>
+          <li class="bonus">shadcn/vue CRUD in single page<br><span style="color:var(--muted);font-size:10px">AlertDialog + Inertia.js polling</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- POLYMORPHIC RELATIONS -->
+  <div class="card c-cyan">
+    <div class="card-header">🔀 POLYMORPHIC RELATIONS</div>
+    <div class="card-body">
+      <pre><span class="cmt">// ── Migration for comments table ──</span>
+<span class="var">$t</span>-><span class="fn">id</span>();
+<span class="var">$t</span>-><span class="fn">text</span>(<span class="str">'body'</span>);
+<span class="var">$t</span>-><span class="fn">morphs</span>(<span class="str">'commentable'</span>);
+<span class="cmt">// → adds commentable_id + commentable_type</span>
+<span class="var">$t</span>-><span class="fn">timestamps</span>();
+
+<span class="cmt">// ── Comment Model ──</span>
+<span class="kw">class</span> <span class="cls">Comment</span> <span class="kw">extends</span> <span class="cls">Model</span> {
+  <span class="kw">public function</span> <span class="fn">commentable</span>() {
+    <span class="kw">return</span> <span class="var">$this</span>-><span class="fn">morphTo</span>();
+  }
+}
+
+<span class="cmt">// ── Post Model ──</span>
+<span class="kw">class</span> <span class="cls">Post</span> <span class="kw">extends</span> <span class="cls">Model</span> {
+  <span class="kw">public function</span> <span class="fn">comments</span>() {
+    <span class="kw">return</span> <span class="var">$this</span>-><span class="fn">morphMany</span>(
+      <span class="cls">Comment</span>::class, <span class="str">'commentable'</span>
+    );
+  }
+}
+
+<span class="cmt">// ── Create a comment ──</span>
+<span class="var">$post</span>->comments()-><span class="fn">create</span>([
+  <span class="str">'body'</span> => <span class="var">$request</span>->body
+]);
+
+<span class="cmt">// ── Get comments ──</span>
+<span class="var">$post</span>->comments; <span class="cmt">// Collection&lt;Comment&gt;</span></pre>
+    </div>
+  </div>
+
+  <!-- CARBON + PAGINATION -->
+  <div class="card c-green">
+    <div class="card-header">🗓️ CARBON DATES + PAGINATION</div>
+    <div class="card-body">
+      <pre><span class="cmt">// ── Carbon Date Formatting ──</span>
+<span class="cmt">// Carbon is auto-cast on Eloquent timestamps</span>
+
+<span class="var">$post</span>->created_at-><span class="fn">format</span>(<span class="str">'d M Y'</span>);
+<span class="cmt">// → "15 May 2025"</span>
+
+<span class="var">$post</span>->created_at-><span class="fn">format</span>(<span class="str">'d/m/Y H:i'</span>);
+<span class="cmt">// → "15/05/2025 14:30"</span>
+
+<span class="var">$post</span>->created_at-><span class="fn">diffForHumans</span>();
+<span class="cmt">// → "3 days ago"</span>
+
+<span class="var">$post</span>->created_at-><span class="fn">toDateString</span>();
+<span class="cmt">// → "2025-05-15"</span>
+
+<span class="cmt">// In Blade:
+// {{ $post->created_at->format('d M Y') }}</span>
+
+<span class="cmt">// ── Pagination ──</span>
+<span class="cmt">// Controller:</span>
+<span class="var">$posts</span> = <span class="cls">Post</span>::<span class="fn">paginate</span>(<span class="num">15</span>);
+<span class="cmt">// or with query:</span>
+<span class="var">$posts</span> = <span class="cls">Post</span>::<span class="fn">with</span>(<span class="str">'user'</span>)
+    -><span class="fn">orderBy</span>(<span class="str">'created_at'</span>, <span class="str">'desc'</span>)
+    -><span class="fn">paginate</span>(<span class="num">15</span>);
+
+<span class="cmt">// Blade view:</span>
+{{ <span class="var">$posts</span>->links() }}
+<span class="cmt">// → renders Tailwind pagination UI</span></pre>
+    </div>
+  </div>
+
+</div><!-- /grid-4 -->
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!--  FLOW DIAGRAM: Typical Laravel DB Workflow                        -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="section-label">Typical DB Setup Workflow</div>
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:24px">
+  <div class="flow">
+    <div class="flow-step">
+      <div class="step-title">1 · MIGRATE</div>
+      <div style="font-size:11px">php artisan make:migration<br>→ define schema<br>→ php artisan migrate</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-title">2 · MODEL</div>
+      <div style="font-size:11px">php artisan make:model<br>→ set $fillable<br>→ define relations</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-title">3 · FACTORY</div>
+      <div style="font-size:11px">make:factory<br>→ define fake data<br>→ use $this->faker</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-title">4 · SEEDER</div>
+      <div style="font-size:11px">make:seeder<br>→ Model::factory()<br>→ ->count(N)->create()</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-title">5 · SEED</div>
+      <div style="font-size:11px">db:seed<br>→ fills the DB<br>→ ready for dev!</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-title">6 · TINKER</div>
+      <div style="font-size:11px">php artisan tinker<br>→ query models<br>→ test relations</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-title">7 · CONTROLLER</div>
+      <div style="font-size:11px">Eloquent ORM<br>→ CRUD operations<br>→ $request handling</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main-canvas -->
+</div><!-- /canvas-wrap -->
+
+<script>
+let scale = 1;
+const canvas = document.getElementById('main-canvas');
+const label = document.getElementById('scale-label');
+
+function zoom(delta) {
+  scale = Math.min(2, Math.max(0.3, scale + delta));
+  canvas.style.transform = `scale(${scale})`;
+  label.textContent = Math.round(scale * 100) + '%';
+}
+
+function resetZoom() {
+  scale = 1;
+  canvas.style.transform = 'scale(1)';
+  label.textContent = '100%';
+}
+
+// Ctrl+scroll zoom
+document.addEventListener('wheel', (e) => {
+  if (e.ctrlKey) {
+    e.preventDefault();
+    zoom(e.deltaY < 0 ? 0.1 : -0.1);
+  }
+}, { passive: false });
+</script>
+</body>
+</html>

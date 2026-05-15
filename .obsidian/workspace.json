@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "laravel/laravel-chapter-01-part1.md",
+                "file": "laravel/الفصل_الرابع_DB_Eloquent_Complete.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "laravel-chapter-01-part1"
+              "title": "الفصل_الرابع_DB_Eloquent_Complete"
             }
           }
         ]
@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,6 +238,9 @@
   },
   "active": "7bbd814216bdccfa",
   "lastOpenFiles": [
+    "laravel/laravel_day2_cheatsheet.html",
+    "laravel/Unconfirmed 898514.crdownload",
+    "laravel/laravel-chapter-01-part1.md",
     "laravel/WhatsApp Image 2026-05-14 at 7.47.35 PM.jpeg",
     "laravel/Unconfirmed 933819.crdownload",
     "admin2/RHSA1_CommandMap.excalidraw",
@@ -258,7 +262,6 @@
     "components life cycle .png",
     "Pasted image 20260224214153.png",
     "Pasted image 20260224214557.png",
-    "Pasted image 20260514030119.png",
     "Aws practitioner/new/domain3b_part1_monitoring_vpc.md",
     "Aws practitioner/new/Unconfirmed 343414.crdownload",
     "Aws practitioner/new/domain3a_part3_Compute_Deploy_Integration.md",
@@ -272,7 +275,6 @@
     "Aws practitioner/Unconfirmed 643748.crdownload",
     "Aws practitioner/Unconfirmed 893914.crdownload",
     "Aws practitioner/05_S3_Databases.md",
-    "Aws practitioner/new/Unconfirmed 565918.crdownload",
     "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
     "Aws practitioner/03_EC2.md",
     "Aws practitioner/02_IAM.md",
@@ -282,7 +284,6 @@
     "Aws practitioner/new/AWS_CLF-C02_Domain1_EliteGuide.md",
     "php/PHP Day02.md",
     "Aws practitioner/new/aws_ec2_storage_notes.md",
-    "Aws practitioner/new/aws_advanced_identity_notes.md",
     "Untitled.canvas"
   ]
 }
