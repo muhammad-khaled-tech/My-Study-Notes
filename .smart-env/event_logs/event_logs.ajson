@@ -174,3 +174,5 @@
 "event_logs:embedding:progress_reported": {"key":"embedding:progress_reported","ct":265,"first_at":1767705477543,"last_at":1778819360769,"class_name":"EventLog"},
 "event_logs:item:embedded": {"key":"item:embedded","ct":33967,"first_at":1767705477927,"last_at":1778819368833,"class_name":"EventLog"},
 "event_logs:embedding:completed": {"key":"embedding:completed","ct":90,"first_at":1767705768568,"last_at":1778819368834,"class_name":"EventLog"},
+"event_logs:source:initial_scan_started": {"key":"source:initial_scan_started","ct":1,"first_at":1778821904715,"last_at":1778821904715,"class_name":"EventLog"},
+"event_logs:source:initial_scan_completed": {"key":"source:initial_scan_completed","ct":1,"first_at":1778821904735,"last_at":1778821904735,"class_name":"EventLog"},
