@@ -11,12 +11,14 @@
             "id": "7bbd814216bdccfa",
             "type": "leaf",
             "state": {
-              "type": "excalidraw",
+              "type": "markdown",
               "state": {
-                "file": "admin2/RHSA1_CommandMap.excalidraw"
+                "file": "laravel/laravel-chapter-01-part1.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "excalidraw-icon",
-              "title": "RHSA1_CommandMap"
+              "icon": "lucide-file",
+              "title": "laravel-chapter-01-part1"
             }
           }
         ]
@@ -235,6 +237,8 @@
   },
   "active": "7bbd814216bdccfa",
   "lastOpenFiles": [
+    "laravel/WhatsApp Image 2026-05-14 at 7.47.35 PM.jpeg",
+    "laravel/Unconfirmed 933819.crdownload",
     "admin2/RHSA1_CommandMap.excalidraw",
     "Aws practitioner/new/CLF-C02_Question_Generator_Prompt.md",
     "Aws practitioner/new/Unconfirmed 910289.crdownload",
@@ -269,11 +273,9 @@
     "Aws practitioner/Unconfirmed 893914.crdownload",
     "Aws practitioner/05_S3_Databases.md",
     "Aws practitioner/new/Unconfirmed 565918.crdownload",
-    "Aws practitioner/new/Unconfirmed 172810.crdownload",
     "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
     "Aws practitioner/03_EC2.md",
     "Aws practitioner/02_IAM.md",
-    "Aws practitioner/new/Unconfirmed 50820.crdownload",
     "Aws practitioner/new/claude_aws_clf_c_02_storytelling_master_prompt.md",
     "php/PHP Day04.md",
     "php/PHP Day03.md",
