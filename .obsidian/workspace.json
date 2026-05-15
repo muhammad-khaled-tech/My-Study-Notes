@@ -11,14 +11,12 @@
             "id": "7bbd814216bdccfa",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "excalidraw",
               "state": {
-                "file": "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
-                "mode": "source",
-                "source": false
+                "file": "admin2/RHSA1_CommandMap.excalidraw"
               },
-              "icon": "lucide-file",
-              "title": "domain1_part2_global_wellarchitected"
+              "icon": "excalidraw-icon",
+              "title": "RHSA1_CommandMap"
             }
           }
         ]
@@ -237,6 +235,11 @@
   },
   "active": "7bbd814216bdccfa",
   "lastOpenFiles": [
+    "Aws practitioner/new/domain3b_part3_wellarchitected_ecosystem.md",
+    "Aws practitioner/new/domain3b_part2_ml_migration.md",
+    "Aws practitioner/new/domain4_billing_pricing_support.md",
+    "Aws practitioner/new/Unconfirmed 132511.crdownload",
+    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "Aws practitioner/new/AWS_CLF-C02_Master_Prompt.md",
     "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
     "Pasted image 20260514041658.png",
@@ -245,7 +248,6 @@
     "Pasted image 20260514041459.png",
     "Pasted image 20260514041435.png",
     "Pasted image 20260514041414.png",
-    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "components life cycle .png",
     "Pasted image 20260224214153.png",
     "Pasted image 20260224214557.png",
@@ -271,7 +273,6 @@
     "Aws practitioner/new/Unconfirmed 50820.crdownload",
     "Aws practitioner/new/Unconfirmed 985210.crdownload",
     "Aws practitioner/new/claude_aws_clf_c_02_storytelling_master_prompt.md",
-    "Aws practitioner/new/Unconfirmed 197393.crdownload",
     "php/PHP Day04.md",
     "php/PHP Day03.md",
     "Aws practitioner/new/AWS_CLF-C02_Domain1_EliteGuide.md",
@@ -280,8 +281,6 @@
     "Aws practitioner/new/aws_advanced_identity_notes.md",
     "Aws practitioner/new/aws_security_compliance_notes.md",
     "Aws practitioner/new/aws_iam_notes.md",
-    "Aws practitioner/new/aws_well_architected_caf_notes.md",
-    "Aws practitioner/new/D1_S1_cloud_computing_notes.md",
     "Untitled.canvas"
   ]
 }
