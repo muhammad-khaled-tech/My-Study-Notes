@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "laravel/Laravel_ITI_OSAD_Complete_Manual.md",
+                "file": "laravel/Laravel_Day2_Ultimate_Guide.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Laravel_ITI_OSAD_Complete_Manual"
+              "title": "Laravel_Day2_Ultimate_Guide"
             }
           }
         ]
@@ -237,6 +237,9 @@
   },
   "active": "7bbd814216bdccfa",
   "lastOpenFiles": [
+    "laravel/laravel-chapter-01-part2.md",
+    "laravel/Laravel_ITI_OSAD_Complete_Manual.md",
+    "laravel/Unconfirmed 118590.crdownload",
     "laravel/Laravel_Day2_Ultimate_Guide.md",
     "laravel/Unconfirmed 113685.crdownload",
     "laravel/الفصل_الرابع_DB_Eloquent_Complete.md",
@@ -268,7 +271,6 @@
     "Aws practitioner/new/Unconfirmed 343414.crdownload",
     "Aws practitioner/new/domain3a_part3_Compute_Deploy_Integration.md",
     "Aws practitioner/new/Unconfirmed 939371.crdownload",
-    "Aws practitioner/new/Unconfirmed 487122.crdownload",
     "Aws practitioner/01_what is cloud computing?.md",
     "Aws practitioner/new/domain1_cloud_concepts_elite_notes.md",
     "Aws practitioner/new/domain2_security_part1.md",
@@ -281,8 +283,6 @@
     "Aws practitioner/new/claude_aws_clf_c_02_storytelling_master_prompt.md",
     "php/PHP Day04.md",
     "php/PHP Day03.md",
-    "Aws practitioner/new/AWS_CLF-C02_Domain1_EliteGuide.md",
-    "php/PHP Day02.md",
     "Untitled.canvas"
   ]
 }
