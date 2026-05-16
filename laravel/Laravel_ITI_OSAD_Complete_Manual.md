@@ -2356,17 +2356,17 @@ php artisan tinker                           # REPL تفاعلي مع الـ App
 
 ## المراجع والـ Resources المذكورة في الـ Course
 
-| المورد | الرابط |
-|--------|--------|
-| Laravel Validation Rules | https://laravel.com/docs/master/validation#available-validation-rules |
-| Custom Validation Rules | https://laravel.com/docs/master/validation#custom-validation-rules |
-| Laravel Breeze | https://laravel.com/docs/11.x/starter-kits |
-| Eloquent Sluggable Package | https://github.com/cviebrock/eloquent-sluggable |
-| Laravel Tags Package | https://github.com/spatie/laravel-tags |
-| Laravel Medialibrary | https://spatie.be/docs/laravel-medialibrary |
-| Laravel Debugbar | https://github.com/barryvdh/laravel-debugbar |
-| File Uploads Docs | https://laravel.com/docs/master/filesystem#file-uploads |
-| PHP Reflection | http://php.net/manual/en/book.reflection.php |
-| Taylor Otwell Laracon 2017 | اتكلم عنه في الـ Slides لـ Request Lifecycle |
-| Mohamed Said Video (Queues) | مذكور في الـ Lab 3 Slides |
+| المورد                      | الرابط                                                                |
+| --------------------------- | --------------------------------------------------------------------- |
+| Laravel Validation Rules    | https://laravel.com/docs/master/validation#available-validation-rules |
+| Custom Validation Rules     | https://laravel.com/docs/master/validation#custom-validation-rules    |
+| Laravel Breeze              | https://laravel.com/docs/11.x/starter-kits                            |
+| Eloquent Sluggable Package  | https://github.com/cviebrock/eloquent-sluggable                       |
+| Laravel Tags Package        | https://github.com/spatie/laravel-tags                                |
+| Laravel Medialibrary        | https://spatie.be/docs/laravel-medialibrary                           |
+| Laravel Debugbar            | https://github.com/barryvdh/laravel-debugbar                          |
+| File Uploads Docs           | https://laravel.com/docs/master/filesystem#file-uploads               |
+| PHP Reflection              | http://php.net/manual/en/book.reflection.php                          |
+| Taylor Otwell Laracon 2017  | اتكلم عنه في الـ Slides لـ Request Lifecycle                          |
+| Mohamed Said Video (Queues) | مذكور في الـ Lab 3 Slides                                             |
 
