@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "laravel/الفصل_الرابع_DB_Eloquent_Complete.md",
+                "file": "laravel/Laravel_ITI_OSAD_Complete_Manual.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "الفصل_الرابع_DB_Eloquent_Complete"
+              "title": "Laravel_ITI_OSAD_Complete_Manual"
             }
           }
         ]
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945,
-    "collapsed": true
+    "width": 260.51103591918945
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -238,6 +237,9 @@
   },
   "active": "7bbd814216bdccfa",
   "lastOpenFiles": [
+    "laravel/Laravel_Day2_Ultimate_Guide.md",
+    "laravel/Unconfirmed 113685.crdownload",
+    "laravel/الفصل_الرابع_DB_Eloquent_Complete.md",
     "laravel/laravel_day2_cheatsheet.html",
     "laravel/Unconfirmed 898514.crdownload",
     "laravel/laravel-chapter-01-part1.md",
@@ -272,8 +274,6 @@
     "Aws practitioner/new/domain2_security_part1.md",
     "Aws practitioner/new/D1_s2_global_infrastructure_notes.md",
     "Aws practitioner/new/domain2_security_part2.md",
-    "Aws practitioner/Unconfirmed 643748.crdownload",
-    "Aws practitioner/Unconfirmed 893914.crdownload",
     "Aws practitioner/05_S3_Databases.md",
     "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
     "Aws practitioner/03_EC2.md",
@@ -283,7 +283,6 @@
     "php/PHP Day03.md",
     "Aws practitioner/new/AWS_CLF-C02_Domain1_EliteGuide.md",
     "php/PHP Day02.md",
-    "Aws practitioner/new/aws_ec2_storage_notes.md",
     "Untitled.canvas"
   ]
 }
