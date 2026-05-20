@@ -197,8 +197,6 @@ B --> C["Region الأقرب<br/>للمستخدم"]
 - **S3 CRR** = Real-time + Duplicate Storage + Dynamic/Compliance لـ ريجون محددة.
     
 
-الجدول ده جاهز يتركب في الفايل عندك فوراً ومفهوم بنسبة 100%؟ لو تمام ومستعد للوحش اللي بعده، قولي "كمل" عشان ندخل في الـ **AWS Global Accelerator** ونشوف بيلعب في الشبكة إزاي!
-
 ---
 
 ## 🚀 S3 Transfer Acceleration
