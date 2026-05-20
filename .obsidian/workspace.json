@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "laravel/Laravel_ITI_OSAD_Complete_Manual.md",
+                "file": "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Laravel_ITI_OSAD_Complete_Manual"
+              "title": "domain1_part2_global_wellarchitected"
             }
           }
         ]
@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,9 +238,21 @@
   },
   "active": "7bbd814216bdccfa",
   "lastOpenFiles": [
+    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
+    "Aws practitioner/new/domain4_billing_pricing_support.md",
+    "Aws practitioner/new/domain3b_part3_wellarchitected_ecosystem.md",
+    "Aws practitioner/new/domain3b_part2_ml_migration.md",
+    "Aws practitioner/new/domain3b_part1_monitoring_vpc.md",
+    "Aws practitioner/new/domain3a_part3_Compute_Deploy_Integration.md",
+    "Aws practitioner/new/domain3a_part2_S3_Databases.md",
+    "Aws practitioner/new/domain3a_part1_EC2_Storage_ELB.md",
+    "Aws practitioner/new/domain2_security_part2.md",
+    "Aws practitioner/new/domain2_security_part1.md",
+    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
+    "Aws practitioner/new/CLF-C02_Question_Generator_Prompt.md",
+    "laravel/Laravel_ITI_OSAD_Complete_Manual.md",
     "laravel/Laravel_Day2_Ultimate_Guide.md",
     "laravel/laravel-chapter-01-part2.md",
-    "laravel/Laravel_ITI_OSAD_Complete_Manual.md",
     "laravel/Unconfirmed 118590.crdownload",
     "laravel/Unconfirmed 113685.crdownload",
     "laravel/الفصل_الرابع_DB_Eloquent_Complete.md",
@@ -249,15 +262,9 @@
     "laravel/WhatsApp Image 2026-05-14 at 7.47.35 PM.jpeg",
     "laravel/Unconfirmed 933819.crdownload",
     "admin2/RHSA1_CommandMap.excalidraw",
-    "Aws practitioner/new/CLF-C02_Question_Generator_Prompt.md",
     "Aws practitioner/new/Unconfirmed 910289.crdownload",
-    "Aws practitioner/new/domain3b_part3_wellarchitected_ecosystem.md",
-    "Aws practitioner/new/domain3b_part2_ml_migration.md",
-    "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Aws practitioner/new/Unconfirmed 132511.crdownload",
-    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "Aws practitioner/new/AWS_CLF-C02_Master_Prompt.md",
-    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
     "Pasted image 20260514041658.png",
     "Pasted image 20260514041618.png",
     "Pasted image 20260514041516.png",
@@ -267,22 +274,16 @@
     "components life cycle .png",
     "Pasted image 20260224214153.png",
     "Pasted image 20260224214557.png",
-    "Aws practitioner/new/domain3b_part1_monitoring_vpc.md",
     "Aws practitioner/new/Unconfirmed 343414.crdownload",
-    "Aws practitioner/new/domain3a_part3_Compute_Deploy_Integration.md",
     "Aws practitioner/new/Unconfirmed 939371.crdownload",
     "Aws practitioner/01_what is cloud computing?.md",
     "Aws practitioner/new/domain1_cloud_concepts_elite_notes.md",
-    "Aws practitioner/new/domain2_security_part1.md",
     "Aws practitioner/new/D1_s2_global_infrastructure_notes.md",
-    "Aws practitioner/new/domain2_security_part2.md",
     "Aws practitioner/05_S3_Databases.md",
     "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
     "Aws practitioner/03_EC2.md",
     "Aws practitioner/02_IAM.md",
     "Aws practitioner/new/claude_aws_clf_c_02_storytelling_master_prompt.md",
-    "php/PHP Day04.md",
-    "php/PHP Day03.md",
     "Untitled.canvas"
   ]
 }
