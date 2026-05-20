@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945,
-    "collapsed": true
+    "width": 260.51103591918945
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -238,6 +237,8 @@
   },
   "active": "7bbd814216bdccfa",
   "lastOpenFiles": [
+    "Aws practitioner/new/domain2_security_part1.md",
+    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
     "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Aws practitioner/new/domain3b_part3_wellarchitected_ecosystem.md",
@@ -247,8 +248,6 @@
     "Aws practitioner/new/domain3a_part2_S3_Databases.md",
     "Aws practitioner/new/domain3a_part1_EC2_Storage_ELB.md",
     "Aws practitioner/new/domain2_security_part2.md",
-    "Aws practitioner/new/domain2_security_part1.md",
-    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "Aws practitioner/new/CLF-C02_Question_Generator_Prompt.md",
     "laravel/Laravel_ITI_OSAD_Complete_Manual.md",
     "laravel/Laravel_Day2_Ultimate_Guide.md",

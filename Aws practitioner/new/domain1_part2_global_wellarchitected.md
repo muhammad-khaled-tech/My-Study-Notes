@@ -407,25 +407,71 @@ graph LR
 
 ---
 
-## 💡 AWS Right Sizing
+## 💡 AWS Right Sizing (الحجم المناسب بالظبط)
 
-ده مفهوم بسيط جداً بس مهم للـ Exam. لما شركة بتعمل Migration للـ Cloud، الـ Mistake الشائعة هي إنها بتاخد الـ Server القديم (مثلاً 64-core مش بيستخدم إلا 10% منه) وبتنقله 1:1 على أكبر EC2 Instance. النتيجة: بتدفع على Resources مش بتستخدمها.
+المفهوم ده هو عدو الـ Over-provisioning (إسراف الموارد) الأول في الـ Cloud.
 
-**Right Sizing** معناه: مطابقة الـ Instance Type والـ Size مع الـ Workload الفعلي بأقل تكلفة. المبدأ على AWS: **دايماً ابدأ بصغير**، لأن الـ Scale Up على الـ Cloud سهل في دقيقة. الـ Tools اللي بتساعدك: **CloudWatch** للـ Monitoring الفعلي، **Cost Explorer** لتحليل التكاليف، و**AWS Trusted Advisor** اللي بيديك Recommendations تلقائية للـ Right Sizing.
+لما تيم الـ Infrastructure في أي شركة ييجي يعمل Migration (هجرة) من السيرفرات التقليدية (On-Premises) للـ Cloud، بيقعوا في فخ كلاسيكي جداً: بيبصوا على السيرفر الحديد اللي عندهم في الشركة، يلاقوا مواصفاته مثلاً 64-core و128 جيجا رام، فيقوموا حاجزين EC2 Instance بنفس الحجم الضخم ده بالظبط (1:1 Migration).
 
+لكن لما بنبص على الاستخدام الفعلي (Utilization)، بنكتشف إن السيرفر ده طول السنة مش بيستهلك أكتر من 10% من قوته! في الـ On-premises ده كان أمر واقع لأنك اشتريت الحديد خلاص، لكن في الـ Cloud إنت كده بترمي فلوس الشركة في الأرض.
+
+**الـ Right Sizing** هو إنك تدرس الـ Workload بتاعك كويس، وتختار الـ Instance Type والـ Size المناسبين "بالظبط" للاحتياج الفعلي بأقل تكلفة ممكنة. والقاعدة الذهبية في الـ Cloud: **دايماً ابدأ بصغير (Start Small)**، لأنك لو احتجت موارد زيادة، الـ Scale Up بياخد دقيقة بضغطة زرار.
+
+### الـ Tools اللي بتساعدك في الـ Right Sizing (مهمة للامتحان):
+
+- **Amazon CloudWatch:** ده الجاسوس بتاعك اللي بيراقب الـ CPU والـ RAM والاستخدام الفعلي للسيرفرات عشان يقولك السيرفر ده مظلوم ولا مأنتخ.
+    
+- **AWS Cost Explorer:** بيحلل التكاليف وبيرسم لقطات بيانية توضحلك إنت بتصرف كام وفين.
+    
+- **AWS Trusted Advisor:** (🚨 الأهم فيهم) ده مستشارك الآلي، بيدخل على حسابك وبيديك Recommendations (توصيات) صريحة يقولك فيها: "عندك الـ EC2 الفلاني شغال بقاله شهر واستخدامه أقل من 5%، صغّره أو اقفله عشان توفر فلوس".
+    
 ---
+## 🛎️ AWS Ecosystem — خطط الدعم والـ Support Plans
 
-## 🛎️ AWS Ecosystem — الـ Support والـ Community
+أول ما بتفتح حساب على AWS، لازم تختار الـ Support Plan بتاعتك. هما **4 خطط** لازم تحفظ الفروق الجوهرية بينهم لأنهم بييجوا في الامتحان في شكل أسئلة سيناريوهات:
 
-**الـ Support Plans:** أول حاجة بتختار لما بتفتح AWS Account هي الـ Support Plan. الـ **Basic** مجاني وبيديك Documentation والـ Forums بس. الـ **Developer** بيديك Email Support في Business Hours والـ Response Time لـ General Questions أقل من 24 ساعة ولو System Impaired أقل من 12 ساعة. الـ **Business** بيديك 24/7 Phone وEmail وChat، ولو Production Down فأقل من **1 ساعة**. الـ **Enterprise** بيديك كل ده وكمان **TAM (Technical Account Manager)** — مستشارك الشخصي من AWS — وResponse Time للـ Business-Critical Down أقل من **15 دقيقة**.
+### 1. Basic Plan (الخطة الأساسية)
 
-**AWS Marketplace:** Catalog رقمي فيه آلاف الـ Software Solutions من Third-Party Vendors. تقدر تشتري Software جاهز وفاتورته بتيجيلك في الـ AWS Bill العادي. وتقدر إنت كمان تبيع Solutions بتاعتك عليه.
+- **التكلفة:** مجانية تماماً لكل الناس.
+    
+- **المميزات:** ليك صلاحية تقرأ الـ Documentation، وتدخل على الـ Support Forums، وتشوف الـ Core checks بتاعة الـ Trusted Advisor (مش كل الـ Checks).
+    
+- **🚨 القيد:** مفيش أي تواصل مع مهندسين أو دعم بشري لحل مشاكل تقنية.
+    
 
-**AWS IQ:** منصة بتلاقي فيها **AWS Certified Experts** للـ Freelance Work. بتعمل Request، بتاخد Proposals، بتختار Expert، والدفع بييجي في الـ AWS Bill بتاعتك.
+### 2. Developer Plan (خطة المطورين)
 
-**AWS re:Post:** Community Q&A Platform — بديل الـ AWS Forums القديم. بتسأل، الـ Community بتجاوب، وبتاخد Reputation Points لما بتجاوب صح. مهم تعرف إنه **مش للأسئلة الـ Time-Sensitive** أو اللي فيها Proprietary Information.
+- **المميزات:** مخصصة لو بتجرب أو بتعمل تيسيت لأبلكيشن. بتديك إمكانية تفتح Ticket ويوصلك **Email Support** بس في أوقات العمل الرسمية (Business Hours).
+    
+- **الـ Response Time:** أقل من 24 ساعة للأسئلة العامة، وأقل من 12 ساعة لو السيستم متعطل جزئياً (System Impaired).
+    
 
-**AWS Managed Services (AMS):** لو الشركة مش عايزة تدير الـ Infrastructure بنفسها خالص — AWS بتوفر team كاملة تدير كل حاجة: Change Requests وMonitoring وPatching وSecurity وBackups. ده Fully Managed Operations على مدار **24/365**.
+### 3. Business Plan (خطة الشركات والـ Production)
+
+- **المميزات:** أول ما يكون عندك سيرفرات في الـ Production الحقيقي والعملاء بيستخدموا الأبلكيشن، لازم تنقل للـ Business. بتديك دعم **24/7 على مدار الساعة** عبر التليفون، الإيميل، والـ Chat المباشر.
+    
+- **الـ Response Time:** لو الـ Production بتاعك وقع تماماً (**Production System Down**)، الـ Response بيكون في **أقل من ساعة واحدة**.
+    
+
+### 4. Enterprise Plan (الخطة الكبرى للمؤسسات)
+
+- **المميزات:** مخصصة للشركات الضخمة والـ Mission-Critical workloads. الميزة الأهم والكلمة المفتاحية في الامتحان هي الـ **TAM (Technical Account Manager)**؛ ده مهندس مستشار مخصص من أمازون قاعد معاك في الشركة، فاهم الـ Architecture بتاعك وبيساعدك في الـ Cost والـ Operations. وكمان بتديك Concierge Support Team للـ Billing.
+    
+- **الـ Response Time:** لو السيستم الرئيسي للشركة انهار (**Business-Critical System Down**)، الـ Response بيموت في **أقل من 15 دقيقة**.
+    
+
+## 🏛️ باقي الـ Ecosystem (أدوات المجتمع والمنصات)
+
+أمازون وفرت حبة منصات جانبية بتسهل الحياة للشركات والمطورين:
+
+- **AWS Marketplace:** تخيل إنه الـ App Store أو Google Play بس بتاع الـ Enterprise. كتالوج رقمي بتدخل تشتري منه أجهزة وويندوز وسيرفرات جاهزة أو Software متقفل ومتأمن من شركات تانية (Third-Party Vendors) زي WordPress جاهز، Firewalls من Cisco أو Fortinet. الميزة الجوهرية للامتحان: **الحساب والفاتورة بتنزلك مدمجة جوة فاتورة AWS العادية بتاعتك (Single AWS Bill)**.
+    
+- **AWS IQ:** منصة عمل حر (Freelancing) تابعة لـ AWS. لو شركتك محتاجة مهندس معتمد يعملكم شغلانة سريعة، بتدخل تكتب الـ Request، ومهندسين معاهم شهادات AWS بيبعتوا Proposals، وبتدفع لهم برضه عن طريق الـ AWS Bill بتاعتك.
+    
+- **AWS re:Post:** دي المنصة الرسمية للـ Q&A والأسئلة جوه مجتمع أمازون (بديل المنتديات القديمة). بتدخل تسأل والناس تجاوبك وتاخد نقاط سمعة (Reputation). تذكر للامتحان: **مش مناسبة للأسئلة الطارئة (Time-Sensitive)** ولا ينفع تحط فيها الكود السري أو البيانات الخاصة بشركتك (Proprietary info).
+    
+- **AWS Managed Services (AMS):** لو شركة كبيرة معاها فلوس بس مش عايزة تعين تيم DevOps وتيم هندسة يديروا الـ Cloud؛ الـ AMS هي خدمة بتخلي أمازون تبعت تيم كامل من عندها يديرلك الـ Infrastructure بالكامل (تشغيل، صيانة، تحديث Patches، أمان، ونسخ احتياطي Backups) على مدار الـ 24 ساعة.
+    
 
 ---
 
@@ -442,6 +488,15 @@ graph LR
 **الـ Trap الخامس — Outposts Physical Security:** AWS بتدير الـ Outposts Remotely، بس إنت مسؤول عن الـ Physical Security للـ Rack الموجود عندك.
 
 **الـ Trap السادس — re:Post مش للـ Urgent Issues:** re:Post هي Community Platform — مش الـ Channel الصح للمشاكل الـ Time-Sensitive. ديها Support Plan عندك.
+
+- **فخ الـ TAM:** إذا رأيت "Technical Account Manager" أو "Response time < 15 minutes" ➔ اختار فوراً **Enterprise Support Plan**.
+    
+- **فخ الـ Production Down:** لو السيستم اللي وقع هو Production والوقت المطلبو ساعة ➔ دي الـ **Business Plan**.
+    
+- **فخ الـ Marketplace:** شراء Software من طرف ثالث وينزل في فاتورة واحدة ➔ **AWS Marketplace**.
+    
+- **فخ الـ Right Sizing الإستباقي:** لو قالك أداة بتديك توصيات أوتوماتيك لتقليل حجم السيرفرات الغير مستغلة ➔ **AWS Trusted Advisor**.
+    
 
 ---
 
