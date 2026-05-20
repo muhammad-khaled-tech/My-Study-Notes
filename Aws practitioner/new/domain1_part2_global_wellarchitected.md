@@ -128,8 +128,6 @@ B --> C["Region الأقرب<br/>للمستخدم"]
 - **الأمان:** بيستخدم **OAC** لحماية الـ S3، وبيحمي من الـ **DDoS** بالتعاون مع Shield وWAF.
     
 
-الـ Flow كده وضح فكرة الكاش والـ OAC والحماية في دماغك يا هندسة؟ لو كله تمام قولي "كمل" عشان ندخل في الوحش اللي بيتلخبط معاه دايماً: **AWS Global Accelerator** ونعرف الفرق الجوهري بينهم.
-
 **أهم مقارنة في الـ Exam — CloudFront vs S3 Cross-Region Replication:**
 
 | | CloudFront | S3 Cross-Region Replication |
