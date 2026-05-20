@@ -236,7 +236,7 @@ B --> C["Region الأقرب<br/>للمستخدم"]
 
 **AWS WaveLength** جاي لحالة نادرة جداً — التطبيقات اللي محتاجة Latency في حدود الـ milliseconds الواحدة مع مستخدمين الـ 5G. AWS بتحط Compute جوه شبكة الـ Telecom Carrier نفسها — يعني الـ Traffic مش بيخرج من الشبكة الخلوية خالص ومش بيروح لـ AWS Region. ده بيديك Ultra-Low Latency. مناسب لـ Smart Cities وConnected Vehicles والـ AR/VR.
 
-**AWS Local Zones** فكرة مختلفة. بعض المدن الكبيرة في العالم ماعنهاش AWS Region كاملة — فـ AWS بتعمل "امتداد" للـ Region الأقرب في المدينة دي. مثلاً `us-east-1` في فيرجينيا عندها Local Zones في Boston وChicago وDallas وHouston. بتـ Extend الـ VPC بتاعتك للـ Local Zone وتشغّل EC2 وRDS وECS فيها.
+**AWS Local Zones** فكرة مختلفة. بعض المدن الكبيرة في العالم ماعندهاش AWS Region كاملة — فـ AWS بتعمل "امتداد" للـ Region الأقرب في المدينة دي. مثلاً `us-east-1` في فيرجينيا عندها Local Zones في Boston وChicago وDallas وHouston. بتـ Extend الـ VPC بتاعتك للـ Local Zone وتشغّل EC2 وRDS وECS فيها.
 
 الفرق بين الاتنين بسيط: WaveLength جوه شبكة الـ 5G Carrier، Local Zones امتداد للـ AWS Region في مدينة معينة.
 
