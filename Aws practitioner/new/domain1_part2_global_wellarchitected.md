@@ -260,18 +260,70 @@ A --> G["Sustainability"]
 
 ---
 
-**الـ Pillar الأول — Operational Excellence** بيتكلم عن تشغيل ومراقبة الـ Systems بشكل مستمر وتحسينها. المبدأ الأهم هنا هو "Perform operations as code" — يعني كل حاجة Infrastructure بتعملها عن طريق Code (CloudFormation, CDK) مش يدوي. مبدأ تاني مهم هو "Make frequent, small, reversible changes" — بدل الـ Big Bang Deployments، بتعمل تغييرات صغيرة وسهلة ترجع منها. الـ AWS Services المرتبطة بيه: CloudFormation، CloudTrail، CloudWatch، AWS Config.
+### 1. Operational Excellence (التميز التشغيلي)
 
-**الـ Pillar التاني — Security** بيتكلم عن حماية كل حاجة. الـ Principle الأساسي هو **Least Privilege** — كل حد بياخد بس الصلاحيات اللي يحتاجها بالظبط. مبدأ تاني هو "Apply Security at ALL Layers" — مش بس على الـ Application، على الـ Network، الـ Subnet، الـ Load Balancer، الـ EC2، الـ OS، وكل حاجة. والمبدأ التالت "Enable Traceability" — كل حاجة بتتعمل لازم تتسجل. الـ Services: IAM، CloudTrail، CloudWatch، KMS، Shield، WAF، Inspector.
+بيركز على تشغيل ومراقبة السيستم باستمرار وتحسينه.
 
-**الـ Pillar التالت — Reliability** بيتكلم عن قدرة الـ System يتعافى من المشاكل تلقائياً. المبدأ الأهم: "Automatically recover from failure" — الـ System المفروض يشتشف المشاكل ويتعافى من غير تدخل بشري. "Test recovery procedures" يعني لازم تجرب الـ Disaster Recovery بانتظام — مش تستنى الكارثة الحقيقية. "Scale horizontally" بدل Vertical Scaling لأن أكتر machines بتعني أقل risk per machine. الـ Services: Auto Scaling، CloudWatch، Route 53، Multi-AZ.
+- **القاعدة الذهبية:** "Perform operations as code"؛ يعني أي حاجة Infrastructure بتعملها تكون عن طريق Code (CloudFormation أو CDK) مش بالإيد عشان نتجنب الخطأ البشري.
+    
+- **نصيحة:** اعمل "frequent, small, reversible changes"؛ تغييرات صغيرة عشان لو حصلت مشكلة تعرف تعمل Rollback بسهولة.
+    
+- **الخدمات:** CloudFormation، CloudTrail، CloudWatch، AWS Config.
+    
 
-**الـ Pillar الرابع — Performance Efficiency** بيتكلم عن استخدام الـ Resources بكفاءة. المبدأ الأهم: "Use serverless architectures" — Lambda وFargate بتديك Performance من غير ما تدير Servers. "Democratize advanced technologies" — بدل ما تبني AI Model من الصفر، استخدم Rekognition أو SageMaker. "Go global in minutes" — بتـ Deploy في أي Region بسهولة. الـ Services: Lambda، Auto Scaling، CloudFront، ElastiCache.
+### 2. Security (الأمان)
 
-**الـ Pillar الخامس — Cost Optimization** بيتكلم عن دفع أقل من غير ما تضحي بالـ Performance. المبدأ الأساسي: "Adopt a consumption model" — بتدفع على اللي بتستخدمه فعلاً. "Measure overall efficiency" — لازم تعرف كل حاجة بتكلفك كام. "Use Spot Instances" لو الـ Workload يتحمل Interruption. الـ Services: Cost Explorer، Budgets، Spot Instances، Reserved Instances، S3 Intelligent Tiering.
+بيحمي البيانات والسيستم بتاعك.
 
-**الـ Pillar السادس — Sustainability** وده الأحدث، بيتكلم عن تقليل الأثر البيئي. المبدأ الأهم: "Maximize utilization" — لو عندك Instance شغّال بـ 20% من طاقته، صغّره. استخدم **Graviton Processors** من AWS — معالجات ARM بتستهلك طاقة أقل بكتير من x86 وبتديك نفس أو أحسن Performance. استخدم Lambda وFargate عشان الـ Shared Infrastructure بتاعتهم أكثر كفاءة من Dedicated Instances.
+- **القاعدة الذهبية:** "Least Privilege"؛ كل يوزر أو سيرفيس ياخد بس الصلاحيات اللي محتاجها "بالظبط".
+    
+- **استراتيجية:** "Apply Security at ALL Layers"؛ الأمان مش على الـ App بس، ده في الـ Network والـ OS والـ Load Balancer وكل حتة. لازم كل حركة تتسجل (Traceability).
+    
+- **الخدمات:** IAM، CloudTrail، CloudWatch، KMS، Shield، WAF، Inspector.
+    
 
+### 3. Reliability (الموثوقية)
+
+قدرة السيستم إنه يتعافى من أي مشاكل (Fault Tolerance).
+
+- **القاعدة الذهبية:** "Automatically recover from failure"؛ السيستم المفروض يكتشف المشكلة ويصلح نفسه أوتوماتيك.
+    
+- **نصيحة:** "Test recovery procedures"؛ جرب الـ Disaster Recovery (DR) بتاعك بانتظام، ماتستناش الكارثة تحصل. استخدم Horizontal Scaling بدل Vertical عشان تقلل الـ Risk.
+    
+- **الخدمات:** Auto Scaling، CloudWatch، Route 53، Multi-AZ.
+    
+
+### 4. Performance Efficiency (كفاءة الأداء)
+
+إزاي تستخدم الـ Resources بذكاء عشان تاخد أحسن أداء.
+
+- **القاعدة الذهبية:** "Use serverless architectures"؛ Lambda وFargate بيدوك أداء ممتاز من غير ما توجع دماغك بإدارة سيرفرات.
+    
+- **استراتيجية:** بدل ما تخترع العجلة (زي بناء AI Model من الصفر)، استخدم تكنولوجيا جاهزة زي Rekognition أو SageMaker.
+    
+- **الخدمات:** Lambda، Auto Scaling، CloudFront، ElastiCache.
+    
+
+### 5. Cost Optimization (تحسين التكلفة)
+
+إزاي تدفع أقل تمن مقابل أحسن أداء.
+
+- **القاعدة الذهبية:** "Adopt a consumption model"؛ ادفع بس على قد اللي بتستخدمه.
+    
+- **استراتيجية:** لو عندك Workload بيستحمل توقف، استخدم **Spot Instances** عشان توفر كتير، واعرف تكلفة كل Resource عندك.
+    
+- **الخدمات:** Cost Explorer، Budgets، Spot/Reserved Instances، S3 Intelligent Tiering.
+    
+
+### 6. Sustainability (الاستدامة)
+
+أحدث Pillar، هدفه تقليل الأثر البيئي للـ IT.
+
+- **القاعدة الذهبية:** "Maximize utilization"؛ لو عندك سيرفر شغال بـ 20%، صغّره عشان متستهلكش كهرباء على الفاضي.
+    
+- **استراتيجية:** استخدم معالجات **Graviton (ARM)**، بتديك أداء ممتاز واستهلاك طاقة أقل بكتير من معالجات x86 التقليدية.
+    
+- **الخدمات:** Graviton Processors، Lambda، Fargate (عشان الـ Shared Infrastructure بتوفر في الطاقة).
 ---
 
 ## 🚀 AWS Cloud Adoption Framework (CAF)
