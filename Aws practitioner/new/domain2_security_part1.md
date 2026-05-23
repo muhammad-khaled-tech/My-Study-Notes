@@ -141,27 +141,86 @@ graph TD
 - **Shield Advanced:** بـ 3,000$ في الشهر + فريق SRT بشرائي معاك 24/7 + حماية مادية ضد فواتير الـ Scaling + بيحمي كمان الطبقة 7 (الأبلكيشن).
 
 ---
+## 1. مفهوم الـ Layer 7 وفلسفة الفحص العميق (Deep Inspection)
 
-## 🔥 AWS WAF — حارس البوابة على الـ Layer 7
+في هندسة الشبكات، الترافيك بيمر بمراحل (Layers) مختلفة. الـ Firewalls التقليدية والـ Security Groups بتشتغل على مستوى **Layer 3 (Network)** و**Layer 4 (Transport)**؛ يعني كل اللي بتشوفه هو: "الريكويست ده جاي من IP إيه؟ ورايح لبورت كام؟" ومتقدرش تشوف اللي جوه الـ Request نفسه.
 
-الـ **Shield** بيحميك من هجمات الـ Network. الـ **WAF (Web Application Firewall)** بيحميك من هجمات الـ Application — وده مستوى أعمق وأذكى.
+الـ **WAF (Web Application Firewall)** بيمتاز بأنه بيشتغل على **Layer 7 (Application Layer)**. ده معناه إنه بيفهم بروتوكول الـ HTTP/HTTPS بالكامل، وبيقدر يعمل **Deep Packet Inspection** (فحص عميق لمحتوى الريكويست) كأنه متصفح أو سيرفر بيقرأ البيانات.
 
-الـ WAF بيشتغل على **Layer 7** — يعني بيفهم الـ HTTP/HTTPS. بيقدر يفحص كل Request بالتفصيل — الـ IP Address، الـ HTTP Headers، محتوى الـ Body، الـ URI. وبناءً على قواعد إنت بتحددها، بيسمح أو بيمنع.
+### البيانات التي يفحصها الـ WAF بدقة:
 
-بتنشره على: Application Load Balancer، API Gateway، وCloudFront.
+- **الـ IP Address:** مش بس بيشوف الـ IP الحالي، ده بيقدر يقرا الـ `X-Forwarded-For` Header عشان يعرف الـ IP الحقيقي لليوزر لو جاي من ورا Proxy.
+    
+- **الـ HTTP Headers:** بيفحص الـ `User-Agent` (عشان يكتشف لو الريكويست مبعوت من Script أو Bot مش متصفح طبيعي)، وبيفحص الـ `Cookies` والـ `Content-Type`.
+    
+- **محتوى الـ Body:** بيقرأ الـ Payload الفعلي اللي مبعوت في الـ `POST` requests (زي داتا الـ Forms أو الـ JSON المبعوت للـ API).
+    
+- **الـ URI / Query String:** بيفحص العناوين والـ Parameters المكتوبة في الـ URL (زي الـ IDs والـ Search queries).
+    
 
-الـ **Web ACL (Web Access Control List)** هي القلب — مجموعة Rules بتقول للـ WAF إيه يسمح وإيه يمنع:
-- **IP Blocking** — بتحجب IPs معينة أو نطاقات بأكملها.
-- **SQL Injection Protection** — بيتعرف على محاولات حقن SQL في الـ Parameters.
-- **XSS (Cross-Site Scripting) Protection** — بيتعرف على Scripts خبيثة في الـ Requests.
-- **Geo-Match** — بتحجب بلدان بأكملها. مثلاً: موقعك للسوق المصري فقط — بتحجب كل حاجة خارج مصر.
-- **Rate-Based Rules** — لو IP معين بيرسل أكتر من عدد معين من الـ Requests في الدقيقة — بيتـ Block تلقائياً (ده بيساعد في صد الـ DDoS على مستوى الـ Application).
+## 2. تشريح الـ Web ACL والـ Rules Engine
 
-> [!important] Shield vs WAF — الفرق الجوهري
-> - **Shield** = حماية من هجمات الـ Network (Layer 3/4) — SYN Floods وUDP Floods.
-> - **WAF** = حماية من هجمات الـ Application (Layer 7) — SQL Injection وXSS وBot Traffic.
-> - الاتنين ممكن يشتغلوا مع بعض — Shield يحمي الـ Infrastructure، WAF يحمي الـ Application.
+الـ **Web ACL (Web Access Control List)** هي الحاوية الأساسية أو "السياسة الأمنية" اللي بتعملها جوه الـ WAF وتربطها بالـ Resources بتاعتك. الـ Web ACL دي جواها مجموعة من الـ **Rules** (القواعد) اللي بتمشي بالترتيب (Priority).
 
+لما الريكويست بيوصل، الـ WAF بيمشيه على الـ Rules دي بالترتيب. لو طابق قاعدة معينة (Match)، بياخد القرار فوراً (إما يمرره `ALLOW`، أو يحجبه `BLOCK` بـ HTTP 403 Forbidden، أو يراقبه بس `COUNT`).
+
+Code snippet
+
+```mermaid
+graph TD
+    Incoming[Incoming HTTP/HTTPS Request] --> WAF[AWS WAF / Web ACL]
+    
+    subgraph Rules Engine (Sequential Check)
+        WAF --> Rule1{Rule 1: SQL Injection?}
+        Rule1 -- Yes --> Block[BLOCK: HTTP 403]
+        Rule1 -- No --> Rule2{Rule 2: Geo-Match?}
+        Rule2 -- Blocked Country --> Block
+        Rule2 -- Allowed Country --> Rule3{Rule 3: Rate-Based?}
+        Rule3 -- Limit Exceeded --> Block
+        Rule3 -- Safe Rate --> Allow[ALLOW: Forward to Backend]
+    end
+    
+    style Block fill:#ff4d4d,stroke:#333,stroke-width:2px,color:#fff
+    style Allow fill:#2eb82e,stroke:#333,stroke-width:2px,color:#fff
+    style WAF fill:#ff9900,stroke:#333,stroke-width:2px
+```
+
+### تفصيل الـ Rules الأساسية:
+
+- **SQL Injection (SQLi) Protection:** الهكر بيحاول يكتب أوامر SQL (زي `UNION SELECT` أو `OR 1=1`) جوه الـ Inputs (خانة الـ Username مثلاً). الـ WAF عنده فلاتر ذكية (RegEx Patterns) بتلمح الأنماط دي في الـ Body أو الـ Query String وتعمل لها Block قبل ما الريكويست يلمس الـ Backend ويضرب الداتا بيز.
+    
+- **Cross-Site Scripting (XSS) Protection:** هنا الهكر بيحاول يحقن كود JavaScript (زي `<script>steal_cookies()</script>`) جوه الموقع عشان يتخزن ويشتغل عند يوزرز تانيين. الـ WAF بيكتشف الـ HTML tags والـ Scripts الخبيثة دي في الـ Request ويمنعها.
+    
+- **Geo-Match (التصفية الجغرافية):** الـ WAF مدمج معاه قاعدة بيانات جغرافية للـ IPs. لو الأبلكيشن بتاعك بيخدم نطاق جغرافي معين (مصر مثلاً)، تقدر تمنع ترافيك دول كاملة معروفة بمعدلات الهجمات العالية بنسبة 100%.
+    
+- **Rate-Based Rules (الـ Application-level DDoS Defense):** دي ميزة قوية جداً. بتحدد حد أقصى للـ Requests من الـ IP الواحد (مثلاً: ممنوع أي IP يبعت أكتر من 1000 ريكويست في الـ 5 دقائق). لو هكر بيعمل هجوم DDoS ذكي (HTTP Flood) أو بيحاول يخمن الباسوردات (Brute Force)، الـ WAF هيلقطه ويعمل له Block تلقائي لفترة زمنية محددة.
+    
+
+## 3. أماكن النشر والربط (Deployment Targets)
+
+الـ WAF ملوش Static IP ومبيشتغلش في الهواء كخدمة مستقلة، لازم يتركب كـ "مصفاة" (Filter Layer) مباشرة فوق واحدة من الـ Services دي:
+
+1. **Amazon CloudFront:** وده الـ Best Practice هندسياً؛ لأن الـ WAF بيشتغل هنا عند الـ **Edge Locations**. يعني الريكويست الخبيث بيتحجب قريباً من اليوزر وقبل ما يستهلك أي Network bandwidth من الـ Data Center الرئيسي بتاعك.
+    
+2. **Application Load Balancer (ALB):** لو الترافيك واصل فعلياً للـ Region بتاعتك ورايح للسيرفرات (EC2)، الـ WAF بيفحصه هنا قبل ما الـ Load Balancer يوزعه على الـ Instances.
+    
+3. **Amazon API Gateway:** لو شغال Serverless Architecture (زي AWS Lambda)، الـ WAF بيحمى الـ Endpoints بتاعت الـ API مباشرة.
+    
+
+## 4. المقارنة الحاسمة: AWS Shield vs AWS WAF
+
+الخلط بينهم في الامتحانات والمشاريع بيجي من إن الـ هدف النهائي للاتنين هو "الحماية وتأمين السيستم"، لكن تكتيك العمل ومستوى الطبقات مختلف تماماً:
+
+|**وجه المقارنة**|**AWS Shield**|**AWS WAF**|
+|---|---|---|
+|**الطبقة (OSI Layer)**|بيشتغل على **Layer 3 & 4** (Network / Transport)|بيشتغل على **Layer 7** (Application Layer)|
+|**طبيعة الرؤية**|**حجمي (Volumetric):** بيقرا عدد الـ Packets وتدفق الشبكة، ملوش دعوة باللي مكتوب جوه.|**محتوائي (Content-aware):** بيقرا الكلمات، الـ Headers، السكربتات، والـ Strings المبعوتة جوه الـ HTTP.|
+|**نوع الهجمات المستهدفة**|SYN Floods, UDP Floods, Infrastructure DDoS Attacks (محاولات خنق الشبكة وفصل السيرفرات).|SQL Injection, Cross-Site Scripting (XSS), HTTP Floods, Brute Force, Scraping Bots.|
+|**طريقة العمل والإعداد**|الـ Standard بيشتغل **تلقائياً وبالمجان** لحماية بنية AWS التحتية.|إنت اللي بتكريت الـ Web ACL وتكتب الـ Rules (أو تشتري AWS Managed Rules جاهزة).|
+
+> [!tip] النتيجة المعمارية (The Architecture Blueprint)
+> 
+> الأنظمة الاحترافية مش بتختار واحد منهم، الاتنين بيشتغلوا مع بعض في نفس الوقت: **AWS Shield** بيقف على الحدود الخارجية لصد هجمات الـ Network الضخمة وتأمين السيرفرات كحديد وشبكة، والـ **AWS WAF** بيقعد وراه مباشرة لفلترة محتوى الـ HTTP والتأكد إن الـ Requests اللي داخلة للكود سليمة ومفيهاش ثغرات أمنية.
 ---
 
 ## 🌐 AWS Network Firewall — حارس الـ VPC كله
