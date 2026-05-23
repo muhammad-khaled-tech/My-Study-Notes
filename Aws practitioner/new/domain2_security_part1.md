@@ -141,6 +141,10 @@ graph TD
 - **Shield Advanced:** بـ 3,000$ في الشهر + فريق SRT بشرائي معاك 24/7 + حماية مادية ضد فواتير الـ Scaling + بيحمي كمان الطبقة 7 (الأبلكيشن).
 
 ---
+
+## 🔥 AWS WAF — حارس البوابة على الـ Layer 7
+
+
 ## 1. مفهوم الـ Layer 7 وفلسفة الفحص العميق (Deep Inspection)
 
 في هندسة الشبكات، الترافيك بيمر بمراحل (Layers) مختلفة. الـ Firewalls التقليدية والـ Security Groups بتشتغل على مستوى **Layer 3 (Network)** و**Layer 4 (Transport)**؛ يعني كل اللي بتشوفه هو: "الريكويست ده جاي من IP إيه؟ ورايح لبورت كام؟" ومتقدرش تشوف اللي جوه الـ Request نفسه.
@@ -170,7 +174,7 @@ Code snippet
 graph TD
     Incoming[Incoming HTTP/HTTPS Request] --> WAF[AWS WAF / Web ACL]
     
-    subgraph Rules Engine (Sequential Check)
+    subgraph Rules_Engine [Rules Engine - Sequential Check]
         WAF --> Rule1{Rule 1: SQL Injection?}
         Rule1 -- Yes --> Block[BLOCK: HTTP 403]
         Rule1 -- No --> Rule2{Rule 2: Geo-Match?}
@@ -221,6 +225,7 @@ graph TD
 > [!tip] النتيجة المعمارية (The Architecture Blueprint)
 > 
 > الأنظمة الاحترافية مش بتختار واحد منهم، الاتنين بيشتغلوا مع بعض في نفس الوقت: **AWS Shield** بيقف على الحدود الخارجية لصد هجمات الـ Network الضخمة وتأمين السيرفرات كحديد وشبكة، والـ **AWS WAF** بيقعد وراه مباشرة لفلترة محتوى الـ HTTP والتأكد إن الـ Requests اللي داخلة للكود سليمة ومفيهاش ثغرات أمنية.
+
 ---
 
 ## 🌐 AWS Network Firewall — حارس الـ VPC كله
