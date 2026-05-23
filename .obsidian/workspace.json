@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
+                "file": "VUE/Vue_Day1_Notes (1).md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "domain1_part2_global_wellarchitected"
+              "title": "Vue_Day1_Notes (1)"
             }
           }
         ]
@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,8 +238,8 @@
   },
   "active": "7bbd814216bdccfa",
   "lastOpenFiles": [
-    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
     "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
+    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
     "Aws practitioner/new/domain2_security_part1.md",
     "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Aws practitioner/new/domain3b_part3_wellarchitected_ecosystem.md",
