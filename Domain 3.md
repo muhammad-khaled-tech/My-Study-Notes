@@ -298,3 +298,108 @@ flowchart TD
 > 
 > في الامتحان، أول ما عينك تلمح كلمة **(Interruptible)** أو **(Batch)** روح فوراً للـ **Spot**. وأول ما تلمح كلمة **(License)** أو **(Compliance)** اختار **Dedicated Hosts** وإنت مغمض!
 
+---
+## 4. المكملات الهندسية لـ EC2 (تريكات مخفية في الامتحان)
+
+في 3 مفاهيم أساسية بيكملوا معمارية الـ EC2، وأسئلتهم بتيجي في الامتحان على هيئة "فخوخ" (Traps):
+
+### (1) العناوين الثابتة: Elastic IP (EIP)
+
+- **المشكلة:** لما بتعمل سيرفر EC2 جديد (مثلاً عليه مشروع Laravel 13)، أمازون بتديله Public IP مجاني عشان الناس تدخله. الكارثة إنك لو عملت للسيرفر (Stop) ورجعت عملتله (Start)، الـ IP ده بيتغير! لو إنت رابط الـ IP ده بدومين (زي .com)، الموقع هيقع.
+    
+- **الحل المعماري:** الـ **Elastic IP**. ده IP ثابت (Static IPv4) إنت بتحجزه لنفسك ويفضل بتاعك للأبد، وتربطه بالسيرفر، ولو السيرفر عمل ريستارت هيفضل الـ IP زي ما هو.
+    
+- 🚨 **فخ الامتحان (التسعير الغريب):** الـ Elastic IP **مجاني** طول ما هو مربوط بسيرفر شغال (Running). لكن لو إنت حاجزه وراميه عندك ومش رابطه بسيرفر، أو رابطه بسيرفر مطفي (Stopped).. **أمازون هتبدأ تسحب منك فلوس عليه!** (بيعملوا كده عشان الناس ماتحجزش الـ IPs وتخلصها على الفاضي).
+    
+
+### (2) فخ التسعير: Dedicated Hosts vs Dedicated Instances
+
+في الامتحان، هيحاول يلخبطك بين الاتنين دول لأنهم شبه بعض جداً:
+
+- **Dedicated Instances (الخوادم المخصصة):** سيرفرات شغالة على هاردوير (Physical Server) مخصص لشركتك إنت بس. مفيش أي عميل تاني من أمازون هيشاركك نفس الحديدة. (تستخدم للـ Compliance والأمان العادي).
+    
+- **Dedicated Hosts (المضيف المخصص):** نفس اللي فوق، بس بيزيد عليها إن أمازون بتديك **(Visibility - رؤية كاملة)** لعدد الـ Sockets والـ Cores بتاعة البروسيسور.
+    
+- 🚨 **الكلمة الدلالية (Keyword):** أول ما تشوف في السؤال كلمة **BYOL (Bring Your Own License)** أو رخص سوفت وير بتتحاسب بعدد الكورز (زي Oracle أو Windows Server)، إياك تختار Instances، لازم تختار **Dedicated Hosts**!
+    
+
+### (3) مجموعات التسكين (Placement Groups)
+
+أمازون بتسألك: "عايزني أرصلك السيرفرات بتاعتك فين في الداتا سنتر؟"
+
+ليها 3 استراتيجيات (كل واحدة لسيناريو معين):
+
+1. **Cluster (التكتل):**
+    
+    - **الفكرة:** بنرص السيرفرات كلها في نفس الـ Rack (نفس الدولاب) جنب بعض بالظبط.
+        
+    - **السيناريو:** لو عندك سيرفرات بتكلم بعض بسرعة جنونية ومحتاج (Low Latency) وتأخير شبه معدوم، زي الـ High Performance Computing (HPC).
+        
+    - **العيب:** لو الـ Rack ده الكهربا قطعت عنه، السيرفرات كلها هتقع مرة واحدة.
+        
+2. **Spread (الانتشار):**
+    
+    - **الفكرة:** بنوزع السيرفرات بحيث كل سيرفر يتحط في (Rack) مستقل، ليه كهربا ونتورك مختلفة.
+        
+    - **السيناريو:** لو عندك أبلكيشن حساس جداً (Critical Application) ومش عايز أي نسبة خطأ (High Availability). لو راك ولع، الباقي شغال.
+        
+    - **العيب:** الحد الأقصى 7 سيرفرات بس في كل منطقة (AZ).
+        
+3. **Partition (التقسيم):**
+    
+    - **الفكرة:** بنقسم السيرفرات لـ (مجموعات/Partitions). كل مجموعة في Rack لوحدها.
+        
+    - **السيناريو:** بتستخدم دايماً مع الـ Big Data وأنظمة قواعد البيانات الموزعة زي (Hadoop, Cassandra, Kafka).
+        
+
+### 🏗️ خريطة هندسة مجموعات التسكين (Mermaid)
+
+Code snippet
+
+
+
+```mermaid
+flowchart TD
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+
+    subgraph Placement_Groups ["AWS EC2 Placement Groups"]
+        direction LR
+
+        subgraph Cluster ["Cluster (Low Latency)"]
+            direction TB
+            Rack1["Rack 1</br>(Same Hardware)"]
+            EC2_1[[EC2]] --- EC2_2[[EC2]] --- EC2_3[[EC2]]
+            Rack1 -.-> EC2_1
+        end
+
+        subgraph Spread ["Spread (High Availability)"]
+            direction TB
+            RackA["Rack A"] --> EC2_A[[EC2]]
+            RackB["Rack B"] --> EC2_B[[EC2]]
+            RackC["Rack C"] --> EC2_C[[EC2]]
+        end
+
+        subgraph Partition ["Partition (Big Data)"]
+            direction TB
+            Part1["Partition 1</br>(Rack X)"] --> EC2_P1[[EC2s]]
+            Part2["Partition 2</br>(Rack Y)"] --> EC2_P2[[EC2s]]
+        end
+    end
+
+    classDef cluster fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef spread fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef part fill:#e6f7ff,stroke:#1890ff,color:#000;
+
+    class Cluster cluster;
+    class Spread spread;
+    class Partition part;
+```
+
+---
+
+
+
+
+
+
+----
