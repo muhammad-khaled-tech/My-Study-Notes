@@ -403,66 +403,71 @@ flowchart TD
 
 
 ----
-## 5. عوالم التخزين (Storage) - الجزء الأول: التشريح العميق لأساسيات EBS
+## 2. عوالم التخزين المرفقة (Attached Storage) - الجزء الأول: معمارية EBS
 
 **أصل الحكاية والمشكلة الأساسية:**
 
-أي سيرفر EC2 بتخلقه (عشان تشغل عليه مثلاً Backend بـ Laravel 13 وقاعدة بيانات PostgreSQL)، محتاج "هارد ديسك" عشان ينزل عليه نظام التشغيل (Ubuntu) وتتخزن عليه ملفاتك.
+أي سيرفر EC2 بتخلقه محتاج "هارد ديسك" عشان يتسطب عليه نظام التشغيل (Linux/Windows) وتتخزن عليه ملفاتك وقواعد البيانات. في السيرفرات القديمة (On-Premises)، الهارد كان بيبقى راكب بمسامير جوه اللوحة الأم، ولو المازربورد اتحرقت، الداتا كلها بتطير.
 
-في الـ IT التقليدي، الهارد بيكون راكب "فيزيكال" بمسامير جوه اللوحة الأم للسيرفر. الكارثة إن لو السيرفر ده المازربورد بتاعته اتحرقت، الهارد اتحرق معاه والداتا طارت!
+أمازون غيرت اللعبة دي واخترعت ما يسمى بـ **(التخزين المربوط بالشبكة - Network-Attached Storage)**. الهارد بقى مفصول عن السيرفر فيزيكال، ومربوط بيه بكابل شبكة داخلي فائق السرعة. يعني لو السيرفر ولع، الهارد هيفضل سليم وتقدر توصله بسيرفر تاني في ثواني!
 
-عشان كده أمازون اخترعت الـ **EBS (Elastic Block Store)**. الفكرة العبقرية هنا إن الهارد ده مش جوه السيرفر، ده هارد "مربوط بالشبكة" (Network-Attached). يعني لو سيرفرك ولع، تقدر بضغطة زرار تفك الهارد منه (سوفت وير) وتركبه في سيرفر تاني جديد، وتلاقي الداتا بتاعتك كلها سليمة!
+### ⚙️ التشريح العميق لـ Amazon EBS (Elastic Block Store)
 
-### ⚙️ التفكيك المعماري لـ EBS (Under the Hood)
+عشان تفهم الـ EBS صح وتحل أسئلته المعقدة في الامتحان، لازم نفكك اسمه ونفهم القوانين اللي بتحكمه:
 
-#### (1) يعني إيه Block Storage (تخزين الكتل)؟
+#### (أ) يعني إيه Block Storage (تخزين الكتل)؟
 
-- **المعنى الهندسي:** الهارد بيقسم الداتا لـ "بلوكات" (Blocks) صغيرة بحجم ثابت.
+- **المعنى الهندسي:** الهارد ده بيقسم الداتا لـ "بلوكات" (Blocks) صغيرة جداً بحجم ثابت.
     
-- **ليه ده يهمنا؟** تخيل عندك داتابيز حجمها 10 جيجا، وفي يوزر عمل Update لحرف واحد في اسمه. لو الهارد ده (File Storage)، هيضطر يمسح الـ 10 جيجا ويكتبهم من جديد عشان حرف! لكن في الـ (Block Storage)، الهارد بيروح للبلوك المعين (اللي حجمه كام كيلو بايت) اللي فيه الحرف ده ويعدله بس.
+- **ليه ده يهمنا؟** تخيل عندك قاعدة بيانات (Database) حجمها 50 جيجا، وفي يوزر عمل Update لحرف واحد في اسمه. لو الهارد ده بيخزن كـ (ملفات كاملة)، هيضطر يمسح الـ 50 جيجا ويكتبهم من جديد عشان حرف! لكن في الـ (Block Storage)، الهارد بيروح للبلوك المعين (اللي حجمه كام كيلو بايت) اللي فيه الحرف ده ويعدله بس في أجزاء من الثانية.
     
-- **الخلاصة للامتحان:** الـ EBS **سريع جداً جداً** ومثالي لأنظمة التشغيل وقواعد البيانات (Databases) اللي محتاجة سرعة قراءة وكتابة لحظية (Low Latency).
+- **الخلاصة للامتحان:** الـ EBS **سريع جداً جداً** ومثالي لأنظمة التشغيل وقواعد البيانات (Databases) اللي محتاجة سرعة قراءة وكتابة لحظية.
     
 
-#### (2) القواعد المعمارية الصارمة للـ EBS (دستور الامتحان)
+#### (ب) القوانين المعمارية الصارمة للـ EBS (دستور الامتحان)
 
 الـ EBS ليه 3 قوانين حاكمة مستحيل كسرها، والامتحان بيلعب عليهم في السيناريوهات:
 
-- **القانون الأول: حبيس منطقة التوافر (AZ Locked)**
+1. **حبيس المنطقة (AZ Locked):**
     
-    لما بتخلق هارد EBS، بيتولد جوه منطقة توافر واحدة (Availability Zone - مثلاً `us-east-1a`). السيرفر (EC2) اللي هيركب عليه لازم وحتماً يكون معاه في نفس الـ AZ.
+    لما بتخلق هارد EBS، بيتولد جوه مبنى واحد (Availability Zone - مثلاً `us-east-1a`). السيرفر (EC2) اللي هيركب عليه لازم وحتماً يكون معاه في نفس الـ AZ.
     
-    _السبب:_ الهارد والسيرفر مربوطين بكابلات شبكة داخلية سريعة جداً. مستحيل تركب هارد في مبنى `1a` على سيرفر في مبنى `1b` لأن سرعة الكابل (Latency) هتقل.
+    _(السبب: الهارد والسيرفر مربوطين بكابلات. مستحيل تركب هارد في مبنى `1a` على سيرفر في مبنى `1b` لأن الكابل مش هيوصل والسرعة هتقل)._
     
-- **القانون الثاني: الزواج الفردي (One-to-One)**
+2. **الزواج الفردي (One-to-One):**
     
-    هارد الـ EBS العادي بيركب في **سيرفر واحد فقط** في نفس اللحظة. مينفعش تجيب سيرفرين وتوصلهم بنفس هارد الـ EBS العادي عشان يقرأوا ويكتبوا مع بعض. (عشان تعمل كده هتحتاج خدمة تانية هنشرحها قدام).
+    هارد الـ EBS العادي بيركب في **سيرفر واحد فقط** في نفس اللحظة. مينفعش تجيب سيرفرين وتوصلهم بنفس هارد الـ EBS العادي عشان يقرأوا ويكتبوا مع بعض. (عشان تعمل كده هتحتاج هارد EFS اللي هنشرحه في الجزء الثالث).
     
-- **القانون الثالث: البقاء أو الفناء (Delete on Termination)**
+3. **البقاء أو الفناء (Delete on Termination):**
     
-    دي تريكة خبيثة جداً في الامتحان وفي الشغل:
+    دي تريكة خبيثة جداً في الامتحان وفي بيئة العمل:
     
-    - الهارد الأساسي (Root Volume) اللي بينزل عليه نظام التشغيل: الديفولت بتاعه إنه **بيتمسح ويُدمر أوتوماتيك** لو إنت مسحت السيرفر (Terminated).
+    - **الهارد الأساسي (Root Volume):** ده اللي بينزل عليه نظام التشغيل. الديفولت بتاعه إنه **بيتمسح ويُدمر أوتوماتيك** لو إنت مسحت السيرفر (Terminated).
         
-    - الهاردات الإضافية (Data Volumes) اللي بتركبها عشان تشيل عليها الداتابيز: الديفولت بتاعها إنها **بتفضل عايشة** حتى لو السيرفر اتدمر.
+    - **الهاردات الإضافية (Data Volumes):** دي اللي بتركبها عشان تشيل عليها الداتابيز أو الصور. الديفولت بتاعها إنها **بتفضل عايشة** حتى لو السيرفر اتدمر.
         
-        _(إنت كمهندس تقدر تغير الإعدادات دي براحتك قبل الإطلاق)._
-        
-
-#### (3) اللقطات الاحتياطية (EBS Snapshots) - الحل السحري لكسر الحدود
-
-- **المشكلة:** طالما الهارد "حبيس" في مبنى `1a`، إزاي أعمل منه باك أب (Backup) وأنقله لمبنى `1b` عشان الـ High Availability؟
-    
-- **الحل (Snapshot):** إنت بتاخد "لقطة" (صورة طبق الأصل) من الهارد.
-    
-    - اللقطة دي مش بتتخزن على EBS، دي بتروح تتخزن في خدمة التخزين العملاقة **(Amazon S3)** لأنها أرخص.
-        
-    - بعدها بتروح للمبنى التاني `1b`، وتقوله "اصنعلي هارد EBS جديد من اللقطة اللي متخزنة في الـ S3". وكده إنت نقلت الهارد من مبنى لمبنى!
+        _(ملاحظة: إنت كمهندس تقدر تغير الإعدادات دي براحتك قبل إطلاق السيرفر)._
         
 
-### 🏗️ اللوحة المعمارية: دورة حياة الـ EBS والـ Snapshots (Mermaid)
+#### (ج) اللقطات الاحتياطية (EBS Snapshots) - الهروب من السجن
 
-الرسمة دي بتوضح إزاي الهارد مربوط بالشبكة، وإزاي اللقطة بتسافر بين المباني (خالية من الأرقام المنقطة والـ HTML لضمان عملها بامتياز في أوبسيديان):
+- **المشكلة:** طالما الهارد "حبيس" في مبنى `1a`، إزاي أعمل منه باك أب (Backup) وأنقله لمبنى `1b` عشان أحمي الأبلكيشن لو المبنى الأول وقع؟
+    
+- **الحل المعماري (Snapshot):** إنت بتاخد "لقطة" (صورة طبق الأصل) من الهارد.
+    
+    - اللقطة دي مش بتتخزن على EBS، دي بتروح تتخزن في خدمة التخزين العملاقة **(Amazon S3)** لأنها أرخص وبتتوزع على كل المباني.
+        
+    - بعدها بتروح للمبنى التاني `1b`، وتقوله "اصنعلي هارد EBS جديد من اللقطة اللي متخزنة في الـ S3". وكده إنت استنسخت الهارد ونقلته من مبنى لمبنى!
+        
+
+> [!info] معلومة هامة للامتحان (Incremental Backups)
+> 
+> الـ Snapshots في أمازون بتشتغل بنظام (الزيادة التراكمية - Incremental). يعني أول لقطة بتاخد مساحة الهارد كله (مثلاً 10 جيجا). لو ضفت ملف حجمه 1 جيجا وأخدت لقطة تانية، اللقطة التانية هتحفظ الـ 1 جيجا الجديد بس، وده بيوفرلك فلوس كتير جداً في التخزين!
+
+### 🏗️ اللوحة المعمارية: دورة حياة الـ EBS والـ Snapshots
+
+الرسمة دي بتوضح إزاي الهارد مربوط بالشبكة الفردية، وإزاي اللقطة بتسافر بين المباني (تم استخدام الـ `</br>` لفصل السطور بدون أخطاء):
+
 
 
 ```mermaid
@@ -474,13 +479,13 @@ flowchart TD
         
         subgraph AZ_A ["Availability Zone A (us-east-1a)"]
             direction TB
-            EC2_1[["🖥️ EC2 Instance</br>(Laravel App)"]]
+            EC2_1[["🖥️ EC2 Instance</br>(App Server)"]]
             EBS_1[("💾 EBS Volume</br>Network Attached")]
             
             EC2_1 <==>|Fast Local Network| EBS_1
         end
 
-        S3[("🪣 Amazon S3</br>Global Storage")]
+        S3[("🪣 Amazon S3</br>Global Storage</br>Holds Snapshots")]
 
         subgraph AZ_B ["Availability Zone B (us-east-1b)"]
             direction TB
@@ -506,115 +511,304 @@ flowchart TD
     class AZ_A,AZ_B az;
 ```
 
-كده إحنا فرشنا الأساس المعماري (الـ Foundation) لهارد الـ EBS وحطينا إيدينا على قوانينه اللي الامتحان بيلعب عليها.
-
 ---
-## 5. عوالم التخزين (Storage) - الجزء الأول: التشريح العميق لأساسيات EBS
+##  الجزء الثاني: أنواع هاردات EBS (SSD vs HDD)
 
-**أصل الحكاية والمشكلة الأساسية:**
+**أصل الحكاية (The Core Problem):**
 
-أي سيرفر EC2 بتخلقه (عشان تشغل عليه مثلاً Backend بـ Laravel 13 وقاعدة بيانات PostgreSQL)، محتاج "هارد ديسك" عشان ينزل عليه نظام التشغيل (Ubuntu) وتتخزن عليه ملفاتك.
+ليه أمازون معملتش هارد واحد موحد وخلاص؟ لأن الداتا مش زي بعضها. لو إنت بتعمل سيرفر داتابيز (PostgreSQL) عليه ملايين العمليات في الثانية، إنت محتاج هارد "سريع جداً". لكن لو بتخزن ملفات "سجلات" (Logs) مش بتفتحها غير مرة كل كام شهر، حرام تدفع فلوس في هارد سريع!
 
-في الـ IT التقليدي، الهارد بيكون راكب "فيزيكال" بمسامير جوه اللوحة الأم للسيرفر. الكارثة إن لو السيرفر ده المازربورد بتاعته اتحرقت، الهارد اتحرق معاه والداتا طارت!
+عشان كده، أمازون قسمت الـ EBS لعائلتين كبار: **SSD** (سريع وغالي)، و **HDD** (بطيء ورخيص).
 
-عشان كده أمازون اخترعت الـ **EBS (Elastic Block Store)**. الفكرة العبقرية هنا إن الهارد ده مش جوه السيرفر، ده هارد "مربوط بالشبكة" (Network-Attached). يعني لو سيرفرك ولع، تقدر بضغطة زرار تفك الهارد منه (سوفت وير) وتركبه في سيرفر تاني جديد، وتلاقي الداتا بتاعتك كلها سليمة!
+### ⚙️ فك طلاسم السرعة (IOPS vs Throughput)
 
-### ⚙️ التفكيك المعماري لـ EBS (Under the Hood)
+قبل ما نحفظ أنواع الهاردات، لازم نفهم أمازون بتقيس سرعة الهارد إزاي في الكواليس:
 
-#### (1) يعني إيه Block Storage (تخزين الكتل)؟
-
-- **المعنى الهندسي:** الهارد بيقسم الداتا لـ "بلوكات" (Blocks) صغيرة بحجم ثابت.
+1. **الـ IOPS (Input/Output Operations Per Second):** - ده مقياس **"سرعة الاستجابة"**. تخيل إنك بتبعت آلاف العربيات الملاكي الصغيرة والسريعة جداً.
     
-- **ليه ده يهمنا؟** تخيل عندك داتابيز حجمها 10 جيجا، وفي يوزر عمل Update لحرف واحد في اسمه. لو الهارد ده (File Storage)، هيضطر يمسح الـ 10 جيجا ويكتبهم من جديد عشان حرف! لكن في الـ (Block Storage)، الهارد بيروح للبلوك المعين (اللي حجمه كام كيلو بايت) اللي فيه الحرف ده ويعدله بس.
-    
-- **الخلاصة للامتحان:** الـ EBS **سريع جداً جداً** ومثالي لأنظمة التشغيل وقواعد البيانات (Databases) اللي محتاجة سرعة قراءة وكتابة لحظية (Low Latency).
-    
-
-#### (2) القواعد المعمارية الصارمة للـ EBS (دستور الامتحان)
-
-الـ EBS ليه 3 قوانين حاكمة مستحيل كسرها، والامتحان بيلعب عليهم في السيناريوهات:
-
-- **القانون الأول: حبيس منطقة التوافر (AZ Locked)**
-    
-    لما بتخلق هارد EBS، بيتولد جوه منطقة توافر واحدة (Availability Zone - مثلاً `us-east-1a`). السيرفر (EC2) اللي هيركب عليه لازم وحتماً يكون معاه في نفس الـ AZ.
-    
-    _السبب:_ الهارد والسيرفر مربوطين بكابلات شبكة داخلية سريعة جداً. مستحيل تركب هارد في مبنى `1a` على سيرفر في مبنى `1b` لأن سرعة الكابل (Latency) هتقل.
-    
-- **القانون الثاني: الزواج الفردي (One-to-One)**
-    
-    هارد الـ EBS العادي بيركب في **سيرفر واحد فقط** في نفس اللحظة. مينفعش تجيب سيرفرين وتوصلهم بنفس هارد الـ EBS العادي عشان يقرأوا ويكتبوا مع بعض. (عشان تعمل كده هتحتاج خدمة تانية هنشرحها قدام).
-    
-- **القانون الثالث: البقاء أو الفناء (Delete on Termination)**
-    
-    دي تريكة خبيثة جداً في الامتحان وفي الشغل:
-    
-    - الهارد الأساسي (Root Volume) اللي بينزل عليه نظام التشغيل: الديفولت بتاعه إنه **بيتمسح ويُدمر أوتوماتيك** لو إنت مسحت السيرفر (Terminated).
+    - **الاستخدام:** قواعد البيانات (Databases) اللي بتكتب وتقرأ أرقام صغيرة جداً بس بمعدل ملايين المرات في الثانية (Low Latency).
         
-    - الهاردات الإضافية (Data Volumes) اللي بتركبها عشان تشيل عليها الداتابيز: الديفولت بتاعها إنها **بتفضل عايشة** حتى لو السيرفر اتدمر.
+2. **الـ Throughput (معدل النقل - MiB/s):**
+    
+    - ده مقياس **"عرض الماسورة"**. تخيل إنك بتبعت عربية نقل مقطورة بطيئة، بس بتشيل أطنان من البضاعة في النقلة الواحدة.
         
-        _(إنت كمهندس تقدر تغير الإعدادات دي براحتك قبل الإطلاق)._
+    - **الاستخدام:** الـ Big Data ونقل الفيديوهات والملفات الضخمة اللي بتتقرأ ورا بعضها (Sequential Data).
         
 
-#### (3) اللقطات الاحتياطية (EBS Snapshots) - الحل السحري لكسر الحدود
+### ⚙️ عائلات الـ EBS (دستور الامتحان)
 
-- **المشكلة:** طالما الهارد "حبيس" في مبنى `1a`، إزاي أعمل منه باك أب (Backup) وأنقله لمبنى `1b` عشان الـ High Availability؟
+#### أولاً: عائلة الـ SSD (Solid State Drives)
+
+دي الهاردات السريعة اللي بتعتمد على الـ IOPS.
+
+> [!info] ملاحظة هامة
+> 
+> عائلة الـ SSD هي **الوحيدة** اللي مسموح تنزل عليها نظام تشغيل (Boot Volumes).
+
+- **(1) الهارد المتوازن: General Purpose SSD (gp2 / gp3)**
     
-- **الحل (Snapshot):** إنت بتاخد "لقطة" (صورة طبق الأصل) من الهارد.
+    - **الفكرة:** هارد بيوازن بين السعر والأداء. ده "الديفولت" بتاع أمازون لأي سيرفر جديد.
+        
+    - **التريكة الهندسية:** في الـ `gp2` القديم، السرعة (IOPS) كانت مربوطة بحجم الهارد. يعني لو عايز سرعة أكبر، لازم تشتري جيجات أكتر حتى لو مش محتاجها! أمازون حلت المشكلة دي في الـ `gp3`، وبقيت تقدر ترفع السرعة لوحدها من غير ما تزود الحجم (عشان توفر فلوس).
+        
+    - **سيناريو الامتحان:** أي تطبيق ويب عادي (زي تطبيق بـ Laravel)، أو Boot volume، أو بيئات التطوير والاختبار.
+        
+- **(2) الوحش الكاسر: Provisioned IOPS SSD (io1 / io2 / io2 Block Express)**
     
-    - اللقطة دي مش بتتخزن على EBS، دي بتروح تتخزن في خدمة التخزين العملاقة **(Amazon S3)** لأنها أرخص.
+    - **الفكرة:** أغلى وأسرع هارد في أمازون، مخصص للأنظمة الحرجة جداً (Mission-Critical).
         
-    - بعدها بتروح للمبنى التاني `1b`، وتقوله "اصنعلي هارد EBS جديد من اللقطة اللي متخزنة في الـ S3". وكده إنت نقلت الهارد من مبنى لمبنى!
+    - **السيناريو:** لو الداتابيز بتاعتك محتاجة أكتر من `16,000 IOPS` (سرعة جنونية)، أو لو الأبلكيشن بتاعك بيتعامل مع معاملات مالية (Billion-dollar DBs) ومفيش أي مجال للتأخير.
+        
+    - **الكلمات الدلالية في الامتحان:** `Critical Database`, `High IOPS`, `Sub-millisecond Latency`, `> 16,000 IOPS`.
         
 
-### 🏗️ اللوحة المعمارية: دورة حياة الـ EBS والـ Snapshots (Mermaid)
+#### ثانياً: عائلة الـ HDD (Hard Disk Drives)
 
-الرسمة دي بتوضح إزاي الهارد مربوط بالشبكة، وإزاي اللقطة بتسافر بين المباني (خالية من الأرقام المنقطة والـ HTML لضمان عملها بامتياز في أوبسيديان):
+دي هاردات ميكانيكية بتعتمد على عرض الماسورة (Throughput).
+
+> [!warning] تحذير امتحان صارم
+> 
+> عائلة الـ HDD **مستحيل** تنزل عليها نظام تشغيل (Cannot be a Boot Volume). دي بتستخدم كهاردات "إضافية" للداتا فقط.
+
+- **(3) هارد النقل الضخم: Throughput Optimized HDD (st1)**
+    
+    - **الفكرة:** هارد الماسورة الواسعة. رخيص ومصمم لنقل الداتا الضخمة والمستمرة.
+        
+    - **السيناريو:** الـ Big Data، أنظمة الـ Data Warehouses، ومعالجة سجلات النظام (Log Processing).
+        
+    - **الكلمات الدلالية:** `Big Data`, `Data Warehouse`, `Streaming workloads`.
+        
+- **(4) هارد الأرشيف: Cold HDD (sc1)**
+    
+    - **الفكرة:** ده "أرخص" هارد EBS في أمازون على الإطلاق.
+        
+    - **السيناريو:** الداتا "الباردة" (Cold Data) اللي محتاجينها تفضل واصلة بالسيرفر عشان لو احتاجنالها، بس مش بندخل عليها غير نادراً جداً.
+        
+    - **الكلمات الدلالية:** `Lowest Cost`, `Infrequently Accessed`, `Archive`.
+        
+
+### 🏗️ خريطة اتخاذ القرار في الامتحان (EBS Volume Types)
+
+الرسمة دي (Mermaid) هتخليك تلقط الإجابة الصح في الامتحان بمجرد ما تقرأ الكلمة الدلالية (Keyword) في السيناريو (تم استخدام `</br>` لضمان التوافق التام مع أوبسيديان):
 
 Code snippet
 
-![](data:image/png;base64,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)
 
-```
+
+```mermaid
 flowchart TD
     classDef default font-weight:bold,font-size:14px,stroke-width:2px;
 
-    subgraph Region ["AWS Region (e.g., us-east-1)"]
-        direction LR
-        
-        subgraph AZ_A ["Availability Zone A (us-east-1a)"]
+    Start{"طبيعة التطبيق؟</br>(Workload Type)"}
+
+    Start -->|نظام تشغيل أو ويب عادي</br>Boot Volume / General| GP["(1) General Purpose SSD</br>gp2 / gp3"]
+    
+    Start -->|قاعدة بيانات حرجة وسريعة</br>Critical DB / High IOPS| IO["(2) Provisioned IOPS SSD</br>io1 / io2"]
+    
+    Start -->|بيانات ضخمة وتحليل</br>Big Data / Data Warehouse| ST["(3) Throughput Optimized HDD</br>st1"]
+    
+    Start -->|أرشيف رخيص ونادر</br>Cold Data / Lowest Cost| SC["(4) Cold HDD</br>sc1"]
+
+    classDef ssd fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef hdd fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef start fill:#f9f9f9,stroke:#52c41a,color:#000;
+
+    class Start start;
+    class GP,IO ssd;
+    class ST,SC hdd;
+```
+
+---
+##  الجزء الثالث: الهارد المشترك (Amazon EFS)
+
+**أصل الحكاية والمشكلة الأساسية:**
+
+في الـ EBS، الهارد بيركب في "سيرفر واحد" وفي "مبنى واحد (AZ)". طب لو عندي سيستم كبير شغال وراه 10 سيرفرات EC2 متوزعين في 3 مباني (AZs) مختلفة، وكلهم محتاجين يقرأوا ويكتبوا في نفس الفولدر (`/uploads`) في نفس اللحظة؟
+
+لو يوزر رفع صورة، هتنزل على سيرفر 1. لو يوزر تاني دخل والـ Load Balancer رماه على سيرفر 2، مش هيلاقي الصورة!
+
+من هنا أمازون اخترعت الـ **EFS (Elastic File System)**: ده "هارد شبكي مشترك" (Shared File System) موجود في السحابة، بيكبر لوحده، بيوصل لآلاف السيرفرات في نفس اللحظة، وعابر للمباني (Multi-AZ).
+
+### ⚙️ القواعد الهندسية للـ EFS (دستور الامتحان)
+
+الـ EFS ليه قوانين صارمة جداً، وأسئلته في الامتحان بتيجي "مباشرة" لو إنت حافظ التريكات دي:
+
+#### (أ) حصرية نظام التشغيل (Linux Only) - 🚨 [فخ الامتحان الأول]
+
+- **القاعدة:** الـ EFS مصمم عشان يشتغل ببروتوكول اسمه (NFSv4 - Network File System)، وده بروتوكول بيفهمه اللينكس بس (زي Ubuntu و Amazon Linux).
+    
+- **سيناريو الامتحان:** لو جابلك سؤال بيقولك الشركة عندها سيرفرات **Windows** ومحتاجين هارد مشترك.. **إياك تختار EFS!** الإجابة الصح وقتها هتكون خدمة تانية خالص اسمها **Amazon FSx for Windows**.
+    
+
+#### (ب) التواجد في عدة مباني (Multi-AZ Built-in)
+
+الداتا اللي بتترفع على الـ EFS بتتنسخ في الكواليس بشكل لحظي (Synchronously) في أكتر من AZ جوه الـ Region. يعني الـ High Availability بتاعته مبنية جواه. مش محتاج تعمل Snapshots عشان تحمي الداتا من إن مبنى يقع، هو بيحمي نفسه.
+
+#### (ج) التمدد التلقائي والتسعير (Elasticity & Pricing)
+
+- **في الـ EBS:** إنت بتشتري هارد 100 جيجا، بتدفع تمنهم بالكامل سواء حطيت فيهم ملفات أو سيبتهم فاضيين.
+    
+- **في الـ EFS:** إنت **مابتحددش مساحة أصلاً**. الهارد ده بيكبر ويصغر أوتوماتيك على حسب الملفات اللي جواه، وبتدفع تمن الجيجات اللي إنت ماليها بالظبط.
+    
+- **العيب المعماري (Trade-off):** الـ EFS **أغلى بكتير** من الـ EBS (تقريباً 3 أضعاف السعر)، عشان كده بنستخدمه للضرورة القصوى (للملفات المشتركة بس، مش لنظام التشغيل).
+    
+
+### ⚙️ طبقات التوفير الذكية (EFS Storage Classes)
+
+بما إن الـ EFS غالي، أمازون عملت فيه "طبقات" (Tiers) عشان توفرلك فلوس بناءً على استخدامك للملفات:
+
+1. **الطبقة القياسية (Standard):**
+    
+    دي للملفات الساخنة اللي السيرفرات بتفتحها وتعدل فيها كل يوم (ودي الطبقة الأغلى).
+    
+2. **طبقة الوصول النادر (EFS-IA - Infrequent Access):**
+    
+    للملفات اللي مش بتفتحها كتير. السعر هنا بيقل جداً (أرخص بحوالي 92%)، بس أمازون بتفرض عليك "رسوم بسيطة" كل مرة تفتح فيها الملف.
+    
+3. **نظام الإدارة الآلي (Lifecycle Management):**
+    
+    إنت بتشغل الخاصية دي في الإعدادات وتقوله: "أي ملف على الـ EFS محدش فتحه بقاله 30 يوم، انقله أوتوماتيك من طبقة الـ Standard لطبقة الـ IA عشان أوفر فاتورتي". دي بتيجي في الامتحان تحت كلمة (Cost Optimization for EFS).
+    
+
+> [!info] ملاحظة هندسية للامتحان (EFS One Zone)
+> 
+> لو إنت بتعمل بيئة تجارب (Test/Dev) ومش فارق معاك لو الداتا ضاعت، ممكن تختار (EFS One Zone). ده بيخزن الداتا في AZ واحدة بس، وده بيخليه أرخص 47% من الـ EFS العادي. بس لو الـ AZ دي وقعت، الداتا بتاعتك كلها طارت.
+
+### 🏗️ اللوحة المعمارية: ديناميكية الـ EFS
+
+الرسمة دي بتوضح إزاي الـ EFS بيربط السيرفرات ببعضها عبر المباني المختلفة (تم الاعتماد على `</br>` حصرياً لتوافق أوبسيديان):
+
+
+```mermaid
+flowchart TD
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+
+    subgraph AWS_Region ["AWS Region"]
+        direction TB
+
+        subgraph AZ_A ["AZ A (us-east-1a)"]
             direction TB
-            EC2_1[["🖥️ EC2 Instance</br>(Laravel App)"]]
-            EBS_1[("💾 EBS Volume</br>Network Attached")]
-            
-            EC2_1 <==>|Fast Local Network| EBS_1
+            EC2_1[["🖥️ EC2 Instance 1</br>(Linux)"]]
+            EC2_W[["🖥️ EC2 Instance</br>(Windows)"]]
         end
 
-        S3[("🪣 Amazon S3</br>Global Storage")]
-
-        subgraph AZ_B ["Availability Zone B (us-east-1b)"]
+        subgraph AZ_B ["AZ B (us-east-1b)"]
             direction TB
-            EBS_2[("💾 New EBS Volume</br>Created from Snapshot")]
-            EC2_2[["🖥️ New EC2 Instance</br>(Backup Server)"]]
-            
-            EBS_2 <==>|Fast Local Network| EC2_2
+            EC2_2[["🖥️ EC2 Instance 2</br>(Linux)"]]
+            EC2_3[["🖥️ EC2 Instance 3</br>(Linux)"]]
         end
 
-        %% Snapshot Travel Process
-        EBS_1 -.->|Take Snapshot| S3
-        S3 -.->|Restore Snapshot| EBS_2
+        EFS[("📁 Amazon EFS</br>Shared File System</br>(Multi-AZ / Linux Only)")]
+        FSx[("📁 Amazon FSx</br>Shared File System</br>(Windows Only)")]
+
+        %% EFS Connections (Linux Only)
+        EC2_1 -.->|NFS Protocol| EFS
+        EC2_2 -.->|NFS Protocol| EFS
+        EC2_3 -.->|NFS Protocol| EFS
+
+        %% FSx Connections (Windows Only)
+        EC2_W -.->|SMB Protocol| FSx
     end
 
     classDef ec2 fill:#f6ffed,stroke:#52c41a,color:#000;
-    classDef ebs fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef s3 fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef efs fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef fsx fill:#f9f0ff,stroke:#722ed1,color:#000;
     classDef az fill:#fdfdfd,stroke:#ff4d4f,stroke-width:3px,color:#000,stroke-dasharray: 5 5;
 
-    class EC2_1,EC2_2 ec2;
-    class EBS_1,EBS_2 ebs;
-    class S3 s3;
+    class EC2_1,EC2_2,EC2_3,EC2_W ec2;
+    class EFS efs;
+    class FSx fsx;
     class AZ_A,AZ_B az;
 ```
 
-كده إحنا فرشنا الأساس المعماري (الـ Foundation) لهارد الـ EBS وحطينا إيدينا على قوانينه اللي الامتحان بيلعب عليها.
+---
+## الجزء الرابع: الخلاصة وشفرات الامتحان
 
-طمني إن البلوك ده ركب معاك بتفاصيله في النوتس.. عشان لو تمام، أرميلك **(الجزء التاني: أنواع هاردات الـ EBS بالتفصيل الممل، وفك طلاسم الـ IOPS والـ SSD والـ HDD وتسعيرهم للامتحان)**! جاهز؟
+**أصل الحكاية:**
+
+في امتحان الـ CLF-C02، أمازون مش بتختبر حفظك للتعريفات، هي بتختبر قدرتك كـ (Architect) إنك تختار الأداة الصح للسيناريو الصح بأقل تكلفة. الأسئلة هنا بتيجي في شكل "شركة عندها تطبيق بيعمل كذا.. تختار أنهي نوع تخزين؟"
+
+### ⚙️ شفرات الامتحان (The Exam Keywords)
+
+أول ما تشوف الكلمات دي في السؤال، اختار الخدمة دي وإنت مغمض:
+
+#### (أ) شفرات الـ EBS (Elastic Block Store)
+
+- `Boot Volume` أو `Operating System` ➔ **EBS (gp2/gp3)**
+    
+- `Relational Database`, `Low Latency`, `High IOPS` ➔ **EBS (io1/io2)**
+    
+- `Single EC2 instance`, `Block level storage` ➔ **EBS**
+    
+- `Backup to another AZ/Region` ➔ **EBS Snapshots**
+    
+
+#### (ب) شفرات الـ EFS (Elastic File System)
+
+- `Shared File System`, `Hundreds of EC2 instances` ➔ **EFS**
+    
+- `Linux instances`, `NFS protocol` ➔ **EFS**
+    
+- `Multi-AZ shared storage`, `Grows automatically` ➔ **EFS**
+    
+
+#### (ج) شفرات الـ FSx (خدمات الملفات المتخصصة)
+
+- `Windows Server`, `SMB protocol`, `Active Directory` ➔ **Amazon FSx for Windows File Server**
+    
+- `High Performance Computing (HPC)`, `Machine Learning`, `Lustre` ➔ **Amazon FSx for Lustre**
+    
+
+### 📊 الجدول الذهبي للمقارنة (EBS vs EFS vs FSx)
+
+|**وجه المقارنة**|**Amazon EBS**|**Amazon EFS**|**Amazon FSx for Windows**|
+|---|---|---|---|
+|**نوع التخزين**|Block Storage (مكعبات)|File Storage (ملفات)|File Storage (ملفات)|
+|**عدد السيرفرات المسموح**|سيرفر واحد فقط (1:1)|آلاف السيرفرات (Many:1)|آلاف السيرفرات (Many:1)|
+|**نظام التشغيل المدعوم**|Windows و Linux|**Linux فقط (NFS)**|**Windows فقط (SMB)**|
+|**نطاق التواجد (Scope)**|AZ واحدة فقط (مبنى واحد)|Multi-AZ (عدة مباني)|Single أو Multi-AZ|
+|**التسعير (Pricing)**|تدفع للمساحة المحجوزة مسبقاً|تدفع لما تستخدمه فعلياً فقط|تدفع للمساحة المحجوزة مسبقاً|
+
+> [!tip] نصيحة ذهبية للحل السريع
+> 
+> أي سؤال يطلب منك "هارد مشترك" (Shared Storage) عينك تروح فوراً على نظام التشغيل: لو قالك Linux اختار EFS، لو قالك Windows اختار FSx.
+
+### 🏗️ خريطة اتخاذ القرار في الامتحان (Storage Decision Tree)
+
+الرسمة دي (Mermaid) بتلخص خطوات تفكيرك وأنت بتقرأ أي سؤال عن التخزين المرفق:
+
+```mermaid
+flowchart TD
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+
+    Start{"هل التخزين لسيرفر واحد</br>أم مشترك بين عدة سيرفرات؟"}
+
+    %% مسار السيرفر الواحد
+    Start -->|سيرفر واحد فقط</br>Single Instance| EBS{"ما نوع البيانات؟"}
+    EBS -->|نظام تشغيل أو ويب</br>Boot / General| GP["EBS gp2/gp3"]
+    EBS -->|قاعدة بيانات حرجة</br>Critical DB| IO["EBS io1/io2"]
+    EBS -->|بيانات ضخمة وأرشيف</br>Big Data / Archive| HDD["EBS st1/sc1"]
+
+    %% مسار التخزين المشترك
+    Start -->|تخزين مشترك</br>Shared Storage| OS{"ما هو نظام التشغيل؟"}
+    OS -->|Linux / NFS| EFS["Amazon EFS"]
+    OS -->|Windows / SMB| FSxW["Amazon FSx for Windows"]
+    OS -->|HPC / Machine Learning| FSxL["Amazon FSx for Lustre"]
+
+    classDef ebs fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef efs fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef fsx fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef decision fill:#f9f9f9,stroke:#52c41a,color:#000;
+
+    class Start,EBS,OS decision;
+    class GP,IO,HDD ebs;
+    class EFS efs;
+    class FSxW,FSxL fsx;
+```
+
+---
+
+
+
+
+---
