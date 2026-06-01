@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "odoo/odoo_day1_study_guide.md",
+                "file": "odoo/odoo_views_deep_dive.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "odoo_day1_study_guide"
+              "title": "odoo_views_deep_dive"
             }
           }
         ]
@@ -238,6 +238,7 @@
   },
   "active": "9b69c47c74ef4558",
   "lastOpenFiles": [
+    "odoo/odoo_day1_study_guide.md",
     "odoo/odoo_views_deep_dive.md",
     "odoo/Unconfirmed 514064.crdownload",
     "odoo/chapter_01_odoo_intro_and_first_module.md",
@@ -245,7 +246,6 @@
     "odoo/chapter_02_odoo_views_and_orm.md",
     "odoo/Unconfirmed 940594.crdownload",
     "odoo/Odoo_Day2_Study_Guide.md",
-    "odoo/odoo_day1_study_guide.md",
     "odoo/Unconfirmed 519347.crdownload",
     "Untitled.md",
     "Aws practitioner/new/domain3a_part3_Compute_Deploy_Integration.md",
