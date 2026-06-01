@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "eb1d7bfc1089dcb1",
+        "id": "78eab8a7a606b32a",
         "type": "tabs",
         "children": [
           {
-            "id": "9b69c47c74ef4558",
+            "id": "f3d318177cd01333",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "odoo/odoo_views_deep_dive.md",
+                "file": "Untitled 1.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "odoo_views_deep_dive"
+              "title": "Untitled 1"
             }
           }
         ]
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945,
-    "collapsed": true
+    "width": 260.51103591918945
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -236,10 +235,11 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "9b69c47c74ef4558",
+  "active": "f3d318177cd01333",
   "lastOpenFiles": [
-    "odoo/odoo_day1_study_guide.md",
+    "Untitled 1.md",
     "odoo/odoo_views_deep_dive.md",
+    "odoo/odoo_day1_study_guide.md",
     "odoo/Unconfirmed 514064.crdownload",
     "odoo/chapter_01_odoo_intro_and_first_module.md",
     "odoo/Unconfirmed 904400.crdownload",
@@ -283,7 +283,6 @@
     "components life cycle .png",
     "Pasted image 20260224214153.png",
     "Pasted image 20260224214557.png",
-    "Aws practitioner/01_what is cloud computing?.md",
     "Untitled.canvas"
   ]
 }
