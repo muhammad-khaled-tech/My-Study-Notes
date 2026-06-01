@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Untitled 1.md",
+                "file": "Domain 3.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 1"
+              "title": "Domain 3"
             }
           }
         ]
@@ -237,7 +237,7 @@
   },
   "active": "f3d318177cd01333",
   "lastOpenFiles": [
-    "Untitled 1.md",
+    "Domain 3.md",
     "odoo/odoo_views_deep_dive.md",
     "odoo/odoo_day1_study_guide.md",
     "odoo/Unconfirmed 514064.crdownload",
