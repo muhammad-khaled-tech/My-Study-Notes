@@ -1,3 +1,4 @@
+
 # Domain 3: Cloud Technology & Services
 
 ## 1. التشريح العميق والموسع لمعمارية EC2 (Elastic Compute Cloud)
@@ -33,10 +34,11 @@
     
     دي السيرفرات اللي الـ CPU والرامات فيها متوازنين.
     
-    > [!warning] تحذير معماري (T-Series CPU Credits)
-    > 
-    > عائلة الـ **T** (زي t2.micro) بتشتغل بنظام الـ (Burstable Performance). يعني إيه؟ يعني طول ما السيرفر بتاعك هادي، بيجمع حاجة اسمها (CPU Credits). ولما يحصل ضغط مفاجئ، بيحرق الكريدت دي عشان يشتغل بأقصى طاقة. لو الكريدت خلصت، السيرفر بيهنج وبيبقى بطيء جداً. دي تريكة خطيرة في بيئة العمل!
-    
+
+> [!warning] تحذير معماري (T-Series CPU Credits)
+> 
+> عائلة الـ **T** (زي t2.micro) بتشتغل بنظام الـ (Burstable Performance). يعني إيه؟ يعني طول ما السيرفر بتاعك هادي، بيجمع حاجة اسمها (CPU Credits). ولما يحصل ضغط مفاجئ، بيحرق الكريدت دي عشان يشتغل بأقصى طاقة. لو الكريدت خلصت، السيرفر بيهنج وبيبقى بطيء جداً. دي تريكة خطيرة في بيئة العمل!
+
 - **عائلة المعالجة (Compute Optimized - C):**
     
     المعالجات هنا جبارة. بتستخدمها لو الكود بتاعك بيعمل حسابات معقدة، ريندرينج، أو بيعالج فيديوهات.
@@ -74,9 +76,8 @@
 
 ### 🏗️ اللوحة المعمارية التفصيلية لتكوين الـ EC2 (Mermaid)
 
-الخريطة دي بتفصل التفاعل المعقد بين الـ 4 مكونات عشان يخلقوا السيرفر النهائي:
+الخريطة دي بتفصل التفاعل المعقد بين الـ 4 مكونات عشان يخلقوا السيرفر النهائي (الكود خالي من الـ HTML ليتوافق مع Obsidian):
 
-Code snippet
 
 ```mermaid
 flowchart TD
@@ -85,20 +86,20 @@ flowchart TD
     subgraph Config [مرحلة التجهيز - Launch Configuration]
         direction TB
         
-        A[<b>1. AMI (Amazon Machine Image)</b> <br> AWS Managed, Marketplace, or Custom Golden Image]
-        B[<b>2. Instance Type</b> <br> CPU/RAM Balance <br> <i>(e.g., General, Compute, Memory, Storage)</i>]
-        C[<b>3. User Data (Bootstrapping)</b> <br> Bash Script runs ONCE as root <br> pulls code & starts services]
-        D[<b>4. Key Pair (Security)</b> <br> Public Key injected into OS <br> Private Key downloaded to Developer]
+        A["1. AMI (Amazon Machine Image)\nAWS Managed, Marketplace, or Custom"]
+        B["2. Instance Type\nCPU and RAM Balance"]
+        C["3. User Data (Bootstrapping)\nBash Script runs ONCE as root"]
+        D["4. Key Pair (Security)\nPublic Key injected into OS"]
     end
 
     subgraph Execution [مرحلة الإطلاق - Provisioning]
-        EC2[[Running EC2 Instance <br> Fully Configured & Secure]]
+        EC2[["Running EC2 Instance\nFully Configured & Secure"]]
     end
 
-    A -->|1. Injects Base OS & Apps| EC2
-    B -->|2. Allocates Virtual Hardware| EC2
-    C -->|3. Executes Startup Script| EC2
-    D -->|4. Configures SSH Access| EC2
+    A -->|1. Injects Base OS| EC2
+    B -->|2. Allocates Hardware| EC2
+    C -->|3. Executes Script| EC2
+    D -->|4. Configures SSH| EC2
 
     classDef config fill:#e6f7ff,stroke:#1890ff,stroke-width:3px,color:#000;
     classDef ec2 fill:#f6ffed,stroke:#52c41a,stroke-width:3px,color:#000;
@@ -107,6 +108,6 @@ flowchart TD
     class Execution,EC2 ec2;
 ```
 
-أنا كده فردتلك كل تفصيلة في الـ EC2 كمعمارية، من أول أنواع الـ AMIs لحد مصيبة ضياع الـ Private Key، وسر الـ CPU Credits في الـ T-series.
+جرب كده يا هندسة، هتلاقي المربع بتاع التحذير طلع بشكله النظيف، ورسمة الـ Mermaid اشتغلت معاك طلقة من غير أي Error.
 
-ايه رأيك في العمق ده يا هندسة؟ لو ده اللي بيدور في دماغك والـ Markdown طالع معاك مظبوط، اديني الإشارة الخضراء عشان أقفل لك الـ EC2 بآخر حتة فيها وهي **(أمن السيرفر: الـ Security Groups)** واللي بتيجي في الامتحان بنسبة 100%.
+لو كله تمام، ندخل بقى نقفل الـ EC2 ببلوك **(أمن السيرفر: الـ Security Groups)** اللي الامتحان مابيخلاش منه؟
