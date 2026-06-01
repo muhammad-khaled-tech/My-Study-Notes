@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.51103591918945
+    "width": 260.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -237,7 +238,12 @@
   },
   "active": "9b69c47c74ef4558",
   "lastOpenFiles": [
+    "odoo/chapter_01_odoo_intro_and_first_module.md",
+    "odoo/Unconfirmed 904400.crdownload",
+    "odoo/chapter_02_odoo_views_and_orm.md",
+    "odoo/Unconfirmed 940594.crdownload",
     "odoo/Odoo_Day2_Study_Guide.md",
+    "odoo/odoo_day1_study_guide.md",
     "odoo/Unconfirmed 519347.crdownload",
     "Untitled.md",
     "Aws practitioner/new/domain3a_part3_Compute_Deploy_Integration.md",
@@ -266,7 +272,6 @@
     "laravel/Unconfirmed 933819.crdownload",
     "admin2/RHSA1_CommandMap.excalidraw",
     "Aws practitioner/new/Unconfirmed 910289.crdownload",
-    "Aws practitioner/new/Unconfirmed 132511.crdownload",
     "Aws practitioner/new/AWS_CLF-C02_Master_Prompt.md",
     "Pasted image 20260514041658.png",
     "Pasted image 20260514041618.png",
@@ -277,12 +282,8 @@
     "components life cycle .png",
     "Pasted image 20260224214153.png",
     "Pasted image 20260224214557.png",
-    "Aws practitioner/new/Unconfirmed 343414.crdownload",
     "Aws practitioner/01_what is cloud computing?.md",
     "Aws practitioner/new/domain1_cloud_concepts_elite_notes.md",
-    "Aws practitioner/new/D1_s2_global_infrastructure_notes.md",
-    "Aws practitioner/05_S3_Databases.md",
-    "Aws practitioner/04_EC2_Storage_ELB_ASG.md",
     "Untitled.canvas"
   ]
 }
