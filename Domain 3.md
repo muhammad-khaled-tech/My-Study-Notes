@@ -812,3 +812,513 @@ flowchart TD
 
 
 ---
+## 3. وحش التخزين اللانهائي (Amazon S3) - الجزء الأول: المعمارية والتشريح الدقيق
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+في عالم التخزين المرفق (EBS و EFS)، إنت محكوم بقواعد صارمة: الهارد لازم يتوصل بسيرفر (EC2)، ومقيد ببروتوكولات أنظمة التشغيل (Linux/Windows)، وليه حد أقصى في المساحة، ولازم تكون جوه شبكة أمازون المغلقة (VPC) عشان توصل للملفات.
+
+لكن، تخيل إنك بتبني سيستم زي Netflix، أو منصة تواصل اجتماعي، أو حتى بتعمل سيستم لحفظ ملفات الـ Backup لشركتك. إنت محتاج مكان "سحري" مساحته لا نهائية، مش محتاج توصله بسيرفر أصلاً، وأي مستخدم يقدر يرفع أو ينزل ملفات من خلال الإنترنت مباشرة بـ (URL).
+
+هنا ظهرت خدمة **Amazon S3 (Simple Storage Service)**. دي أقدم خدمة في تاريخ أمازون، والعمود الفقري للإنترنت الحديث. الـ S3 مش هارد ديسك، ده **(مخزن كيانات - Object Storage)** شغال عن طريق الـ Web APIs.
+
+### ⚙️ التشريح العميق لمعمارية S3 (Under the Hood)
+
+عشان تقفل أسئلة الـ S3 في الامتحان، لازم تمسح مفاهيم الهاردات العادية من دماغك، وتفهم الـ 3 أركان اللي بيقوم عليهم:
+
+#### الركن الأول: حرب التخزين (Object Storage vs Block Storage)
+
+الامتحان بيعشق المقارنة دي في سيناريوهات الشركات:
+
+- **تخزين الكتل (EBS - Block Storage):** الهارد بيقطع الملف لـ "بلوكات". لو عندك ملف داتابيز (PostgreSQL) حجمه 100 جيجا، واليوزر "محمد" غير رقم تليفونه، الهارد هيروح يغير الـ 4 كيلو بايت بتوع رقم التليفون بس. (عشان كده EBS سريع جداً).
+    
+- **تخزين الكيانات (S3 - Object Storage):** الـ S3 بيشوف الملف كـ "صندوق أسود مقفول" (Immutable Object). لو عندك فيديو حجمه 100 جيجا على S3، وعايز تعدل فيه بيكسل واحد بس، الـ S3 مابيعرفش يعدل أجزاء.. **لازم ترفع الـ 100 جيجا كلهم من جديد فوق الملف القديم!**
+    
+- 🚨 **قاعدة الامتحان الصارمة:** إياك ثم إياك تختار S3 لو السيناريو بيقولك "قاعدة بيانات نشطة (Active Database)" أو "نظام تشغيل (OS)". الـ S3 مخصص فقط للملفات الثابتة (Static Files) زي الصور، الفيديوهات، ملفات الـ PDF، والـ Backups.
+    
+
+#### الركن الثاني: الحاوية (The Bucket) - قوانين الجردل
+
+أي ملف هترفعه على S3، لازم يتحط جوه حاوية رئيسية اسمها (Bucket). الجردل ده ليه 3 قوانين دستورية في الامتحان:
+
+1. **الاسم الفريد عالمياً (Globally Unique Name):**
+    
+    اسم الجردل بتاعك لازم يكون فريد على مستوى الكوكب كله في كل حسابات أمازون. ليه؟ لأن الجردل بيتحول لـ رابط إنترنت (URL) بالشكل ده: `https://my-unique-bucket.s3.amazonaws.com`. لو حد في اليابان حجز اسم `test-bucket`، إنت مستحيل تقدر تحجزه تاني أبداً.
+    
+2. **وهم العالمية (Global Console vs Regional Storage):**
+    
+    لما تفتح لوحة تحكم أمازون (Console)، هتلاقي الـ S3 مكتوب عليه (Global) زيه زي الـ IAM. بس دي خدعة!
+    
+    🚨 **الـ Data محبوسة:** لما بتيجي تخلق الجردل، أمازون بتجبرك تختار **Region** (مثلاً `us-east-1`). الداتا بتاعتك بتتخزن في المباني بتاعة المنطقة دي، و**مستحيل** أمازون تنقلها لمنطقة تانية من وراك (ده عشان قوانين سيادة البيانات Compliance & Data Sovereignty).
+    
+3. **السعة اللانهائية (Infinite Capacity):**
+    
+    إنت مابتحددش مساحة للجردل. الجردل ده ملوش قاع، ارمي فيه من زيرو بايت لحد إكسابايت (Exabytes)، وأمازون هتحاسبك بالجيجا اللي بتستخدمها بس.
+    
+
+#### الركن الثالث: الكيان (The Object) - تشريح الملف
+
+الملف جوه الـ S3 مش زي الملف جوه الويندوز. الملف (Object) بيتكون من 5 أجزاء متركبة فوق بعض:
+
+1. **المفتاح (Key):**
+    
+    ده مش بس اسم الملف، ده **المسار الكامل** للملف.
+    
+    🚨 **تريكة الفولدرات الوهمية:** الـ S3 **مفهوش فولدرات حقيقية** (Flat Namespace). لو إنت رافع صورة المسار بتاعها `images/2026/profile.jpg`، الـ S3 مش بيكريت فولدر اسمه `images` وجواه فولدر `2026`. هو بيعتبر الجملة الطويلة دي كلها هي "اسم الملف" (Key). واجهة أمازون بس هي اللي بترسملك شكل الفولدرات عشان تريح عينك (بيسموها Prefixes).
+    
+2. **القيمة (Value):**
+    
+    دي الداتا الفعلية (الـ Bytes) بتاعة الصورة أو الفيديو.
+    
+    _حدود الامتحان:_ مساحة الملف الواحد (Object) بتبدأ من 0 بايت لحد أقصى حاجة **5 تيرابايت (5TB)** للملف الواحد.
+    
+3. **البيانات الوصفية (Metadata):**
+    
+    معلومات عن الملف. (زي تاريخ الرفع، نوع الملف `Content-Type`، أو معلومات إنت بتضيفها بنفسك).
+    
+4. **العلامات (Tags):**
+    
+    كلمات دلالية إنت بتلزقها على الملف (مثلاً `Project: Project13` أو `Department: HR`). دي خطيرة جداً لأنك بتستخدمها عشان تظبط فواتيرك وتعرف كل مشروع بيصرف كام تخزين.
+    
+5. **معرف الإصدار (Version ID):**
+    
+    (هنشرحه بالتفصيل في جزء الحماية). كود فريد بيتحط للملف لو إنت مفعل خاصية الاحتفاظ بالنسخ القديمة.
+    
+
+### 🏗️ اللوحة المعمارية: التركيب الداخلي للـ S3 والـ Flat Namespace
+
+الرسمة دي بتلخص فكرة وهم الفولدرات وإزاي الـ S3 بيخزن البيانات ككيانات مسطحة (تم استخدام `</br>` للفصل):
+
+Code snippet
+
+
+
+```mermaid
+flowchart TD
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+
+    subgraph Internet ["🌐 The Internet (Access via HTTP/HTTPS APIs)"]
+        direction TB
+        User(("👨‍💻 End User"))
+    end
+
+    subgraph AWS_Cloud ["☁️ AWS Cloud (Global Console)"]
+        direction TB
+
+        subgraph Region ["📍 AWS Region (e.g., eu-west-1)"]
+            direction TB
+            
+            Bucket[("🪣 S3 Bucket</br>Name: my-company-assets-2026</br>Must be Globally Unique")]
+
+            subgraph Objects ["📦 Objects (Flat Namespace - No Real Directories)"]
+                direction LR
+                Obj1["📄 Object A</br>Key: 'images/logo.png'</br>Value: [Data Max 5TB]</br>Metadata: image/png</br>Tags: Project=Marketing"]
+                Obj2["📄 Object B</br>Key: 'videos/intro.mp4'</br>Value: [Data Max 5TB]</br>Metadata: video/mp4</br>Tags: Project=Sales"]
+            end
+
+            Bucket --> Objects
+        end
+    end
+
+    User ==>|Upload/Download via REST API| Bucket
+
+    classDef bucket fill:#fffbe6,stroke:#faad14,stroke-width:3px,color:#000;
+    classDef object fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef region fill:#fdfdfd,stroke:#ff4d4f,stroke-width:3px,color:#000,stroke-dasharray: 5 5;
+    classDef cloud fill:#f9f9f9,stroke:#52c41a,stroke-width:2px,color:#000;
+    classDef internet fill:#f0f2f5,stroke:#8c8c8c,color:#000;
+
+    class Bucket bucket;
+    class Obj1,Obj2 object;
+    class Region region;
+    class AWS_Cloud cloud;
+    class Internet internet;
+```
+---
+
+
+
+---
+## الجزء الثاني: طبقات التخزين (Storage Classes)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+تخيل إن شركتك عندها 100 تيرابايت من البيانات. البيانات دي متقسمة كالتالي:
+
+- صور ومقالات اليوزرز بيدخلوا عليها كل ثانية.
+    
+- ملفات باك أب (Backup) لبيانات الشهر اللي فات، بنحتاجها مرة كل كام أسبوع.
+    
+- سجلات ضريبية وقانونية (Compliance) من سنة 2020، القانون بيجبرنا نحتفظ بيها 7 سنين بس إحنا مش بنفتحها أصلاً.
+    
+
+هل من العقل إننا نحط كل الداتا دي في نفس "الجردل" وندفع عليها نفس الفاتورة الغالية؟ طبعاً لأ.
+
+أمازون عملت ما يسمى بـ **(طبقات التخزين - Storage Classes)**. الفكرة هنا عاملة زي "درجات الحرارة": الداتا الساخنة (Hot) اللي بنستخدمها كتير بتتحط في طبقة غالية وسريعة. والداتا المتجمدة (Cold) اللي مش بنفتحها بتترمي في أرخص طبقة في أمازون كلها.
+
+_🚨 أسئلة الطبقات دي مؤكدة 100% في الامتحان، واللعبة كلها في حفظ "الكلمات الدلالية"._
+
+### ⚙️ تفكيك طبقات التخزين (من الأغلى للأرخص)
+
+#### (أ) طبقة الداتا الساخنة: S3 Standard
+
+- **الفكرة:** دي الطبقة الافتراضية (Default). بتديك استجابة في أجزاء من الثانية (Milliseconds). الداتا بتاعتك بتتنسخ أوتوماتيك في 3 مباني (Multi-AZ) عشان لو مبنيين ولعوا الداتا متضيعش!
+    
+- **التسعير:** دي **أغلى** طبقة في الـ S3. بتدفع على التخزين، ومفيش رسوم على فتح الملفات.
+    
+- **سيناريو الامتحان:** `Frequently accessed data`, `Dynamic websites`, `Mobile applications`, `Default class`.
+    
+
+#### (ب) الطبقة الذكية: S3 Intelligent-Tiering
+
+- **الفكرة:** لو إنت عندك داتا مش عارف اليوزرز هيستخدموها كتير ولا لأ (Unpredictable workload). أمازون بتشغّل "ذكاء اصطناعي" يراقب الملفات بتاعتك. لو لقى ملف محدش فتحه بقاله 30 يوم، يقوم ناقله أوتوماتيك لطبقة أرخص عشان يوفرلك فلوس، ولما حد يفتحه يرجعه تاني للطبقة الغالية.
+    
+- **التسعير:** بتدفع رسوم شهرية بسيطة لأمازون مقابل "المراقبة الأوتوماتيكية" دي.
+    
+- **سيناريو الامتحان:** `Unknown access patterns`, `Unpredictable workloads`, `Automatic cost optimization`.
+    
+
+#### (ج) طبقات الداتا الدافئة: Infrequent Access (IA)
+
+دي للملفات اللي مش بنفتحها كل يوم، بس لما بنعوزها، بنعوزها "فوراً وبسرعة".
+
+_هنا أمازون بتعمل معاك ديل: هقلل لك سعر التخزين جداً، بس هفرض عليك غرامة (Retrieval Fee) كل مرة تفتح فيها الملف._
+
+1. **S3 Standard-IA (Infrequent Access):**
+    
+    - الداتا منسوخة في 3 مباني (Multi-AZ).
+        
+    - **سيناريو الامتحان:** `Disaster Recovery backups`, `Long-term storage accessed once a month`.
+        
+2. **S3 One Zone-IA (الطبقة الخطرة):**
+    
+    - **تريكة الامتحان:** دي الطبقة **الوحيدة** في الـ S3 اللي بتخزن الداتا في **(مبنى واحد فقط - Single AZ)**.
+        
+    - ده بيخليها أرخص بـ 20% من الـ Standard-IA، بس لو المبنى ده اتدمر، الداتا طارت للأبد!
+        
+    - **سيناريو الامتحان:** `Reproducible data` (داتا نقدر نعملها توليد تاني لو ضاعت، زي الـ Thumbnails بتاعة الصور المصغرة)، `Secondary backups`.
+        
+
+#### (د) عائلة التجميد العميق: Amazon Glacier
+
+دي الداتا اللي اتجمدت وبقت "أرشيف". مساحة التخزين هنا برخص التراب، بس الفخ فين؟ الفخ إنك لو طلبت تفتح الملف، أمازون هتقولك "استنى على ما نسيحهولك!".
+
+العائلة دي فيها 3 مستويات حسب سرعة الذوبان:
+
+1. **S3 Glacier Instant Retrieval:**
+    
+    - بتفتح الملف في أجزاء من الثانية. بس سعر التخزين أغلى شوية من إخواتها. أرخص من IA لو بتفتح الداتا مرة كل ربع سنة.
+        
+2. **S3 Glacier Flexible Retrieval:**
+    
+    - عشان تفتح الملف، لازم تستنى من **دقيقة لحد 12 ساعة** حسب الفلوس اللي هتدفعها في الاسترجاع.
+        
+    - **سيناريو الامتحان:** `Occasional data retrieval`, `Backups not needed immediately`.
+        
+3. **S3 Glacier Deep Archive (أرخص شيء في أمازون):**
+    
+    - دي أرخص خدمة تخزين في AWS كلها. حرفياً ببلاش.
+        
+    - بس عشان تفتح ملف، لازم تستنى **12 ساعة كاملة**!
+        
+    - **سيناريو الامتحان (مؤكد):** `Regulatory compliance` (الامتثال للقوانين)، `Retain data for 7-10 years`، `Long-term archive`.
+        
+
+### ⚙️ إدارة دورة الحياة (S3 Lifecycle Rules) - المايسترو الآلي
+
+بدل ما تدخل بنفسك تنقل الملفات من طبقة للتانية، أمازون عملتلك **Lifecycle Policies**. ده سكريبت إنت بتكتبه مرة واحدة وبيشتغل أوتوماتيك:
+
+- _مثال معمارى:_ إنت بتقول لأمازون: "لما أرفع ملف جديد، حطه في الـ `Standard`. بعد 30 يوم، انقله للـ `Standard-IA`. بعد 90 يوم، ارميه في الـ `Glacier Deep Archive`. وبعد 365 يوم.. **امسحه خالص (Expire)**".
+    
+- **أهمية الامتحان:** دي الأداة الأولى لتحقيق مبدأ الـ (Cost Optimization) في التخزين.
+    
+
+### 🏗️ خريطة اتخاذ القرار في الامتحان (S3 Storage Classes)
+
+الخريطة دي (Mermaid) بتلخص رحلة البيانات والكلمات الدلالية اللي هتخليك تختار الإجابة في ثانية (تم استخدام `</br>` للفصل):
+
+Code snippet
+
+
+
+```mermaid
+flowchart TD
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+
+    Start{"كيف يتم الوصول للبيانات؟</br>(Access Pattern)"}
+
+    Start -->|نمط غير معروف أو متغير</br>Unpredictable / Changing| Intel["🤖 S3 Intelligent-Tiering</br>Auto-moves between tiers</br>Monitoring fee applies"]
+    
+    Start -->|وصول دائم ويومي</br>Frequent Access / Default| Std["🔥 S3 Standard</br>Fastest / Most Expensive</br>Multi-AZ"]
+    
+    Start -->|وصول نادر ولكن استجابة فورية</br>Infrequent but immediate| IA_Check{"هل البيانات يمكن تعويضها لو ضاعت؟</br>Reproducible?"}
+    
+    IA_Check -->|لا، بيانات هامة</br>Important Backups| Std_IA["⛅ S3 Standard-IA</br>Multi-AZ</br>Retrieval fees apply"]
+    
+    IA_Check -->|نعم، يمكن توليدها</br>Thumbnails / Secondary| OneZone["⚠️ S3 One Zone-IA</br>Single AZ (Data can be lost)</br>Cheapest IA"]
+
+    Start -->|أرشيف طويل الأمد</br>Archive / Compliance| Glacier_Check{"متى تريد استرجاعها؟</br>Retrieval Time?"}
+    
+    Glacier_Check -->|فوراً</br>Milliseconds| G_Instant["🧊 Glacier Instant Retrieval"]
+    Glacier_Check -->|دقائق إلى ساعات</br>Minutes to 12 Hours| G_Flex["🌨️ Glacier Flexible Retrieval"]
+    Glacier_Check -->|الامتثال القانوني 10 سنوات</br>12 Hours minimum| G_Deep["🏔️ Glacier Deep Archive</br>Cheapest storage in AWS"]
+
+    classDef hot fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    classDef smart fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef warm fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef danger fill:#fff2e8,stroke:#fa541c,color:#000;
+    classDef cold fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef decision fill:#f9f9f9,stroke:#52c41a,color:#000;
+
+    class Start,IA_Check,Glacier_Check decision;
+    class Std hot;
+    class Intel smart;
+    class Std_IA warm;
+    class OneZone danger;
+    class G_Instant,G_Flex,G_Deep cold;
+```
+
+---
+## الجزء الثالث: حماية البيانات والأمان (Security & Data Protection)
+
+**أصل الحكاية والمشكلة المعمارية:**
+
+الـ S3 بطبيعته متصل بالإنترنت. لو معملتش طبقات حماية (Layers of Security)، الداتا بتاعتك في خطر من 3 حاجات: المسح بالخطأ (Accidental Deletion)، التعديل الخاطئ (Overwrites)، وتسريب البيانات (Data Leaks).
+
+أمازون وفرتلك ترسانة أسلحة عشان تقفل الجردل بتاعك بالضبة والمفتاح.
+
+### ⚙️ السلاح الأول: إدارة الإصدارات (S3 Versioning) - آلة الزمن
+
+- **المشكلة:** في الـ S3 العادي، لو رفعت ملف اسمه `index.html`، وبعدين رفعت ملف تاني بنفس الاسم، الملف القديم هيتمسح للأبد والجديد هيحل محله. طب لو مسحت الملف بالغلط؟ مفيش سلة مهملات (Recycle Bin) ترجعه منها!
+    
+- **الحل المعماري (Versioning):** أول ما بتفعل الخاصية دي على الجردل، الـ S3 بيشتغل كأنه (Git). لو رفعت ملف جديد بنفس الاسم، الـ S3 بيحتفظ بالملف القديم في الكواليس وبيديله (Version ID)، ويخلي الجديد هو الأساسي.
+    
+- **الحماية من الحذف:** لو دوست (Delete) لملف، الـ S3 مابيمسحوش بجد! هو بيحط فوقه حاجة اسمها (Delete Marker - علامة حذف) عشان يختفي من قدامك، بس لو دخلت في الإعدادات تقدر تشيل العلامة دي وترجع الملف عادي جداً!
+    
+
+> [!warning] قوانين الـ Versioning في الامتحان 🚨
+> 
+> 1. **طريق باتجاه واحد:** بمجرد ما تفعل الـ Versioning على جردل، **مستحيل تعمله Disable (إلغاء)**. تقدر بس تعمله (Suspend - إيقاف مؤقت).
+>     
+> 2. **التكلفة:** إنت بتدفع فلوس على كل الإصدارات القديمة اللي متخزنة! يعني لو ملف حجمه جيجا، وعدلته 5 مرات، إنت كده بتدفع تمن 5 جيجا مش جيجا واحدة.
+>     
+
+#### (أ) الحماية القصوى: المصادقة الثنائية للحذف (MFA Delete)
+
+لو عايز تمنع أي حد (حتى الـ Root User بتاع الحساب) إنه يمسح إصدار قديم من الملف بشكل نهائي، بتفعل خاصية الـ `MFA Delete`. وقتها، مستحيل أمر المسح النهائي يتنفذ إلا لو الشخص معاه الموبايل بتاعك ودخل الكود المكون من 6 أرقام (زي كود البنك).
+
+### ⚙️ السلاح الثاني: القفل الجنائي (S3 Object Lock / WORM)
+
+- **المشكلة:** البنوك والمستشفيات عندهم قوانين حكومية (Compliance) بتجبرهم يحتفظوا بالسجلات لمدة 7 سنين بدون ما "أي مخلوق" يقدر يعدلها أو يمسحها، حتى لو كان صاحب الشركة نفسه.
+    
+- **الحل (WORM - Write Once, Read Many):** إكتب مرة واحدة واقرأ كتير. لما بتفعل الـ Object Lock على ملف، بتحدد مدة (مثلاً 5 سنين). خلال الـ 5 سنين دول، الملف ده **استحالة** يتمسح أو يتعدل، ولا حتى عن طريق خدمة الدعم الفني بتاعة أمازون شخصياً!
+    
+- **الكلمات الدلالية في الامتحان:** `Compliance`, `WORM model`, `Prevent deletion for fixed amount of time`, `Regulatory requirements`.
+    
+
+### ⚙️ السلاح الثالث: حراس البوابات (Access Control & Security)
+
+إزاي نتحكم مين يشوف الداتا ومين لأ؟ عندنا 3 طبقات للحماية (الامتحان بيسأل في الفرق بينهم):
+
+1. **سياسات المستخدمين (IAM Policies):**
+    
+    - دي بتتركب على **اليوزر (الشخص)**. يعني بكتب قاعدة أقول فيها: "المبرمج أحمد من حقه يقرأ الملفات اللي في جردل HR".
+        
+2. **سياسات الجردل (Bucket Policies):** - 🚨 أهم حاجة في S3
+    
+    - دي بتتركب على **الجردل نفسه** (Resource-based). ده ملف (JSON Document) بكتب فيه قوانين صارمة للجردل كله.
+        
+    - **سيناريو الامتحان:** إزاي تخلي الجردل كله (Public) عشان تستضيف عليه موقع ويب؟ عن طريق الـ Bucket Policy إنك تعمل `Allow` للـ `Principal: *` (يعني تسمح لأي حد في العالم).
+        
+    - **سيناريو تاني:** إزاي أجبر الناس إنهم ميرفعوش ملفات إلا لو كانوا جوه شبكة الشركة؟ بعمل Bucket Policy تمنع (Deny) أي حد הـ IP بتاعه مش بتاع الشركة.
+        
+3. **زرار الأمان النووي (Block Public Access - BPA):**
+    
+    - **المشكلة:** مبرمج صغير دخل عدل الـ Bucket Policy وخلى بيانات العملاء كلها Public بالغلط.
+        
+    - **الحل:** أمازون عملت خاصية اسمها (Block Public Access) ومفعلة كـ الديفولت. الخاصية دي عامله زي "السكينة الرئيسية بتاعة الكهربا". لو هي شغالة (ON)، فإنها بتعمل (Override / إبطال) لأي Bucket Policy بتسمح بالوصول العام، وتمنع الداتا إنها تطلع على النت مهما حصل!
+        
+
+### ⚙️ السلاح الرابع: التشفير (Data Encryption)
+
+لو هاكر قدر يخترق سيرفرات أمازون ويسرق الهاردات الفيزيكال اللي عليها الداتا بتاعتك، هيلاقي الداتا دي "متشفرة" (مكتوبة بلغة غير مفهومة) ومستحيل يقرأها.
+
+أمازون في الامتحان بتسألك عن **التشفير أثناء السكون (Encryption at Rest)** وليه طرق:
+
+- **SSE-S3:** التشفير الأساسي، أمازون هي اللي بتشفر الداتا وهي اللي بتحتفظ بمفاتيح التشفير. _(ملاحظة: أمازون مؤخراً خلت النوع ده شغال أوتوماتيك على أي ملف يترفع بدون تدخلك)._
+    
+- **SSE-KMS:** إنت بتستخدم خدمة اسمها `AWS KMS` عشان تدير إنت مفاتيح التشفير بنفسك، وتعرف مين استخدم المفتاح إمتى (Auditing).
+    
+- **SSE-C (Customer Provided):** إنت اللي بتصنع مفتاح التشفير بره أمازون، وبتبعته لأمازون تشفر بيه الملف وبعدين أمازون بتمسح المفتاح من عندها.
+    
+
+### 🏗️ اللوحة المعمارية: رحلة الريكويست ونقاط التفتيش في S3
+
+الرسمة دي (Mermaid) بتلخص طبقات الحماية (نقاط التفتيش) اللي أي حد لازم يعدي عليها عشان يوصل لملف جوه الـ S3 (تم استخدام `</br>` للفصل):
+
+Code snippet
+
+
+```mermaid
+flowchart LR
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+
+    User(("👨‍💻 User / Hacker</br>Internet Request"))
+
+    subgraph AWS_Cloud ["AWS Security Layers"]
+        direction LR
+
+        IAM{"1. IAM Policy</br>(هل اليوزر ده معاه تصريح؟)"}
+        BPA{"2. Block Public Access</br>(هل السكينة الرئيسية مرفوعة؟)"}
+        BP{"3. Bucket Policy</br>(هل الجردل بيسمح للـ IP ده؟)"}
+    end
+
+    subgraph S3_Bucket ["🪣 Amazon S3 Bucket"]
+        direction TB
+        
+        Encrypt["🔒 Encryption (SSE-S3)"]
+        
+        subgraph Objects ["Data Protection"]
+            direction TB
+            V["⏳ Versioning</br>(Keeps old versions)"]
+            WORM["🛡️ Object Lock</br>(Prevents deletion)"]
+        end
+        Encrypt --> Objects
+    end
+
+    User --> IAM
+    IAM -->|Allowed| BPA
+    BPA -->|Not Blocked| BP
+    BP -->|Allowed| S3_Bucket
+
+    User -.->|Request Denied at any step| Blocked(("❌ Access Denied"))
+    IAM -.-> Blocked
+    BPA -.-> Blocked
+    BP -.-> Blocked
+
+    classDef user fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef security fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    classDef bucket fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef internal fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef block fill:#fdfdfd,stroke:#000,color:#ff4d4f,stroke-dasharray: 5 5;
+
+    class User user;
+    class IAM,BPA,BP security;
+    class S3_Bucket bucket;
+    class Encrypt,V,WORM internal;
+    class Blocked block;
+```
+
+---
+## الجزء الرابع: المكملات السحرية (الاستضافة والهجرة)
+
+**أصل الحكاية (The Core Problem):**
+
+إحنا كده فهمنا إن S3 بيخزن الداتا وبيحميها وبيوفر فلوسها. بس أمازون مبتقفش عند التخزين العادي؛ الامتحان بيختبرك في "الحلول المعمارية المبتكرة" اللي بتعتمد على S3 في الكواليس، زي إنك تشغل موقع كامل من غير ما تشتري سيرفر (EC2) أصلاً، أو إزاي تنقل "بيتابايت" من الداتا من شركتك لأمازون لو النت عندك بطيء جداً.
+
+### ⚙️ أولاً: الاستضافة الساكنة (S3 Static Website Hosting)
+
+- **الفكرة السحرية:** الـ S3 يقدر يشتغل كـ (Web Server) يستضيف موقعك بالكامل ويطلعه للناس على النت، وكل ده بتكلفة شبه معدومة (سنتات في الشهر) ومن غير ما تدير أي سيرفر (Serverless).
+    
+- **الشرط المعماري (🚨 تريكة الامتحان):** الـ S3 بيستضيف **(مواقع ساكنة - Static Websites) فقط**. يعني ملفات `HTML`, `CSS`, `JavaScript` (زي مشاريع React أو Vue.js).
+    
+- **الممنوعات:** **مستحيل** تشغل عليه كود (Backend) زي `PHP` (Laravel) أو `Node.js` أو `Python`، ومستحيل تركب عليه داتابيز مباشرة. لو موقعك فيه Backend، الـ S3 بيشيل الـ Frontend بس، والـ Backend بيروح لـ EC2 أو Lambda.
+    
+- **إعدادات الامتحان:** عشان الموقع يشتغل، لازم تعمل حاجتين:
+    
+    1. تقفل زرار الـ (Block Public Access).
+        
+    2. تضيف (Bucket Policy) بتعمل `Allow` لأكشن اسمه `s3:GetObject` لكل الناس `*`.
+        
+
+### ⚙️ ثانياً: عائلة الجليد ونقل البيانات (AWS Snow Family)
+
+- **المشكلة:** لو شركتك عندها داتا حجمها 100 بيتابايت (Petabytes)، وعايز ترفعهم لأمازون، لو استخدمت أسرع خط إنترنت في العالم هياخد سنين!
+    
+- **الحل (Offline Migration):** أمازون بتبعتلك "جهاز هاردوير" لحد باب شركتك عن طريق شركة شحن. توصله في السيرفرات بتاعتك، تنقل الداتا بسرعة الكابلات، وبعدين تشحنه تاني لأمازون، وهم يفرغوه في الـ S3!
+    
+
+**أفراد العائلة (أسئلة مؤكدة في الامتحان):**
+
+1. **AWS Snowcone:**
+    
+    - **الوصف:** أصغر جهاز (وزنه 2 كيلو تقريباً). بيشيل داتا من 8 لـ 14 تيرابايت.
+        
+    - **السيناريو:** الأماكن المتطرفة (Edge Computing) زي المستشفيات الميدانية أو السفن اللي مفيهاش نت، ومحتاجين نجمع داتا ونبعتها.
+        
+2. **AWS Snowball Edge:**
+    
+    - **الوصف:** جهاز بحجم "شنطة السفر". بيشيل داتا لحد 80 تيرابايت.
+        
+    - **السيناريو:** نقل الداتا الضخمة (Petabyte-scale migration)، أو معالجة الداتا محلياً في المصانع لأن الجهاز جواه (مُعالج CPU) يقدر يشغل كود قبل ما يتبعت لأمازون (Compute Optimized).
+        
+3. **AWS Snowmobile (شاحنة البيانات):**
+    
+    - **الوصف:** سيارة نقل بمقطورة (18-Wheeler Truck) بتيجي تقف قدام الداتا سنتر بتاعك!
+        
+    - **السيناريو:** نقل الـ (Exabytes) من البيانات (الـ 1 إكسابايت = ألف بيتابايت = مليون تيرابايت). دي بتستخدم لنقل داتا سنتر كاملة لشركة ضخمة.
+        
+
+### ⚙️ ثالثاً: بوابات التخزين الهجينة (AWS Storage Gateway)
+
+- **المشكلة:** شركتك عندها داتا سنتر خاص بيها (On-Premises)، ومش عايزين ينقلوا كل حاجة للكلاود. عايزين يخلوا السيرفرات اللي في الشركة كأنها "متوصلة" بالـ S3 في أمازون عشان المساحة متخلصش أبداً (Hybrid Cloud Storage).
+    
+- **الحل (Storage Gateway):** ده سوفت وير (Virtual Machine) بتسطبه على سيرفرات الشركة بتاعتك، بيلعب دور "الكوبري" بين أجهزة الشركة وخدمات أمازون (S3, EBS, Glacier).
+    
+
+**الأنواع في الامتحان (كلمات دلالية):**
+
+1. **بوابة الملفات (File Gateway / Amazon S3 File Gateway):**
+    
+    - السيرفرات بتاعتك بتتعامل معاه كأنه هارد شبكة عادي (ببروتوكولات NFS أو SMB). الكوبري بياخد الملفات دي ويرفعها أوتوماتيك لـ **Amazon S3**.
+        
+    - **السيناريو:** `Extend on-premises file storage to S3`, `NFS/SMB to S3`.
+        
+2. **بوابة الكتل (Volume Gateway):**
+    
+    - السيرفرات بتتعامل معاه كأنه هارد "بلوكات" (iSCSI). الكوبري بياخد الداتا ويحولها لـ **EBS Snapshots** عشان يعملها باك أب في الكلاود.
+        
+    - **السيناريو:** `iSCSI block storage`, `Disaster recovery with EBS snapshots`.
+        
+3. **بوابة الشرائط (Tape Gateway):**
+    
+    - في الشركات القديمة جداً، بيعملوا أرشيف للداتا على "شرائط مغناطيسية" (Physical Tapes). الكوبري ده بيوهم السيرفرات إنها لسه بتكتب على شرائط، بس هو في الحقيقة بياخد الداتا ويرميها في **Amazon Glacier**.
+        
+    - **السيناريو:** `Virtual Tape Library (VTL)`, `Replace physical tapes with Glacier`.
+        
+
+### 🏗️ خريطة اتخاذ القرار: الهجرة والتخزين الهجين (Migration & Hybrid)
+
+الرسمة دي (Mermaid) بتلخص كل طرق نقل وربط الداتا بأمازون (باستخدام `</br>` للفصل الدقيق):
+
+Code snippet
+
+```mermaid
+flowchart TD
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+
+    Start{"ما هي مشكلة</br>نقل أو ربط البيانات؟"}
+
+    Start -->|الإنترنت بطيء جداً أو مقطوع</br>Offline Migration| Snow{"ما هو حجم البيانات؟</br>Data Size"}
+    Snow -->|تيرابايت قليلة ومكان متطرف</br>Up to 14 TB / Edge| SC["❄️ AWS Snowcone"]
+    Snow -->|بيتابايت ومعالجة محلية</br>Petabytes / Compute| SB["❄️ AWS Snowball Edge"]
+    Snow -->|إكسابايت ونقل داتا سنتر</br>Exabytes (100 PB)| SM["🚛 AWS Snowmobile</br>(شاحنة عملاقة)"]
+
+    Start -->|استمرار الاتصال بين الشركة والسحابة</br>Hybrid Cloud| SG{"كيف تتعامل السيرفرات مع التخزين؟</br>Storage Protocol"}
+    SG -->|مشاركة ملفات عادية</br>NFS / SMB| FG["📁 File Gateway</br>(Backs up to S3)"]
+    SG -->|هاردات بلوكات</br>iSCSI| VG["💾 Volume Gateway</br>(Backs up to EBS)"]
+    SG -->|شرائط باك أب قديمة</br>Virtual Tapes (VTL)| TG["📼 Tape Gateway</br>(Backs up to Glacier)"]
+
+    Start -->|موقع ويب بدون سيرفر</br>Serverless Web Hosting| Web["🌐 S3 Static Website Hosting</br>(HTML/CSS/JS only)"]
+
+    classDef offline fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef hybrid fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef decision fill:#f9f9f9,stroke:#52c41a,color:#000;
+    classDef web fill:#f6ffed,stroke:#52c41a,color:#000;
+
+    class Start,Snow,SG decision;
+    class SC,SB,SM offline;
+    class FG,VG,TG hybrid;
+    class Web web;
+```
+
