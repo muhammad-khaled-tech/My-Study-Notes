@@ -108,6 +108,89 @@ flowchart TD
     class Execution,EC2 ec2;
 ```
 
-جرب كده يا هندسة، هتلاقي المربع بتاع التحذير طلع بشكله النظيف، ورسمة الـ Mermaid اشتغلت معاك طلقة من غير أي Error.
+---
+## 2. أمن السيرفرات: مجموعات الأمان (Security Groups)
 
-لو كله تمام، ندخل بقى نقفل الـ EC2 ببلوك **(أمن السيرفر: الـ Security Groups)** اللي الامتحان مابيخلاش منه؟
+**أصل الحكاية (The Core Problem):**
+
+أي سيرفر EC2 بتخلقه وبتديله (Public IP) عشان الناس تدخله من على النت، بيبقى عامل زي بيت بيبانه وشبابيكه مفتوحة في شارع ضلمة؛ أي هاكر يقدر يعمل عليه (Port Scan) ويدخله. في الـ IT القديم، كنا بنشتري أجهزة (Hardware Firewalls) غالية جداً ونحطها على باب الشركة. في السحابة، أمازون اخترعت الـ **Security Groups (SG)**: ده فايروال افتراضي (Virtual Firewall) مجاني، بيحوط السيرفر بتاعك كأنه "درع شخصي"، وبيفلتر أي داتا داخلة أو طالعة.
+
+### ⚙️ القواعد الهندسية للـ Security Groups (دستور الامتحان)
+
+الـ Security Groups مش بتشتغل بالبركة، ليها 4 قواعد صارمة الامتحان بيلعب عليهم في السيناريوهات:
+
+#### 1. مبدأ المنع الافتراضي (Default Deny)
+
+- **القاعدة:** أول ما بتخلق SG جديد، بيكون **مانع كل حاجة داخلة للسيرفر (Inbound = Deny All)**، و**سامح بكل حاجة طالعة من السيرفر (Outbound = Allow All)**.
+    
+- **السيناريو:** لو عملت سيرفر وسطبت عليه موقع، الموقع مش هيفتح للناس إلا لو إنت دخلت بنفسك فتحت (Port 80 للـ HTTP) أو (Port 443 للـ HTTPS) في الـ Inbound Rules.
+    
+
+#### 2. حالة الاتصال (Stateful) - 🚨 [أهم تريكة في الامتحان]
+
+- **المعنى المعماري:** الـ Security Group عندها "ذاكرة". يعني لو هي سمحت لريكويست إنه يدخل (Inbound)، هتسمح للرد بتاع الـ ريكويست ده إنه يخرج (Outbound) أوتوماتيك، **حتى لو إنت قافل كل الـ Outbound Rules!**
+    
+- **الفرق الجوهري:** في فايروال تاني في أمازون اسمه (NACL) ده بيكون (Stateless) مابيفهمش، لو فتحت الدخول لازم تفتح الخروج بإيدك. لكن الـ SG ذكية (Stateful).
+    
+
+#### 3. القواعد الإيجابية فقط (Allow Rules Only)
+
+- إنت في الـ SG تقدر تقول: "اسمح لـ IP كذا إنه يدخل".
+    
+- لكن **مستحيل** تقول: "امنع IP كذا إنه يدخل". الـ SG مفيهاش (Deny Rules). لو عايز تمنع حد معين، بتسيبه بره القواعد المسموحة، فالـ SG هتمنعه بالديفولت.
+    
+
+#### 4. لغة التخاطب (IPs vs Security Groups)
+
+- في الـ Inbound Rules، ممكن تفتح الباب لـ IP معين (مثلاً IP بيتك عشان تعمل SSH).
+    
+- **الحركة المعمارية الأذكى:** تقدر تفتح الباب لـ Security Group تانية!
+    
+    - _مثال:_ عندك سيرفر داتابيز (EC2-DB). بدل ما تفتحه للنت، هتقوله في الـ SG بتاعته: "ماتقبلش أي ريكويستات إلا لو جاية من الـ SG بتاعة سيرفر الـ Laravel (EC2-Web)". دي بتعمل طبقة حماية مرعبة (Micro-segmentation).
+        
+
+### 🏗️ اللوحة المعمارية: كيف يعمل الـ Security Group (Mermaid)
+
+الرسمة دي بتوضح قاعدة الـ (Stateful) وإزاي الدرع بيحمي السيرفر:
+
+Code snippet
+
+```mermaid
+flowchart LR
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+
+    User(("👨‍💻 User</br>Internet"))
+    Hacker(("🦹 Hacker</br>Internet"))
+
+    subgraph AWS_Cloud ["AWS Cloud"]
+        subgraph SG ["🛡️ Security Group (Stateful Firewall)"]
+            direction TB
+            Inbound["Inbound Rules:</br>✅ Allow Port 80 (HTTP)</br>✅ Allow Port 22 (Your IP)"]
+        end
+        EC2[["🖥️ EC2 Instance</br>(Web Server)"]]
+    end
+
+    %% User Traffic
+    User -->|1. HTTP Request (Port 80)| Inbound
+    Inbound -->|Allowed!| EC2
+    EC2 -.->|2. Auto-Allowed out</br>(Because SG is Stateful)| User
+
+    %% Hacker Traffic
+    Hacker -->|Try Port 3306 (DB)| Inbound
+    Inbound -.-x|Blocked!</br>(Implicit Deny)| Hacker
+
+    classDef aws fill:#f9f9f9,stroke:#ff9900,stroke-width:3px,color:#000;
+    classDef sg fill:#e6f7ff,stroke:#1890ff,stroke-width:3px,color:#000,stroke-dasharray: 5 5;
+    classDef ec2 fill:#f6ffed,stroke:#52c41a,stroke-width:3px,color:#000;
+    classDef user fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef hacker fill:#fff1f0,stroke:#ff4d4f,color:#000;
+
+    class AWS_Cloud aws;
+    class SG sg;
+    class EC2 ec2;
+    class User user;
+    class Hacker hacker;
+```
+
+بصة سريعة على الكود ده بعد ما ضفنا فيه الـ `</br>`، وقولي لو طالع معاك مظبوط وشكله نضيف في أوبسيديان.
+
