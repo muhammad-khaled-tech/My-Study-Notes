@@ -81,26 +81,28 @@
 
 ```mermaid
 flowchart TD
-    classDef default font-weight:bold,font-size:16px,stroke-width:2px;
 
-    subgraph Config [مرحلة التجهيز - Launch Configuration]
+    %% Configuration Subgraph
+    subgraph Config ["مرحلة التجهيز - Launch Configuration"]
         direction TB
-        
-        A["1. AMI (Amazon Machine Image)\nAWS Managed, Marketplace, or Custom"]
-        B["2. Instance Type\nCPU and RAM Balance"]
-        C["3. User Data (Bootstrapping)\nBash Script runs ONCE as root"]
-        D["4. Key Pair (Security)\nPublic Key injected into OS"]
+        A["1. AMI (Amazon Machine Image)<br/>AWS Managed, Marketplace, or Custom"]
+        B["2. Instance Type<br/>CPU and RAM Balance"]
+        C["3. User Data (Bootstrapping)<br/>Bash Script runs ONCE as root"]
+        D["4. Key Pair (Security)<br/>Public Key injected into OS"]
     end
 
-    subgraph Execution [مرحلة الإطلاق - Provisioning]
-        EC2[["Running EC2 Instance\nFully Configured & Secure"]]
+    %% Execution Subgraph
+    subgraph Execution ["مرحلة الإطلاق - Provisioning"]
+        EC2[["Running EC2 Instance<br/>Fully Configured & Secure"]]
     end
 
-    A -->|1. Injects Base OS| EC2
-    B -->|2. Allocates Hardware| EC2
-    C -->|3. Executes Script| EC2
-    D -->|4. Configures SSH| EC2
+    %% Connections
+    A -->|Injects Base OS| EC2
+    B -->|Allocates Hardware| EC2
+    C -->|Executes Script| EC2
+    D -->|Configures SSH| EC2
 
+    %% Styling
     classDef config fill:#e6f7ff,stroke:#1890ff,stroke-width:3px,color:#000;
     classDef ec2 fill:#f6ffed,stroke:#52c41a,stroke-width:3px,color:#000;
 
@@ -157,33 +159,34 @@ Code snippet
 
 ```mermaid
 flowchart LR
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
 
-    User(("👨‍💻 User</br>Internet"))
-    Hacker(("🦹 Hacker</br>Internet"))
+    %% Nodes
+    User(("👨‍💻 User<br/>Internet"))
+    Hacker(("🦹 Hacker<br/>Internet"))
+    EC2[["🖥️ EC2 Instance<br/>(Web Server)"]]
 
     subgraph AWS_Cloud ["AWS Cloud"]
-        subgraph SG ["🛡️ Security Group (Stateful Firewall)"]
-            direction TB
-            Inbound["Inbound Rules:</br>✅ Allow Port 80 (HTTP)</br>✅ Allow Port 22 (Your IP)"]
+        direction TB
+        subgraph SG ["Security Group"]
+            Inbound["Inbound Rules:<br/>Allow Port 80<br/>Allow Port 22"]
         end
-        EC2[["🖥️ EC2 Instance</br>(Web Server)"]]
     end
 
     %% User Traffic
-    User -->|1. HTTP Request (Port 80)| Inbound
-    Inbound -->|Allowed!| EC2
-    EC2 -.->|2. Auto-Allowed out</br>(Because SG is Stateful)| User
+    User -->|HTTP Request| Inbound
+    Inbound --> EC2
+    EC2 -.->|Auto-Allowed| User
 
     %% Hacker Traffic
-    Hacker -->|Try Port 3306 (DB)| Inbound
-    Inbound -.-x|Blocked!</br>(Implicit Deny)| Hacker
+    Hacker -->|Try Port 3306| Inbound
+    Inbound -.-x|Blocked| Hacker
 
-    classDef aws fill:#f9f9f9,stroke:#ff9900,stroke-width:3px,color:#000;
-    classDef sg fill:#e6f7ff,stroke:#1890ff,stroke-width:3px,color:#000,stroke-dasharray: 5 5;
-    classDef ec2 fill:#f6ffed,stroke:#52c41a,stroke-width:3px,color:#000;
-    classDef user fill:#fffbe6,stroke:#faad14,color:#000;
-    classDef hacker fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    %% Styling
+    classDef aws fill:#f9f9f9,stroke:#ff9900,stroke-width:2px;
+    classDef sg fill:#e6f7ff,stroke:#1890ff,stroke-dasharray: 5 5;
+    classDef ec2 fill:#f6ffed,stroke:#52c41a;
+    classDef user fill:#fffbe6,stroke:#faad14;
+    classDef hacker fill:#fff1f0,stroke:#ff4d4f;
 
     class AWS_Cloud aws;
     class SG sg;
@@ -251,23 +254,30 @@ Code snippet
 
 ```mermaid
 flowchart TD
+
+    %% Global styling
     classDef default font-weight:bold,font-size:16px,stroke-width:2px;
-
-    Start{"طبيعة التطبيق؟</br>(Workload Type)"}
-
-    Start -->|غير متوقع أو تحت التطوير</br>(Unpredictable / Short-term)| OnDemand["On-Demand</br>الدفع بالاستخدام - الأغلى"]
     
-    Start -->|مستقر ومستمر لسنوات</br>(Steady-state / Long-term)| RI["Reserved Instances</br>خصم 72% بعقد"]
-    
-    Start -->|يتحمل الانقطاع المفاجئ</br>(Fault-tolerant / Batch)| Spot["Spot Instances</br>خصم 90% ولكن غير مستقر"]
-    
-    Start -->|قوانين صارمة أو رخص</br>(Compliance / Licensing)| Dedicated["Dedicated Hosts</br>سيرفر فيزيكال خاص بك"]
+    %% Nodes
+    Start{"طبيعة التطبيق؟<br/>(Workload Type)"}
+    OnDemand["On-Demand<br/>الدفع بالاستخدام - الأغلى"]
+    RI["Reserved Instances<br/>خصم 72% بعقد"]
+    Spot["Spot Instances<br/>خصم 90% ولكن غير مستقر"]
+    Dedicated["Dedicated Hosts<br/>سيرفر فيزيكال خاص بك"]
 
+    %% Connections
+    Start -->|غير متوقع أو تحت التطوير| OnDemand
+    Start -->|مستقر ومستمر لسنوات| RI
+    Start -->|يتحمل الانقطاع المفاجئ| Spot
+    Start -->|قوانين صارمة أو رخص| Dedicated
+
+    %% Class definitions
     classDef ondemand fill:#fffbe6,stroke:#faad14,color:#000;
     classDef ri fill:#e6f7ff,stroke:#1890ff,color:#000;
     classDef spot fill:#fff1f0,stroke:#ff4d4f,color:#000;
     classDef dedicated fill:#f6ffed,stroke:#52c41a,color:#000;
 
+    %% Applying classes
     class OnDemand ondemand;
     class RI ri;
     class Spot spot;
@@ -1295,27 +1305,36 @@ Code snippet
 
 ```mermaid
 flowchart TD
+
+    %% Global styling
     classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-
+    
+    %% Decision nodes
     Start{"ما هي مشكلة</br>نقل أو ربط البيانات؟"}
+    Snow{"ما هو حجم البيانات؟</br>Data Size"}
+    SG{"كيف تتعامل السيرفرات مع التخزين؟</br>Storage Protocol"}
 
-    Start -->|الإنترنت بطيء جداً أو مقطوع</br>Offline Migration| Snow{"ما هو حجم البيانات؟</br>Data Size"}
-    Snow -->|تيرابايت قليلة ومكان متطرف</br>Up to 14 TB / Edge| SC["❄️ AWS Snowcone"]
-    Snow -->|بيتابايت ومعالجة محلية</br>Petabytes / Compute| SB["❄️ AWS Snowball Edge"]
-    Snow -->|إكسابايت ونقل داتا سنتر</br>Exabytes (100 PB)| SM["🚛 AWS Snowmobile</br>(شاحنة عملاقة)"]
+    Start -->|الإنترنت بطيء جداً أو مقطوع| Snow
+    Start -->|استمرار الاتصال بين الشركة والسحابة| SG
+    Start -->|موقع ويب بدون سيرفر| Web["🌐 S3 Static Website Hosting<br/>(HTML/CSS/JS only)"]
 
-    Start -->|استمرار الاتصال بين الشركة والسحابة</br>Hybrid Cloud| SG{"كيف تتعامل السيرفرات مع التخزين؟</br>Storage Protocol"}
-    SG -->|مشاركة ملفات عادية</br>NFS / SMB| FG["📁 File Gateway</br>(Backs up to S3)"]
-    SG -->|هاردات بلوكات</br>iSCSI| VG["💾 Volume Gateway</br>(Backs up to EBS)"]
-    SG -->|شرائط باك أب قديمة</br>Virtual Tapes (VTL)| TG["📼 Tape Gateway</br>(Backs up to Glacier)"]
+    %% Snow Family
+    Snow -->|تيرابايت قليلة ومكان متطرف| SC["❄️ AWS Snowcone"]
+    Snow -->|بيتابايت ومعالجة محلية| SB["❄️ AWS Snowball Edge"]
+    Snow -->|إكسابايت ونقل داتا سنتر| SM["🚛 AWS Snowmobile<br/>(شاحنة عملاقة)"]
 
-    Start -->|موقع ويب بدون سيرفر</br>Serverless Web Hosting| Web["🌐 S3 Static Website Hosting</br>(HTML/CSS/JS only)"]
+    %% Storage Gateway Family
+    SG -->|مشاركة ملفات عادية| FG["📁 File Gateway<br/>(Backs up to S3)"]
+    SG -->|هاردات بلوكات| VG["💾 Volume Gateway<br/>(Backs up to EBS)"]
+    SG -->|شرائط باك أب قديمة| TG["📼 Tape Gateway<br/>(Backs up to Glacier)"]
 
+    %% Class definitions
     classDef offline fill:#e6f7ff,stroke:#1890ff,color:#000;
     classDef hybrid fill:#fffbe6,stroke:#faad14,color:#000;
     classDef decision fill:#f9f9f9,stroke:#52c41a,color:#000;
     classDef web fill:#f6ffed,stroke:#52c41a,color:#000;
 
+    %% Applying classes
     class Start,Snow,SG decision;
     class SC,SB,SM offline;
     class FG,VG,TG hybrid;
