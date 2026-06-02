@@ -85,15 +85,15 @@ flowchart TD
     %% Configuration Subgraph
     subgraph Config ["مرحلة التجهيز - Launch Configuration"]
         direction TB
-        A["1. AMI (Amazon Machine Image)<br/>AWS Managed, Marketplace, or Custom"]
-        B["2. Instance Type<br/>CPU and RAM Balance"]
-        C["3. User Data (Bootstrapping)<br/>Bash Script runs ONCE as root"]
-        D["4. Key Pair (Security)<br/>Public Key injected into OS"]
+        A["(1) AMI Amazon Machine Image <br> AWS Managed, Marketplace, or Custom"]
+        B["(2) Instance Type <br> CPU and RAM Balance"]
+        C["(3) User Data Bootstrapping <br> Bash Script runs ONCE as root"]
+        D["(4) Key Pair Security <br> Public Key injected into OS"]
     end
 
     %% Execution Subgraph
     subgraph Execution ["مرحلة الإطلاق - Provisioning"]
-        EC2[["Running EC2 Instance<br/>Fully Configured & Secure"]]
+        EC2[["Running EC2 Instance <br> Fully Configured & Secure"]]
     end
 
     %% Connections
@@ -102,12 +102,14 @@ flowchart TD
     C -->|Executes Script| EC2
     D -->|Configures SSH| EC2
 
-    %% Styling
-    classDef config fill:#e6f7ff,stroke:#1890ff,stroke-width:3px,color:#000;
-    classDef ec2 fill:#f6ffed,stroke:#52c41a,stroke-width:3px,color:#000;
-
-    class Config config;
-    class Execution,EC2 ec2;
+    %% Direct Styling to avoid CSS injection conflicts
+    style Config fill:#121e2f,stroke:#1890ff,stroke-width:2px,color:#fff
+    style Execution fill:#14251c,stroke:#52c41a,stroke-width:2px,color:#fff
+    style EC2 fill:#14251c,stroke:#52c41a,stroke-width:2px,color:#fff
+    style A fill:#1f1f1f,stroke:#722ed1,color:#fff
+    style B fill:#1f1f1f,stroke:#722ed1,color:#fff
+    style C fill:#1f1f1f,stroke:#722ed1,color:#fff
+    style D fill:#1f1f1f,stroke:#722ed1,color:#fff
 ```
 
 ---
