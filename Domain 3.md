@@ -1346,3 +1346,136 @@ flowchart TD
 
 
 ---
+# Domain 3: Cloud Technology & Services
+
+## 1. قواعد البيانات وتحليل البيانات (Databases & Analytics) - الجزء الأول: عائلة الـ SQL (RDS & Aurora)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+زمان، لما كنا بنبني Backend قوي (زي نظام بـ Laravel 13 مثلاً)، كنا بنعمل سيرفر (EC2)، وندخل نسطب عليه قاعدة البيانات (PostgreSQL أو MySQL) بإيدينا. المشكلة إنك كمهندس كنت بتتحول لـ "حارس أمن" للداتابيز؛ لازم تعمل Backups كل يوم، تنزل تحديثات أمنية لنظام التشغيل، ولو السيرفر هنج أو الهارد باظ، الداتا بتضيع والموقع بيقع!
+
+من هنا أمازون قالتلك: "ركز إنت في الكود وهندسة التطبيق، وسيب إدارة الداتابيز عليا". واخترعت خدمات قواعد البيانات المدارة (Managed Database Services).
+
+### ⚙️ أولاً: خدمة قواعد البيانات العلائقية (Amazon RDS)
+
+الـ **RDS (Relational Database Service)** هي خدمة بتخليك تطلق قاعدة بيانات (SQL) في ثواني، وأمازون بتتكفل بكل المهام الروتينية (النسخ الاحتياطي، تحديثات السوفت وير، تغيير الهاردوير، والـ Patching).
+
+**محركات البحث المدعومة (الـ 6 محركات في الامتحان):**
+
+الـ RDS مش داتابيز في حد ذاتها، دي "حاضنة" بتشغل 6 أنواع من قواعد البيانات:
+
+1. Amazon Aurora (اختراع أمازون)
+    
+2. PostgreSQL
+    
+3. MySQL
+    
+4. MariaDB
+    
+5. Oracle
+    
+6. Microsoft SQL Server
+    
+
+#### 🛡️ استراتيجيات المعمارية في RDS (موضع أسئلة الامتحان)
+
+الامتحان بيركز على إزاي بتخلي الداتابيز بتاعتك "مستحيل تقع" (High Availability) وإزاي "تسرعها" (Scalability).
+
+**1. النشر في مناطق متعددة (RDS Multi-AZ Deployment): للحماية من الكوارث**
+
+- **الفكرة:** لما بتفعل الخاصية دي، أمازون بتخلق سيرفر داتابيز "أساسي" (Primary) في مبنى (AZ-A)، وسيرفر تاني "احتياطي" (Standby) في مبنى تاني خالص (AZ-B).
+    
+- **الكواليس (Synchronous Replication):** أي داتا بتتكتب في الأساسي، بتتنسخ "في نفس اللحظة" للاحتياطي.
+    
+- **السيناريو:** لو المبنى الأول ولع، أمازون بتعمل (Automatic Failover) وتحول الـ Traffic أوتوماتيك للاحتياطي من غير ما الموقع بتاعك يقع أو الكود بتاعك يتغير.
+    
+- **الكلمة الدلالية في الامتحان:** `High Availability`, `Disaster Recovery`, `Automatic Failover`. (🚨 **تحذير:** الـ Standby ممنوع تقرأ منه داتا، هو نايم مستني الكارثة تحصل بس).
+    
+
+**2. النُسخ المخصصة للقراءة (RDS Read Replicas): لتسريع الأداء**
+
+- **المشكلة:** تطبيقك عليه ضغط رهيب. اليوزرز بيقرأوا مقالات أو بيسحبوا تقارير ضخمة، وده مأثر على سرعة كتابة طلبات الشراء في الداتابيز.
+    
+- **الحل المعماري:** بتعمل (Read Replica). دي نسخة طبق الأصل من الداتابيز، بس "للقراءة فقط". بتخلي الـ Backend بتاعك يبعت كل أوامر الـ (SELECT) للنسخة دي، ويسيب الداتابيز الأساسية لأوامر الـ (INSERT / UPDATE) بس.
+    
+- **الكواليس (Asynchronous Replication):** النسخ هنا بياخد أجزاء من الثانية. وتقدر تعمل لحد 5 نسخ قراءة.
+    
+- **الكلمة الدلالية في الامتحان:** `Performance`, `Scalability`, `Read-heavy workloads`, `Offload read traffic`.
+    
+
+### ⚙️ ثانياً: وحش أمازون الخاص (Amazon Aurora)
+
+**أصل الحكاية:** أمازون شافت إن MySQL و PostgreSQL العاديين ليهم حدود في السرعة على الكلاود. فقررت تبني قاعدة بيانات "Cloud-Native" من الصفر، مصممة مخصوص للعمل على البنية التحتية بتاعة AWS.
+
+**القواعد الهندسية للـ Aurora (دستور الامتحان):**
+
+1. **التوافق التام (Compatibility):** الـ Aurora بتفهم كود **MySQL** و **PostgreSQL**. يعني لو الأبلكيشن بتاعك متبرمج عليهم، هتنقله للـ Aurora من غير ما تغير حرف في الكود.
+    
+2. **السرعة الخارقة:** الـ Aurora أسرع **5 مرات** من الـ MySQL العادي، وأسرع **3 مرات** من الـ PostgreSQL العادي!
+    
+3. **التمدد الذاتي للتخزين (Auto-scaling Storage):** إنت مابتحددش مساحة هارد للـ Aurora. هي بتبدأ بـ 10 جيجا، وكل ما تتملي، أمازون تزودها 10 جيجا أوتوماتيك لحد ما توصل لـ **128 تيرابايت**.
+    
+4. **حماية البيانات المجنونة (6 Copies):** أول ما بتخلق Aurora، أمازون أوتوماتيك بتنسخ الداتا بتاعتك **6 مرات** وتوزعها على **3 مباني (AZs)** مختلفة، حتى لو إنت مطلبشت ده! (ده بيخليها تقريباً من المستحيل تفقد بياناتك).
+    
+
+> [!info] تريكة امتحان: Aurora Serverless
+> 
+> لو السيناريو بيقولك إن عندك أبلكيشن بيجيله ضغط "عشوائي وغير متوقع" (Unpredictable workloads)، وإنت مش عايز تدفع فلوس لسيرفر داتابيز شغال طول الوقت على الفاضي، الحل هو **Aurora Serverless**. دي داتابيز بتكبر وتصغر وتقفل خالص لوحدها حسب الضغط، وبتدفع بالثانية!
+
+### 🏗️ اللوحة المعمارية: الفرق بين Multi-AZ و Read Replicas (Mermaid)
+
+الخريطة دي بتوضح شكل الاتصال وإزاي بنحمي الداتابيز ونسرعها في نفس الوقت (تم استخدام `<br/>` لتوافق أوبسيديان):
+
+
+
+```mermaid
+flowchart TD
+
+    App[["🖥️ Application Server"]]
+
+    subgraph AWS_Region ["AWS Region"]
+        direction TB
+
+        subgraph AZ_A ["Availability Zone A"]
+            DB_Primary[("🗄️ Primary DB")]
+        end
+
+        subgraph AZ_B ["Availability Zone B"]
+            DB_Standby[("🛑 Standby DB")]
+        end
+
+        subgraph AZ_C ["Availability Zone C"]
+            DB_Replica[("📖 Read Replica")]
+        end
+
+        DB_Primary == "Sync Replication" === DB_Standby
+        DB_Primary -. "Async Replication" .-> DB_Replica
+    end
+
+    App -->|Write| DB_Primary
+    App -->|Read| DB_Replica
+
+    classDef app fill:#f9f0ff,stroke:#722ed1;
+    classDef primary fill:#f6ffed,stroke:#52c41a;
+    classDef standby fill:#fffbe6,stroke:#faad14;
+    classDef replica fill:#e6f7ff,stroke:#1890ff;
+    classDef region fill:#fdfdfd,stroke:#ff4d4f,stroke-width:3px,stroke-dasharray: 5 5;
+
+    class App app;
+    class DB_Primary primary;
+    class DB_Standby standby;
+    class DB_Replica replica;
+    class AWS_Region region;
+```
+
+### 📊 شفرات الامتحان: الخلاصة لاختيار الـ DB
+
+|**الكلمة الدلالية في سيناريو الامتحان (Keyword)**|**الإجابة الصحيحة (Service)**|
+|---|---|
+|`Relational DB`, `SQL`, `Complex Joins`, `Managed Service`|**Amazon RDS**|
+|`Disaster Recovery`, `High Availability`, `Automatic Failover`|**RDS Multi-AZ**|
+|`Improve performance`, `Heavy read traffic`, `Scalability`|**RDS Read Replicas**|
+|`Proprietary AWS DB`, `5x faster than MySQL`, `Cloud-Native`|**Amazon Aurora**|
+|`Relational DB`, `Unpredictable workload`, `Infrequent usage`|**Amazon Aurora Serverless**|
+|`Full OS control`, `Custom DB patches`, `Specific OS level access`|**Database on Amazon EC2** (مش RDS خالص)|
+
