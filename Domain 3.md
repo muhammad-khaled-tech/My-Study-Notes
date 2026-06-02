@@ -747,9 +747,6 @@ flowchart TD
 > 
 > أي سؤال يطلب منك "هارد مشترك" (Shared Storage) عينك تروح فوراً على نظام التشغيل: لو قالك Linux اختار EFS، لو قالك Windows اختار FSx.
 
-### 🏗️ خريطة اتخاذ القرار في الامتحان (Storage Decision Tree)
-
-الرسمة دي (Mermaid) بتلخص خطوات تفكيرك وأنت بتقرأ أي سؤال عن التخزين المرفق:
 
 ```mermaid
 flowchart TD
@@ -779,11 +776,6 @@ flowchart TD
     class EFS efs;
     class FSxW,FSxL fsx;
 ```
-
----
-
-
-
 
 ---
 ## 3. وحش التخزين اللانهائي (Amazon S3) - الجزء الأول: المعمارية والتشريح الدقيق
