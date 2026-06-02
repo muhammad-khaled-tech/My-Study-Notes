@@ -571,12 +571,6 @@ flowchart TD
     - **الكلمات الدلالية:** `Lowest Cost`, `Infrequently Accessed`, `Archive`.
         
 
-### 🏗️ خريطة اتخاذ القرار في الامتحان (EBS Volume Types)
-
-الرسمة دي (Mermaid) هتخليك تلقط الإجابة الصح في الامتحان بمجرد ما تقرأ الكلمة الدلالية (Keyword) في السيناريو (تم استخدام `</br>` لضمان التوافق التام مع أوبسيديان):
-
-Code snippet
-
 
 
 ```mermaid
