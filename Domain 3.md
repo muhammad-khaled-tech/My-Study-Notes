@@ -391,13 +391,6 @@ flowchart TD
     class Partition part;
 ```
 
----
-
-
-
-
-
-
 ----
 ## 2. عوالم التخزين المرفقة (Attached Storage) - الجزء الأول: معمارية EBS
 
