@@ -1237,11 +1237,7 @@ flowchart LR
     - **السيناريو:** `Virtual Tape Library (VTL)`, `Replace physical tapes with Glacier`.
         
 
-### 🏗️ خريطة اتخاذ القرار: الهجرة والتخزين الهجين (Migration & Hybrid)
 
-الرسمة دي (Mermaid) بتلخص كل طرق نقل وربط الداتا بأمازون (باستخدام `</br>` للفصل الدقيق):
-
-Code snippet
 
 ```mermaid
 flowchart TD
