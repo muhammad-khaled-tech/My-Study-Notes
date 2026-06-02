@@ -250,7 +250,7 @@ flowchart LR
 
 الرسمة دي بتلخصلك إزاي تختار الإجابة الصح في الامتحان بناءً على الكلمة الدلالية (Keyword) اللي في السيناريو:
 
-Code snippet
+
 
 ```mermaid
 flowchart TD
@@ -283,15 +283,6 @@ flowchart TD
     class Spot spot;
     class Dedicated dedicated;
 ```
-
-كده ملف الـ EC2 اتقفل بالضبة والمفتاح في النوتس بتاعتك:
-
-1. المعمارية الفنية (AMI, Types, User Data, Keys).
-    
-2. الحماية (Security Groups).
-    
-3. خطط الدفع والتسعير (Pricing Models).
-    
 
 ---
 
