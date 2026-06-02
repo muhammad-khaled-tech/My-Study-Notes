@@ -2334,3 +2334,120 @@ flowchart LR
 |`Serverless event bus`, `Connect SaaS apps to AWS`|**Amazon EventBridge**|
 
 ---
+## 🛠️ مراجعة شاملة (1): عمالقة الحوسبة ومنصات النشر (Compute & PaaS)
+
+**القصة المعمارية (الخلاصة):**
+
+رحلة تشغيل أي كود في أمازون بتمشي في مستويات من "التحكم الكامل" إلى "الراحة الكاملة". كل ما بتطلع لمستوى أعلى، أمازون بتشيل عنك إدارة السيرفرات (EC2)، لحد ما توصل لمرحلة الـ Serverless اللي بتخليك تدفع بالمللي ثانية أو منصات النشر اللي بتبني كل حاجة بضغطة زر.
+
+### 📊 الجدول الذهبي: خريطة اتخاذ القرار للحوسبة
+
+|**السيناريو في الامتحان (Use Case)**|**الخدمة المعمارية (AWS Service)**|**ليه اخترناها؟ (The Why)**|
+|---|---|---|
+|تحكم كامل في الـ OS، تسطيب رخص مخصصة، أو تطبيقات تقليدية جداً|**Amazon EC2**|الـ (IaaS) الأساسي. إنت بتدير كل حاجة من أول نظام التشغيل (Linux/Windows).|
+|تشغيل حاويات (Docker) مع رغبة في تقليل الإدارة (Serverless Containers)|**AWS Fargate**|بتشغل الحاوية فوراً بدون ما تفتح أو تدير سيرفرات EC2.|
+|أداة إدارة حاويات (Orchestration) متوافقة مع الكلاودات التانية (Multi-Cloud)|**Amazon EKS**|بتستخدم تكنولوجيا Kubernetes المفتوحة المصدر لعدم التقيد بأمازون (No Vendor Lock-in).|
+|أداة إدارة حاويات (Orchestration) مدمجة بعمق مع خدمات أمازون|**Amazon ECS**|أداة أمازون الخاصة (Native)، أسهل في الإعداد من EKS.|
+|كود بيشتغل كرد فعل لحدث (Event-driven) وبيخلص في أقل من 15 دقيقة|**AWS Lambda**|حوسبة بالمللي ثانية، بتنام وتصحى لوحدها (Serverless Function).|
+|مهام تقيلة (ريندر، تحليل بيانات) بتاخد ساعات، مع توفير التكلفة|**AWS Batch**|بتخلق سيرفرات Spot رخيصة أوتوماتيك، تخلص المهمة، وتمسحها.|
+|مطور عايز يرفع الكود بس (ZIP file) والخدمة تبني السيرفر والشبكة|**AWS Elastic Beanstalk**|الـ (PaaS) المثالي للمطورين اللي ميعرفوش بنية تحتية، مع بقاء التحكم في الـ EC2.|
+|بناء بنية تحتية كاملة (VPC, S3, EC2) باستخدام ملف كود (JSON/YAML)|**AWS CloudFormation**|الـ (IaC) الرسمي لأتمتة إنشاء الداتا سنتر وتكرارها بدون أخطاء بشرية.|
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef question fill:#f9f9f9,stroke:#52c41a,color:#000;
+    classDef ec2 fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef container fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef serverless fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef paas fill:#f9f0ff,stroke:#722ed1,color:#000;
+
+    Start["🤔 How do you want to run the App?"]
+    
+    %% Paths
+    Start -->|"I need full OS control"| EC2["🖥️ Amazon EC2<br/>(IaaS - Manage Everything)"]
+    
+    Start -->|"I have Docker Containers"| ContQ["Kubernetes or AWS Native?"]
+    ContQ -->|"Kubernetes (Multi-Cloud)"| EKS["☸️ Amazon EKS"]
+    ContQ -->|"AWS Native"| ECS["⚙️ Amazon ECS"]
+    EKS -->|"Where to run them?"| Fargate["☁️ AWS Fargate<br/>(Serverless Compute)"]
+    ECS -->|"Where to run them?"| Fargate
+    
+    Start -->|"I just have code functions"| CodeQ["How long does it run?"]
+    CodeQ -->|"< 15 Minutes (Event-Driven)"| Lambda["⚡ AWS Lambda<br/>(Serverless Functions)"]
+    CodeQ -->|"> 15 Minutes (Heavy Data)"| Batch["📦 AWS Batch<br/>(Batch Processing)"]
+    
+    Start -->|"I want to upload code and relax"| Beanstalk["🚀 Elastic Beanstalk<br/>(PaaS - Auto Provisioning)"]
+
+    %% Apply Classes
+    class Start,ContQ,CodeQ question;
+    class EC2 ec2;
+    class EKS,ECS container;
+    class Fargate,Lambda,Batch serverless;
+    class Beanstalk paas;
+```
+
+## 🛠️ مراجعة شاملة (2): مصنع الأكواد وممتصات الصدمات (CI/CD & Integration)
+
+**القصة المعمارية (الخلاصة):**
+
+بعد ما اخترنا هنشغل الكود فين (الجزء الأول)، لازم نضمن إن الكود بيوصل للسيرفرات بأمان وبشكل أوتوماتيكي (مصنع CI/CD). ولما الموقع يشتغل ويجيله ملايين الزيارات، لازم نحط "مساعدين وممتصات صدمات" (Decoupling) بين أجزاء السيستم عشان الداتابيز متقعش من الضغط.
+
+### 📊 الجدول الذهبي: أدوات المطورين وفك الارتباط
+
+|**الخدمة (AWS Service)**|**الوظيفة المعمارية (The Role)**|**الكلمة الدلالية الثابتة في الامتحان (Keyword)**|
+|---|---|---|
+|**AWS CodeCommit**|"خزنة الكود" الآمنة والخاصة بالشركة.|`Git repository`, `Source control`, `Version control`.|
+|**AWS CodeBuild**|"مفتش الجودة" اللي بيعمل Compile ويشغل الـ Unit Tests.|`Run tests`, `Compile code`, `Continuous Integration (CI)`.|
+|**AWS CodeDeploy**|"عامل الدليفري" اللي بيرفع الكود الجديد للسيرفرات بدون توقف.|`Automate deployments`, `Deploy to EC2/Lambda/On-Prem`.|
+|**AWS CodePipeline**|"مدير المصنع" اللي بيربط (Commit ➔ Build ➔ Deploy) ببعض.|`Orchestrate CI/CD`, `Automate release process`.|
+|**Amazon SQS**|"الطابور / ممتص الصدمات" بيفصل الـ Frontend عن الـ Backend.|`Decouple`, `Message queue`, `Buffer`, `Pull-based`.|
+|**Amazon SNS**|"مكبر الصوت" بيبعت إشعارات للجميع في نفس اللحظة.|`Pub/Sub`, `Push notifications`, `Email/SMS`, `Fan-out`.|
+|**Amazon EventBridge**|"سنترال الكلاود" بيربط الأحداث ببعضها أو بخدمات خارجية.|`Serverless event bus`, `SaaS integration`, `Trigger actions`.|
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef dev fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef cicd fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef compute fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef decouple fill:#e6f7ff,stroke:#1890ff,color:#000;
+
+    subgraph Factory ["1. The CI/CD Assembly Line (Managed by CodePipeline)"]
+        direction LR
+        Commit["📦 CodeCommit<br/>(Git Push)"]
+        Build["⚙️ CodeBuild<br/>(Test & Compile)"]
+        Deploy["🚀 CodeDeploy<br/>(Release)"]
+    end
+
+    subgraph Production ["2. Production Architecture (Decoupled)"]
+        direction LR
+        Server["🖥️ Web Server<br/>(EC2 / Fargate)"]
+        SNS["📢 Amazon SNS<br/>(Topic / Pub-Sub)"]
+        SQS["📨 Amazon SQS<br/>(Queue / Buffer)"]
+        Worker["⚡ AWS Lambda<br/>(Background Worker)"]
+    end
+
+    %% Connections
+    Developer["👨‍💻 Developer"] -->|"Writes Code"| Commit
+    Commit -->|"Triggers"| Build
+    Build -->|"Artifacts"| Deploy
+    Deploy -->|"Updates App safely"| Server
+    
+    Server -->|"Order Received (Push)"| SNS
+    SNS -->|"Fan-out Notification"| SQS
+    SQS -.->|"Pulls Message when ready"| Worker
+
+    %% Apply Classes
+    class Developer dev;
+    class Commit,Build,Deploy cicd;
+    class Server,Worker compute;
+    class SNS,SQS decouple;
+```
+
+---
+
