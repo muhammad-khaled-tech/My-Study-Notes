@@ -1479,3 +1479,363 @@ flowchart TD
 |`Relational DB`, `Unpredictable workload`, `Infrequent usage`|**Amazon Aurora Serverless**|
 |`Full OS control`, `Custom DB patches`, `Specific OS level access`|**Database on Amazon EC2** (مش RDS خالص)|
 
+---
+##  الجزء الثاني: وحش الـ NoSQL (Amazon DynamoDB)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+الـ RDS والـ SQL عموماً عظيمة جداً طول ما إنت عندك "علاقات" معقدة (جداول مربوطة ببعض بـ Foreign Keys). بس إيه المشكلة؟
+
+المشكلة إن الـ SQL بطيء لما الضغط يوصل لملايين الطلبات في الثانية (زي مثلاً لو بتبني لعبة أونلاين وعايز تحفظ الـ Score بتاع 10 مليون لاعب في نفس اللحظة، أو بتعمل سلة مشتريات لموقع زي أمازون في الـ Black Friday). الـ SQL هنا هيهنج لأنه بيحاول يراجع كل العلاقات (Joins) قبل ما يكتب.
+
+هنا ظهر مفهوم الـ **NoSQL (Not Only SQL)**. الفكرة هنا: "إنسى الجداول والعلاقات المعقدة، إحنا هنخزن الداتا على هيئة (مفتاح وقيمة - Key/Value) أو (ملفات JSON). ارمي الداتا واسحبها في أجزاء من الثانية!". بطل القصة دي في أمازون هو **Amazon DynamoDB**.
+
+### ⚙️ التشريح العميق لـ Amazon DynamoDB (دستور الامتحان)
+
+الـ DynamoDB مش مجرد قاعدة بيانات، دي "ظاهرة" في أمازون، وليها 4 قوانين معمارية بتيجي في الامتحان دايماً:
+
+**1. البنية التحتية (Serverless Database):**
+
+إنت في DynamoDB **مابتختارش سيرفرات**، ولا رامات، ولا بتحدد مساحة هارد. دي خدمة (Serverless) بالكامل. إنت بس بتعمل "جدول" (Table) وترمي فيه الداتا، وأمازون بتكبر السيرفرات في الكواليس أوتوماتيك لدرجة إنها ممكن تستحمل تيرابايتات من الداتا بدون أي تدخل منك.
+
+**2. السرعة الجنونية (Single-digit Millisecond Latency):**
+
+الـ DynamoDB بيضمنلك إن أي عملية قراءة أو كتابة هتاخد أقل من 10 مللي ثانية (Single-digit)، سواء الجدول ده فيه 100 ريكورد أو فيه 10 مليار ريكورد! السرعة ثابتة مبتتغيرش.
+
+**3. التواجد المدمج (Multi-AZ by Default):**
+
+عكس الـ RDS اللي كان لازم تختار تفعّل الـ Multi-AZ وتدفع فلوس زيادة، الـ DynamoDB بيعمل نسخ للداتا بتاعتك في 3 مباني (AZs) مختلفة **أوتوماتيك وبشكل افتراضي** عشان يضمن إن الداتا عمرها ما تضيع.
+
+**4. نموذج البيانات (Key-Value & Document):**
+
+الداتا هنا مش بتتحط في أعمدة وصفوف ثابتة. كل (Item) ممكن يكون ليه شكل مختلف. (مثلاً: مستخدم تحطله اسمه وسنه، ومستخدم تاني تحطله اسمه وعنوانه وهواياته). ده بيخليها مرنة جداً للتطبيقات الحديثة.
+
+### 🚀 تسريع الوحش: محرك الـ DAX (DynamoDB Accelerator)
+
+أمازون قالتلك: "الـ 10 مللي ثانية بطيئة بالنسبة لبعض التطبيقات (زي التداول المالي أو الألعاب اللحظية)، إحنا عايزين سرعة بالـ (ميكرو ثانية - Microseconds)!".
+
+- **الحل المعماري (DAX):** ده نظام تخزين مؤقت (In-Memory Cache) مبني **مخصوص** للـ DynamoDB.
+    
+- **الكواليس:** بدل ما الأبلكيشن بتاعك يروح يقرأ من الداتابيز كل مرة، بيقرأ من الـ DAX (اللي شايل الداتا في الرامات). وده بينزل سرعة الاستجابة من مللي ثانية لـ ميكرو ثانية (أسرع 1000 مرة).
+    
+- 🚨 **تريكة الامتحان:** أول ما تشوف كلمة `Microseconds` مع `DynamoDB`، الإجابة فوراً هي **DAX**.
+    
+
+### 🌍 الانتشار العالمي: الجداول العالمية (Global Tables)
+
+- **المشكلة:** الأبلكيشن بتاعك نجح عالمياً، بقى عندك مستخدمين في أمريكا وفي أستراليا. لو الداتابيز بتاعتك في أمريكا، المستخدم الأسترالي هيعاني من بطء (Latency) عشان الداتا بتسافر عبر المحيط.
+    
+- **الحل المعماري (Global Tables):** الخاصية دي بتخلي الـ DynamoDB ينسخ الجدول بتاعك في كذا منطقة جغرافية (Regions) في نفس الوقت.
+    
+- **الكواليس (Active-Active Replication):** المستخدم الأمريكي بيكتب ويقرأ من نسخة أمريكا، والأسترالي بيكتب ويقرأ من نسخة أستراليا، والنسختين بيكلموا بعض في الكواليس ويوحدوا الداتا!
+    
+- 🚨 **الكلمة الدلالية في الامتحان:** `Multi-Region scaling for DynamoDB`, `Active-Active global database`.
+    
+
+### 🏗️ اللوحة المعمارية: ديناميكية DynamoDB و DAX (Mermaid)
+
+الرسمة دي بتوضح إزاي الأبلكيشن بيتعامل مع الـ DAX قبل ما يوصل للـ DynamoDB عشان ياخد أقصى سرعة ممكنة (تم استخدام `<br/>` لتوافق أوبسيديان):
+
+Code snippet
+
+```mermaid
+flowchart TD
+
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    App[["🖥️ Application<br/>(e.g., Mobile Game / E-commerce)"]]
+
+    subgraph AWS_Cloud ["AWS Cloud (Serverless Architecture)"]
+        direction TB
+
+        DAX{"⚡ Amazon DAX<br/>(In-Memory Cache)"}
+        
+        DB[("🗂️ Amazon DynamoDB<br/>(NoSQL Table)<br/>Replicated across 3 AZs")]
+
+        %% Data Flow - Simplified labels to avoid parser errors
+        App -->|1. Read Request| DAX
+        DAX -->|2. Cache Miss if not in RAM| DB
+        DB -.->|3. Return Data and Cache| DAX
+        DAX -.->|4. Microsecond Response| App
+        
+        App ===|Direct Write Millisecond| DB
+    end
+
+    classDef app fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef dax fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef dynamo fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef cloud fill:#fdfdfd,stroke:#52c41a,stroke-width:3px,color:#000,stroke-dasharray: 5 5;
+
+    class App app;
+    class DAX dax;
+    class DB dynamo;
+    class AWS_Cloud cloud;
+```
+
+### 📊 شفرات الامتحان: متى تختار DynamoDB؟
+
+الامتحان هيجيبلك سيناريوهات، أول ما تلمح الكلمات دي، اختار DynamoDB فوراً:
+
+|**الكلمة الدلالية في سيناريو الامتحان (Keyword)**|**التفسير المعماري**|
+|---|---|
+|`Key-Value database`, `Document database`|النوع الأساسي لقاعدة البيانات (NoSQL).|
+|`Single-digit millisecond latency at any scale`|السرعة الثابتة مهما زاد حجم البيانات أو الضغط.|
+|`Serverless database`, `No infrastructure to manage`|إنت بتدير الداتا بس، أمازون بتدير السيرفرات.|
+|`Microsecond latency for DynamoDB`|الإجابة هنا هتكون **DAX** (لتسريع الـ DynamoDB).|
+|`Active-Active database across multiple regions`|الإجابة هنا هتكون **DynamoDB Global Tables**.|
+|`Shopping cart`, `Gaming leaderboards`, `Session state`|أشهر استخدامات الـ DynamoDB في بيئة العمل.|
+
+---
+## الجزء الثالث: مستودعات البيانات والتحليلات (Redshift & Athena)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+تخيل إنك بنيت سيستم مبيعات ضخم. الداتابيز الأساسية بتاعتك (RDS أو DynamoDB) بتسجل آلاف عمليات البيع كل دقيقة. مدير الشركة طلب منك تقرير معقد جداً: _"عايز أعرف مبيعات منتج معين في آخر 5 سنين، متقسمة بالشهور والمحافظات، ومقارنتها بمبيعات نفس المنتج لشركة تانية"_.
+
+لو كتبت كود `SQL` يعمل `JOIN` و `GROUP BY` على قاعدة البيانات الأساسية بتاعتك (اللي شغالة لايف)، الـ CPU هيوصل 100%، والداتابيز هتهنج، والموقع هيقع!
+
+هنا ظهر مفهوم فصل المعمارية لجزئين:
+
+1. **OLTP (Online Transaction Processing):** دي الـ RDS اللي بتسجل الشغل اليومي السريع.
+    
+2. **OLAP (Online Analytical Processing):** دي "مستودعات البيانات" اللي بناخد فيها نسخة من الداتا كل يوم بالليل، عشان نعمل عليها التحليلات الثقيلة براحتنا من غير ما نأثر على الموقع. بطل القصة دي هو **Amazon Redshift**.
+    
+
+### ⚙️ أولاً: وحش التحليلات ومستودعات البيانات (Amazon Redshift)
+
+الـ Redshift هو (Data Warehouse) أو مستودع بيانات مصمم خصيصاً لتحليل البيانات الضخمة جداً (بيتابايت - Petabytes) بسرعة خرافية.
+
+**القواعد الهندسية للـ Redshift (دستور الامتحان):**
+
+1. **التخزين العمودي (Columnar Storage):**
+    
+    على عكس الـ RDS اللي بيخزن الداتا في "صفوف"، الـ Redshift بيخزنها في "أعمدة". يعني لو بتعمل استعلام عن "سعر المنتجات"، هو بيسحب عمود السعر بس من غير ما يقرأ باقي بيانات الجدول. ده بيقلل القراءة من الهارد جداً وبيسرع التحليل.
+    
+2. **المعالجة المتوازية (Massively Parallel Processing - MPP):**
+    
+    الـ Redshift بيقسم الاستعلام المعقد (Query) بتاعك على كذا سيرفر جوه الكلاستر (Cluster) يشتغلو فيه مع بعض في نفس اللحظة، ويرجعولك النتيجة في ثواني.
+    
+3. **التسعير التنافسي:**
+    
+    أمازون بتفتخر إن Redshift بيكلف 1/10 (عُشر) تكلفة مستودعات البيانات التقليدية اللي الشركات بتعملها (On-Premises).
+    
+
+- 🚨 **الكلمات الدلالية في الامتحان:** `Data Warehouse`, `Analytics`, `OLAP`, `Petabyte-scale data warehousing`.
+    
+
+### ⚙️ ثانياً: استعلامات السحابة المباشرة (Amazon Athena)
+
+**المشكلة:** طب لو الداتا بتاعتك أصلاً مش في داتابيز؟ لو الداتا عبارة عن ملايين ملفات الـ (Logs / Text / CSV) مرمية في جردل (S3 Bucket)؟ عشان تحللها، هتحتاج تعمل سيرفر، وتسطب عليه داتابيز، وتعمل (Import) للملفات دي من S3 للداتابيز.. حوار طويل ومكلف!
+
+**الحل السحري (Athena):**
+
+دي خدمة (Serverless) عبارة عن "محرك بحث SQL" طاير في الهوا. إنت بتفتح الـ Athena، تكتب كود `SELECT * FROM S3-Bucket`، وهي بتنزل تقرأ الملفات اللي جوه الـ S3 مباشرة وتطلعلك النتيجة!
+
+**قواعد Athena في الامتحان:**
+
+1. **بدون خوادم (Serverless):** مفيش سيرفرات بتديرها ولا داتابيز بتسطبها.
+    
+2. **الدفع بالاستخدام (Pay per Query):** بتدفع فلوس على كل تيرا بايت (TB) الـ Athena بتعمله (Scan) جوه S3. (عشان كده يفضل تضغط ملفاتك قبل ما ترميها في S3 عشان تقلل الفاتورة).
+    
+3. **الاستخدام الأشهر:** تحليل سجلات النظام (Log Analysis) زي الـ VPC Flow Logs أو CloudTrail Logs.
+    
+
+- 🚨 **الكلمات الدلالية في الامتحان:** `Query data in S3 directly`, `Serverless SQL`, `Analyze logs in S3`, `Standard SQL`.
+    
+
+### ⚙️ ثالثاً: مكملات البيانات الضخمة (Amazon EMR)
+
+_(دي بتيجي كسؤال عابر في الامتحان، بس لازم تكون عارفها)._
+
+**Amazon EMR (Elastic MapReduce):**
+
+لو الشركة بتاعتك عندها داتا ضخمة جداً (Big Data) وبتستخدم تقنيات مفتوحة المصدر زي **Hadoop** أو **Apache Spark**، بدل ما تبني سيرفرات كتير عشان تشغلهم، الـ EMR بيعملك الكلاستر ده كله جاهز للإطلاق في دقايق.
+
+- 🚨 **الكلمات الدلالية في الامتحان:** `Hadoop cluster`, `Apache Spark`, `Big data framework`.
+    
+
+### 🏗️ اللوحة المعمارية: مسار البيانات للتحليلات (Mermaid)
+
+الرسمة دي بتوضح إزاي الداتا بتمشي من مرحلة العمليات اليومية (OLTP) لمرحلة التحليلات (OLAP)، وتم تطبيق كل قواعد أوبسيديان المعمارية الصارمة عليها (روابط خارجية، نصوص محمية، `flowchart LR`، و `<br/>`):
+
+
+
+
+```mermaid
+flowchart LR
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef app fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef oltp fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef storage fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef olap fill:#e6f7ff,stroke:#1890ff,color:#000;
+
+    App["🖥️ Application<br/>Live Traffic"]
+
+    subgraph Operations ["1. Operational Databases (OLTP)"]
+        RDS["🗄️ Amazon RDS<br/>Daily Transactions"]
+        Dynamo["🗂️ DynamoDB<br/>Live User Data"]
+    end
+
+    subgraph Storage ["2. Data Lake (Storage)"]
+        S3["🪣 Amazon S3<br/>Raw Data and Logs"]
+    end
+
+    subgraph Analytics ["3. Analytics and Querying (OLAP)"]
+        Redshift["💎 Amazon Redshift<br/>Data Warehouse"]
+        Athena["🔍 Amazon Athena<br/>Serverless SQL over S3"]
+    end
+
+    %% Connections defined entirely outside subgraphs
+    App -->|"Live Traffic"| RDS
+    App -->|"Live Traffic"| Dynamo
+    
+    RDS -.->|"ETL Process"| Redshift
+    Dynamo -.->|"Export Data"| S3
+    
+    S3 -.->|"Direct Query"| Athena
+    S3 -.->|"Load Historical Data"| Redshift
+
+    %% Apply Classes
+    class App app;
+    class RDS,Dynamo oltp;
+    class S3 storage;
+    class Redshift,Athena olap;
+```
+
+### 📊 شفرات الامتحان: متى تختار أي خدمة تحليل؟
+
+|**الكلمة الدلالية في سيناريو الامتحان (Keyword)**|**الإجابة الصحيحة (Service)**|
+|---|---|
+|`Data Warehouse`, `Petabyte-scale analytics`, `Complex analytical queries`|**Amazon Redshift**|
+|`Analyze data directly in S3`, `Serverless interactive query`, `Standard SQL`|**Amazon Athena**|
+|`Hadoop`, `Spark`, `Managed Big Data framework`|**Amazon EMR**|
+
+---
+##  الجزء الرابع: التخزين المؤقت والهجرة (ElastiCache & DMS)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+إحنا كده غطينا الداتابيز العادية (RDS) والسريعة (DynamoDB) والتحليلات (Redshift). بس في بيئة العمل الحقيقية، بتظهر مشكلتين كبار:
+
+1. **أزمة القراءة المتكررة:** لو عندك موقع إخباري، ملايين الناس بتدخل تقرأ نفس الخبر الرئيسي. لو الأبلكيشن راح يقرأ الخبر ده من الـ RDS مليون مرة في الدقيقة، الداتابيز هتقع! محتاجين حاجة تشيل الحمل ده.
+    
+2. **أزمة الانتقال للسحابة:** الشركة مقتنعة بـ AWS، بس الداتابيز بتاعتهم موجودة على سيرفراتهم القديمة (On-Premises). إزاي ننقل الداتا دي للسحابة من غير ما الموقع يقف دقيقة واحدة؟
+    
+
+هنا أمازون بتتدخل بخدمتين هم أبطال الجزء ده: **ElastiCache** و **DMS**.
+
+### ⚙️ أولاً: التخزين المؤقت في الذاكرة (Amazon ElastiCache)
+
+الـ ElastiCache عبارة عن خدمة بتقدم (In-Memory Data Store). يعني الداتا مش بتتخزن على هارد ديسك بطيء، دي بتتخزن في "الرامات" (RAM) بتاعة السيرفر، وده بيخلي سرعة الاستجابة بأجزاء من المللي ثانية (Sub-millisecond latency).
+
+_ملاحظة: ElastiCache بيستخدم لتخفيف الضغط عن قواعد البيانات العلائقية (RDS)، زي ما الـ DAX بيخفف الضغط عن الـ DynamoDB._
+
+**محركات الـ ElastiCache (أسئلة المقارنة في الامتحان):**
+
+1. **Redis:**
+    
+    - هو المحرك الأقوى والأكثر استخداماً.
+        
+    - بيدعم البيانات المعقدة (Lists, Sets).
+        
+    - **تريكة الامتحان:** Redis بيدعم الـ (Multi-AZ) والـ (Backups)، يعني لو السيرفر وقع، الداتا مش بتطير.
+        
+2. **Memcached:**
+    
+    - أبسط بكتير ومصمم للأشياء البسيطة جداً (Strings).
+        
+    - بيدعم الـ (Multi-threading) يعني بيستغل معالجات السيرفر بكفاءة.
+        
+    - **تريكة الامتحان:** لا يدعم الـ Multi-AZ ولا الـ Backups. لو السيرفر رستر، الرامات بتفضى والداتا بتطير!
+        
+
+- 🚨 **الكلمات الدلالية في الامتحان:** `Sub-millisecond latency`, `In-memory data store`, `Alleviate database load`, `Improve read performance for RDS`.
+    
+
+### ⚙️ ثانياً: خدمة هجرة قواعد البيانات (AWS DMS)
+
+**AWS Database Migration Service (DMS)** هي الخدمة السحرية اللي بتنقل الداتابيز بتاعتك من أي مكان لـ AWS (أو العكس) بسرعة وبدون ما توقف الأبلكيشن بتاعك (Zero Downtime Migration).
+
+**أنواع الهجرة في الامتحان:**
+
+1. **الهجرة المتجانسة (Homogeneous Migration):**
+    
+    إنت بتنقل من نفس النوع لنفس النوع. (مثلاً: Oracle على سيرفرات الشركة ➔ Oracle على Amazon RDS). هنا إنت بتستخدم DMS مباشرة عشان ينقل الداتا.
+    
+2. **الهجرة غير المتجانسة (Heterogeneous Migration):**
+    
+    إنت بتنقل من نوع لنوع تاني خالص (عشان توفر فلوس الرخص). (مثلاً: Oracle على سيرفرات الشركة ➔ Amazon Aurora).
+    
+    - **أداة الامتحان السحرية (SCT):** الـ DMS بينقل الداتا بس (الصفوف والأعمدة). لكن عشان تترجم "هيكل الجدول" (Schema) والـ (Stored Procedures) من لغة أوراكل للغة أورورا، لازم تستخدم أداة مساعدة مع الـ DMS اسمها **AWS Schema Conversion Tool (SCT)**.
+        
+
+- 🚨 **الكلمات الدلالية في الامتحان:** `Migrate databases securely`, `Continuous replication during migration`, `Change database engine`, `SCT`.
+    
+
+### 🏗️ اللوحة المعمارية: مسار التخزين المؤقت والهجرة (Mermaid)
+
+الرسمة دي معمولة بـ (flowchart LR) ومطبقة لكل القواعد الصارمة (نصوص محمية بـ " "، أسهم نقية، وتخصيص خارج الـ Subgraphs) عشان تظهر معاك بأفضل جودة:
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef app fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef cache fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef db fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef onprem fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    classDef tool fill:#e6f7ff,stroke:#1890ff,color:#000;
+
+    subgraph Live_Traffic ["1. Caching Architecture (Live Traffic)"]
+        direction LR
+        App["📱 Application<br/>(Heavy Read Traffic)"]
+        Cache["⚡ Amazon ElastiCache<br/>(Redis / Memcached)"]
+        RDS["🗄️ Amazon RDS<br/>(Main Database)"]
+    end
+
+    subgraph Migration ["2. Database Migration Architecture"]
+        direction LR
+        OnPremDB["🏢 On-Premises DB<br/>(Oracle/SQL Server)"]
+        SCT["🛠️ AWS SCT<br/>(Schema Conversion)"]
+        DMS["🔄 AWS DMS<br/>(Data Migration)"]
+        Aurora["☁️ Amazon Aurora<br/>(Target DB)"]
+    end
+
+    %% Connections defined outside subgraphs for safety and layout clarity
+
+    %% Caching Connections
+    App -->|"1. Read from Cache"| Cache
+    Cache -.->|"2. Cache Miss (Go to DB)"| RDS
+    RDS -.->|"3. Return Data & Store in Cache"| Cache
+    App -->|"Direct Writes"| RDS
+
+    %% Migration Connections
+    OnPremDB -->|"Step 1: Convert Schema"| SCT
+    SCT -->|"Apply Schema"| Aurora
+    OnPremDB -->|"Step 2: Replicate Data"| DMS
+    DMS -->|"Insert Data with Zero Downtime"| Aurora
+
+    %% Apply Classes
+    class App app;
+    class Cache cache;
+    class RDS db;
+    class OnPremDB onprem;
+    class SCT,DMS tool;
+    class Aurora db;
+```
+
+### 📊 شفرات الامتحان: التفرقة بين خدمات الداتابيز النهائية
+
+لأن الداتابيز بتلخبط، ده الجدول الذهبي النهائي اللي تبروزه في النوتس:
+
+|**الهدف (Use Case)**|**الخدمة المناسبة (AWS Service)**|
+|---|---|
+|قاعدة بيانات علائقية (SQL)|**Amazon RDS**|
+|داتابيز علائقية أسرع 5 مرات ومبنية للسحابة|**Amazon Aurora**|
+|قاعدة بيانات NoSQL سريعة جداً (Serverless)|**Amazon DynamoDB**|
+|تسريع استجابة DynamoDB للميكرو ثانية|**Amazon DAX**|
+|تسريع استجابة RDS وتخفيف أحمال القراءة|**Amazon ElastiCache**|
+|مستودع بيانات ضخم للتحليلات المعقدة|**Amazon Redshift**|
+|هجرة قاعدة بيانات من الخارج إلى AWS|**AWS DMS** (+ **SCT** لو هتغير النوع)|
+
+---
