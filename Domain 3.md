@@ -353,11 +353,6 @@ flowchart TD
     - **السيناريو:** بتستخدم دايماً مع الـ Big Data وأنظمة قواعد البيانات الموزعة زي (Hadoop, Cassandra, Kafka).
         
 
-### 🏗️ خريطة هندسة مجموعات التسكين (Mermaid)
-
-Code snippet
-
-
 
 ```mermaid
 flowchart TD
