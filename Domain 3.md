@@ -1277,13 +1277,6 @@ flowchart TD
     class Web web;
 ```
 
----
-
-
-
----
-# Domain 3: Cloud Technology & Services
-
 ## 1. قواعد البيانات وتحليل البيانات (Databases & Analytics) - الجزء الأول: عائلة الـ SQL (RDS & Aurora)
 
 **أصل الحكاية والمشكلة المعمارية (The Core Problem):**
