@@ -2451,3 +2451,277 @@ flowchart LR
 
 ---
 
+## 3. الشبكات وتوصيل المحتوى (Networking & Content Delivery) - الجزء الأول: أساسيات الشبكة وتصميم الـ VPC (VPC Core & Subnetting)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+تخيل إنك اشتريت قطعة أرض وبنيت عليها عمارة، ومن غير ما تعمل بوابة رئيسية ولا أقفال للشقق، سبت العمارة مفتوحة على الشارع العمومي مباشرة! أي حد معدي في الشارع يقدر يدخل غرف النوم، ويشوف الخزنة، ويلعب في الأجهزة. دي الكارثة اللي كانت هتحصل لو أمازون سابت السيرفرات (EC2) وقواعد البيانات (RDS) بتاعتك تترمي في الكلاود من غير سور يحميها.
+
+في عالم الـ IT التقليدي، كنا بنبني داتا سنتر حقيقية محاطة بأسوار، وبندخل نعمل إعدادات الـ Routers والـ Switches عشان نعزل السيرفرات الحساسة عن الإنترنت.
+
+في السحابة، أمازون نقلت المفهوم ده بالكامل برمجياً واخترعت خدمة **Amazon VPC (Virtual Private Cloud)**. الـ VPC هي "الداتا سنتر الوهمية" الخاصة بشركتك جوه سحابة أمازون. حتة أرض معزولة تماماً ومنفصلة عن باقي الشركات وعن الإنترنت العام، إنت اللي بتحدد قوانينها، ومين يكلم مين، ومين يشوف الإنترنت ومين يستخبى منه.
+
+### ⚙️ أولاً: لغة الأرقام وتخطيط المساحة (VPC CIDR Blocks)
+
+لما بتيجي تحجز حتة الأرض بتاعتك (VPC) في أمازون، أول حاجة بتطلبها منك هي تحديد "نطاق أرقام الـ IP" اللي السيرفرات بتاعتك هتاخدها. التخطيط ده بيتم باستخدام نظام برمي صلب اسمه **CIDR (Classless Inter-Domain Routing)**.
+
+- **شكل الـ CIDR Block:** بتلاقيه مكتوب في الامتحان بالشكل ده: `10.0.0.0/16`
+    
+- **تفكيك الشفرة الرقمية للامتحان:**
+    
+    - الجزء الأول (`10.0.0.0`): ده بداية عنوان الشبكة.
+        
+    - الجزء الثاني بعد السلاش (`/16`): ده بيحدد عدد الـ IPs المتاحة جوه الشبكة. كل ما الرقم ده **يقل**، مساحة الأرض **تكبر** وعدد الـ IPs يزيد!
+        
+    - القيمة `/16` بتديك **65,536 عنوان IP** متاحين جوه الـ VPC بتاعتك.
+        
+    - القيمة `/24` (زي `10.0.1.0/24`) بتديك **256 عنوان IP** فقط.
+        
+- 🚨 **قاعدة التعديل في الامتحان:** بمجرد ما تبني الـ VPC وتديلها CIDR Block أساسي، **مستحيل تغيره** أو تعدله! تقدر بس تضيف عليه (Secondary CIDR) لو المساحة خلصت منك.
+    
+
+### ⚙️ ثانياً: تقسيم الأرض إلى حارات (Subnets)
+
+الـ VPC مساحتها ضخمة جداً (65 ألف IP مثلاً). المعمارية السليمة بتقول إننا مستحيل نرمي كل السيرفرات مع بعض في نفس المساحة. لازم نقسم الـ VPC لـ "حارات" أو "أقسام أصغر" بيسموها **Subnets**.
+
+- **قانون الجغرافيا الصارم:** الـ VPC بتغطي المنطقة بالكامل (Region - مثلاً `eu-west-1` في إيرلندا). أما الـ Subnet، فلازم وحتماً تعيش جوه **مبنى واحد فقط (Availability Zone)**. مستحيل الـ Subnet الواحدة تتمدد عبر مبنيين!
+    
+
+الامتحان بيركز على نوعين أساسيين من الـ Subnets حسب اتصالهم بالعالم الخارجي:
+
+#### 1. الحارة العامة (Public Subnet)
+
+- **المعنى الهندسي:** دي حارة متصلة بالإنترنت الخارجي مباشرة بالاتجاهين (رايح جاي).
+    
+- **الاستخدام المعماري:** بنحط فيها السيرفرات اللي "لازم" الناس في الشارع تشوفها وتكلمها، زي سيرفرات الـ Frontend، ومواقع الويب العامة، والـ Load Balancers.
+    
+
+#### 2. الحارة المستخبية / الخاصة (Private Subnet)
+
+- **المعنى الهندسي:** دي حارة معزولة تماماً عن الإنترنت الخارجي. لا حد بره يقدر يوصلها، ولا هي بتقدر تشوف بره مباشرة.
+    
+- **الاستخدام المعماري:** دي المكان السري اللي بنخزن فيه "أسرار الشركة" والداتا الحرجة، زي قواعد البيانات (RDS - PostgreSQL)، والـ Backend (مشروع Laravel 13 أو Node.js)، وأنظمة التخزين الداخلية.
+    
+
+### 🚨 ثالثاً: الخمسة IPs الضائعة (AWS Reserved IPs)
+
+دي تريكة رياضية بتيجي في أسئلة الحسابات جوه الامتحان، ولازم تكون حافظها صم:
+
+لو إنت عملت Subnet مساحتها الـ CIDر بتاعها `/24`، المفروض حسابياً تديك 256 عنوان IP. بس لو دخلت على واجهة أمازون، هتلاقي المتاح ليك **251 IP بس**! فين الـ 5 الباقيين؟
+
+أمازون **تحجز أوتوماتيك أول 4 عناويين وآخر عنوان** في كل Subnet لحسابها الخاص عشان تشغل بيهم الشبكة، ومستحيل إنت تستخدمهم:
+
+1. `10.0.0.0`: عنوان الشبكة نفسه (Network Address).
+    
+2. `10.0.0.1`: محجوز للـ Router الافتراضي بتاع AWS.
+    
+3. `10.0.0.2`: محجوز لسيرفر الـ DNS الخاص بأمازون.
+    
+4. `10.0.0.3`: محجوز لأي استخدامات مستقبلية (Future use).
+    
+5. `10.0.0.255`: عنوان البث الشبكي (Network Broadcast Address) - رغم إن أمازون مابتستخدمش الـ Broadcast بس بتحجزه برضه!
+    
+
+> [!danger] فخ الحسابات في الامتحان 🚨
+> 
+> لو جالك سؤال بيقولك: شركة محتاجة تبني Subnet تشيل **252 سيرفر**، هل الـ CIDR بقيمة `/24` هيكفي؟
+> 
+> **الإجابة: لأ طبعاً!** لأن الـ `/24` بتديك 256، وبنطرح منهم 5 بتوع أمازون، يتبقى 251 IP صافي. الشركة كده هينقصها IP واحد والسيستم هيضرب. لازم نختار مساحة أكبر (زي `/23`).
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef region fill:#fdfdfd,stroke:#ff4d4f,stroke-width:3px,stroke-dasharray: 5 5,color:#000;
+    classDef vpc fill:#f9f9f9,stroke:#ff9900,stroke-width:3px,color:#000;
+    classDef az fill:#fafafa,stroke:#8c8c8c,stroke-dasharray: 3 3,color:#000;
+    classDef public fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef private fill:#fff1f0,stroke:#ff4d4f,color:#000;
+
+    subgraph AWS_Region ["📍 AWS Region (e.g., eu-west-1)"]
+        
+        subgraph VPC ["☁️ Virtual Private Cloud (VPC)<br/>CIDR: 10.0.0.0/16 (65,536 IPs)"]
+            
+            subgraph AZ_A ["🏠 Availability Zone A"]
+                PubSub1["🌐 Public Subnet A<br/>CIDR: 10.0.1.0/24<br/>Available: 251 IPs"]
+                PrivSub1["🔒 Private Subnet A<br/>CIDR: 10.0.2.0/24<br/>Available: 251 IPs"]
+            end
+
+            subgraph AZ_B ["🏠 Availability Zone B"]
+                PubSub2["🌐 Public Subnet B<br/>CIDR: 10.0.3.0/24<br/>Available: 251 IPs"]
+                PrivSub2["🔒 Private Subnet B<br/>CIDR: 10.0.4.0/24<br/>Available: 251 IPs"]
+            end
+
+        end
+    end
+
+    %% Logical cross-AZ communication lines defined outside the boxes
+    PubSub1 --- PrivSub1
+    PubSub2 --- PrivSub2
+    PrivSub1 -.->|"Internal Traffic Only"| PrivSub2
+
+    %% Apply Classes
+    class AWS_Region region;
+    class VPC vpc;
+    class AZ_A,AZ_B az;
+    class PubSub1,PubSub2 public;
+    class PrivSub1,PrivSub2 private;
+```
+
+### 📊 شفرات الامتحان: الكلمات الدلالية لأساسيات الشبكة
+
+|**السيناريو في سيناريو الامتحان (Keyword)**|**الإجابة المعمارية الصح**|
+|---|---|
+|`Logically isolated virtual network`, `Your own data center in AWS`|**Amazon VPC**|
+|`VPC spans multiple...`|**Availability Zones** جوه نفس المنطقة (Region).|
+|`Subnet spans multiple Availability Zones`|**غلط تماماً (False)**، الـ Subnet محبوسة جوه AZ واحدة.|
+|`How many IPs are reserved by AWS in a single subnet?`|**5 IPs** ثابتة ومستحيل تعديلها.|
+|`Deploy web application facing the public internet`|توضع في **Public Subnet**.|
+|`Deploy backend database holding customer records safely`|توضع في **Private Subnet**.|
+
+---
+## الجزء الثاني: بوابات العبور والاتصال بالإنترنت (VPC Gateways & Connectivity)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+في الجزء الأول، إحنا بنّينا الـ VPC وقسمناها لـ حارات عامة (Public Subnets) وحارات مستخبية (Private Subnets). بس في وضعها الحالي، الشبكة دي عاملة زي "أوضة عزل صحي" مقفولة بالخرسانة؛ لا السيرفرات اللي جوه قادرة تشوف الإنترنت الخارجي، ولا أي يوزر على النت قادر يدخل للموقع بتاعك.
+
+علشان السيرفرات دي تبدأ تؤدي وظيفتها، محتاجين نفتح "بوابات" في سور الـ VPC. بس التحدي الهندسي هنا هو التحكم في اتجاه الحركة (Traffic Direction):
+
+1. السيرفرات اللي في الحارة العامة (زي الـ Load Balancer) محتاجة بوابة تفتح الاتصال في الاتجاهين: الناس تدخل لها من النت، وهي ترد عليهم.
+    
+2. السيرفرات اللي في الحارة الخاصة (زي سيرفر الـ Backend بـ Laravel 13 أو قاعدة بيانات PostgreSQL) محتاجة تطلع للإنترنت "في اتجاه واحد فقط" عشان تسحب تحديثات أمنية (OS Patches أو Composer packages) من غير ما أي مخلوق بره الشبكة يقدر يشم رقم الـ IP بتاعها أو يبدأ اتصال معاها.
+    
+
+أمازون حلت المعضلة دي باختراع نوعين من البوابات هما ملوك الأسئلة في هذا الجزء.
+
+### ⚙️ أولاً: بوابة الإنترنت المفتوحة (Amazon Internet Gateway - IGW)
+
+الـ **Internet Gateway (IGW)** هي المكون المسؤول عن ربط الـ VPC بالإنترنت الخارجي بشكل مباشر وفتح باب الاتصال في الاتجاهين (Bi-directional).
+
+**القوانين المعمارية للـ IGW في الامتحان:**
+
+1. **الربط الفردي (One-to-One):** الـ VPC الواحدة مستحيل يركب عليها أكتر من Internet Gateway واحد في نفس اللحظة. هو كابل رئيسي واحد بيتوصل بالشبكة كلها.
+    
+2. **التوفر التلقائي المتأصل (Built-in High Availability):** الـ IGW مش سيرفر فيزيكال ولا جهاز هيخنق الترافيك (No Bottleneck)؛ ده مكون برمجى (Software-defined) بيتمدد لوحده ليستوعب أي حجم ترافيك في العالم ومستحيل يقع.
+    
+3. **دورها في خلق الـ Public Subnet:** الـ Subnet مابتتولدش "عامة" من تلقاء نفسها. إنت بتخليها Public لما تدخل على جدول التوجيه بتاعها (Route Table) وتقوله: _"أي ريكويست عايز يروح للإنترنت الخارجي `0.0.0.0/0`، ارميه على الـ IGW"_.
+    
+
+- 🚨 **الكلمات الدلالية في الامتحان:** `Allows internet traffic to and from the VPC`, `Two-way traffic`, `Horizontal scaling by default`.
+    
+
+### ⚙️ ثانياً: حارس الاتصال أحادي الاتجاه (NAT Gateway)
+
+**المشكلة المعمارية (The Challenge):**
+
+عندك سيرفر داتابيز PostgreSQL مستخبي جوه الـ Private Subnet. نزل تحديث أمني حرج ولازم السيرفر ينزله حالاً من النت. لو ربطت الـ Private Subnet بالـ IGW مباشرة، بقت Public والهاكرز هيخترقوها! طب العمل إيه؟
+
+**الحل السحري (NAT Gateway):**
+
+كلمة NAT هي اختصار لـ (Network Address Translation). الـ NAT Gateway هو "سيرفر وسيط ذكي ومحمي" بتشتريه وتزرعه جوه الـ **Public Subnet** (🚨 ركز في المكان: بيتحط في الحارة العامة بس بيخدم الحارة الخاصة).
+
+**إزاي الـ NAT Gateway بيشتغل في الكواليس؟**
+
+1. سيرفر الداتابيز اللي جوه الـ Private Subnet يبعت طلب تحديث: _"عايز أطلع للإنترنت"_.
+    
+2. الطلب بيروح للـ NAT Gateway اللي قاعد في الحارة العامة.
+    
+3. الـ NAT Gateway بياخد الطلب، ويمسح الـ Private IP بتاع الداتابيز، ويحط الـ Public IP بتاعه هو (المعروف بـ Elastic IP)، ويطلع يجيب التحديث من النت.
+    
+4. لما النت يرد بالملفات، الـ NAT Gateway يستلمها ويسلمها للداتابيز في الكواليس.
+    
+5. **النتيجة القاتلة للامتحان:** الداتابيز طلعت للنت وجابت التحديث، بس أي حد بره على الإنترنت شاف الـ NAT Gateway ومقدرش يعرف إن في داتابيز مستخبية وراه! الاتصال يخرج من عندك بس محدش يقدر يبدأ اتصال يدخل بسببه (Outbound Only).
+    
+
+> [!warning] دستور الـ NAT Gateway للامتحان 🚨
+> 
+> 1. **مكان الإطلاق:** بيتم إنشاؤه دايماً جوه الـ **Public Subnet**.
+>     
+> 2. **التسعير والإدارة:** الـ NAT Gateway هو خدمة مدارة (Managed) من أمازون، بس هو سيرفر حقيقي شغال في الكواليس؛ يعني بتدفع عليه فلوس بالساعة وعلى حجم الداتا المارة فيه (عكس الـ IGW المجاني تماماً).
+>     
+> 3. **حبيس المبنى (AZ Locked):** الـ NAT Gateway بيعيش جوه AZ واحدة. المعمارية الاحترافية بتقول لو عندك سيرفرات في 3 مباني، أعمل NAT Gateway في كل مبنى عشان لو مبنى وقع، الباقي يفضل شغال (High Availability).
+>     
+
+### ⚙️ ثالثاً: الحماية المتقدمة للـ IPv6 بـ (Egress-Only Internet Gateway)
+
+**أصل الحكاية:** نظام الـ IPv4 القديم كانت الـ IPs فيه قليلة، فعشان كده اخترعنا الـ NAT Gateway عشان يوفر ويخفي الـ IPs. لكن في نظام الـ **IPv6** الجديد، عندنا أرقام IPs لا نهائية، فكل سيرفر في الكلاود (حتى لو في حارة خاصة) بياخد Public IPv6 فريد عالمياً ومفيش حاجة اسمها NAT في الـ IPv6.
+
+طب إزاي نحمي السيرفرات الخاصة اللي شغالة بـ IPv6 ونخليها تطلع للنت ومحدش يدخلها؟
+
+- **الحل المعماري:** اخترعت أمازون بوابة مخصصة اسمها **Egress-Only Internet Gateway**.
+    
+- **الوظيفة:** دي بتلعب نفس دور الـ NAT Gateway بالظبط بس مخصصة لعالم الـ **IPv6**. بتسمح للترافيك الخرج فقط (Outbound) وتمنع أي ترافيك جاي من بره (Inbound).
+    
+- 🚨 **تريكة الامتحان:** أول ما تلمح في السؤال `IPv6` مع جملة `Outbound only internet traffic`، إياك تختار NAT Gateway! الإجابة الصح فوراً هي **Egress-Only Internet Gateway**.
+    
+
+### 🏗️ اللوحة المعمارية: مسار التدفق الشبكي للبوابات (Mermaid)
+
+الرسمة المعمارية دي (flowchart LR) بتوضح إزاي الـ Traffic بيمشي في اتجاهين عبر الـ IGW، وفي اتجاه واحد عبر الـ NAT Gateway (تم تطبيق القواعد الصارمة لحماية أوبسيديان):
+
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef internet fill:#f0f2f5,stroke:#8c8c8c,color:#000;
+    classDef gateway fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    classDef public fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef private fill:#fffbe6,stroke:#faad14,color:#000;
+
+    Internet["🌐 The Public Internet<br/>0.0.0.0/0"]
+
+    subgraph AWS_VPC ["☁️ AWS Virtual Private Cloud (VPC)"]
+        
+        IGW["🚪 Internet Gateway (IGW)<br/>Bi-directional Traffic"]
+
+        subgraph Pub_Subnet ["🌐 Public Subnet (AZ-A)"]
+            NAT["🛡️ NAT Gateway<br/>Translates Private to Public"]
+            WebServer["🖥️ Web Server<br/>Accessible from outside"]
+        end
+
+        subgraph Priv_Subnet ["🔒 Private Subnet (AZ-A)"]
+            Backend["🖥️ Backend Engine<br/>Laravel 13 / Node.js"]
+            DB[("🗄️ Database<br/>PostgreSQL / RDS")]
+        end
+
+    end
+
+    %% Connections defined entirely outside subgraphs
+    Internet <=>|"Inbound & Outbound"| IGW
+    IGW <=>|"Route Table Directs"| WebServer
+
+    %% NAT Gateway Path (Outbound Only)
+    Backend -->|"Need Updates (Outbound)"| NAT
+    DB -->|"Need Patches (Outbound)"| NAT
+    NAT -->|"Forward request safely"| IGW
+
+    %% Implicit Deny Path
+    Internet -.-x|"Blocked! Cannot initiate connection"| Backend
+
+    %% Apply Classes
+    class Internet internet;
+    class IGW gateway;
+    class NAT gateway;
+    class WebServer public;
+    class Backend,DB private;
+```
+
+### 📊 شفرات الامتحان: التفرقة الحاسمة بين بوابات الشبكة
+
+الجدول ده بيقفل لك أي لغبطة بين الـ Gateways في الامتحان:
+
+|**الميزة / الخدمة**|**Internet Gateway (IGW)**|**NAT Gateway**|**Egress-Only IGW**|
+|---|---|---|---|
+|**نوع بروتوكول الـ IP**|IPv4 & IPv6|IPv4 فقط|IPv6 فقط 🚨|
+|**اتجاه الترافيك المسموح**|اتجاهين (Inbound & Outbound)|اتجاه واحد (Outbound Only)|اتجاه واحد (Outbound Only)|
+|**مكان التثبيت المعماري**|على سور الـ VPC الخارجي|جوه الـ **Public Subnet**|على سور الـ VPC الخارجي|
+|**الاستخدام الأساسي**|ربط السيرفرات العامة بالنت|حماية السيرفرات الخاصة (IPv4)|حماية السيرفرات الخاصة (IPv6)|
+|**التكلفة والـتأجير**|مجاني تماماً|مدفوع بالساعة وحجم الداتا|مجاني تماماً|
+
+ده كده **(الجزء الثاني)** من المحطة الثالثة، مفرود ومفصص بكل السيناريوهات والفخ الرياضي بتاع الـ IPv6.
+
+الزق البلوك ده يا هندسة في الفايل بتاعك.. واديني الإشارة بكلمة **"كمل"** عشان ننزل بـ **(الجزء الثالث: التوجيه والحماية الداخلية - Route Tables, Security Groups vs NACLs)** ونعرف إزاي العساكر بتقف على بوابات الحارات تفتش الداتا! جاهز؟
