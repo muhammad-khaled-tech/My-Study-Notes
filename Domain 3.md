@@ -1108,16 +1108,17 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
 
-    User(("👨‍💻 User / Hacker</br>Internet Request"))
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    
+    User(("👨‍💻 User / Hacker<br>Internet Request"))
 
     subgraph AWS_Cloud ["AWS Security Layers"]
         direction LR
 
-        IAM{"1. IAM Policy</br>(هل اليوزر ده معاه تصريح؟)"}
-        BPA{"2. Block Public Access</br>(هل السكينة الرئيسية مرفوعة؟)"}
-        BP{"3. Bucket Policy</br>(هل الجردل بيسمح للـ IP ده؟)"}
+        IAM{"(1) IAM Policy<br>(هل اليوزر ده معاه تصريح؟)"}
+        BPA{"(2) Block Public Access<br>(هل السكينة الرئيسية مرفوعة؟)"}
+        BP{"(3) Bucket Policy<br>(هل الجردل بيسمح للـ IP ده؟)"}
     end
 
     subgraph S3_Bucket ["🪣 Amazon S3 Bucket"]
@@ -1127,12 +1128,13 @@ flowchart LR
         
         subgraph Objects ["Data Protection"]
             direction TB
-            V["⏳ Versioning</br>(Keeps old versions)"]
-            WORM["🛡️ Object Lock</br>(Prevents deletion)"]
+            V["⏳ Versioning<br>(Keeps old versions)"]
+            WORM["🛡️ Object Lock<br>(Prevents deletion)"]
         end
         Encrypt --> Objects
     end
 
+    %% التوصيلات
     User --> IAM
     IAM -->|Allowed| BPA
     BPA -->|Not Blocked| BP
@@ -1143,11 +1145,12 @@ flowchart LR
     BPA -.-> Blocked
     BP -.-> Blocked
 
-    classDef user fill:#fffbe6,stroke:#faad14,color:#000;
-    classDef security fill:#fff1f0,stroke:#ff4d4f,color:#000;
-    classDef bucket fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef internal fill:#f6ffed,stroke:#52c41a,color:#000;
-    classDef block fill:#fdfdfd,stroke:#000,color:#ff4d4f,stroke-dasharray: 5 5;
+    %% ستايلات متوافقة مع المظهر الداكن (Dark Mode)
+    classDef user fill:#2b2b2b,stroke:#faad14,color:#fff;
+    classDef security fill:#3d1418,stroke:#ff4d4f,color:#fff;
+    classDef bucket fill:#002342,stroke:#1890ff,color:#fff;
+    classDef internal fill:#14251c,stroke:#52c41a,color:#fff;
+    classDef block fill:transparent,stroke:#ff4d4f,color:#ff4d4f,stroke-dasharray: 5 5;
 
     class User user;
     class IAM,BPA,BP security;
