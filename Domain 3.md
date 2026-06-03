@@ -3279,3 +3279,120 @@ flowchart LR
 |`Scale based on a known upcoming event (e.g., Black Friday)`|**Scheduled Scaling Policy**|
 
 ---
+##  الجزء الثاني: ثالوث المراقبة المقدس (CloudWatch vs CloudTrail vs Config)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+إنت دلوقتي بنيت سيستم متكامل، السيرفرات شغالة والداتابيز في أمان. بس فجأة، لقيت فاتورة أمازون ضخمة جداً لأن في سيرفر اتعمله (Create) من وراك، وسيرفر تاني الـ CPU بتاعه وصل 100% ومحدش حس بيه، وسيرفر تالت حد فتح الـ Port بتاعه للإنترنت بالغلط!
+
+لو إنت مش مركب "كاميرات مراقبة وعدادات"، الكلاود هيكون بالنسبة لك "صندوق أسود" مرعب.
+
+أمازون عملتلك 3 خدمات أساسية (الثالوث المقدس) عشان تجاوب على 3 أسئلة مختلفة تماماً:
+
+1. **كيف تعمل الأنظمة؟ (How is it performing?)** ➔ `CloudWatch`
+    
+2. **من فعل هذا؟ (Who did this?)** ➔ `CloudTrail`
+    
+3. **ماذا تغير في الإعدادات؟ (What changed?)** ➔ `AWS Config`
+    
+
+### ⚙️ أولاً: عداد الأداء والإنذارات (Amazon CloudWatch)
+
+الـ **CloudWatch** هو "الدكتور" اللي بيقيس نبض وضغط السيستم بتاعك. هو عينه دايماً على الأداء (Performance).
+
+**وظائف CloudWatch في الامتحان:**
+
+1. **المقاييس (Metrics):** بيجمع أرقام عن كل حاجة. (مثلاً: استهلاك الـ CPU، حجم استهلاك الرامات، عدد الريكويستات اللي دخلت للـ Load Balancer).
+    
+2. **الإنذارات (Alarms):** إنت بتظبط قاعدة (مثلاً: لو الـ CPU عدى 80% لمدة 5 دقايق، اضرب إنذار!). الإنذار ده ممكن يبعتلك رسالة على الموبايل (عن طريق SNS)، أو يكلم الـ Auto Scaling يخليه يزود سيرفر جديد.
+    
+3. **السجلات (Logs):** ده المكان اللي بترمي فيه الـ Logs بتاعة الأبلكيشن بتاعك (زي سجلات الأخطاء في مشروع Laravel 13، أو سجلات زوار الـ Nginx).
+    
+
+- 🚨 **الكلمات الدلالية:** `Monitor performance`, `Metrics`, `Set alarms`, `Application logs`, `Trigger Auto Scaling`.
+    
+
+### ⚙️ ثانياً: كاميرا المراقبة الجنائية (AWS CloudTrail)
+
+الـ **CloudTrail** هو "المحقق الجنائي" أو كاميرا المراقبة الأمنية. الخدمة دي مابتهتمش السيرفر سريع ولا بطيء، دي بتهتم بـ **(الأفعال والأشخاص)**.
+
+**الفكرة المعمارية:** أي حركة بتتعمل جوه حساب أمازون بتاعك (سواء من واجهة الموقع Console، أو سطر الأوامر CLI، أو حتى كود برمجي SDK) بتعتبر في الكواليس (API Call).
+
+الـ CloudTrail بيسجل كل API Call في ملف غير قابل للتعديل ويقولك:
+
+- **مين** اللي عمل الإجراء؟ (اسم اليوزر).
+    
+- **إمتى** عمله؟ (التاريخ والوقت).
+    
+- **إيه** هو الإجراء؟ (مثلاً: `TerminateInstances` مسح سيرفر).
+    
+- **منين** عمله؟ (رقم الـ IP اللي دخل منه).
+    
+- 🚨 **الكلمات الدلالية:** `Track user activity`, `API calls`, `Audit`, `Governance`, `Who made this change?`.
+    
+
+### ⚙️ ثالثاً: مفتش المطابقة والإعدادات (AWS Config)
+
+الـ **AWS Config** هو "مفتش الجودة". الخدمة دي مابتبصش على الـ CPU، ولا بتبص مين اللي داس على الزرار، دي بتبص على **(حالة الموارد والإعدادات)**.
+
+**الوظائف الجوهرية في الامتحان:**
+
+1. **شريط الزمن للإعدادات (Resource Inventory & History):** الـ Config بيسجل شكل السيرفر بتاعك وقت ما اتولد، وأي تغيير بيحصل في إعداداته بيسجله. يعني تقدر ترجع بالزمن وتعرف: _"السيرفر ده كان مفتوح له Port 80 يوم الخميس اللي فات ولا لأ؟"_.
+    
+2. **المطابقة للقوانين (Compliance):** إنت كمهندس أمن بتحط قوانين (Rules). مثلاً: _"ممنوع أي هارد ديسك (EBS) يتخلق من غير تشفير"_. الـ Config بيفحص كل الهاردات طول الوقت، ولو لقى هارد مش مشفر، بيعمل عليه علامة حمراء (Non-compliant) وممكن يبعت إنذار أو يصلحه أوتوماتيك!
+    
+
+- 🚨 **الكلمات الدلالية:** `Configuration history`, `Assess, audit, and evaluate configurations`, `Compliance with internal policies`.
+    
+
+
+
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef user fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef ec2 fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef monitor fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef audit fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef compliance fill:#fff1f0,stroke:#ff4d4f,color:#000;
+
+    Admin["👨‍💻 Admin User"]
+    Server["🖥️ EC2 Server<br/>(Running App)"]
+
+    subgraph The_Holy_Trinity ["👁️ The Holy Trinity of Monitoring"]
+        direction TB
+        CT["🕵️ AWS CloudTrail<br/>(The Auditor)"]
+        CFG["📜 AWS Config<br/>(The Inspector)"]
+        CW["📈 Amazon CloudWatch<br/>(The Doctor)"]
+    end
+
+    %% The Action
+    Admin -->|"1. Modifies Instance Type<br/>(API Call)"| Server
+
+    %% The Reactions
+    Admin -.->|"2. Logs: Admin X called ModifyInstance API"| CT
+    Server -.->|"3. Logs: EC2 changed from t2.micro to t3.large"| CFG
+    Server -.->|"4. Tracks: CPU Usage dropped from 90% to 30%"| CW
+
+    %% Apply Classes
+    class Admin user;
+    class Server ec2;
+    class CT audit;
+    class CFG compliance;
+    class CW monitor;
+```
+
+### 📊 شفرات الامتحان: التفرقة القاضية بين خدمات المراقبة
+
+الجدول ده هو الـ (Cheat Sheet) اللي هيدخلك الامتحان تحل أي سؤال في ثانية:
+
+|**السؤال اللي بتسأله لنفسك (The Question)**|**الخدمة المسؤولة (AWS Service)**|**الكلمة الدلالية في الامتحان (Exam Keyword)**|
+|---|---|---|
+|**إيه اللي بيحصل في السيستم كأداء؟** (عايز أشوف استهلاك الـ CPU والرامات)|**Amazon CloudWatch**|`Performance`, `Metrics`, `Alarms`, `Dashboards`|
+|**مين اللي عمل المصيبة دي؟** (عايز أعرف مين مسح الداتابيز إمبارح)|**AWS CloudTrail**|`API Activity`, `User Actions`, `Auditing`, `Traceability`|
+|**إيه اللي اتغير في الإعدادات؟** (عايز أتأكد إن كل السيرفرات مطابقة لقوانين الأمان)|**AWS Config**|`Configuration History`, `Compliance`, `Evaluate Rules`|
+
+---
