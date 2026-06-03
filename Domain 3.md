@@ -3396,3 +3396,346 @@ flowchart LR
 |**إيه اللي اتغير في الإعدادات؟** (عايز أتأكد إن كل السيرفرات مطابقة لقوانين الأمان)|**AWS Config**|`Configuration History`, `Compliance`, `Evaluate Rules`|
 
 ---
+##  الجزء الثالث: الإدارة المركزية وحوكمة الشركات (Organizations & Systems Manager)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+شركتك كبرت. في الأول كان عندك حساب أمازون (Account) واحد بتعمل فيه كل حاجة. دلوقتي الشركة بقى فيها تيم للمطورين (Dev)، وتيم للمحاسبين (Finance)، وتيم للإنتاج (Production). لو كل التيمات دي شغالة في نفس الحساب، مبرمج مبتدئ ممكن يمسح داتابيز الإنتاج بالغلط!
+
+المعمارية السليمة (Best Practice) بتقول: _"افصل كل بيئة في حساب أمازون مستقل"_. بس هنا هتظهر كارثة إدارية: إزاي هتدفع 50 فاتورة لـ 50 حساب؟ وإزاي تضمن إن محدش في الـ 50 حساب دول ينسى يشغل الـ CloudTrail (كاميرا المراقبة)؟ وإزاي تعمل تحديث أمني لـ 1000 سيرفر شغالين عليهم مشروع الـ Laravel 13 بتاعك من غير ما تدخل عليهم واحد واحد؟
+
+أمازون حلت المعضلة دي بأدوات "إدارة الأسطول" (Fleet Management & Governance).
+
+### ⚙️ أولاً: المظلة الإدارية للشركة (AWS Organizations)
+
+الـ **Organizations** هي الخدمة اللي بتلم كل حسابات أمازون بتاعت شركتك تحت مظلة (شاشة) واحدة.
+
+**الفوائد الجوهرية في الامتحان:**
+
+1. **الفاتورة الموحدة (Consolidated Billing):** بدل ما تدفع 50 فاتورة، بتدفع فاتورة واحدة من الحساب الرئيسي (Root Account). الأجمل إن أمازون بتديك (Volume Discounts).. يعني لو كل حساب استهلك شوية S3، أمازون بتجمع الاستهلاك ده كله وتديك خصم الكمية!
+    
+2. **الوحدات التنظيمية (Organizational Units - OUs):** بتخليك تقسم الحسابات لمجلدات. (مثلاً مجلد لحسابات الـ HR، ومجلد لحسابات الـ Dev).
+    
+3. **سياسات التحكم الصارمة (Service Control Policies - SCPs) 🚨:** دي أقوى ميزة أمنية. الـ SCP عبارة عن قانون بتفرضه من فوق على الـ Account كله.
+    
+    - _مثال معمارى:_ تقدر تعمل SCP على مجلد الـ Dev يقول: "ممنوع أي شخص في الحسابات دي يشتري سيرفرات غالية، وممنوع يقفلوا الـ CloudTrail". الـ SCP أقوى من أي صلاحيات (IAM)، حتى الـ Admin بتاع الحساب مابيقدرش يكسر الـ SCP!
+        
+
+- 🚨 **الكلمات الدلالية:** `Manage multiple AWS accounts`, `Consolidated billing`, `Volume discounts`, `Service Control Policies (SCPs)`, `Restrict account privileges`.
+    
+
+### ⚙️ ثانياً: مصنع الكلاود الآمن (AWS Control Tower)
+
+لو إنت لسه بتبني الشركة من الصفر، ومش عايز توجع دماغك بإعداد الـ Organizations والـ SCPs خطوة بخطوة، أمازون عملتلك زرار سحري اسمه **Control Tower**.
+
+- **الفكرة:** دي خدمة بتبنيلك (Landing Zone) أو بيئة عمل متعددة الحسابات مطابقة تماماً لمعايير الأمان العالمية (Best Practices) في ضغطة زر.
+    
+- **الكواليس:** الـ Control Tower بيستخدم AWS Organizations في الكواليس، وبيسطب الـ CloudTrail، وبيحط قوانين جاهزة اسمها (Guardrails) عشان يمنع أي حد يعمل مصيبة.
+    
+- 🚨 **الكلمات الدلالية:** `Automate landing zone setup`, `Multi-account environment best practices`, `Guardrails`.
+    
+
+### ⚙️ ثالثاً: قائد أسطول السيرفرات (AWS Systems Manager - SSM)
+
+الـ **Systems Manager (SSM)** هو الساحر اللي بيتحكم في السيرفرات (EC2 أو حتى سيرفرات الشركة الحقيقية On-Premises) من شاشة واحدة، بدون ما تحتاج تدخل بـ SSH!
+
+**أدوات الـ SSM في الامتحان:**
+
+1. **SSM Run Command:** لو عايز تسطب تحديث لمشروعك على 1000 سيرفر في نفس اللحظة، بتكتب الأمر هنا، وهو بيروح ينفذه على كل السيرفرات ويجيبلك النتيجة. (وداعاً للـ SSH البطيء!).
+    
+2. **SSM Patch Manager:** بيعمل تحديثات (OS Patches) لأنظمة الويندوز واللينكس أوتوماتيك لكل سيرفراتك في أوقات إنت بتحددها.
+    
+3. **SSM Parameter Store:** ده المكان الآمن (والمجاني) اللي بتخزن فيه "الباسوردات" و "الـ API Keys" بتاعت مشروعك متشفّرة، والسيرفرات بتروح تقرأها من هناك بدل ما تكتب الباسورد جوه كود الـ PHP.
+    
+
+- 🚨 **الكلمات الدلالية:** `Manage fleet of EC2 and on-premises instances`, `Run scripts on multiple instances`, `Automate patching`, `Securely store configuration data and secrets`.
+    
+
+
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef root fill:#f0f2f5,stroke:#8c8c8c,color:#000;
+    classDef ou fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef acc fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef scp fill:#fff1f0,stroke:#ff4d4f,stroke-width:3px,color:#000;
+
+    Root["👑 Root Account<br/>(AWS Organizations - Consolidated Billing)"]
+
+    subgraph OU_Prod ["📁 Production OU"]
+        direction TB
+        ProdAcc["🏢 Prod Account 1"]
+    end
+
+    subgraph OU_Dev ["📁 Developers OU"]
+        direction TB
+        DevAcc1["💻 Dev Account 1"]
+        DevAcc2["💻 Dev Account 2"]
+    end
+
+    SCP["🛑 Service Control Policy (SCP)<br/>Rule: Deny disabling CloudTrail<br/>Rule: Deny large EC2 instances"]
+
+    %% Connections
+    Root -->|"Groups into"| OU_Prod
+    Root -->|"Groups into"| OU_Dev
+    
+    %% SCP Applied
+    SCP -.->|"Applies strictly to"| OU_Dev
+    
+    %% Developer Action
+    Admin["👨‍💻 Dev Admin"] -->|"Tries to disable CloudTrail"| DevAcc1
+    DevAcc1 -.-x|"Action Blocked by SCP (Even for Admins)"| SCP
+
+    %% Apply Classes
+    class Root root;
+    class OU_Prod,OU_Dev ou;
+    class ProdAcc,DevAcc1,DevAcc2 acc;
+    class SCP scp;
+    class Admin root;
+```
+
+### 📊 شفرات الامتحان: الخلاصة للحوكمة المركزية
+
+|**السيناريو في الامتحان (Keyword)**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Consolidated billing`, `Centrally manage multiple accounts`, `Volume discounts`|**AWS Organizations**|
+|`Restrict permissions for an entire AWS account`, `Apply policies across multiple accounts`|**Service Control Policies (SCPs)**|
+|`Set up a secure, multi-account AWS environment based on best practices`, `Landing zone`|**AWS Control Tower**|
+|`Execute commands across thousands of EC2 instances without SSH`|**AWS Systems Manager (Run Command)**|
+|`Automate OS patching across AWS and on-premises`|**AWS Systems Manager (Patch Manager)**|
+|`Store secrets, passwords, and license codes securely`|**AWS Systems Manager (Parameter Store)**|
+
+---
+##  الجزء الرابع والأخير: إدارة التكلفة والمستشار الآلي (Cost Management & Trusted Advisor)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+أكبر كابوس بيواجه أي مهندس كلاود مش إن السيرفر يقع، الكابوس الحقيقي هو (صدمة الفاتورة - Bill Shock). الكلاود شغال بنظام (Pay-as-you-go). لو سطبت مشروع الـ **Laravel 13** بتاعك على 10 سيرفرات ضخمة يوم الخميس ونسيتهم شغالين طول الويك إند، هتيجي يوم الأحد تلاقي فاتورة بآلاف الدولارات!
+
+في الداتا سنتر القديمة، المحاسب كان بيدفع تمن السيرفر مرة واحدة وخلاص (CapEx). في السحابة، الفلوس بتتسحب بالثانية (OpEx). عشان كده أمازون وفرتلك ترسانة من أدوات الفلوس عشان تتوقع، تراقب، وتتحكم في كل سنت بيخرج من جيبك، بالإضافة لمستشار آلي بيقولك توفر الفلوس دي إزاي.
+
+### ⚙️ أولاً: ترسانة إدارة التكلفة (AWS Cost Management Tools)
+
+الامتحان بيركز على 4 أدوات أساسية، كل واحدة بتلعب دور في مرحلة معينة من حياة المشروع:
+
+**1. حاسبة الأسعار (AWS Pricing Calculator):**
+
+- **المرحلة (قبل البناء):** الأداة دي بتستخدمها _قبل_ ما تفتح أي سيرفر. بتدخل تقولها: "أنا ناوي أفتح 3 سيرفرات EC2، وداتابيز RDS، وهستهلك 50 جيجا نت". هي تحسبلك التكلفة التقديرية للشهر، عشان تاخد موافقة مديرك.
+    
+- 🚨 **الكلمة الدلالية:** `Estimate costs before provisioning`, `Forecast cost of a new architecture`.
+    
+
+**2. مستكشف التكلفة (AWS Cost Explorer):**
+
+- **المرحلة (المراقبة والتنبؤ):** دي شاشة (Dashboard) بتوريك إنت صرفت إيه في الـ 12 شهر اللي فاتوا، والأهم إنها **تتوقع (Forecast)** إنت هتصرف إيه في الـ 12 شهر اللي جايين بناءً على استهلاكك الحالي. تقدر تفلتر الفاتورة وتقول: "وريني أنا صرفت كام على الـ EC2 لوحده؟".
+    
+- 🚨 **الكلمة الدلالية:** `Visualize, understand, and manage AWS costs`, `Forecast future costs over 12 months`.
+    
+
+**3. الميزانية والإنذارات (AWS Budgets):**
+
+- **المرحلة (التحكم الاستباقي):** هنا إنت بتحط "سقف" للفلوس. مثلاً بتعمل ميزانية بـ 100 دولار في الشهر. لو الاستهلاك وصل 80 دولار (أو لو الـ Cost Explorer _توقع_ إنه هيعدي الـ 100 دولار)، الـ AWS Budgets هيبعتلك إنذار (Email أو SMS) فوراً عشان تلحق نفسك وتقفل السيرفرات.
+    
+- 🚨 **الكلمة الدلالية:** `Set custom budgets`, `Receive alerts when costs exceed thresholds`.
+    
+
+**4. تقرير التكلفة والاستخدام (AWS Cost & Usage Report - CUR):**
+
+- **المرحلة (التحليل العميق جداً):** ده مش رسم بياني، ده ملف (Excel / CSV) معقد جداً بيترمي جوه S3 Bucket. الملف ده فيه تفصيلة كل "ميكرو-سنت" اتصرف في حسابك بالساعة وبالدقيقة. الشركات الكبيرة بتاخد الملف ده تحلله بـ (Amazon Athena) عشان تطلع تقارير دقيقة جداً.
+    
+- 🚨 **الكلمة الدلالية:** `Most comprehensive set of cost and usage data`, `Highly detailed billing report`.
+    
+
+### ⚙️ ثانياً: المستشار الآلي السحري (AWS Trusted Advisor)
+
+الـ **Trusted Advisor** ده اختراع أمازون عشان تحميك من أخطائك! ده مش بيراقب الفلوس بس، ده بيعمل (Scan) كامل لحسابك كله، ويقارنه بالمعايير المثالية لأمازون، ويديك نصائح بالألوان (أخضر: تمام، أصفر: تحذير، أحمر: كارثة).
+
+**أعمدة التقييم الـ 5 في الامتحان (حفظ صم):**
+
+1. **تحسين التكلفة (Cost Optimization):** بيلف في حسابك، لو لقى سيرفر EC2 شغال بس الـ CPU بتاعه 0% بقاله أسبوع (Idle)، بيقولك: _"السيرفر ده ملوش لازمة، اقفله ووفر فلوسك!"_.
+    
+2. **الأداء (Performance):** لو لقى داتابيز بطيئة أو شغالة على هارد ديسك قديم (Magnetic)، بينصحك تحدثه لـ (SSD) عشان الموقع يسرع.
+    
+3. **الأمان (Security):** لو لقى (Security Group) مفتوح للإنترنت بالكامل (Port 22 لـ `0.0.0.0/0`) أو S3 Bucket الداتا اللي فيها مكشوفة للعالم، بيضرب إنذار أحمر فوراً!
+    
+4. **التسامح مع الأخطاء (Fault Tolerance):** لو لقى سيرفراتك كلها في مبنى واحد (AZ واحدة)، بينصحك توزعها على كذا مبنى عشان لو واحد وقع الموقع ميموتش.
+    
+5. **حدود الخدمة (Service Limits):** أمازون حاطة حد أقصى افتراضي (مثلاً متقدرش تفتح أكتر من 20 سيرفر في المنطقة). لو إنت وصلت لـ 18 سيرفر، المستشار ده بينبهك عشان تطلب زيادة الحد قبل ما السيستم بتاعك يقف.
+    
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef pre fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef active fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef alert fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    classDef advisor fill:#fffbe6,stroke:#faad14,color:#000;
+
+    subgraph Phase1 ["1. Before Building (Planning)"]
+        Calc["🧮 AWS Pricing Calculator<br/>(Estimates Future Cost)"]
+    end
+
+    subgraph Phase2 ["2. While Running (Monitoring)"]
+        direction TB
+        Explorer["📊 AWS Cost Explorer<br/>(Visualize & Forecast)"]
+        CUR["📄 Cost & Usage Report<br/>(Granular CSV Data)"]
+    end
+
+    subgraph Phase3 ["3. Automated Protections"]
+        direction TB
+        Budgets["🚨 AWS Budgets<br/>(Sends Alerts if over limit)"]
+        TA["🧙‍♂️ AWS Trusted Advisor<br/>(Finds idle servers to save money)"]
+    end
+
+    %% Connections
+    Calc -->|"Approve Budget"| Explorer
+    Explorer -.->|"Analyzes trends"| Budgets
+    Budgets -->|"Trigger SMS/Email"| Admin["👨‍💻 Cloud Admin"]
+    Explorer -.->|"Generates detailed raw data"| CUR
+    TA -->|"Scans for Waste & Security Risks"| Admin
+
+    %% Apply Classes
+    class Phase1,Calc pre;
+    class Explorer,CUR active;
+    class Budgets alert;
+    class TA advisor;
+```
+
+### 📊 شفرات الامتحان: التفرقة بين أدوات التكلفة والمستشار
+
+الجدول ده بيقفل أي لغبطة في أسئلة التكلفة (Cost):
+
+|**السيناريو في الامتحان (Keyword)**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Estimate the cost of a new web application`, `Before provisioning`|**AWS Pricing Calculator**|
+|`Visualize your costs over the past months`, `Forecast costs for the next 12 months`|**AWS Cost Explorer**|
+|`Get alerted when spending exceeds $500`|**AWS Budgets**|
+|`Most comprehensive billing data`, `Detailed spreadsheet of costs`|**AWS Cost & Usage Report (CUR)**|
+|`Find underutilized EC2 instances to save money`, `Check for unrestricted Security Groups`, `5 pillars check`|**AWS Trusted Advisor**|
+
+---
+## 5. الذكاء الاصطناعي، الهجرة، وبيئة العمل (AI, Migration & EUC) - الجزء الأول: عائلة الذكاء الاصطناعي وتحليل البيانات (AI/ML Data)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+عشان تبني موديل ذكاء اصطناعي (AI Model) من الصفر، إنت محتاج جيش من علماء البيانات (Data Scientists)، وسيرفرات بـ GPUs تكلفتها خرافية، وشهور من تدريب الخوارزميات.
+
+أمازون قسمت عالم الذكاء الاصطناعي لطبقتين عشان تحل المشكلة دي:
+
+1. **الطبقة السفلية (للمحترفين):** منصات بتديك الأدوات والسيرفرات عشان تبني وتدرب الموديل الخاص بيك إنت من الصفر.
+    
+2. **الطبقة العلوية (للمطورين العاديين):** خدمات ذكاء اصطناعي "جاهزة" (Pre-trained APIs). أمازون دربتها بمليارات الدولارات، وإنت كمطور (زي شغلك على Laravel أو Node.js) مجرد بتبعتلها الصورة أو النص عبر API، وهي ترد عليك بالنتيجة في مللي ثانية من غير ما تفهم أي حاجة في الخوارزميات المعقدة!
+    
+
+### ⚙️ أولاً: مصنع الذكاء الاصطناعي (Amazon SageMaker)
+
+الـ **SageMaker** هو الخدمة الأم والأضخم في عالم الـ ML في أمازون. ده مش خدمة جاهزة، ده "المصنع" اللي بتبني فيه الذكاء الاصطناعي.
+
+- **الوظيفة المعمارية:** الخدمة دي بتغطي دورة حياة الـ Machine Learning بالكامل (Build, Train, Deploy). بتوفر بيئة عمل للمطورين، وبتخلق سيرفرات أوتوماتيك لتدريب الموديل، وبعدين تعمل له استضافة (Hosting) عشان اليوزرز يستخدموه.
+    
+- **مثال معماري:** لو بتبني منصة ذكاء اصطناعي (زي مشروع **وتين Wateen.ai** مثلاً) هدفها تحليل داتا تاريخية عشان تتوقع النواقص في فصائل الدم، إنت هنا بتستخدم **SageMaker** لتدريب الموديل على بيانات بنوك الدم القديمة عشان يطلعلك التوقعات المستقبلية بدقة.
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Build, train, and deploy machine learning models`, `Fully managed ML service`.
+    
+
+### ⚙️ ثانياً: محلل الصور والفيديوهات (Amazon Rekognition)
+
+الـ **Rekognition** هو خدمة الـ (Computer Vision) الجاهزة. إنت بتبعتله صورة أو فيديو وهو يحللها.
+
+- **قدرات الخدمة في الامتحان:**
+    
+    1. التعرف على الوجوه (Facial Recognition) ومطابقتها.
+        
+    2. اكتشاف المشاعر (طول ما اليوزر باصص للكاميرا زعلان ولا فرحان).
+        
+    3. اكتشاف المحتوى غير اللائق (Content Moderation) في الصور المرفوعة.
+        
+    4. قراءة النصوص من الصور العادية.
+        
+- 🚨 **الكلمات الدلالية في الامتحان:** `Analyze images and videos`, `Facial recognition`, `Identify objects in pictures`.
+    
+
+### ⚙️ ثالثاً: مستخرج النصوص والبيانات (Amazon Textract)
+
+الـ **Textract** مش مجرد (OCR) عادي بيقرأ الحروف، ده خدمة ذكاء اصطناعي بتفهم "هيكل" الورقة.
+
+- **الوظيفة المعمارية:** بيقدر يستخرج النصوص، الخط اليدوي، الجداول، والفورمات المطبوعة من المستندات الممسوحة ضوئياً (Scanned Documents).
+    
+- **دمج معماري:** في منصات رقمنة الدفاتر الورقية، الـ Textract بيسحب الخط اليدوي من دفاتر السجلات الطبية أو المالية بمنتهى الدقة ويحولها لـ JSON، وتقدر تاخد الداتا دي تخزنها في داتابيز فوراً أو تبعتها لـ SageMaker يحللها.
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Extract text and handwriting from scanned documents`, `Extract data from forms and tables`.
+    
+
+### ⚙️ رابعاً: محلل المشاعر والنصوص (Amazon Comprehend)
+
+الـ **Comprehend** هو خدمة معالجة اللغات الطبيعية (NLP). بتبعتله نص (مقال، تويتة، ريفيو لمنتج) وهو بيحلل المعنى اللي وراه.
+
+- **الوظيفة المعمارية:** بيعمل (Sentiment Analysis)، يعني يقولك التويتة دي صاحبها "غاضب" ولا "سعيد". وبيقدر يطلع الكلمات المفتاحية (Key phrases)، وأسماء الأماكن والأشخاص (Entities) من جوه النص.
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Natural Language Processing (NLP)`, `Discover insights and relationships in text`, `Sentiment analysis`.
+    
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef input fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef ai_ready fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef ai_custom fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef output fill:#f6ffed,stroke:#52c41a,color:#000;
+
+    subgraph Inputs ["1. Raw Data Input"]
+        direction TB
+        Doc["📄 Handwritten Ledger<br/>(Scanned PDF)"]
+        Review["💬 Customer Review<br/>(Text)"]
+        Img["📸 Security Camera<br/>(Image)"]
+    end
+
+    subgraph AI_Ready_APIs ["2. AWS Pre-trained AI APIs"]
+        direction TB
+        Textract["📝 Amazon Textract<br/>(Extracts Handwriting)"]
+        Comprehend["🧠 Amazon Comprehend<br/>(Sentiment Analysis)"]
+        Rekog["👁️ Amazon Rekognition<br/>(Facial/Object Detection)"]
+    end
+
+    subgraph Custom_AI ["3. Custom ML Platform"]
+        SageMaker["⚙️ Amazon SageMaker<br/>(Trains Model on Extracted Data)"]
+    end
+
+    Result["📊 Dashboard & Predictions"]
+
+    %% Connections
+    Doc -->|"API Call"| Textract
+    Review -->|"API Call"| Comprehend
+    Img -->|"API Call"| Rekog
+
+    Textract -->|"Passes JSON Data"| SageMaker
+    SageMaker -->|"Predicts Shortages"| Result
+    
+    Comprehend -.->|"Negative/Positive"| Result
+    Rekog -.->|"Identified Persons"| Result
+
+    %% Apply Classes
+    class Doc,Review,Img input;
+    class Textract,Comprehend,Rekog ai_ready;
+    class SageMaker ai_custom;
+    class Result output;
+```
+
+### 📊 شفرات الامتحان: خدمات تحليل البيانات
+
+الأسئلة هنا مباشرة جداً، بتعتمد على إنك تلقط الكلمة من السؤال وتختار الخدمة:
+
+|**الكلمة الدلالية في الامتحان (Exam Keyword)**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Build, train, and deploy custom ML models`|**Amazon SageMaker**|
+|`Identify faces`, `Object detection in videos`, `Content moderation`|**Amazon Rekognition**|
+|`Extract text`, `Extract handwriting`, `Read scanned documents/tables`|**Amazon Textract**|
+|`Analyze sentiment`, `NLP`, `Find relationships in text data`|**Amazon Comprehend**|
+
+---
