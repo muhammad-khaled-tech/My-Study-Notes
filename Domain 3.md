@@ -2665,49 +2665,50 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    %% Global Styling
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef internet fill:#f0f2f5,stroke:#8c8c8c,color:#000;
-    classDef gateway fill:#fff1f0,stroke:#ff4d4f,color:#000;
-    classDef public fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef private fill:#fffbe6,stroke:#faad14,color:#000;
 
-    Internet["🌐 The Public Internet<br/>0.0.0.0/0"]
+%% Global Styling
+classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+classDef internet fill:#f0f2f5,stroke:#8c8c8c,color:#000;
+classDef gateway fill:#fff1f0,stroke:#ff4d4f,color:#000;
+classDef public fill:#e6f7ff,stroke:#1890ff,color:#000;
+classDef private fill:#fffbe6,stroke:#faad14,color:#000;
 
-    subgraph AWS_VPC ["☁️ AWS Virtual Private Cloud (VPC)"]
-        
-        IGW["🚪 Internet Gateway (IGW)<br/>Bi-directional Traffic"]
+Internet["🌐 The Public Internet<br/>0.0.0.0/0"]
 
-        subgraph Pub_Subnet ["🌐 Public Subnet (AZ-A)"]
-            NAT["🛡️ NAT Gateway<br/>Translates Private to Public"]
-            WebServer["🖥️ Web Server<br/>Accessible from outside"]
-        end
+subgraph AWS_VPC ["☁️ AWS Virtual Private Cloud (VPC)"]
+    
+    IGW["🚪 Internet Gateway (IGW)<br/>Bi-directional Traffic"]
 
-        subgraph Priv_Subnet ["🔒 Private Subnet (AZ-A)"]
-            Backend["🖥️ Backend Engine<br/>Laravel 13 / Node.js"]
-            DB[("🗄️ Database<br/>PostgreSQL / RDS")]
-        end
-
+    subgraph Pub_Subnet ["🌐 Public Subnet (AZ-A)"]
+        NAT["🛡️ NAT Gateway<br/>Translates Private to Public"]
+        WebServer["🖥️ Web Server<br/>Accessible from outside"]
     end
 
-    %% Connections defined entirely outside subgraphs
-    Internet <=>|"Inbound & Outbound"| IGW
-    IGW <=>|"Route Table Directs"| WebServer
+    subgraph Priv_Subnet ["🔒 Private Subnet (AZ-A)"]
+        Backend["🖥️ Backend Engine<br/>Laravel 13 / Node.js"]
+        DB[("🗄️ Database<br/>PostgreSQL / RDS")]
+    end
 
-    %% NAT Gateway Path (Outbound Only)
-    Backend -->|"Need Updates (Outbound)"| NAT
-    DB -->|"Need Patches (Outbound)"| NAT
-    NAT -->|"Forward request safely"| IGW
+end
 
-    %% Implicit Deny Path
-    Internet -.-x|"Blocked! Cannot initiate connection"| Backend
+%% Connections defined entirely outside subgraphs - FIXED ARROWS
+Internet <==>|"Inbound & Outbound"| IGW
+IGW <==>|"Route Table Directs"| WebServer
 
-    %% Apply Classes
-    class Internet internet;
-    class IGW gateway;
-    class NAT gateway;
-    class WebServer public;
-    class Backend,DB private;
+%% NAT Gateway Path (Outbound Only)
+Backend -->|"Need Updates (Outbound)"| NAT
+DB -->|"Need Patches (Outbound)"| NAT
+NAT -->|"Forward request safely"| IGW
+
+%% Implicit Deny Path
+Internet -.-x|"Blocked! Cannot initiate connection"| Backend
+
+%% Apply Classes
+class Internet internet;
+class IGW gateway;
+class NAT gateway;
+class WebServer public;
+class Backend,DB private;
 ```
 
 ### 📊 شفرات الامتحان: التفرقة الحاسمة بين بوابات الشبكة
@@ -2828,5 +2829,209 @@ flowchart LR
 |**أنواع القواعد**|قواعد السماح فقط (**Allow rules only**)|السماح والمنع (**Allow and Deny rules**)|
 |**تقييم القواعد**|بيقيم كل القواعد مع بعض|بيقيم القواعد بـ **الترتيب الرقمي** (الأقل أولاً)|
 |**لو عايز أمنع IP معين للهاكر**|مستحيل تعمله هنا!|بتعمل **Deny rule** صريحة هنا!|
+
+---
+##  الجزء الرابع: الاتصالات الداخلية والسرية (VPC Peering & Endpoints)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+إحنا أمنّا الشبكة بتاعتنا (VPC) وخبينا سيرفرات الـ Backend اللي شغالة بـ **Laravel 13** جوه الـ Private Subnet. بس في بيئة العمل، هتواجهنا مشكلتين كبار جداً بيكسرو العزلة دي:
+
+1. **أزمة الشركات والمايكروسيرفس:** شركتك اشترت شركة تانية، الشركة الجديدة عندها VPC خاصة بيها. إزاي نخلي السيرفرات اللي في شبكتنا تكلم السيرفرات اللي في شبكتهم بشكل "سري" من غير ما نطلع الترافيك على الإنترنت العام ونتعرض للاختراق؟
+    
+2. **أزمة خدمات أمازون العامة:** سيرفر الـ Laravel بتاعك اللي في الحارة الخاصة عايز يرفع صورة لـ (Amazon S3) أو يقرأ داتا من (DynamoDB). المشكلة إن S3 و DynamoDB دي خدمات (Public) ليها عناوين على الإنترنت. عشان نوصلهم لازم نعدي على الـ NAT Gateway والـ IGW، وده هيكلفنا فلوس كتير جداً وهيعرض الداتا للإنترنت.
+    
+
+أمازون عملت حلين معماريين بييجوا في الامتحان بنسبة 100% عشان يحلوا الأزمتين دول.
+
+### ⚙️ أولاً: كوبري شراكة الشبكات (VPC Peering)
+
+الـ **VPC Peering** هو كوبري سري "مباشر" بيربط شبكتين (2 VPCs) ببعض في الكواليس باستخدام شبكة أمازون الخاصة (مش الإنترنت العام). السيرفرات في الشبكة الأولى بتكلم السيرفرات في الشبكة التانية باستخدام الـ (Private IPs) كأنهم في نفس الأوضة!
+
+**دستور الـ VPC Peering في الامتحان (🚨 فخوخ مؤكدة):**
+
+1. **ممنوع تداخل العناوين (No Overlapping CIDRs):** مستحيل تربط شبكتين ليهم نفس أرقام الـ IP. يعني لو VPC-A واخدة `10.0.0.0/16` و VPC-B واخدة `10.0.0.0/16`، الكوبري مش هيتبني. لازم الشبكتين يكون ليهم عناوين مختلفة.
+    
+2. **ليست متعدية (Not Transitive):** دي أهم تريكة في الامتحان! لو شبكة (A) مربوطة بـ (B)، وشبكة (B) مربوطة بـ (C).. ده **لا يعني أبداً** إن (A) تقدر تكلم (C) من خلال (B)! عشان (A) تكلم (C)، لازم تبني كوبري مباشر جديد بينهم.
+    
+3. **عابرة للحدود:** الـ Peering ممكن يربط شبكتين في نفس الحساب، أو في حسابين أمازون مختلفين، أو حتى في منطقتين جغرافيتين مختلفتين (Cross-Region Peering).
+    
+
+### ⚙️ ثانياً: البوابات السرية (VPC Endpoints / AWS PrivateLink)
+
+عشان تحل أزمة إن السيرفرات المستخبية توصل لخدمات أمازون (زي S3) من غير إنترنت ولا NAT Gateway، أمازون اخترعت الـ **VPC Endpoints**.
+
+دي عبارة عن "نفق سري" بيطلع من جوه الـ VPC بتاعتك يوصل لخدمات أمازون مباشرة عبر شبكة أمازون الداخلية.
+
+الامتحان هيسألك في الفرق بين نوعين من الـ Endpoints دول:
+
+#### 1. بوابات التوجيه (Gateway Endpoints) - 🚨 [المجانية]
+
+- **الفكرة:** بتدخل على عسكري المرور (Route Table) وتقوله: _"أي ترافيك رايح لـ S3، ارميه في النفق ده"_.
+    
+- **الخدمات المدعومة (حفظ صم):** النوع ده بيشتغل مع خدمتين فقط لا غير: **Amazon S3** و **Amazon DynamoDB**.
+    
+- **التكلفة:** مجاني تماماً (لا تدفع رسوم على الإنشاء ولا على نقل البيانات).
+    
+
+#### 2. بوابات الواجهة (Interface Endpoints / AWS PrivateLink) - 🚨 [المدفوعة]
+
+- **الفكرة:** أمازون بتزرع "كارت شبكة وهمي" (ENI) جوه الـ Private Subnet بتاعتك، وبتديله (Private IP). السيرفر بتاعك بيكلم الـ IP ده كأنه سيرفر زميله، وفي الحقيقة الـ IP ده هو نفق واصل بالخدمة التانية.
+    
+- **الخدمات المدعومة:** أي خدمة تانية غير (S3 و DynamoDB). زي مثلاً لو عايز توصل لـ SQS، أو SNS، أو Kinesis، أو حتى خدمة بتاعت شركة تانية خالص مبنية على AWS.
+    
+- **التكلفة:** مدفوعة (بتدفع بالساعة وعلى كل جيجابايت بتعدي منها).
+    
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef vpc fill:#f9f9f9,stroke:#ff9900,stroke-width:3px,color:#000;
+    classDef private fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    classDef service fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef gateway fill:#fffbe6,stroke:#faad14,color:#000;
+
+    subgraph VPC_A ["☁️ VPC A (CIDR: 10.0.0.0/16)"]
+        direction TB
+        AppA["🖥️ Laravel 13 Server<br/>(Private Subnet)"]
+        GW_Endpoint["🚪 Gateway Endpoint"]
+    end
+
+    subgraph VPC_B ["☁️ VPC B (CIDR: 192.168.0.0/16)"]
+        direction TB
+        AppB["🖥️ Data Analytics Server<br/>(Private Subnet)"]
+    end
+
+    Peering{"🔗 VPC Peering Connection<br/>(Private AWS Network)"}
+    S3["🪣 Amazon S3<br/>(AWS Public Service)"]
+
+    %% Connections defined entirely outside subgraphs with protected text
+    AppA -->|"Requests Private IP"| Peering
+    Peering -->|"Reaches Server"| AppB
+    
+    AppA -->|"Route Table sends S3 traffic to"| GW_Endpoint
+    GW_Endpoint -->|"Secure Tunnel (No Internet)"| S3
+
+    %% Apply Classes
+    class VPC_A,VPC_B vpc;
+    class AppA,AppB private;
+    class S3 service;
+    class Peering,GW_Endpoint gateway;
+```
+
+### 📊 شفرات الامتحان: الخلاصة لاختيار طريقة الاتصال
+
+الجدول ده بيحل أي عقدة في أسئلة الـ Connectivity جوه الـ VPC:
+
+|**السيناريو المعماري في الامتحان (Keyword)**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Connect two VPCs together privately`, `Use private IPs between VPCs`|**VPC Peering**|
+|`VPC A connected to VPC B, VPC B to C. Can A talk to C?`|**No (Not Transitive)**|
+|`Access S3 or DynamoDB privately without NAT or Internet`|**Gateway Endpoint**|
+|`Access SQS or Kinesis privately without internet`|**Interface Endpoint (PrivateLink)**|
+|`Connect thousands of VPCs together easily`|_(هناخدها الجزء القادم)_ **Transit Gateway**|
+
+---
+##  الجزء الخامس: التوصيل العالمي والسرعة (Global Edge Network)
+
+**أصل الحكاية والمشكلة المعمارية (The Core Problem):**
+
+تخيل إنك بنيت موقع عظيم (Backend بـ Laravel و Frontend بـ Vue.js) ورفعته على سيرفرات أمازون في أمريكا (Region: `us-east-1`). المستخدم اللي في أمريكا الموقع هيفتح معاه في 20 مللي ثانية (طلقة!). بس لو مستخدم من مصر أو اليابان حاول يفتح الموقع، الطلب بتاعه هيمشي في كابلات تحت المحيطات، والموقع هيفتح في 300 مللي ثانية، ولو الموقع فيه صور وفيديوهات، السيرفر في أمريكا هينهار من كتر الضغط الجاي من كل قارات العالم!
+
+هنا ظهر مفهوم **الشبكة الطرفية (Edge Network)**. الفكرة: "لو العميل بعيد عن السيرفر، إحنا هنجيب السيرفر لحد باب بيت العميل!".
+
+أمازون عندها مئات النقاط الموزعة حول العالم اسمها **(Edge Locations)**، بتستخدمها لتقديم خدمتين من أخطر خدمات تسريع الإنترنت في الامتحان: **CloudFront** و **Global Accelerator**.
+
+### ⚙️ أولاً: شبكة توصيل المحتوى (Amazon CloudFront)
+
+الـ **CloudFront** هو خدمة الـ (CDN - Content Delivery Network) الخاصة بأمازون. دي الخدمة اللي بتخلي الصور، الفيديوهات، وملفات الـ (JS/CSS) بتاعتك تفتح في اليابان في نفس اللحظة اللي بتفتح فيها في أمريكا.
+
+**الكواليس المعمارية (إزاي بيشتغل؟):**
+
+1. **المصدر (The Origin):** ده المكان الأصلي اللي متخزن فيه الداتا بتاعتك (ممكن يكون S3 Bucket، أو سيرفر EC2، أو Load Balancer).
+    
+2. **التخزين المؤقت (Caching):** لما أول يوزر في مصر يطلب صورة من موقعك، الطلب بيروح لـ أقرب نقطة لأمازون في الشرق الأوسط (Edge Location). النقطة دي بتروح تجيب الصورة من السيرفر في أمريكا، **وتحتفظ بنسخة منها (Cache)**.
+    
+3. **السرعة الجنونية:** لما تاني يوزر في مصر (أو حتى مليون يوزر) يطلبوا نفس الصورة، النقطة الطرفية دي هترد عليهم فوراً في 5 مللي ثانية من غير ما ترجع للسيرفر الأصلي في أمريكا أصلاً! السيرفر بتاعك ارتاح، والمستخدم طار من الفرحة.
+    
+
+**دستور الـ CloudFront في الامتحان 🚨:**
+
+- **الحماية الصارمة (OAC):** لو مخزن ملفاتك في S3 وعامل CloudFront عشان يسرعها، الهاكر ممكن يروح للـ S3 مباشرة ويسحب الملفات ويحملك فاتورة ضخمة. الحل هو خاصية **(OAC - Origin Access Control)**، دي بتخلي الـ S3 يرفض أي طلب يجيله من أي مكان، إلا لو كان جي من الـ CloudFront.
+    
+- **الأمان الطرفي:** الـ CloudFront بيوفر حماية مجانية من هجمات الـ DDoS لأنه بيصد الملايين من الطلبات المزيفة عند الحدود (Edge) قبل ما توصل لسيرفراتك الداخلية.
+    
+
+### ⚙️ ثانياً: مسرّع الإنترنت العالمي (AWS Global Accelerator)
+
+**المشكلة المعمارية الجديدة:** الـ CloudFront ممتاز جداً مع "الملفات" والـ (HTTP/HTTPS). بس ماذا لو إنت عامل "لعبة أونلاين" بتستخدم بروتوكول (UDP)، أو عندك تطبيق إنترنت أشياء (IoT) بيرفع داتا لحظية، أو داتا بتتغير كل ثانية ومينفعش يتعملها (Cache)؟
+
+هنا يتدخل **AWS Global Accelerator**. الخدمة دي مش بتعمل Caching، دي بتعمل **(Routing Optimization - تحسين مسار التوجيه)**.
+
+**الكواليس المعمارية:**
+
+- الإنترنت العام (Public Internet) عامل زي الدائري في وقت الزحمة؛ مليان مطبات، والسيرفرات اللي في النص ممكن توقع رزم البيانات (Packet Loss).
+    
+- أمازون بتقولك: الـ Global Accelerator هيديك **(2 Static Anycast IP Addresses)**.
+    
+- لما اليوزر في اليابان يكتب الـ IP ده، الطلب مش هيمشي في الإنترنت العام لحد أمريكا! الطلب هيدخل في أقرب (Edge Location) في اليابان، ومن هناك هيركب "الكابلات الخاصة الفايبر بتاعة أمازون" (AWS Global Backbone) اللي فاضية وسريعة جداً، لحد ما يوصل لسيرفرك في أمريكا.
+    
+- **النتيجة:** سرعة استجابة خرافية وثبات في الاتصال للألعاب والتطبيقات الحساسة للوقت.
+    
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef user fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef edge fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef aws fill:#f9f9f9,stroke:#ff9900,stroke-width:3px,color:#000;
+    classDef origin fill:#f6ffed,stroke:#52c41a,color:#000;
+
+    User1["👨‍💻 User in Egypt<br/>(Requests Image)"]
+    User2["🎮 Gamer in Japan<br/>(UDP Traffic)"]
+
+    subgraph AWS_Edge_Network ["🌍 AWS Global Edge Network"]
+        direction TB
+        CF["⚡ Amazon CloudFront<br/>(Caches Content Locally)"]
+        GA["🚀 Global Accelerator<br/>(Routes via Private Backbone)"]
+    end
+
+    subgraph AWS_Region ["📍 AWS Region (USA)"]
+        direction TB
+        S3["🪣 Amazon S3<br/>(Image Origin)"]
+        EC2["🖥️ EC2 Game Server<br/>(No Caching allowed)"]
+    end
+
+    %% CloudFront Path (Caching)
+    User1 -->|"1. Give me Logo.png"| CF
+    CF -.->|"2. Cache Miss (Goes to Origin)"| S3
+    S3 -.->|"3. Returns & Caches"| CF
+    CF -->|"4. Fast Response to User"| User1
+
+    %% Global Accelerator Path (Fast Routing)
+    User2 -->|"1. Connects to closest Edge"| GA
+    GA ==>|"2. Bypasses Public Internet<br/>Uses AWS Private Fiber"| EC2
+    EC2 ==>|"3. Fast Stable Return"| GA
+    GA -->|"4. Low Latency Gameplay"| User2
+
+    %% Apply Classes
+    class User1,User2 user;
+    class CF,GA edge;
+    class AWS_Region aws;
+    class S3,EC2 origin;
+```
+
+### 📊 شفرات الامتحان: التفرقة القاضية بين وحوش السرعة
+
+السؤال ده دايماً بيلخبط الناس في الامتحان لأن الخدمتين ليهم علاقة بـ "السرعة" والـ "Edge Locations". احفظ الجدول ده صم:
+
+|**وجه المقارنة في الامتحان (Keyword)**|**الإجابة: Amazon CloudFront**|**الإجابة: AWS Global Accelerator**|
+|---|---|---|
+|**طريقة العمل الأساسية**|بيخزن المحتوى (Caching) عشان ميرجعش للمصدر|بيحسن مسار التوجيه (Routing Optimization) مفيش Cache|
+|**البروتوكولات المدعومة**|HTTP & HTTPS|TCP & UDP (مناسب للألعاب و IoT)|
+|**الكلمات الدلالية في السؤال**|`Deliver static/dynamic content`, `CDN`, `Cache at Edge`, `Low latency global delivery`|`Bypass public internet`, `AWS global network`, `Two static IP addresses`, `UDP/TCP routing`|
+|**طريقة الحماية للمصدر**|بنستخدم (OAC) عشان نحمي الـ S3|مدمج مع AWS Shield للحماية من DDoS على مستوى الشبكة|
 
 ---
