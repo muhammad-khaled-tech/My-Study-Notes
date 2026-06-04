@@ -2019,40 +2019,41 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    %% Global Styling
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef registry fill:#fffbe6,stroke:#faad14,color:#000;
-    classDef orch fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef compute fill:#f6ffed,stroke:#52c41a,color:#000;
 
-    subgraph Step1 ["1. Image Storage"]
-        ECR["📦 Amazon ECR<br/>Docker Image Repository"]
-    end
+%% Global Styling
+classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+classDef registry fill:#fffbe6,stroke:#faad14,color:#000;
+classDef orch fill:#e6f7ff,stroke:#1890ff,color:#000;
+classDef compute fill:#f6ffed,stroke:#52c41a,color:#000;
 
-    subgraph Step2 ["2. The Orchestrators (Managers)"]
-        ECS["⚙️ Amazon ECS<br/>AWS-Native Manager"]
-        EKS["☸️ Amazon EKS<br/>Kubernetes Manager"]
-    end
+subgraph Step1 ["(1) Image Storage"]
+    ECR["📦 Amazon ECR<br>Docker Image Repository"]
+end
 
-    subgraph Step3 ["3. The Compute Engines (Muscles)"]
-        Fargate["☁️ AWS Fargate<br/>Serverless (No EC2)"]
-        EC2["🖥️ Amazon EC2<br/>Managed by You"]
-    end
+subgraph Step2 ["(2) The Orchestrators (Managers)"]
+    ECS["⚙️ Amazon ECS<br>AWS-Native Manager"]
+    EKS["☸️ Amazon EKS<br>Kubernetes Manager"]
+end
 
-    %% Connections strictly outside subgraphs with protected text
-    ECR -->|"Pulls Image"| ECS
-    ECR -->|"Pulls Image"| EKS
-    
-    ECS -->|"Runs Container on"| Fargate
-    ECS -->|"Runs Container on"| EC2
-    
-    EKS -->|"Runs Container on"| Fargate
-    EKS -->|"Runs Container on"| EC2
+subgraph Step3 ["(3) The Compute Engines (Muscles)"]
+    Fargate["☁️ AWS Fargate<br>Serverless (No EC2)"]
+    EC2["🖥️ Amazon EC2<br>Managed by You"]
+end
 
-    %% Apply Classes
-    class ECR registry;
-    class ECS,EKS orch;
-    class Fargate,EC2 compute;
+%% Connections strictly outside subgraphs with protected text
+ECR -->|"Pulls Image"| ECS
+ECR -->|"Pulls Image"| EKS
+
+ECS -->|"Runs Container on"| Fargate
+ECS -->|"Runs Container on"| EC2
+
+EKS -->|"Runs Container on"| Fargate
+EKS -->|"Runs Container on"| EC2
+
+%% Apply Classes
+class ECR registry;
+class ECS,EKS orch;
+class Fargate,EC2 compute;
 ```
 
 ### 📊 شفرات الامتحان: الخلاصة لاختيار الحاويات
