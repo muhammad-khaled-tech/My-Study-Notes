@@ -2350,9 +2350,13 @@ flowchart LR
 2. **الـ Stack (الرزمة):** لما الـ CloudFormation بيبني الموارد دي، بيجمعهم كلهم في حاجة واحدة اسمها (Stack). لو حبيت تمسح السيستم كله، بتمسح الـ Stack، وأمازون بتدمر كل حاجة اتخلقت بسببه أوتوماتيك (عشان متنساش سيرفر شغال يسحب فلوس).
     
 3. **AWS CDK (مكمل برمجي):** لو إنت مابتحبش تكتب `JSON/YAML`، أمازون عملتلك أداة اسمها **Cloud Development Kit (CDK)**، بتخليك تكتب البنية التحتية بلغات البرمجة العادية اللي إنت متعود عليها (زي TypeScript أو Python)، والـ CDK بيحولها لـ CloudFormation في الكواليس.
-    
+    ![[Pasted image 20260604190752.png]]
+    ![[Pasted image 20260604190844.png]]
 
 - 🚨 **الكلمات الدلالية في الامتحان:** `Infrastructure as Code (IaC)`, `JSON/YAML templates`, `Automate infrastructure provisioning`, `Repeatable deployments`.
+    ![[Pasted image 20260604190641.png]]
+    ![[Pasted image 20260604190659.png]]
+    ![[Pasted image 20260604190720.png]]
     
 
 ### ⚙️ ثانياً: الصديق الصدوق للمطورين (AWS Elastic Beanstalk)
