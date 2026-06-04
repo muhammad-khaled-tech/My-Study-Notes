@@ -3337,45 +3337,48 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    %% Global Styling
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef user fill:#fffbe6,stroke:#faad14,color:#000;
-    classDef edge fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef aws fill:#f9f9f9,stroke:#ff9900,stroke-width:3px,color:#000;
-    classDef origin fill:#f6ffed,stroke:#52c41a,color:#000;
 
-    User1["👨‍💻 User in Egypt<br/>(Requests Image)"]
-    User2["🎮 Gamer in Japan<br/>(UDP Traffic)"]
+    %% ستايلات مطابقة تماماً للصورة (خلفية داكنة مع حدود ملونة وكتابة بيضاء)
+    classDef default font-weight:bold,font-size:14px,color:#fff;
+    classDef user fill:#000000,stroke:#d35400,stroke-width:2px;
+    classDef edge fill:#000000,stroke:#0088ff,stroke-width:2px;
+    classDef origin fill:#000000,stroke:#00cc00,stroke-width:2px;
+    classDef aws_edge fill:transparent,stroke:#888800,stroke-width:2px;
+    classDef aws_region fill:transparent,stroke:#d35400,stroke-width:2px;
+
+    User1["👨‍💻 User in Egypt<br>(Requests Image)"]
+    User2["🎮 Gamer in Japan<br>(UDP Traffic)"]
 
     subgraph AWS_Edge_Network ["🌍 AWS Global Edge Network"]
         direction TB
-        CF["⚡ Amazon CloudFront<br/>(Caches Content Locally)"]
-        GA["🚀 Global Accelerator<br/>(Routes via Private Backbone)"]
+        CF["⚡ Amazon CloudFront<br>(Caches Content Locally)"]
+        GA["🚀 Global Accelerator<br>(Routes via Private Backbone)"]
     end
 
     subgraph AWS_Region ["📍 AWS Region (USA)"]
         direction TB
-        S3["🪣 Amazon S3<br/>(Image Origin)"]
-        EC2["🖥️ EC2 Game Server<br/>(No Caching allowed)"]
+        S3["🪣 Amazon S3<br>(Image Origin)"]
+        EC2["🖥️ EC2 Game Server<br>(No Caching allowed)"]
     end
 
-    %% CloudFront Path (Caching)
-    User1 -->|"1. Give me Logo.png"| CF
-    CF -.->|"2. Cache Miss (Goes to Origin)"| S3
-    S3 -.->|"3. Returns & Caches"| CF
-    CF -->|"4. Fast Response to User"| User1
+    %% مسار CloudFront (تم استبدال النقط بأقواس لتفادي الخطأ)
+    User1 -->|"(1) Give me Logo.png"| CF
+    CF -.->|"(2) Cache Miss (Goes to Origin)"| S3
+    S3 -.->|"(3) Returns & Caches"| CF
+    CF -->|"(4) Fast Response to User"| User1
 
-    %% Global Accelerator Path (Fast Routing)
-    User2 -->|"1. Connects to closest Edge"| GA
-    GA ==>|"2. Bypasses Public Internet<br/>Uses AWS Private Fiber"| EC2
-    EC2 ==>|"3. Fast Stable Return"| GA
-    GA -->|"4. Low Latency Gameplay"| User2
+    %% مسار Global Accelerator (تم استبدال النقط بأقواس لتفادي الخطأ)
+    User2 -->|"(1) Connects to closest Edge"| GA
+    GA ==>|"(2) Bypasses Public Internet<br>Uses AWS Private Fiber"| EC2
+    EC2 ==>|"(3) Fast Stable Return"| GA
+    GA -->|"(4) Low Latency Gameplay"| User2
 
-    %% Apply Classes
+    %% تطبيق الستايلات
     class User1,User2 user;
     class CF,GA edge;
-    class AWS_Region aws;
     class S3,EC2 origin;
+    class AWS_Edge_Network aws_edge;
+    class AWS_Region aws_region;
 ```
 
 ### 📊 شفرات الامتحان: التفرقة القاضية بين وحوش السرعة
