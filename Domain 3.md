@@ -3713,31 +3713,33 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    %% Global Styling
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef user fill:#f9f0ff,stroke:#722ed1,color:#000;
-    classDef ec2 fill:#f6ffed,stroke:#52c41a,color:#000;
-    classDef monitor fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef audit fill:#fffbe6,stroke:#faad14,color:#000;
-    classDef compliance fill:#fff1f0,stroke:#ff4d4f,color:#000;
+
+    %% ستايلات المظهر الداكن (خلفية سوداء، حدود نيون، كتابة بيضاء)
+    classDef default font-weight:bold,font-size:14px,color:#fff;
+    classDef user fill:#000000,stroke:#9c27b0,stroke-width:2px;
+    classDef ec2 fill:#000000,stroke:#00cc00,stroke-width:2px;
+    classDef monitor fill:#000000,stroke:#0088ff,stroke-width:2px;
+    classDef audit fill:#000000,stroke:#ff9800,stroke-width:2px;
+    classDef compliance fill:#000000,stroke:#e63946,stroke-width:2px;
+    classDef trinity fill:transparent,stroke:#888888,stroke-width:2px,stroke-dasharray: 5 5;
 
     Admin["👨‍💻 Admin User"]
-    Server["🖥️ EC2 Server<br/>(Running App)"]
+    Server["🖥️ EC2 Server<br>(Running App)"]
 
     subgraph The_Holy_Trinity ["👁️ The Holy Trinity of Monitoring"]
         direction TB
-        CT["🕵️ AWS CloudTrail<br/>(The Auditor)"]
-        CFG["📜 AWS Config<br/>(The Inspector)"]
-        CW["📈 Amazon CloudWatch<br/>(The Doctor)"]
+        CT["🕵️ AWS CloudTrail<br>(The Auditor)"]
+        CFG["📜 AWS Config<br>(The Inspector)"]
+        CW["📈 Amazon CloudWatch<br>(The Doctor)"]
     end
 
-    %% The Action
-    Admin -->|"1. Modifies Instance Type<br/>(API Call)"| Server
+    %% The Action (تم استبدال النقط بأقواس)
+    Admin -->|"(1) Modifies Instance Type<br>(API Call)"| Server
 
-    %% The Reactions
-    Admin -.->|"2. Logs: Admin X called ModifyInstance API"| CT
-    Server -.->|"3. Logs: EC2 changed from t2.micro to t3.large"| CFG
-    Server -.->|"4. Tracks: CPU Usage dropped from 90% to 30%"| CW
+    %% The Reactions (تم استبدال النقط بأقواس)
+    Admin -.->|"(2) Logs: Admin X called ModifyInstance API"| CT
+    Server -.->|"(3) Logs: EC2 changed from t2.micro to t3.large"| CFG
+    Server -.->|"(4) Tracks: CPU Usage dropped from 90% to 30%"| CW
 
     %% Apply Classes
     class Admin user;
@@ -3745,6 +3747,7 @@ flowchart LR
     class CT audit;
     class CFG compliance;
     class CW monitor;
+    class The_Holy_Trinity trinity;
 ```
 
 ### 📊 شفرات الامتحان: التفرقة القاضية بين خدمات المراقبة
