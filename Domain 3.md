@@ -2064,6 +2064,9 @@ class Fargate,EC2 compute;
 |`Store Docker images`, `Container registry`, `Securely store container images`|**Amazon ECR**|
 
 ---
+![[Pasted image 20260604160421.png]]
+
+---
 
 ## الجزء الثاني: الحوسبة بدون خوادم (Serverless & Batch)
 
