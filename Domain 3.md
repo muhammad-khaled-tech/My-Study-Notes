@@ -4323,6 +4323,283 @@ flowchart LR
 |`Review architecture against best practices`, `Identify high-risk issues`|**AWS Well-Architected Tool** (الخدمة نفسها)|
 
 ---
+## 7. الملحق المعماري (1): بوابات السيرفرليس والشبكات العملاقة (API Gateway & Transit Gateway)
+
+**رؤية الـ Tech Lead:**
+
+في الكلاود، إحنا دايماً بنواجه مشكلتين لما السيستم بيكبر:
+
+1. إزاي نربط كود "مخفي" ملوش سيرفر (زي AWS Lambda) بالعالم الخارجي وموبايلات المستخدمين بأمان؟
+    
+2. إزاي نربط مئات الشبكات (VPCs) ببعضها من غير ما نعمل "شبكة عنكبوتية" معقدة ومستحيلة الإدارة؟
+    
+    الخدمتين دول هما الحل المعماري السليم (Best Practice) اللي أمازون بتفرضه عليك في بيئة الـ Production.
+    
+
+### ⚙️ أولاً: الباب الأمامي للسيرفرليس (Amazon API Gateway)
+
+**أصل الحكاية والمشكلة المعمارية:**
+
+تخيل إنك بتكتب كود الـ Backend لمشروع (Wateen.ai) عشان يستقبل طلبات التبرع بالدم. قررت إنك مش هتستخدم سيرفرات EC2 خالص وهتشتغل (Serverless) بالكامل، فكتبت الكود بـ Node.js ورفعته على **AWS Lambda**.
+
+الفكرة العبقرية دي وفرتلك فلوس كتير، بس خلقت مشكلة قاتلة: **الـ Lambda كود "نايم" في الكواليس، ملوش عنوان IP عام، ومابيفهمش (HTTP/HTTPS)!** إزاي تطبيق الموبايل بتاع المستخدمين هيبعت ريكويست للكود ده؟ ولو افترضنا إنك فتحت الـ Lambda للإنترنت مباشرة (وده مستحيل معمارياً)، إيه اللي يمنع هاكر إنه يبعت مليون ريكويست في الثانية ويفلّس حسابك في أمازون؟
+
+**الحل المعماري (API Gateway):**
+
+الـ API Gateway هو "الباب الأمامي" (Front Door) أو حارس الأمن اللي بيقف قدام الـ Backend بتاعك. الخدمة دي مخصصة لإنشاء، نشر، وإدارة الـ (RESTful APIs) والـ (WebSocket APIs) على مستوى عالمي.
+
+**الكواليس المعمارية (كيف تعمل؟):**
+
+1. **الاستقبال والتوجيه:** تطبيق الموبايل بيبعت ريكويست لـ رابط الـ API Gateway (مثلاً: `api.wateen.ai/donate`). البوابة بتاخد الريكويست، تفهمه، وتعمل (Trigger) وتصحي دالة الـ Lambda المخصصة للرابط ده.
+    
+2. **الحماية من الإفلاس (Throttling):** لو حصل هجوم (DDoS) أو زحمة مفاجئة، الـ API Gateway عنده خاصية اسمها (Throttling). يعني ممكن تقوله: _"أقصى عدد مسموح بيه هو 1000 ريكويست في الثانية"_. أي ريكويست زيادة، البوابة هترفضه فوراً (Error 429) قبل ما يوصل للـ Lambda ويكلفك فلوس!
+    
+3. **التوثيق (Authentication):** البوابة بتمنع أي حد مجهول إنه يعدي. بتدمجها مع خدمة (Amazon Cognito) عشان تتأكد إن اليوزر ده مسجل دخول (Logged In) قبل ما تصحي الـ Lambda.
+    
+
+- 🚨 **الكلمات الدلالية في الامتحان:** `Create, publish, and secure REST/HTTP APIs`, `Expose Lambda as HTTP endpoint`, `Serverless API backend`, `Front door for applications`.
+    
+
+### ⚙️ ثانياً: سنترال الشبكات العملاقة (AWS Transit Gateway)
+
+**أصل الحكاية والمشكلة المعمارية:**
+
+في الشبكات (Domain 3 - Part 4)، إحنا اتعلمنا إن لو عندنا شبكتين (VPC A) و (VPC B) عايزين يكلموا بعض في السر، بنعمل بينهم كوبري اسمه **(VPC Peering)**.
+
+بس في الشركات الضخمة، الموضوع مبيبقاش شبكتين! تخيل شركتك عندها 100 شبكة (VPC) متوزعين، وعندها 3 داتا سنتر حقيقيين (On-Premises).
+
+عشان نربط الـ 100 شبكة دول ببعض بـ الـ VPC Peering، هنحتاج نعمل **4,950 كوبري**! (لأن الـ Peering مش متعدي Transitive). دي "شبكة عنكبوتية" لو حصل فيها عطل، مستحيل مهندس الشبكات يعرف يكتشفه.
+
+**الحل المعماري (Transit Gateway - TGW):**
+
+الـ Transit Gateway هو جهاز (Router) مركزي ضخم جداً بيشتغل بنظام **(Hub-and-Spoke)** أو "المركز والأطراف".
+
+بدل ما كل شبكة تمد كوبري للشبكة التانية، إنت بتبني TGW واحد في النص (Hub).
+
+- كل الـ 100 شبكة (VPCs) بتتوصل بالـ TGW ده بكابل واحد بس لكل شبكة (Spokes).
+    
+- كل كابلات الـ VPN اللي جاية من داتا سنتر الشركة الحقيقية بتتوصل بالـ TGW.
+    
+- **النتيجة:** لو (VPC 1) عايز يكلم (VPC 99)، الداتا بتروح للسنترال المركزي (TGW)، وهو اللي بيوجهها فوراً. الشبكة العنكبوتية اختفت، وبقت شبكة مركزية بسيطة جداً (Simplify network topology).
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Hub-and-spoke networking`, `Connect thousands of VPCs and on-premises networks`, `Simplify network topology`, `Transitive routing`.
+    
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef client fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef serverless fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef network fill:#e6f7ff,stroke:#1890ff,stroke-width:3px,color:#000;
+    classDef vpc fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef onprem fill:#fff1f0,stroke:#ff4d4f,color:#000;
+
+    App["📱 Wateen Mobile App<br/>(Client)"]
+
+    subgraph Serverless_Layer ["⚡ Serverless Backend"]
+        direction LR
+        APIGW["🚪 API Gateway<br/>(REST API / Throttling)"]
+        Lambda["⚙️ AWS Lambda<br/>(Business Logic)"]
+    end
+
+    subgraph Enterprise_Network ["🌐 Hub-and-Spoke Network"]
+        direction TB
+        TGW["🔀 AWS Transit Gateway<br/>(Central Hub)"]
+        VPC_DB["☁️ VPC A (Database)"]
+        VPC_Log["☁️ VPC B (Logging)"]
+    end
+
+    Corporate["🏢 On-Premises HQ<br/>(VPN)"]
+
+    %% Flow Connections (Defined Outside)
+    App -->|"HTTP GET /donate"| APIGW
+    APIGW -->|"Triggers execution"| Lambda
+
+    %% Internal routing
+    Lambda -.->|"Needs to save data"| TGW
+    
+    TGW --- VPC_DB
+    TGW --- VPC_Log
+    TGW --- Corporate
+
+    %% Apply Classes
+    class App client;
+    class APIGW,Lambda serverless;
+    class TGW network;
+    class VPC_DB,VPC_Log vpc;
+    class Corporate onprem;
+```
+
+### 📊 شفرات الامتحان: الخلاصة للبوابات والشبكات
+
+الجدول ده بيضمنلك إنك تلقط الخدمتين دول من أول كلمة في السؤال:
+
+|**السيناريو المعماري في الامتحان (Keyword)**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Expose Lambda as HTTP endpoint`, `Create, publish, and secure REST APIs`|**Amazon API Gateway**|
+|`Serverless API backend`, `Front door for applications to access backend`|**Amazon API Gateway**|
+|`Connect thousands of VPCs`, `Hub-and-spoke networking topology`|**AWS Transit Gateway**|
+|`Simplify network management across multiple VPCs and on-premises VPNs`|**AWS Transit Gateway**|
+
+---
+## 7. الملحق المعماري (2): مصانع الكلاود ومحلل المشاعر (Elastic Beanstalk vs CloudFormation & Comprehend)
+
+**رؤية الـ Tech Lead:**
+
+في عالم الكلاود، إحنا دايماً بنسأل نفسنا: "مين اللي هيبني السيستم؟". لو اللي هيبني السيستم ده "مطور برمجيات" (Developer) بيكتب كود Laravel 13 وعايز يرفعه ويشوفه شغال من غير ما يوجع دماغه بالشبكات.. هنديله أداة تريحه.
+
+لكن لو اللي هيبني السيستم "مهندس معماري" (Cloud Architect) عايز يبني مدينة كاملة (VPC, Subnets, DB, EC2) ويتحكم في كل مسمار فيها، هنديله أداة تانية خالص.
+
+هنا بيظهر أشهر سؤال مقارنة في الامتحان بين الخدمتين دول.
+
+### ⚙️ أولاً: خدمة النشر المريحة للمطورين (AWS Elastic Beanstalk)
+
+**أصل الحكاية والمشكلة المعمارية:**
+
+المطور كتب الكود وخلصه. عشان يرفعه على الكلاود بالطريقة العادية، لازم يروح يبني EC2، ويسطب عليه Linux، وبعدين يسطب Apache/Nginx، وبعدين يعمل Load Balancer، ويظبط الـ Auto Scaling، ويربطهم ببعض. المطور مبيعرفش يعمل كل ده، وممكن يغلط غلطة أمنية توقع السيستم.
+
+**الحل المعماري (Elastic Beanstalk):**
+
+دي خدمة بتصنف كـ (PaaS - Platform as a Service).
+
+- **طريقة العمل:** المطور بيضغط الكود بتاعه في ملف (ZIP file) ويرفعه على Beanstalk.
+    
+- **السحر اللي بيحصل:** الخدمة بتاخد الكود، وتتكفل هي بكل البنية التحتية! هي اللي بتخلق الـ EC2، وتسطب بيئة التشغيل، وتعمل الـ Load Balancer، وتراقب صحة السيرفرات (Health Monitoring).
+    
+- **التحكم:** رغم إنها بتعمل كل حاجة أوتوماتيك، إنت لسه تقدر تدخل على الـ EC2 اللي هي عملته وتعدل فيه لو حبيت (بعكس الـ Lambda اللي مبتشوفش فيها السيرفر أصلاً).
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Upload code as a ZIP file`, `PaaS`, `AWS handles capacity provisioning, load balancing, and auto-scaling`, `Developer-friendly`.
+    
+
+### ⚙️ ثانياً: البنية التحتية ككود (AWS CloudFormation)
+
+**أصل الحكاية والمشكلة المعمارية:**
+
+المهندس المعماري بنى شبكة عملاقة لفرع الشركة في أمريكا (تتكون من 10 سيرفرات، و3 قواعد بيانات، وVPC معقدة). الشركة قررت تفتح فرع جديد في اليابان، وعايزين "نسخة طبق الأصل" من السيستم ده هناك. لو المهندس دخل يعملهم بـ إيده (Manual Click) من واجهة أمازون، هياخد أسابيع، ونسبة الخطأ البشري (Human Error) هتكون 100%.
+
+**الحل المعماري (CloudFormation):**
+
+الخدمة دي بتصنف كـ (IaC - Infrastructure as Code).
+
+- **طريقة العمل:** المهندس بيكتب "ملف نصي" بلغة (JSON أو YAML) بيوصف فيه كل قطعة في السيستم (مثلاً: سطر لإنشاء الـ VPC، وسطر للـ EC2، وهكذا).
+    
+- **السحر اللي بيحصل:** بتبعت الملف ده لـ CloudFormation، وهو بيقرأه ويبني الداتا سنتر كلها بالترتيب الصح.
+    
+- **الميزة القاتلة (الاستنساخ):** تقدر تاخد الملف ده وتعمل منه 50 نسخة طبق الأصل في أي منطقة في العالم في ثواني!
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Infrastructure as Code (IaC)`, `Deploy infrastructure in a repeatable manner`, `Provision resources using JSON or YAML templates`.
+    
+
+### ⚙️ ثالثاً: محلل المشاعر والنصوص (Amazon Comprehend)
+
+_(إضافة حيوية لعائلة الذكاء الاصطناعي)_
+
+**أصل الحكاية والمشكلة المعمارية:**
+
+الشركة بيجيلها 100 ألف تقييم (Review) وتغريدة كل يوم عن منتجاتها. مدير التسويق عايز يعرف: "هل الناس مبسوطة من المنتج الجديد ولا غاضبة؟ وإيه أكتر كلمات اتكررت في شكاوى العملاء؟". مستحيل تعين جيش من الموظفين يقرأوا 100 ألف رسالة يومياً ويحللوها!
+
+**الحل المعماري (Amazon Comprehend):**
+
+ده خدمة معالجة لغات طبيعية (NLP) جاهزة من أمازون. بتبعتلها النص (Text) عن طريق API، وهي بترد عليك بـ:
+
+1. **تحليل المشاعر (Sentiment Analysis):** بتقولك النص ده (إيجابي، سلبي، محايد، أو مختلط).
+    
+2. **استخراج الكيانات (Entities):** بتطلعلك أسماء (الأشخاص، الأماكن، العلامات التجارية، والتواريخ) من وسط الكلام.
+    
+3. **العبارات المفتاحية (Key Phrases):** بتلخص لك أهم الجمل اللي بتعبر عن سياق النص.
+    
+
+- 🚨 **الكلمات الدلالية في الامتحان:** `Natural Language Processing (NLP)`, `Analyze text sentiment`, `Extract key phrases, entities, or language from text`.
+    
+
+
+
+
+```mermaid
+flowchart TB
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef dev fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef arch fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef tool fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef result fill:#f6ffed,stroke:#52c41a,color:#000;
+
+    Dev["👨‍💻 Developer<br/>(Has Code, wants a running app)"]
+    Arch["👷‍♂️ Cloud Architect<br/>(Has a Design, wants a repeatable datacenter)"]
+
+    subgraph Elastic_Beanstalk ["🚀 AWS Elastic Beanstalk (PaaS)"]
+        direction TB
+        Upload["📁 Uploads App Code (ZIP)"]
+        AutoProv["⚙️ AWS builds servers, load balancers, and scaling"]
+    end
+
+    subgraph CloudFormation ["📜 AWS CloudFormation (IaC)"]
+        direction TB
+        Template["📝 Writes JSON/YAML Template"]
+        Engine["🏗️ Engine reads template & builds precise infrastructure"]
+    end
+
+    ResultApp["🌐 Running Web Application"]
+    ResultInfra["🏢 Exact Replica of Entire Infrastructure"]
+
+    %% Connections
+    Dev --> Upload
+    Upload --> AutoProv
+    AutoProv --> ResultApp
+
+    Arch --> Template
+    Template --> Engine
+    Engine --> ResultInfra
+
+    %% Apply Classes
+    class Dev dev;
+    class Arch arch;
+    class Elastic_Beanstalk,Upload,AutoProv tool;
+    class CloudFormation,Template,Engine tool;
+    class ResultApp,ResultInfra result;
+```
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef raw fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    classDef ai fill:#f9f9f9,stroke:#ff9900,stroke-width:3px,color:#000;
+    classDef insights fill:#f6ffed,stroke:#52c41a,color:#000;
+
+    Review["📝 Customer Review:<br/>'The new iPhone battery is terrible!'"]
+
+    Comprehend["🧠 Amazon Comprehend<br/>(NLP Engine)"]
+
+    subgraph Outputs ["📊 Extracted Insights"]
+        direction TB
+        Sent["😠 Sentiment: Negative"]
+        Entity["📱 Entity: iPhone"]
+        Key["🔑 Key Phrase: terrible battery"]
+    end
+
+    %% Connections
+    Review -->|"API Call with text"| Comprehend
+    Comprehend -->|"Returns JSON analysis"| Outputs
+
+    %% Apply Classes
+    class Review raw;
+    class Comprehend ai;
+    class Outputs,Sent,Entity,Key insights;
+```
+
+### 📊 شفرات الامتحان: الخلاصة للملحق المعماري الثاني
+
+|**السيناريو المعماري في الامتحان (Keyword)**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Upload code as a ZIP file`, `PaaS`, `AWS handles capacity and load balancing`|**AWS Elastic Beanstalk**|
+|`Infrastructure as Code (IaC)`, `JSON or YAML templates`, `Deploy in a repeatable manner`|**AWS CloudFormation**|
+|`Natural Language Processing (NLP)`, `Analyze customer sentiment (Positive/Negative)`|**Amazon Comprehend**|
+|`Extract key phrases, entities, and language from text`|**Amazon Comprehend**|
+
+---
 ## 🏆 المراجعة المعمارية الكبرى (Domain 3) - الجزء الأول: بناء الأساسات (الخرسانة والمحركات)
 
 **رؤية الـ Tech Lead (The Big Picture):**
@@ -4367,7 +4644,7 @@ flowchart LR
     
 
 
-```
+```mermaid
 flowchart LR
     %% Global Styling
     classDef default font-weight:bold,font-size:14px,stroke-width:2px;
