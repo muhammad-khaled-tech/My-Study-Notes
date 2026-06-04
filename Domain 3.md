@@ -4048,49 +4048,50 @@ class TA advisor;
 
 ```mermaid
 flowchart LR
-    %% Global Styling
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef input fill:#f9f0ff,stroke:#722ed1,color:#000;
-    classDef ai_ready fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef ai_custom fill:#fffbe6,stroke:#faad14,color:#000;
-    classDef output fill:#f6ffed,stroke:#52c41a,color:#000;
 
-    subgraph Inputs ["1. Raw Data Input"]
-        direction TB
-        Doc["📄 Handwritten Ledger<br/>(Scanned PDF)"]
-        Review["💬 Customer Review<br/>(Text)"]
-        Img["📸 Security Camera<br/>(Image)"]
-    end
+%% Global Styling
+classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+classDef input fill:#f9f0ff,stroke:#722ed1,color:#000;
+classDef ai_ready fill:#e6f7ff,stroke:#1890ff,color:#000;
+classDef ai_custom fill:#fffbe6,stroke:#faad14,color:#000;
+classDef output fill:#f6ffed,stroke:#52c41a,color:#000;
 
-    subgraph AI_Ready_APIs ["2. AWS Pre-trained AI APIs"]
-        direction TB
-        Textract["📝 Amazon Textract<br/>(Extracts Handwriting)"]
-        Comprehend["🧠 Amazon Comprehend<br/>(Sentiment Analysis)"]
-        Rekog["👁️ Amazon Rekognition<br/>(Facial/Object Detection)"]
-    end
+subgraph Inputs ["(1) Raw Data Input"]
+    direction TB
+    Doc["📄 Handwritten Ledger<br>(Scanned PDF)"]
+    Review["💬 Customer Review<br>(Text)"]
+    Img["📸 Security Camera<br>(Image)"]
+end
 
-    subgraph Custom_AI ["3. Custom ML Platform"]
-        SageMaker["⚙️ Amazon SageMaker<br/>(Trains Model on Extracted Data)"]
-    end
+subgraph AI_Ready_APIs ["(2) AWS Pre-trained AI APIs"]
+    direction TB
+    Textract["📝 Amazon Textract<br>(Extracts Handwriting)"]
+    Comprehend["🧠 Amazon Comprehend<br>(Sentiment Analysis)"]
+    Rekog["👁️ Amazon Rekognition<br>(Facial/Object Detection)"]
+end
 
-    Result["📊 Dashboard & Predictions"]
+subgraph Custom_AI ["(3) Custom ML Platform"]
+    SageMaker["⚙️ Amazon SageMaker<br>(Trains Model on Extracted Data)"]
+end
 
-    %% Connections
-    Doc -->|"API Call"| Textract
-    Review -->|"API Call"| Comprehend
-    Img -->|"API Call"| Rekog
+Result["📊 Dashboard & Predictions"]
 
-    Textract -->|"Passes JSON Data"| SageMaker
-    SageMaker -->|"Predicts Shortages"| Result
-    
-    Comprehend -.->|"Negative/Positive"| Result
-    Rekog -.->|"Identified Persons"| Result
+%% Connections
+Doc -->|"API Call"| Textract
+Review -->|"API Call"| Comprehend
+Img -->|"API Call"| Rekog
 
-    %% Apply Classes
-    class Doc,Review,Img input;
-    class Textract,Comprehend,Rekog ai_ready;
-    class SageMaker ai_custom;
-    class Result output;
+Textract -->|"Passes JSON Data"| SageMaker
+SageMaker -->|"Predicts Shortages"| Result
+
+Comprehend -.->|"Negative/Positive"| Result
+Rekog -.->|"Identified Persons"| Result
+
+%% Apply Classes
+class Doc,Review,Img input;
+class Textract,Comprehend,Rekog ai_ready;
+class SageMaker ai_custom;
+class Result output;
 ```
 
 ### 📊 شفرات الامتحان: خدمات تحليل البيانات
