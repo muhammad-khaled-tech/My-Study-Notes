@@ -41,12 +41,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
+                "file": "domain 1 - part 2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "domain1_part1_cloud_fundamentals"
+              "title": "domain 1 - part 2"
             }
           },
           {
@@ -120,7 +120,7 @@
             }
           }
         ],
-        "currentTab": 4
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -334,12 +334,12 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "b552363861abaa55",
+  "active": "9adaf82800285831",
   "lastOpenFiles": [
-    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
-    "domain 1 - part 2.md",
-    "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
+    "domain 1 - part 2.md",
+    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
+    "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Domain 2.md",
     "Untitled.md",
     "Domain 3.md",
