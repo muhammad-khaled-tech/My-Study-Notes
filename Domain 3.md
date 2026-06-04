@@ -3462,44 +3462,47 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    %% Global Styling
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef user fill:#fffbe6,stroke:#faad14,color:#000;
-    classDef dns fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef aws fill:#f9f9f9,stroke:#ff9900,stroke-width:3px,color:#000;
-    classDef onprem fill:#f6ffed,stroke:#52c41a,color:#000;
-    classDef hybrid fill:#fff1f0,stroke:#ff4d4f,color:#000;
+
+    %% ستايلات مطابقة للمظهر الداكن (خلفية سوداء مع حدود ملونة وكتابة بيضاء)
+    classDef default font-weight:bold,font-size:14px,color:#fff;
+    classDef user fill:#000000,stroke:#d35400,stroke-width:2px;
+    classDef dns fill:#000000,stroke:#0088ff,stroke-width:2px;
+    classDef vpc fill:#000000,stroke:#d35400,stroke-width:2px;
+    classDef onprem fill:#000000,stroke:#00cc00,stroke-width:2px;
+    classDef hybrid fill:#000000,stroke:#e63946,stroke-width:2px;
+    classDef aws fill:transparent,stroke:#d35400,stroke-width:2px,stroke-dasharray: 5 5;
 
     User["👨‍💻 Internet User"]
-    R53["🌐 Amazon Route 53<br/>(DNS / Health Checks)"]
+    R53["🌐 Amazon Route 53<br>(DNS / Health Checks)"]
 
     subgraph AWS_Cloud ["☁️ AWS Cloud"]
         direction TB
         VPC1["🔒 VPC A (App)"]
         VPC2["🔒 VPC B (DB)"]
-        TGW["🔀 AWS Transit Gateway<br/>(Central Hub)"]
+        TGW["🔀 AWS Transit Gateway<br>(Central Hub)"]
     end
 
     subgraph Corporate ["🏢 Corporate Data Center (On-Prem)"]
-        LocalServers["🗄️ Local Severs"]
+        LocalServers["🗄️ Local Servers"]
     end
 
-    %% User Path
-    User -->|"1. Types website name"| R53
-    R53 -->|"2. Returns best IP (Latency/Failover)"| User
-    User -->|"3. Connects securely to"| VPC1
+    %% مسار المستخدم (تم استبدال النقط بأقواس لتفادي خطأ أوبسيديان)
+    User -->|"(1) Types website name"| R53
+    R53 -->|"(2) Returns best IP (Latency/Failover)"| User
+    User -->|"(3) Connects securely to"| VPC1
 
-    %% Corporate Path (Hybrid)
-    Corporate -->|"VPN (Fast setup, over Internet)<br/>or Direct Connect (Slow setup, No Internet)"| TGW
-    
-    %% Internal Routing
+    %% مسار الاتصال بالشركات (Hybrid)
+    Corporate -->|"VPN (Fast setup, over Internet)<br>or Direct Connect (Slow setup, No Internet)"| TGW
+
+    %% التوجيه الداخلي
     TGW --- VPC1
     TGW --- VPC2
 
-    %% Apply Classes
+    %% تطبيق الستايلات
     class User user;
     class R53 dns;
-    class AWS_Cloud,VPC1,VPC2 aws;
+    class VPC1,VPC2 vpc;
+    class AWS_Cloud aws;
     class Corporate,LocalServers onprem;
     class TGW hybrid;
 ```
