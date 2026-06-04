@@ -3020,9 +3020,11 @@ flowchart LR
 
 
 ```mermaid
-flowchart TD
+flowchart LR
 
-    %% ستايلات الألوان الاحترافية للمظهر الداكن
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    
+    %% ستايلات الألوان الغامقة
     classDef internet fill:#1e1b3d,stroke:#722ed1,color:#fff,stroke-width:2px;
     classDef gateway fill:#3d1418,stroke:#e63946,color:#fff,stroke-width:2px;
     classDef public fill:#002342,stroke:#1890ff,color:#fff,stroke-width:2px;
@@ -3031,38 +3033,35 @@ flowchart TD
 
     Internet(("🌐 The Public Internet<br>0.0.0.0/0")):::internet
 
-    subgraph AWS_VPC ["☁️ AWS VPC (Your Secure Cloud)"]
-        direction TB
+    subgraph AWS_VPC ["☁️ AWS Virtual Private Cloud (VPC)"]
+        direction LR
         
-        IGW{"🚪 Internet Gateway<br>The Main Gate"}:::gateway
+        IGW{"🚪 Internet Gateway (IGW)<br>Bi-directional Traffic"}:::gateway
 
-        subgraph Pub_Subnet ["🌐 Public Subnet (DMZ)"]
-            direction LR
-            WebServer["🖥️ Web Server<br>Accepts Public Traffic"]:::public
-            NAT["🛡️ NAT Gateway<br>One-Way Outbound"]:::gateway
+        subgraph Pub_Subnet ["🌐 Public Subnet (AZ-A)"]
+            direction TB
+            WebServer["🖥️ Web Server<br>Accessible from outside"]:::public
+            NAT["🛡️ NAT Gateway<br>Translates Private to Public"]:::gateway
         end
 
-        subgraph Priv_Subnet ["🔒 Private Subnet (Safe Zone)"]
-            direction LR
-            Backend["⚙️ Backend Engine<br>Node.js / Laravel"]:::private
+        subgraph Priv_Subnet ["🔒 Private Subnet (AZ-A)"]
+            direction TB
+            Backend["⚙️ Backend Engine<br>Laravel / Node.js"]:::private
             DB[("🗄️ Database<br>PostgreSQL / RDS")]:::private
         end
     end
 
-    %% مسار الترافيك العام (الأسهم المزدوجة العريضة)
+    %% مسار الترافيك العام (الأسهم المزدوجة المصححة)
     Internet <==>|"Inbound & Outbound"| IGW
     IGW <==>|"Route Table Directs"| WebServer
 
-    %% مسار الترافيك الداخلي
-    WebServer -->|"Secure API Calls"| Backend
-    Backend -->|"Read / Write"| DB
-
     %% مسار خروج السيرفرات الخاصة للإنترنت (للتحديثات)
-    Backend -.->|"Needs Updates"| NAT
-    NAT -.->|"Masks IP & Forwards"| IGW
+    Backend -->|"Need Updates (Outbound)"| NAT
+    DB -->|"Need Patches (Outbound)"| NAT
+    NAT -->|"Forward request safely"| IGW
 
     %% مسار الحماية (المنع)
-    Internet -.-x|"❌ Implicit Deny<br>(Blocked at Subnet Boundary)"| Backend
+    Internet -.-x|"❌ Blocked! Cannot initiate connection"| Backend
 
     class AWS_VPC vpc;
 ```
