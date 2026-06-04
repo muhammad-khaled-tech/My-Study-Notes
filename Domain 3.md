@@ -2575,6 +2575,7 @@ flowchart LR
 
 ![[Pasted image 20260604193616.png]]
 ![[Pasted image 20260604193625.png]]
+
 ---
 ## الجزء الخامس: فك الارتباط (Decoupling & Integration)
 
