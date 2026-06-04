@@ -4302,13 +4302,13 @@ flowchart LR
 
     subgraph The_7_Rs ["🔄 The 7 Migration Strategies"]
         direction TB
-        Rehost["1. Rehost<br/>(Lift & Shift)"]
-        Replatform["2. Replatform<br/>(Lift, Tinker & Shift)"]
-        Refactor["3. Refactor<br/>(Re-architect)"]
-        Repurchase["4. Repurchase<br/>(Drop & Shop)"]
-        Relocate["5. Relocate<br/>(VMware to AWS)"]
-        Retain["6. Retain<br/>(Do nothing yet)"]
-        Retire["7. Retire<br/>(Kill it)"]
+        Rehost["(1) Rehost<br>(Lift & Shift)"]
+        Replatform["(2) Replatform<br>(Lift, Tinker & Shift)"]
+        Refactor["(3) Refactor<br>(Re-architect)"]
+        Repurchase["(4) Repurchase<br>(Drop & Shop)"]
+        Relocate["(5) Relocate<br>(VMware to AWS)"]
+        Retain["(6) Retain<br>(Do nothing yet)"]
+        Retire["(7) Retire<br>(Kill it)"]
     end
 
     %% Routing logic outside subgraphs
