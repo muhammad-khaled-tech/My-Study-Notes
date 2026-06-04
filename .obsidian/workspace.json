@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Domain 2.md",
+                "file": "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Domain 2"
+              "title": "domain1_part2_global_wellarchitected"
             }
           },
           {
@@ -322,14 +322,14 @@
   },
   "active": "715ffb8e2a1921a3",
   "lastOpenFiles": [
+    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
+    "Domain 2.md",
     "Untitled.md",
     "Domain 3.md",
-    "Domain 2.md",
     "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Aws practitioner/new/domain2_security_part2.md",
     "Aws practitioner/new/domain2_security_part1.md",
     "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
-    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
     "Pasted image 20260602101826.png",
     "Aws practitioner/new/domain3a_part1_EC2_Storage_ELB.md",
     "Aws practitioner/new/domain3b_part3_wellarchitected_ecosystem.md",

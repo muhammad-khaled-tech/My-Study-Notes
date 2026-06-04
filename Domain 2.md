@@ -376,3 +376,259 @@ flowchart LR
 |`Protect entire VPC traffic (Layer 3-7)`, `Outbound filtering`|**AWS Network Firewall**|
 
 ---
+## المحطة الثانية: دروع الشبكات وغرف التحقيق - الجزء الثاني (Threat Detection & Analytics)
+
+**رؤية الـ Tech Lead (أصل الحكاية والمشكلة المعمارية):**
+
+في الجزء اللي فات، إحنا بنينا أسوار عالية جداً (Shield و WAF) عشان نمنع الهاكرز من الدخول. بس ماذا لو الخطر "جوه البيت" أصلاً؟
+
+تخيل إن مبرمج بالغلط رفع مفاتيح الـ (IAM Access Keys) على GitHub، وهاكر أخدها وبدأ يعمل API Calls يمسح بيها قواعد البيانات الساعة 3 الفجر. أو سيرفر EC2 اتفيرس وبقى بيعمل (Crypto Mining). أو الأسوأ: ملف Excel مليان أرقام كروت فيزا لعملاء (Wateen.ai) اترفع بالغلط على S3 Bucket وبقى متاح للـ Public!
+
+الدروع الخارجية (WAF/Shield) مش هتشوف كل ده لأن ده بيحصل جوه الحساب نفسه. عشان كده، أمازون بتديك 5 "رادارات" وكلاب حراسة بتشتغل بالذكاء الاصطناعي عشان تراقب وتكشف أي حركة خيانة من جوه.
+
+### ⚙️ أولاً: المحقق الذكي للتهديدات النشطة (Amazon GuardDuty)
+
+الـ **GuardDuty** هو "رادار الكلاود". خدمة شغالة بالـ (Machine Learning) بتراقب حسابك 24/7 عشان تكتشف أي نشاط مشبوه (Anomaly Detection).
+
+- **طريقة العمل (بياكل إيه؟):** الـ GuardDuty مش بيحتاج تسطب أي برنامج. هو بيتغذى في الكواليس على 3 مصادر داتا رئيسية:
+    
+    1. `CloudTrail Logs` (لو حد عمل API Call غريب).
+        
+    2. `VPC Flow Logs` (لو سيرفراتك بتكلم عناوين IPs في دول مشبوهة).
+        
+    3. `DNS Logs` (لو سيرفر بيحاول يوصل لموقع هكرز).
+        
+- **النتيجة:** لو لقى حاجة غريبة، بيضرب إنذار (Finding) فوراً.
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Intelligent threat detection`, `Machine learning to detect anomalies`, `Monitors CloudTrail, VPC Flow Logs, and DNS logs`.
+    
+
+### ⚙️ ثانياً: مفتش ثغرات النظام (Amazon Inspector)
+
+الـ **Inspector** هو "مهندس الجودة الأمني". ده ملوش دعوة بالتهديدات النشطة، ده بيدور على "نقاط الضعف" (Vulnerabilities) قبل ما الهاكر يستغلها.
+
+- **طريقة العمل:** بيدخل جوه سيرفرات الـ (EC2) بتاعتك، أو جوه صور الحاويات (Docker Containers في ECR)، ويفحص البرامج اللي متسطبة عليها. لو لقى إنك مسطب نسخة قديمة من (PHP) أو (Linux) فيها ثغرة معروفة عالمياً (CVE)، بيطلعلك تقرير يقولك: _"السيرفر ده فيه ثغرة كذا، ولازم تعمله Update فوراً"_.
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Automated vulnerability management`, `Discover software vulnerabilities and unintended network exposure`, `CVEs (Common Vulnerabilities and Exposures)`.
+    
+
+### ⚙️ ثالثاً: كلب الحراسة للبيانات الحساسة (Amazon Macie)
+
+الـ **Macie** خدمة متخصصة في حاجة واحدة بس: **الـ Amazon S3**.
+
+- **المشكلة:** عندك آلاف الملفات في S3 وماتعرفش إيه اللي جواها.
+    
+- **الحل:** الـ Macie بيستخدم الـ (Machine Learning) ومعالجة اللغات الطبيعية (NLP) عشان يقرأ الملفات دي. لو لقى أي بيانات حساسة (PII - Personally Identifiable Information) زي: أرقام بطاقات ائتمان، أرقام جوازات سفر، أو أسماء عملاء.. بيضرب إنذار ويقولك: _"الملف ده فيه داتا خطيرة، ولازم تشفره أو تقفله"_.
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Discover and protect sensitive data in S3`, `Personally Identifiable Information (PII)`, `Uses pattern matching and machine learning`.
+    
+
+### ⚙️ رابعاً: شاشة العرض المركزية (AWS Security Hub)
+
+**المشكلة المعمارية:** الـ GuardDuty بيطلع إنذارات، والـ Inspector بيطلع إنذارات، والـ Macie بيطلع إنذارات، والـ WAF بيطلع إنذارات. كـ Tech Lead، هل هفتح 10 شاشات كل يوم الصبح؟
+
+- **الحل (Security Hub):** دي "شاشة القيادة" (Single Pane of Glass). بتجمع كل الإنذارات من كل خدمات الأمن في أمازون (ومن شركاء زي Palo Alto و Trend Micro)، وتحطهم في مكان واحد.
+    
+- الأهم من كده: إنها بتديك (Security Score) نسبة مئوية (مثلاً 75%) وتقولك إنت مطابق لمعايير الأمان العالمية (زي CIS Foundations) بنسبة كام.
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Central security posture management`, `Aggregates alerts from multiple services`, `Single place to view security alerts`.
+    
+
+### ⚙️ خامساً: المحقق الجنائي العميق (Amazon Detective)
+
+الـ Security Hub قالك: _"في هجوم حصل"_. بس إنت عايز تعرف: _"الهجوم ده بدأ إزاي؟ والهاكر دخل منين؟ وراح فين بعد كده؟"_.
+
+- **الحل (Detective):** الخدمة دي بتجمع جبال من الداتا من (GuardDuty و CloudTrail و VPC Flow Logs)، وتبني بيها **رسومات بيانية (Graphs)** معقدة جداً. الرسومات دي بتخلي المحقق الأمني يشوف مسار الهاكر بالزمن، ويعرف السبب الجذري (Root Cause) للمشكلة بسرعة.
+    
+- 🚨 **الكلمات الدلالية في الامتحان:** `Investigate the root cause of security issues`, `Interactive visualizations and graphs`, `Analyze, investigate, and quickly identify root causes`.
+    
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef radar fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef target fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef hub fill:#fffbe6,stroke:#faad14,stroke-width:3px,color:#000;
+    classDef investigate fill:#fff1f0,stroke:#ff4d4f,color:#000;
+
+    subgraph The_Targets ["🎯 What are we monitoring?"]
+        direction TB
+        Acct["👤 AWS Account Activity<br/>(API Calls / Network Traffic)"]
+        EC2["🖥️ EC2 Servers<br/>(OS & Software)"]
+        S3["🪣 Amazon S3<br/>(Files & Documents)"]
+    end
+
+    subgraph The_Radars ["📡 Threat Detection Radars"]
+        direction TB
+        GD["🕵️ Amazon GuardDuty<br/>(Anomaly/Threat Detection)"]
+        Insp["🔬 Amazon Inspector<br/>(Vulnerability/CVE Checks)"]
+        Macie["🔎 Amazon Macie<br/>(PII & Data Discovery)"]
+    end
+
+    Hub["🏛️ AWS Security Hub<br/>(Central Dashboard & Aggregator)"]
+    Det["🔭 Amazon Detective<br/>(Root Cause Investigation)"]
+
+    %% What they monitor
+    Acct -.->|"Analyzes Logs"| GD
+    EC2 -.->|"Scans inside OS"| Insp
+    S3 -.->|"Reads Files for PII"| Macie
+
+    %% Where they report
+    GD ==>|"Sends Alerts"| Hub
+    Insp ==>|"Sends Alerts"| Hub
+    Macie ==>|"Sends Alerts"| Hub
+
+    %% Investigation Phase
+    Hub -->|"Wait, how did this happen?"| Det
+
+    %% Apply Classes
+    class GD,Insp,Macie radar;
+    class Acct,EC2,S3 target;
+    class Hub hub;
+    class Det investigate;
+```
+
+### 📊 شفرات الامتحان: التفرقة القاضية بين خدمات الأمن
+
+أكتر سؤال بيوقع الناس في الامتحان هو الفرق بين (GuardDuty) و (Inspector). احفظ الجدول ده صم:
+
+|**السيناريو المعماري في الامتحان (Keyword)**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Intelligent threat detection`, `Anomaly detection`, `Machine learning for threats`|**Amazon GuardDuty**|
+|`Automated vulnerability management`, `Check for CVEs`, `Software vulnerabilities`|**Amazon Inspector**|
+|🚨 _فخ الامتحان:_ `Vulnerabilities` ➔ **Inspector**|🚨 _فخ الامتحان:_ `Active Threats` ➔ **GuardDuty**|
+|`Discover and protect sensitive data`, `Find PII in S3 buckets`|**Amazon Macie**|
+|`Central security dashboard`, `Aggregate security alerts/findings`|**AWS Security Hub**|
+|`Investigate root cause`, `Interactive visualizations / graphs for investigation`|**Amazon Detective**|
+
+---
+## المحطة الثالثة: أقبية التشفير وإدارة الأسرار والامتثال (Encryption, Secrets & Compliance)
+
+**رؤية الـ Tech Lead (أصل الحكاية والمشكلة المعمارية):**
+
+إحنا أمنّا الشبكة من بره بـ (WAF/Shield)، وراقبناها من جوه بـ (GuardDuty). بس ماذا لو الهاكر قدر يتخطى كل ده ويوصل للـ Database بتاعتك، أو دخل داتا سنتر أمازون وسرق الهارد ديسك الفيزيائي اللي عليه بيانات عملاء (Wateen.ai)؟ أو الأسوأ.. قدر يعترض الداتا وهي بتتنقل في كابلات الإنترنت بين العميل والسيرفر؟
+
+هنا بتظهر القاعدة الذهبية الأخيرة في الأمان: **التشفير (Encryption)**. لو الهاكر أخد الداتا، هياخدها عبارة عن طلاسم مشفرة ملهاش أي قيمة من غير "المفتاح".
+
+الجزء ده بيشرح إزاي أمازون بتدير مفاتيح التشفير، إزاي بتخبي الباسوردات، وإزاي بتطلع ورق قانوني يثبت إنك ماشي صح.
+
+### ⚙️ أولاً: التشفير في حالة السكون (Encryption at Rest - KMS vs CloudHSM)
+
+لما تحب تشفر داتا متخزنة على هارد ديسك (EBS) أو في (S3)، إنت محتاج "مفتاح تشفير". أمازون بتديك خدمتين لإدارة المفاتيح دي، والامتحان بيعشق المقارنة بينهم:
+
+#### 1. مدير المفاتيح المرن (AWS KMS - Key Management Service)
+
+- **الفكرة:** خدمة مدارة (Managed Service) بتخلق وتدير مفاتيح التشفير.
+    
+- **الكواليس المعمارية:** الـ KMS بيستخدم أجهزة هاردوير مشتركة (Multi-tenant) بين عملاء أمازون. ميزته القاتلة إنه مدمج مع كل خدمات أمازون (S3, EBS, RDS..). بضغطة زرار، السيرفر بتاعك بيتشفر.
+    
+- 🚨 **الكلمات الدلالية:** `AWS manages encryption keys`, `Integrated with most AWS services`, `Multi-tenant hardware`.
+    
+
+#### 2. الخزنة الحديدية الخاصة (AWS CloudHSM)
+
+- **المشكلة:** بعض البنوك والجهات الحكومية بتقولك: "ممنوع أستخدم مفاتيح تشفير على أجهزة مشتركة مع ناس تانية، وممنوع أمازون نفسها يكون ليها أي وصول للمفاتيح دي!".
+    
+- **الحل (CloudHSM):** أمازون بتأجرلك جهاز هاردوير كامل خاص بيك لوحدك (Dedicated Hardware) جوه الداتا سنتر. إنت اللي بتدير المفاتيح بالكامل (أمازون مبتشوفهاش)، والجهاز ده مطابق لأعلى معايير الأمان العسكرية.
+    
+- 🚨 **الكلمات الدلالية:** `Dedicated Hardware for encryption`, `You manage encryption keys entirely`, `FIPS 140-2 Level 3 compliance`.
+    
+
+### ⚙️ ثانياً: التشفير أثناء النقل (Encryption in Transit - ACM)
+
+الداتا لازم تتشفر وهي ماشية في سلك الإنترنت (من موبايل اليوزر لحد السيرفر). ده بيتم عن طريق شهادات (SSL/TLS) اللي بتخلي الموقع يبدأ بـ (HTTPS).
+
+- **الحل المعماري (AWS Certificate Manager - ACM):**
+    
+    الخدمة دي بتطلعلك شهادات SSL مجانية تماماً عشان تركبها على الـ Load Balancer أو הـ CloudFront بتاعك.
+    
+- **الميزة القاتلة:** الشهادات القديمة كانت بتنتهي كل سنة ولازم مهندس يدخل يجددها بإيده، ولو نسي الموقع بيقع! הـ ACM بيعمل **(Automatic Renewal)**، يعني بيجدد الشهادة لوحده قبل ما تخلص.
+    
+- 🚨 **الكلمات الدلالية:** `SSL/TLS Certificates for HTTPS`, `Automatic Renewal`.
+    
+
+### ⚙️ ثالثاً: خزنة الباسوردات السحرية (AWS Secrets Manager)
+
+- **المشكلة المعمارية:** إنت عندك كود Laravel 13 بيكلم داتابيز PostgreSQL. لو كتبت الـ Username والـ Password جوه كود الـ PHP (Hardcoded)، دي كارثة! أي مبرمج جديد هيشوفهم.
+    
+- **الحل:** بنخزن الباسورد في **Secrets Manager**. الكود بتاعك بيروح يكلم الخدمة دي وقت التشغيل، وياخد منها الباسورد ويفتح الداتابيز.
+    
+- **الميزة القاتلة (Auto-Rotation):** الخدمة دي تقدر تغير باسورد الداتابيز أوتوماتيك (مثلاً كل 30 يوم) من غير ما الموقع يقع ومن غير ما أي مبرمج يتدخل!
+    
+- 🚨 **الكلمات الدلالية:** `Store database credentials`, `Automatic rotation of secrets`, `Eliminate hardcoded passwords`.
+    
+
+### ⚙️ رابعاً: دولاب الورق القانوني (AWS Artifact)
+
+- **المشكلة:** جالك مدقق حسابات (Auditor) أو جهة حكومية وقالتلك: "اثبتلي إن الداتا سنتر بتاعة أمازون اللي إنت حاطط عليها شغلنا مطابقة لمعايير أمان بطاقات الائتمان (PCI-DSS) أو معايير الأيزو (ISO)".
+    
+- **الحل:** بتفتح **AWS Artifact**. دي مش خدمة بتعمل حاجة تقنية، دي مجرد "بوابة ملفات" (Portal) بتنزل منها تقارير الأمان والشهادات القانونية بتاعة أمازون نفسها عشان تديها للمدققين.
+    
+- 🚨 **الكلمات الدلالية:** `Compliance reports`, `SOC, PCI, ISO certifications`, `Download AWS security and compliance documents`, `Agreements (BAA)`.
+    
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef client fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef transit fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef compute fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef crypto fill:#f9f0ff,stroke:#722ed1,color:#000;
+    classDef data fill:#fff1f0,stroke:#ff4d4f,color:#000;
+
+    User["👨‍💻 User Mobile App"]
+
+    subgraph Encryption_In_Transit ["🌐 Data in Transit"]
+        direction TB
+        ALB["⚖️ Load Balancer<br/>(HTTPS Endpoint)"]
+        ACM["📜 AWS ACM<br/>(Auto-renews SSL/TLS)"]
+    end
+
+    App["🖥️ Laravel Backend"]
+
+    subgraph Secrets_Layer ["🔐 Secrets Management"]
+        SM["🔑 Secrets Manager<br/>(Auto-rotates DB Pass)"]
+    end
+
+    subgraph Encryption_At_Rest ["💾 Data at Rest"]
+        direction TB
+        RDS[("🐘 RDS Database")]
+        KMS["🗝️ AWS KMS<br/>(Generates DB Key)"]
+    end
+
+    %% Connections
+    User ==>|"HTTPS (Encrypted by ACM)"| ALB
+    ALB -.->|"Uses Cert"| ACM
+    
+    ALB -->|"HTTP"| App
+    
+    App -.->|"Fetches DB Creds"| SM
+    App ==>|"Writes Customer Data"| RDS
+    
+    RDS -.->|"Encrypts Data using"| KMS
+
+    %% Apply Classes
+    class User client;
+    class ALB,ACM transit;
+    class App compute;
+    class SM,KMS crypto;
+    class RDS data;
+```
+
+### 📊 شفرات الامتحان: التفرقة النهائية للتشفير والامتثال
+
+الجدول ده بيحسم الـ Security Domain بالكامل، الكلمة الدلالية بتشاور على الخدمة فوراً:
+
+|**السيناريو المعماري في الامتحان (Keyword)**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`AWS manages encryption keys`, `Integrated with S3/EBS`|**AWS KMS (Key Management Service)**|
+|`Dedicated hardware for encryption`, `You manage keys entirely`, `FIPS 140-2 Level 3`|**AWS CloudHSM**|
+|`SSL/TLS Certificates for HTTPS`, `Automatic renewal`|**AWS Certificate Manager (ACM)**|
+|`Store database credentials securely`, `Automatic password rotation`|**AWS Secrets Manager**|
+|`On-demand access to AWS compliance reports`, `ISO, PCI, SOC documents`|**AWS Artifact**|
+|_تريكة: System Manager Parameter Store_|زيه زي Secrets Manager، لكن **مبيعملش Auto-Rotation** ومجاني!|
+
