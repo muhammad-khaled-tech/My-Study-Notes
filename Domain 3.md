@@ -3933,41 +3933,42 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    %% Global Styling
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef pre fill:#f9f0ff,stroke:#722ed1,color:#000;
-    classDef active fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef alert fill:#fff1f0,stroke:#ff4d4f,color:#000;
-    classDef advisor fill:#fffbe6,stroke:#faad14,color:#000;
 
-    subgraph Phase1 ["1. Before Building (Planning)"]
-        Calc["🧮 AWS Pricing Calculator<br/>(Estimates Future Cost)"]
-    end
+%% Global Styling
+classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+classDef pre fill:#f9f0ff,stroke:#722ed1,color:#000;
+classDef active fill:#e6f7ff,stroke:#1890ff,color:#000;
+classDef alert fill:#fff1f0,stroke:#ff4d4f,color:#000;
+classDef advisor fill:#fffbe6,stroke:#faad14,color:#000;
 
-    subgraph Phase2 ["2. While Running (Monitoring)"]
-        direction TB
-        Explorer["📊 AWS Cost Explorer<br/>(Visualize & Forecast)"]
-        CUR["📄 Cost & Usage Report<br/>(Granular CSV Data)"]
-    end
+subgraph Phase1 ["(1) Before Building (Planning)"]
+    Calc["🧮 AWS Pricing Calculator<br>(Estimates Future Cost)"]
+end
 
-    subgraph Phase3 ["3. Automated Protections"]
-        direction TB
-        Budgets["🚨 AWS Budgets<br/>(Sends Alerts if over limit)"]
-        TA["🧙‍♂️ AWS Trusted Advisor<br/>(Finds idle servers to save money)"]
-    end
+subgraph Phase2 ["(2) While Running (Monitoring)"]
+    direction TB
+    Explorer["📊 AWS Cost Explorer<br>(Visualize & Forecast)"]
+    CUR["📄 Cost & Usage Report<br>(Granular CSV Data)"]
+end
 
-    %% Connections
-    Calc -->|"Approve Budget"| Explorer
-    Explorer -.->|"Analyzes trends"| Budgets
-    Budgets -->|"Trigger SMS/Email"| Admin["👨‍💻 Cloud Admin"]
-    Explorer -.->|"Generates detailed raw data"| CUR
-    TA -->|"Scans for Waste & Security Risks"| Admin
+subgraph Phase3 ["(3) Automated Protections"]
+    direction TB
+    Budgets["🚨 AWS Budgets<br>(Sends Alerts if over limit)"]
+    TA["🧙‍♂️ AWS Trusted Advisor<br>(Finds idle servers to save money)"]
+end
 
-    %% Apply Classes
-    class Phase1,Calc pre;
-    class Explorer,CUR active;
-    class Budgets alert;
-    class TA advisor;
+%% Connections
+Calc -->|"Approve Budget"| Explorer
+Explorer -.->|"Analyzes trends"| Budgets
+Budgets -->|"Trigger SMS/Email"| Admin["👨‍💻 Cloud Admin"]
+Explorer -.->|"Generates detailed raw data"| CUR
+TA -->|"Scans for Waste & Security Risks"| Admin
+
+%% Apply Classes
+class Phase1,Calc pre;
+class Explorer,CUR active;
+class Budgets alert;
+class TA advisor;
 ```
 
 ### 📊 شفرات الامتحان: التفرقة بين أدوات التكلفة والمستشار
