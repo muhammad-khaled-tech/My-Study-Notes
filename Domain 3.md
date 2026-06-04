@@ -2568,6 +2568,14 @@ flowchart LR
 |`Debug microservices`, `Trace performance bottlenecks`|**AWS X-Ray**|
 
 ---
+
+
+
+---
+
+![[Pasted image 20260604193616.png]]
+![[Pasted image 20260604193625.png]]
+---
 ## الجزء الخامس: فك الارتباط (Decoupling & Integration)
 
 **أصل الحكاية والمشكلة المعمارية (The Core Problem):**
