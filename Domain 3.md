@@ -1583,7 +1583,7 @@ flowchart TD
 
 - 🚨 **الكلمات الدلالية في الامتحان:** `Query data in S3 directly`, `Serverless SQL`, `Analyze logs in S3`, `Standard SQL`.
     
-
+![[Pasted image 20260604153730.png]]
 ### ⚙️ ثالثاً: مكملات البيانات الضخمة (Amazon EMR)
 
 _(دي بتيجي كسؤال عابر في الامتحان، بس لازم تكون عارفها)._
