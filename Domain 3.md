@@ -2480,6 +2480,24 @@ flowchart LR
     
 - **الكلمة الدلالية في الامتحان:** `Automate release pipelines`, `CI/CD`, `Visualize and automate the different stages`.
     ![[Pasted image 20260604192108.png]]
+    #### 5. مخزن الحزم الآمن (AWS CodeArtifact)
+
+- **الوظيفة:** مخزن مركزي مغلق وآمن للشركة لإدارة وتخزين واسترجاع الحزم والمكتبات البرمجية (Dependencies) اللي بيحتاجها الكود بدلاً من تحميلها كل مرة من الإنترنت العام.
+    
+- **الفكرة المعمارية:** بيشتغل كـ كوبري آمن ومُدار بالكامل (Fully Managed) بين المطورين أو أدوات الـ CI/CD وبين المستودعات العامة، مع حماية السيستم من ثغرات الحزم الخارجية.
+    
+- **التوافق التام:** مدمج وجاهز للعمل مباشرة مع أشهر مديري الحزم عالمياً:
+    
+    - `npm` و `yarn` (عالم JavaScript).
+        
+    - `pip` و `twine` (عالم Python).
+        
+    - `Maven` و `Gradle` (عالم Java).
+        
+    - `NuGet` (عالم .NET).
+        
+- **الكلمة الدلالية في الامتحان:** `Secure and scalable artifact management`, `Manage software packages and code dependencies`, `Works with npm, pip, Maven`.
+- ![[Pasted image 20260604193452.png]]
 
 ### ⚙️ المكملات السحرية للمطورين
 
