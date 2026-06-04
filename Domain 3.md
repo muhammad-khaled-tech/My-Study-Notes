@@ -3020,51 +3020,51 @@ flowchart LR
 
 
 ```mermaid
-flowchart LR
+flowchart TD
 
-%% Global Styling
-classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-classDef internet fill:#f0f2f5,stroke:#8c8c8c,color:#000;
-classDef gateway fill:#fff1f0,stroke:#ff4d4f,color:#000;
-classDef public fill:#e6f7ff,stroke:#1890ff,color:#000;
-classDef private fill:#fffbe6,stroke:#faad14,color:#000;
+    %% ستايلات الألوان الاحترافية للمظهر الداكن
+    classDef internet fill:#1e1b3d,stroke:#722ed1,color:#fff,stroke-width:2px;
+    classDef gateway fill:#3d1418,stroke:#e63946,color:#fff,stroke-width:2px;
+    classDef public fill:#002342,stroke:#1890ff,color:#fff,stroke-width:2px;
+    classDef private fill:#14251c,stroke:#52c41a,color:#fff,stroke-width:2px;
+    classDef vpc fill:transparent,stroke:#faad14,stroke-width:2px,stroke-dasharray: 5 5,color:#fff;
 
-Internet["🌐 The Public Internet<br/>0.0.0.0/0"]
+    Internet(("🌐 The Public Internet<br>0.0.0.0/0")):::internet
 
-subgraph AWS_VPC ["☁️ AWS Virtual Private Cloud (VPC)"]
-    
-    IGW["🚪 Internet Gateway (IGW)<br/>Bi-directional Traffic"]
+    subgraph AWS_VPC ["☁️ AWS VPC (Your Secure Cloud)"]
+        direction TB
+        
+        IGW{"🚪 Internet Gateway<br>The Main Gate"}:::gateway
 
-    subgraph Pub_Subnet ["🌐 Public Subnet (AZ-A)"]
-        NAT["🛡️ NAT Gateway<br/>Translates Private to Public"]
-        WebServer["🖥️ Web Server<br/>Accessible from outside"]
+        subgraph Pub_Subnet ["🌐 Public Subnet (DMZ)"]
+            direction LR
+            WebServer["🖥️ Web Server<br>Accepts Public Traffic"]:::public
+            NAT["🛡️ NAT Gateway<br>One-Way Outbound"]:::gateway
+        end
+
+        subgraph Priv_Subnet ["🔒 Private Subnet (Safe Zone)"]
+            direction LR
+            Backend["⚙️ Backend Engine<br>Node.js / Laravel"]:::private
+            DB[("🗄️ Database<br>PostgreSQL / RDS")]:::private
+        end
     end
 
-    subgraph Priv_Subnet ["🔒 Private Subnet (AZ-A)"]
-        Backend["🖥️ Backend Engine<br/>Laravel 13 / Node.js"]
-        DB[("🗄️ Database<br/>PostgreSQL / RDS")]
-    end
+    %% مسار الترافيك العام (الأسهم المزدوجة العريضة)
+    Internet <==>|"Inbound & Outbound"| IGW
+    IGW <==>|"Route Table Directs"| WebServer
 
-end
+    %% مسار الترافيك الداخلي
+    WebServer -->|"Secure API Calls"| Backend
+    Backend -->|"Read / Write"| DB
 
-%% Connections defined entirely outside subgraphs - FIXED ARROWS
-Internet <==>|"Inbound & Outbound"| IGW
-IGW <==>|"Route Table Directs"| WebServer
+    %% مسار خروج السيرفرات الخاصة للإنترنت (للتحديثات)
+    Backend -.->|"Needs Updates"| NAT
+    NAT -.->|"Masks IP & Forwards"| IGW
 
-%% NAT Gateway Path (Outbound Only)
-Backend -->|"Need Updates (Outbound)"| NAT
-DB -->|"Need Patches (Outbound)"| NAT
-NAT -->|"Forward request safely"| IGW
+    %% مسار الحماية (المنع)
+    Internet -.-x|"❌ Implicit Deny<br>(Blocked at Subnet Boundary)"| Backend
 
-%% Implicit Deny Path
-Internet -.-x|"Blocked! Cannot initiate connection"| Backend
-
-%% Apply Classes
-class Internet internet;
-class IGW gateway;
-class NAT gateway;
-class WebServer public;
-class Backend,DB private;
+    class AWS_VPC vpc;
 ```
 
 ### 📊 شفرات الامتحان: التفرقة الحاسمة بين بوابات الشبكة
