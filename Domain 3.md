@@ -1320,6 +1320,7 @@ flowchart TD
     
 - **الكلمة الدلالية في الامتحان:** `High Availability`, `Disaster Recovery`, `Automatic Failover`. 
 - (🚨 **تحذير:** الـ Standby ممنوع تقرأ منه داتا، هو نايم مستني الكارثة تحصل بس).
+- 
     
 
 **2. النُسخ المخصصة للقراءة (RDS Read Replicas): لتسريع الأداء**
@@ -1331,8 +1332,13 @@ flowchart TD
 - **الكواليس (Asynchronous Replication):** النسخ هنا بياخد أجزاء من الثانية. وتقدر تعمل لحد 5 نسخ قراءة.
     
 - **الكلمة الدلالية في الامتحان:** `Performance`, `Scalability`, `Read-heavy workloads`, `Offload read traffic`.
+
+![[Pasted image 20260604151832.png]]
     
-![[Pasted image 20260604151132.png]]
+**3- النسخ المخصصة للقراءة بس في regions كامله مختلفة:**
+بتعمل انت نسخ في ريجونز مختلفه بحالها بص على الصورة : 
+![[Pasted image 20260604152123.png]]
+
 ### ⚙️ ثانياً: وحش أمازون الخاص (Amazon Aurora)
 
 **أصل الحكاية:** أمازون شافت إن MySQL و PostgreSQL العاديين ليهم حدود في السرعة على الكلاود. فقررت تبني قاعدة بيانات "Cloud-Native" من الصفر، مصممة مخصوص للعمل على البنية التحتية بتاعة AWS.
@@ -1352,6 +1358,7 @@ flowchart TD
 > [!info] تريكة امتحان: Aurora Serverless
 > 
 > لو السيناريو بيقولك إن عندك أبلكيشن بيجيله ضغط "عشوائي وغير متوقع" (Unpredictable workloads)، وإنت مش عايز تدفع فلوس لسيرفر داتابيز شغال طول الوقت على الفاضي، الحل هو **Aurora Serverless**. دي داتابيز بتكبر وتصغر وتقفل خالص لوحدها حسب الضغط، وبتدفع بالثانية!
+![[Pasted image 20260604152211.png]]
 
 ### 🏗️ اللوحة المعمارية: الفرق بين Multi-AZ و Read Replicas (Mermaid)
 
