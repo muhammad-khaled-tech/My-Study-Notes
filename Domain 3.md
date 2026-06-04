@@ -1945,10 +1945,6 @@ flowchart TD
 | --- | --- | --- |
 | **Database Migration** | **AWS DMS** | Migrate databases with near-zero downtime. |
 
-
-
-
-
 ---
 ## 2. الحوسبة المتقدمة وطرق النشر (Compute, Deploy & Integration) - الجزء الأول: عوالم الحاويات (Containers & Docker)
 
