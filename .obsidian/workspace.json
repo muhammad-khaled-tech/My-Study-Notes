@@ -41,12 +41,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "domain 1 - part 2.md",
+                "file": "domain 1.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "domain 1 - part 2"
+              "title": "domain 1"
             }
           },
           {
@@ -69,12 +69,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "domain 1 - part 2.md",
+                "file": "domain 1.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "domain 1 - part 2"
+              "title": "domain 1"
             }
           },
           {
@@ -337,7 +337,7 @@
   "active": "9adaf82800285831",
   "lastOpenFiles": [
     "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
-    "domain 1 - part 2.md",
+    "domain 1.md",
     "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Domain 2.md",

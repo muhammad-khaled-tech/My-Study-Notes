@@ -1,6 +1,4 @@
 
-
-
 # ☁️ ما هو الـ Cloud Computing؟
 
 ### AWS Certified Cloud Practitioner — CLF-C02
