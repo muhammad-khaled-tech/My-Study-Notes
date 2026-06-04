@@ -1469,7 +1469,7 @@ flowchart TD
     
 - 🚨 **الكلمة الدلالية في الامتحان:** `Multi-Region scaling for DynamoDB`, `Active-Active global database`.
     
-
+![[Pasted image 20260604152658.png]]
 ### 🏗️ اللوحة المعمارية: ديناميكية DynamoDB و DAX (Mermaid)
 
 الرسمة دي بتوضح إزاي الأبلكيشن بيتعامل مع الـ DAX قبل ما يوصل للـ DynamoDB عشان ياخد أقصى سرعة ممكنة (تم استخدام `<br/>` لتوافق أوبسيديان):
@@ -1480,22 +1480,22 @@ Code snippet
 flowchart TD
 
     classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    App[["🖥️ Application<br/>(e.g., Mobile Game / E-commerce)"]]
+    App[["🖥️ Application<br>(e.g., Mobile Game / E-commerce)"]]
 
     subgraph AWS_Cloud ["AWS Cloud (Serverless Architecture)"]
         direction TB
 
-        DAX{"⚡ Amazon DAX<br/>(In-Memory Cache)"}
+        DAX{"⚡ Amazon DAX<br>(In-Memory Cache)"}
         
-        DB[("🗂️ Amazon DynamoDB<br/>(NoSQL Table)<br/>Replicated across 3 AZs")]
+        DB[("🗂️ Amazon DynamoDB<br>(NoSQL Table)<br>Replicated across 3 AZs")]
 
-        %% Data Flow - Simplified labels to avoid parser errors
-        App -->|1. Read Request| DAX
-        DAX -->|2. Cache Miss if not in RAM| DB
-        DB -.->|3. Return Data and Cache| DAX
-        DAX -.->|4. Microsecond Response| App
+        %% Data Flow - Fixed numbering to avoid Obsidian markdown crash
+        App -->|"(1) Read Request"| DAX
+        DAX -->|"(2) Cache Miss if not in RAM"| DB
+        DB -.->|"(3) Return Data and Cache"| DAX
+        DAX -.->|"(4) Microsecond Response"| App
         
-        App ===|Direct Write Millisecond| DB
+        App ===|"Direct Write Millisecond"| DB
     end
 
     classDef app fill:#f9f0ff,stroke:#722ed1,color:#000;
