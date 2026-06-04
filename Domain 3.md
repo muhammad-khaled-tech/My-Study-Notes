@@ -3133,39 +3133,44 @@ flowchart LR
 
 ```mermaid
 flowchart LR
+
     %% Global Styling
     classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef user fill:#fffbe6,stroke:#faad14,color:#000;
-    classDef nacl fill:#f9f0ff,stroke:#722ed1,color:#000;
-    classDef sg fill:#e6f7ff,stroke:#1890ff,color:#000;
-    classDef app fill:#f6ffed,stroke:#52c41a,color:#000;
+
+    %% ستايلات الألوان الغامقة
+    classDef user fill:#2b2b2b,stroke:#faad14,color:#fff;
+    classDef nacl fill:#1e1b3d,stroke:#722ed1,color:#fff;
+    classDef sg fill:#002342,stroke:#1890ff,color:#fff;
+    classDef app fill:#14251c,stroke:#52c41a,color:#fff;
+    classDef boundary fill:transparent,stroke:#888,stroke-width:2px,stroke-dasharray: 5 5,color:#fff;
 
     User["👨‍💻 Internet User"]
 
     subgraph VPC_Subnet ["🌐 VPC Subnet Boundary"]
-        NACL["🛡️ Network ACL<br/>(Stateless - Evaluates Rules in Order)"]
-    end
-    
-    subgraph EC2_Boundary ["🖥️ EC2 Instance Boundary"]
-        SG["🔐 Security Group<br/>(Stateful - Allows Implicit Return)"]
-        App["⚙️ Web Application<br/>(Laravel / Node.js)"]
+        NACL["🛡️ Network ACL<br>(Stateless - Evaluates Rules in Order)"]
     end
 
-    %% Inbound Path
-    User -->|"1. Hits Subnet"| NACL
-    NACL -->|"2. Passes Inbound Rule"| SG
-    SG -->|"3. Passes Inbound Rule"| App
-    
-    %% Outbound Path (Return Traffic)
-    App -.->|"4. SG Remembers & Auto-Allows"| SG
-    SG -.->|"5. NACL Forgets! Must explicitly allow Outbound"| NACL
-    NACL -.->|"6. Returns Response"| User
+    subgraph EC2_Boundary ["🖥️ EC2 Instance Boundary"]
+        SG["🔐 Security Group<br>(Stateful - Allows Implicit Return)"]
+        App["⚙️ Web Application<br>(Laravel / Node.js)"]
+    end
+
+    %% Inbound Path - تم تصحيح الأرقام
+    User -->|"(1) Hits Subnet"| NACL
+    NACL -->|"(2) Passes Inbound Rule"| SG
+    SG -->|"(3) Passes Inbound Rule"| App
+
+    %% Outbound Path (Return Traffic) - تم تصحيح الأرقام
+    App -.->|"(4) SG Remembers & Auto-Allows"| SG
+    SG -.->|"(5) NACL Forgets! Must explicitly allow Outbound"| NACL
+    NACL -.->|"(6) Returns Response"| User
 
     %% Apply Classes
     class User user;
     class NACL nacl;
     class SG sg;
     class App app;
+    class VPC_Subnet,EC2_Boundary boundary;
 ```
 
 ### 📊 شفرات الامتحان: الجدول الذهبي (Security Group vs NACL)
