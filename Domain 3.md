@@ -1720,65 +1720,58 @@ _ملاحظة: ElastiCache بيستخدم لتخفيف الضغط عن قواع�
 
 ```mermaid
 flowchart LR
-    %% Global Styling
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef app fill:#f9f0ff,stroke:#722ed1,color:#000;
-    classDef cache fill:#fffbe6,stroke:#faad14,color:#000;
-    classDef db fill:#f6ffed,stroke:#52c41a,color:#000;
-    classDef onprem fill:#fff1f0,stroke:#ff4d4f,color:#000;
-    classDef tool fill:#e6f7ff,stroke:#1890ff,color:#000;
 
-    subgraph Live_Traffic ["1. Caching Architecture (Live Traffic)"]
-        direction LR
-        App["📱 Application<br/>(Heavy Read Traffic)"]
-        Cache["⚡ Amazon ElastiCache<br/>(Redis / Memcached)"]
-        RDS["🗄️ Amazon RDS<br/>(Main Database)"]
-    end
+%% Global Styling
+classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+classDef app fill:#f9f0ff,stroke:#722ed1,color:#000;
+classDef cache fill:#fffbe6,stroke:#faad14,color:#000;
+classDef db fill:#f6ffed,stroke:#52c41a,color:#000;
+classDef onprem fill:#fff1f0,stroke:#ff4d4f,color:#000;
+classDef tool fill:#e6f7ff,stroke:#1890ff,color:#000;
 
-    subgraph Migration ["2. Database Migration Architecture"]
-        direction LR
-        OnPremDB["🏢 On-Premises DB<br/>(Oracle/SQL Server)"]
-        SCT["🛠️ AWS SCT<br/>(Schema Conversion)"]
-        DMS["🔄 AWS DMS<br/>(Data Migration)"]
-        Aurora["☁️ Amazon Aurora<br/>(Target DB)"]
-    end
+subgraph Live_Traffic ["(1) Caching Architecture (Live Traffic)"]
+    direction LR
+    App["📱 Application<br>(Heavy Read Traffic)"]
+    Cache["⚡ Amazon ElastiCache<br>(Redis / Memcached)"]
+    RDS["🗄️ Amazon RDS<br>(Main Database)"]
+end
 
-    %% Connections defined outside subgraphs for safety and layout clarity
+subgraph Migration ["(2) Database Migration Architecture"]
+    direction LR
+    OnPremDB["🏢 On-Premises DB<br>(Oracle/SQL Server)"]
+    SCT["🛠️ AWS SCT<br>(Schema Conversion)"]
+    DMS["🔄 AWS DMS<br>(Data Migration)"]
+    Aurora["☁️ Amazon Aurora<br>(Target DB)"]
+end
 
-    %% Caching Connections
-    App -->|"1. Read from Cache"| Cache
-    Cache -.->|"2. Cache Miss (Go to DB)"| RDS
-    RDS -.->|"3. Return Data & Store in Cache"| Cache
-    App -->|"Direct Writes"| RDS
+%% Connections defined outside subgraphs for safety and layout clarity
 
-    %% Migration Connections
-    OnPremDB -->|"Step 1: Convert Schema"| SCT
-    SCT -->|"Apply Schema"| Aurora
-    OnPremDB -->|"Step 2: Replicate Data"| DMS
-    DMS -->|"Insert Data with Zero Downtime"| Aurora
+%% Caching Connections
+App -->|"(1) Read from Cache"| Cache
+Cache -.->|"(2) Cache Miss (Go to DB)"| RDS
+RDS -.->|"(3) Return Data & Store in Cache"| Cache
+App -->|"Direct Writes"| RDS
 
-    %% Apply Classes
-    class App app;
-    class Cache cache;
-    class RDS db;
-    class OnPremDB onprem;
-    class SCT,DMS tool;
-    class Aurora db;
+%% Migration Connections
+OnPremDB -->|"Step 1: Convert Schema"| SCT
+SCT -->|"Apply Schema"| Aurora
+OnPremDB -->|"Step 2: Replicate Data"| DMS
+DMS -->|"Insert Data with Zero Downtime"| Aurora
+
+%% Apply Classes
+class App app;
+class Cache cache;
+class RDS db;
+class OnPremDB onprem;
+class SCT,DMS tool;
+class Aurora db;
 ```
+![[Pasted image 20260604154256.png]]
 
-### 📊 شفرات الامتحان: التفرقة بين خدمات الداتابيز النهائية
+---
 
-لأن الداتابيز بتلخبط، ده الجدول الذهبي النهائي اللي تبروزه في النوتس:
 
-|**الهدف (Use Case)**|**الخدمة المناسبة (AWS Service)**|
-|---|---|
-|قاعدة بيانات علائقية (SQL)|**Amazon RDS**|
-|داتابيز علائقية أسرع 5 مرات ومبنية للسحابة|**Amazon Aurora**|
-|قاعدة بيانات NoSQL سريعة جداً (Serverless)|**Amazon DynamoDB**|
-|تسريع استجابة DynamoDB للميكرو ثانية|**Amazon DAX**|
-|تسريع استجابة RDS وتخفيف أحمال القراءة|**Amazon ElastiCache**|
-|مستودع بيانات ضخم للتحليلات المعقدة|**Amazon Redshift**|
-|هجرة قاعدة بيانات من الخارج إلى AWS|**AWS DMS** (+ **SCT** لو هتغير النوع)|
+
 
 ---
 ## 2. الحوسبة المتقدمة وطرق النشر (Compute, Deploy & Integration) - الجزء الأول: عوالم الحاويات (Containers & Docker)
