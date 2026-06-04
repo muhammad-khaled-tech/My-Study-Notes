@@ -4322,3 +4322,324 @@ flowchart LR
 |`Reduce environmental impact`, `Carbon footprint`, `Green IT`|**Sustainability**|
 |`Review architecture against best practices`, `Identify high-risk issues`|**AWS Well-Architected Tool** (الخدمة نفسها)|
 
+---
+## 🏆 المراجعة المعمارية الكبرى (Domain 3) - الجزء الأول: بناء الأساسات (الخرسانة والمحركات)
+
+**رؤية الـ Tech Lead (The Big Picture):**
+
+إحنا مش بنراجع عشان نحفظ، إحنا بنراجع عشان "نربط الخيوط ببعضها". في المنهج إحنا درسنا كل خدمة لوحدها، بس في بيئة العمل الحقيقية (Production)، الخدمات دي بتشتغل كـ "تروس في ماكينة واحدة".
+
+تخيل إننا بنبني منصة عملاقة بـ **Laravel 13** و **Node.js**. عشان المنصة دي تقوم، محتاجين 3 عواميد أساسية: "محركات تشغل الكود"، "مخازن تشيل الملفات"، و"ذاكرة تحفظ البيانات". دي هي (الأساسات) اللي مستحيل أي سيستم يقوم من غيرها.
+
+### ⚙️ أولاً: غرفة المحركات (Compute) - أين يعيش الكود؟
+
+أمازون بتديك 4 مستويات لتشغيل الكود بتاعك، من أول التحكم الكامل لحد الراحة التامة:
+
+1. **التحكم الفيزيائي (Amazon EC2):** السيرفر الخام (IaaS). إنت بتختار نظام التشغيل (Linux/Windows)، وإنت اللي بتعمل Update بإيدك. بنستخدمه لو محتاجين تحكم كامل في بيئة العمل.
+    
+2. **عصر الحاويات (Amazon ECS & EKS):** لو الكود بتاعك متقسم (Microservices) جوه (Docker Containers)، أمازون بتديرلك الحاويات دي. ولو مش عايز تدير السيرفرات اللي تحت الحاويات، بتشغلهم على **AWS Fargate** (Serverless Compute).
+    
+3. **اللمسة السحرية (AWS Lambda):** كود بيشتغل في مللي ثانية كرد فعل لحدث (Event-driven) وبيدفعك بالمللي ثانية. مفيش سيرفرات بتديرها، مفيش نظام تشغيل بتشوفه.
+    
+4. **زرار النشر السريع (AWS Elastic Beanstalk):** الـ PaaS المفضل للمطورين. إرمي كود الـ Laravel وهو هيبني الـ EC2 والـ Load Balancer والـ Auto Scaling لوحده.
+    
+
+### ⚙️ ثانياً: خزائن الكلاود (Storage) - أين نضع الملفات؟
+
+الكود لوحده ملوش لازمة من غير مكان يخزن فيه الصور، الفيديوهات، وملفات النظام.
+
+1. **المخزن اللانهائي (Amazon S3):** تخزين الكائنات (Object Storage). ده المكان اللي بنرمي فيه صور وفيديوهات المستخدمين، وملفات الباك أب. رخيص، مساحته لا نهائية، ولازم يكون متصل بالإنترنت.
+    
+2. **قرص السيرفر (Amazon EBS):** تخزين الكتل (Block Storage). ده "الهارد ديسك" الـ (SSD أو HDD) اللي بيتركب جوه سيرفر الـ EC2 عشان ينزل عليه نظام التشغيل وقواعد البيانات. سريع جداً بس غالي، ومربوط بـ AZ واحدة.
+    
+3. **الهارد المشترك (Amazon EFS):** تخزين الملفات (File Storage). ده هارد ديسك "شير" يقدر يتركب في آلاف سيرفرات اللينكس (EC2) في نفس اللحظة. ممتاز لمشاريع الـ CMS والمقالات.
+    
+
+### ⚙️ ثالثاً: ذاكرة النظام (Databases) - أين نحتفظ بالعلاقات؟
+
+الداتا بتاعة المستخدمين، الفواتير، والطلبات محتاجة عقل منظم يحفظها:
+
+1. **الدفاتر المنظمة (Amazon RDS & Aurora):** قواعد البيانات العلاقية (SQL). زي (PostgreSQL, MySQL). جداول وصفوف وعلاقات. الـ RDS خدمة مدارة بتعملك الباك أب، والـ Aurora هو وحش أمازون اللي أسرع 5 مرات من الـ MySQL العادي.
+    
+2. **سرعة البرق (Amazon DynamoDB):** قواعد البيانات غير العلاقية (NoSQL). لو عندك داتا ضخمة جداً ومش منظمة في جداول ثابتة (زي الـ Carts في مواقع الشراء أو الـ High scores في الألعاب)، ده بيقرأ ويكتب في أجزاء من المللي ثانية، وهو (Serverless).
+    
+3. **محلل البيانات (Amazon Redshift):** مخزن البيانات (Data Warehouse). ده المكان اللي بنرمي فيه داتا الشركة بتاعت الـ 10 سنين اللي فاتت عشان نعمل عليها تحليلات مالية معقدة (Analytics & BI).
+    
+
+
+```
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef compute fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef storage fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef db fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef user fill:#f9f0ff,stroke:#722ed1,color:#000;
+
+    User["👨‍💻 Application User"]
+
+    subgraph The_Compute_Engine ["⚙️ Compute Layer (The Brains)"]
+        EC2["🖥️ EC2 Server<br/>(Laravel 13 App)"]
+        Lambda["⚡ Lambda Function<br/>(Image Resizer)"]
+    end
+
+    subgraph The_Storage_Vaults ["🗂️ Storage Layer (The Vaults)"]
+        EBS["💾 Amazon EBS<br/>(OS & DB Disk)"]
+        S3["🪣 Amazon S3<br/>(User Images & Backups)"]
+    end
+
+    subgraph The_Memory ["🗄️ Database Layer (The Memory)"]
+        RDS[("🐘 Amazon RDS<br/>(PostgreSQL - Users Data)")]
+    end
+
+    %% Connections
+    User -->|"Uploads Profile Pic"| EC2
+    EC2 -->|"Saves original pic to"| S3
+    S3 -->|"Triggers Event"| Lambda
+    Lambda -->|"Resizes & saves thumbnail to"| S3
+
+    EC2 -->|"Reads/Writes OS Data"| EBS
+    EC2 -->|"Queries User Info"| RDS
+
+    %% Apply Classes
+    class User user;
+    class EC2,Lambda compute;
+    class EBS,S3 storage;
+    class RDS db;
+```
+
+### 📊 شفرات الامتحان: الخلاصة الفورية للأساسات
+
+|**السيناريو في الامتحان**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Serverless compute`, `Run code without provisioning servers`, `< 15 minutes`|**AWS Lambda**|
+|`PaaS`, `Easy to deploy web applications`, `Handles capacity provisioning`|**AWS Elastic Beanstalk**|
+|`Object storage`, `Store images and backups`, `Internet accessible`|**Amazon S3**|
+|`Block storage`, `Boot volume for EC2`, `High performance`|**Amazon EBS**|
+|`Managed relational database`, `SQL`, `Automated backups`|**Amazon RDS**|
+|`Key-value database`, `NoSQL`, `Single-digit millisecond latency`|**Amazon DynamoDB**|
+|`Data warehouse`, `Run complex analytics queries`, `Petabyte-scale`|**Amazon Redshift**|
+
+---
+## 🏆 المراجعة المعمارية الكبرى (Domain 3) - الجزء الثاني: الجهاز العصبي (الشبكات، التمدد، وفك الارتباط)
+
+**رؤية الـ Tech Lead (The Big Picture):**
+
+إحنا بنينا الأساسات (السيرفرات والداتابيز) في الجزء الأول. بس السيرفرات دي لوحدها عاملة زي "الجزر المنعزلة"؛ لا تقدر تكلم بعض، ولا الإنترنت قادر يوصلها. ولو وصلها ترافيك مفاجئ، هتنهار!
+
+هنا بييجي دور "الجهاز العصبي" للسيستم. إزاي نبني سور يحمي السيرفرات دي (VPC)؟ إزاي نخليها تتكاثر لوحدها تحت الضغط (Auto Scaling)؟ وإزاي نحط "ممتص صدمات" (SQS) عشان لو حصل هجوم من الريكويستات، الداتابيز متقعش؟
+
+### ⚙️ أولاً: قلعة الحماية (Amazon VPC & Security) - كيف نعزل السيستم؟
+
+الكلاود مكان عام، بس الـ **VPC (Virtual Private Cloud)** هي حتة الأرض اللي اشتريتها وبنيت عليها السور بتاعك.
+
+1. **الشارع العام (Public Subnet):** دي الحارة اللي متوصلة بالإنترنت مباشرة عن طريق الـ **(Internet Gateway - IGW)**. بنحط فيها الـ Load Balancer عشان يستقبل الزوار.
+    
+2. **الغرفة السرية (Private Subnet):** دي الحارة المعزولة. بنخبي فيها كود الـ **Laravel 13** بتاعك وقواعد البيانات. عشان السيرفرات دي تعمل Update من غير ما حد من بره يشوفها، بنركبلها **(NAT Gateway)** في الحارة العامة.
+    
+3. **حراس الأمن:**
+    
+    - **NACL:** عسكري المرور على أول الحارة (Subnet). ده (Stateless) بينسى بسرعة، ولازم تديله أوامر صريحة (اسمح بالدخول، واسمح بالخروج). ميزته القاتلة: يقدر يـ **Block (Deny)** أي IP خبيث.
+        
+    - **Security Group:** البودي جارد اللي واقف على باب السيرفر (EC2). ده (Stateful) ذكي ومابينساش، لو دخّل الريكويست هيخرجه أوتوماتيك. بيسمح بس (Allow) وميقدرش يمنع IP محدد.
+        
+
+### ⚙️ ثانياً: الموزع وماكينة الاستنساخ (ELB & Auto Scaling) - كيف نصمد أمام الملايين؟
+
+تخيل إن السيستم بتاعك جاله مليون زائر فجأة. إزاي هنتعامل؟
+
+1. **موزع الأحمال (Application Load Balancer - ALB):** ده المايسترو اللي واقف في الـ Public Subnet. بيفهم الـ (HTTP/HTTPS - Layer 7)، وبيستقبل المليون ريكويست ويوزعهم بالعدل على السيرفرات اللي وراه.
+    
+2. **ماكينة الاستنساخ (Auto Scaling Group - ASG):** دي الأداة اللي بتراقب استهلاك الـ CPU. لو لقت السيرفرات بتعاني، بتخلق سيرفرات جديدة فوراً (Scale Out) وتربطها بالـ Load Balancer. ولما الزحمة تخلص، بتمسحها (Scale In) عشان توفر فلوسك.
+    
+
+### ⚙️ ثالثاً: ممتصات الصدمات (Decoupling) - كيف نمنع انهيار النظام؟
+
+لو الـ Frontend بيكلم الـ Backend مباشرة، والـ Backend بيكلم الداتابيز مباشرة (Tightly Coupled)، أي بطء في الداتابيز هيوقع السيستم كله! لازم نفصلهم عن بعض.
+
+1. **طابور الانتظار (Amazon SQS):** الـ Queue. بدل ما نرمي الطلبات على السيرفر، بنرميها في الطابور. وسيرفرات الـ Backend تسحب (Pull) الطلبات براحتها. كده مفيش ريكويست بيضيع، والسيستم عمره ما بيقع.
+    
+2. **مكبر الصوت (Amazon SNS):** الـ Pub/Sub. سيرفر الـ Backend عايز يبعت رسالة لـ 5 مليون يوزر ولـ 3 طوابير SQS في نفس اللحظة. بيبعت رسالة واحدة للـ SNS، وهو بيعملها (Push / Fan-out) للجميع.
+    
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef user fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef vpc fill:#f9f9f9,stroke:#ff9900,stroke-width:3px,color:#000;
+    classDef public fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef private fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    classDef decouple fill:#f9f0ff,stroke:#722ed1,color:#000;
+
+    User["👨‍💻 Internet User"]
+    IGW["🚪 Internet Gateway (IGW)"]
+
+    subgraph AWS_VPC ["☁️ AWS VPC Fortress"]
+        direction TB
+        
+        ALB["⚖️ Application Load Balancer<br/>(Public Subnet)"]
+        
+        subgraph ASG ["📈 Auto Scaling Group (Private Subnet)"]
+            direction TB
+            App1["🖥️ Web Server 1"]
+            App2["🖥️ Web Server 2"]
+        end
+    end
+
+    SQS["📨 Amazon SQS<br/>(Shock Absorber Queue)"]
+    Worker["⚙️ Backend Worker<br/>(Database Writer)"]
+
+    %% External to Internal
+    User -->|"HTTPS Request"| IGW
+    IGW -->|"Routes to"| ALB
+    ALB -->|"Balances load"| App1
+    ALB -->|"Balances load"| App2
+
+    %% Decoupling mechanism
+    App1 -->|"Send Task"| SQS
+    App2 -->|"Send Task"| SQS
+    SQS -.->|"Worker pulls when ready"| Worker
+
+    %% Apply Classes
+    class User user;
+    class AWS_VPC vpc;
+    class ALB public;
+    class ASG,App1,App2 private;
+    class SQS,Worker decouple;
+```
+
+### 📊 شفرات الامتحان: الخلاصة الفورية للشبكات والتمدد
+
+|**السيناريو في الامتحان**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Logically isolated virtual network`, `Provision a logically isolated section`|**Amazon VPC**|
+|`Connect VPC to the internet`, `Allow internet traffic`|**Internet Gateway (IGW)**|
+|`Allow private instances to download updates without inbound access`|**NAT Gateway** (or Egress-Only IGW for IPv6)|
+|`Stateful firewall at the instance level`, `Allow rules only`|**Security Group**|
+|`Stateless firewall at the subnet level`, `Deny specific IPs`|**Network ACL (NACL)**|
+|`Add or remove instances automatically based on demand`|**Auto Scaling Group**|
+|`Decouple applications`, `Message queue`, `Buffer requests`|**Amazon SQS**|
+|`Pub/Sub`, `Send notifications`, `Fan-out messages`|**Amazon SNS**|
+
+---
+## 🏆 المراجعة المعمارية الكبرى (Domain 3) - الجزء الثالث والأخير: عيون الكلاود والذكاء الاصطناعي (المراقبة، الهجرة، والابتكار)
+
+**رؤية الـ Tech Lead (The Big Picture):**
+
+إحنا بنينا الأساسات (السيرفرات والداتابيز) في الجزء الأول، وركبنا الجهاز العصبي (الشبكات والتمدد) في الجزء الثاني. دلوقتي السيستم شغال، بس لو سبناه كده هنبقى عاملين زي اللي سايق طيارة وهو مغمي عينيه!
+
+محتاجين "عيون" تراقب الأداء (Monitoring)، وتراقب مين بيدخل السيستم (Auditing)، وتحمينا من فواتير الكلاود المرعبة. ولما السيستم يستقر، هنبدأ نضيف ليه لمسة السحر (الذكاء الاصطناعي) عشان نحاكي مشاريع التخرج القوية، ونطبق قواعد الهندسة السليمة (Well-Architected).
+
+### ⚙️ أولاً: غرفة المراقبة والتحكم (Management & Governance) - من يراقب السحابة؟
+
+الكلاود بدون مراقبة هو ثقب أسود بيبلع الفلوس. التفرقة هنا في الامتحان بتعتمد على "إنت بتراقب إيه بالظبط؟".
+
+1. **طبيب النظام (Amazon CloudWatch):** ده بيراقب "الأداء". بيشوف استهلاك الـ CPU، الرامات، وعدد الزوار. وهو اللي بيدي إشارة للـ Auto Scaling عشان يكبر أو يصغر. (الكلمة السرية: `Metrics, Alarms, Logs`).
+    
+2. **كاميرا المراقبة (AWS CloudTrail):** ده بيراقب "الأشخاص". ملوش دعوة بالـ CPU، ده بيسجل أي (API Call) حصلت في حسابك. مين مسح الداتابيز؟ مين قفل السيرفر؟ (الكلمة السرية: `Audit, User Activity, API calls`).
+    
+3. **مفتش المطابقة (AWS Config):** ده بيراقب "الإعدادات". بيشوف هل السيرفرات مطابقة لقوانين الشركة ولا لأ. (الكلمة السرية: `Configuration history, Compliance`).
+    
+4. **المستشار المالي والأمني (AWS Trusted Advisor):** ده بيفحص حسابك كله ويقارنه بـ 5 عواميد (Cost, Security, Performance, Fault Tolerance, Service Limits) ويقولك إزاي توفر فلوس وتقفل الثغرات.
+    
+
+### ⚙️ ثانياً: طبقة الابتكار والذكاء الاصطناعي (AI / ML) - كيف نجعل النظام يفكر؟
+
+بدل ما تبني خوارزميات من الصفر، أمازون بتديك APIs جاهزة تدمجها في مشروعك فوراً:
+
+1. **التعامل مع المستندات والصور:**
+    
+    - لو بتبني منصة زي **وتين (Wateen.ai)** وعايز تقرأ السجلات الورقية المكتوبة بخط اليد لبنوك الدم، هتستخدم **(Amazon Textract)** عشان يستخرج النصوص والجداول.
+        
+    - لو عايز تتعرف على وجوه المستخدمين أو تكتشف محتوى غير لائق في الصور، هتستخدم **(Amazon Rekognition)**.
+        
+2. **التعامل مع الصوتيات والعملاء:**
+    
+    - عشان تخلي السيستم ينطق وترد على العملاء آلياً: **(Amazon Polly)**.
+        
+    - عشان تسمع العميل وتحول صوته لنص: **(Amazon Transcribe)**.
+        
+    - عشان تفهم "نية" العميل وتبني شات بوت ذكي: **(Amazon Lex)**.
+        
+3. **المصنع المخصص:** لو عايز تدرب موديل ذكاء اصطناعي خاص بيك يتوقع نقص فصائل الدم بناءً على الداتا التاريخية، هنا بتدخل معمل المحترفين **(Amazon SageMaker)**.
+    
+
+### ⚙️ ثالثاً: الهجرة والهندسة السليمة (Migration & Well-Architected)
+
+لو بتنقل شركتك للكلاود، لازم تمشي على خطة. ولو بتبني سيستم جديد، لازم تبنيه صح.
+
+1. **أدوات الهجرة (Migration):**
+    
+    - بتراقب السيرفرات القديمة وتعرف علاقاتها ببعض: **(Application Discovery Service)**.
+        
+    - بتنقل السيرفرات كـ (Lift and Shift) من غير تعديل الكود: **(AWS MGN)**.
+        
+    - بتابع تقدم كل ده من شاشة واحدة: **(Migration Hub)**.
+        
+2. **الأعمدة الستة (Well-Architected Framework):**
+    
+    - **التميز التشغيلي:** الأتمتة (CI/CD) وكتابة البنية التحتية ككود.
+        
+    - **الأمان:** تشفير الداتا وإعطاء أقل الصلاحيات (IAM).
+        
+    - **الموثوقية:** السيستم بيتعافى لوحده لو سيرفر وقع (Multi-AZ).
+        
+    - **كفاءة الأداء:** اختيار الأداة الصح (مثلاً Serverless بدل EC2).
+        
+    - **تحسين التكلفة:** قفل السيرفرات اللي ملهاش لازمة.
+        
+    - **الاستدامة:** تقليل استهلاك الطاقة والبصمة الكربونية.
+        
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef app fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef monitor fill:#e6f7ff,stroke:#1890ff,color:#000;
+    classDef audit fill:#fffbe6,stroke:#faad14,color:#000;
+    classDef ai fill:#f9f0ff,stroke:#722ed1,color:#000;
+
+    Admin["👨‍💻 Cloud Architect"]
+
+    subgraph The_Workload ["⚙️ The Production Workload"]
+        App["🖥️ Laravel / Node.js App<br/>(Running on EC2)"]
+        AI["🧠 Amazon Textract & Lex<br/>(AI Features)"]
+    end
+
+    subgraph The_Observers ["👁️ Management & Governance"]
+        CW["📈 CloudWatch<br/>(Monitors CPU & Logs)"]
+        CT["🕵️ CloudTrail<br/>(Tracks API Calls)"]
+        TA["🧙‍♂️ Trusted Advisor<br/>(Cost & Security Scans)"]
+    end
+
+    %% Connections
+    App -->|"Sends Logs & Metrics"| CW
+    App <-->|"Calls AI APIs"| AI
+    Admin -->|"Makes Config Changes"| CT
+    
+    CW -.->|"Alerts if CPU is high"| Admin
+    TA -.->|"Recommends Cost Savings"| Admin
+
+    %% Apply Classes
+    class The_Workload,App app;
+    class CW,TA monitor;
+    class CT audit;
+    class AI ai;
+```
+
+### 📊 شفرات الامتحان: الخلاصة النهائية للمراقبة والذكاء الاصطناعي
+
+|**السيناريو المعماري في الامتحان (Keyword)**|**الإجابة الصحيحة (AWS Service)**|
+|---|---|
+|`Monitor performance`, `Metrics and Alarms`|**Amazon CloudWatch**|
+|`Track user activity`, `API calls`, `Who did what?`|**AWS CloudTrail**|
+|`Review architecture against best practices`, `5 Pillars check`|**AWS Trusted Advisor**|
+|`Extract text/handwriting from scanned documents`|**Amazon Textract**|
+|`Build, train, and deploy machine learning models`|**Amazon SageMaker**|
+|`Conversational interfaces`, `Chatbots`|**Amazon Lex**|
+|`Track the progress of migrations in one place`|**AWS Migration Hub**|
+|`Provision cloud-based virtual desktops`, `DaaS`, `VDI`|**Amazon WorkSpaces**|
+
