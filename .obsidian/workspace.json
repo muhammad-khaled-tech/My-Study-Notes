@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Untitled 1.md",
+                "file": "Domain 2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 1"
+              "title": "Domain 2"
             }
           },
           {
@@ -322,8 +322,9 @@
   },
   "active": "715ffb8e2a1921a3",
   "lastOpenFiles": [
+    "Untitled.md",
     "Domain 3.md",
-    "Untitled 1.md",
+    "Domain 2.md",
     "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Aws practitioner/new/domain2_security_part2.md",
     "Aws practitioner/new/domain2_security_part1.md",
@@ -343,7 +344,6 @@
     "odoo/Unconfirmed 940594.crdownload",
     "odoo/Odoo_Day2_Study_Guide.md",
     "odoo/Unconfirmed 519347.crdownload",
-    "Untitled.md",
     "Aws practitioner/new/domain3a_part2_S3_Databases.md",
     "VUE/Vue_Day1_Notes (1).md",
     "Aws practitioner/new/domain3b_part1_monitoring_vpc.md",
