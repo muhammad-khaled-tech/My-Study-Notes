@@ -3874,7 +3874,7 @@ flowchart LR
 |`Store secrets, passwords, and license codes securely`|**AWS Systems Manager (Parameter Store)**|
 
 ---
-##  الجزء الرابع والأخير: إدارة التكلفة والمستشار الآلي (Cost Management & Trusted Advisor)
+##  الجزء الرابع: إدارة التكلفة والمستشار الآلي (Cost Management & Trusted Advisor)
 
 **أصل الحكاية والمشكلة المعمارية (The Core Problem):**
 
