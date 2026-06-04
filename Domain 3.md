@@ -2452,7 +2452,7 @@ flowchart LR
 - **الفكرة:** مكان آمن جداً ومقفل عليه بتشفير أمازون، التيم بيرفع عليه الكود بتاعهم باستخدام أوامر `Git` العادية.
     
 - **الكلمة الدلالية في الامتحان:** `Private Git repository`, `Source control`, `Securely store source code`.
-    
+    ![[Pasted image 20260604191858.png]]
 
 **2. خط التجميع والاختبار (AWS CodeBuild):**
 
@@ -2461,7 +2461,7 @@ flowchart LR
 - **الميزة:** هو (Serverless)، يعني أمازون بتشغل سيرفرات في الكواليس تعمل الـ Build وتقفلها فوراً، وإنت بتدفع بالدقيقة.
     
 - **الكلمة الدلالية في الامتحان:** `Compile source code`, `Run tests`, `Produce software packages`, `Continuous Integration (CI)`.
-    
+    ![[Pasted image 20260604191925.png]]
 
 **3. أسطول التوصيل (AWS CodeDeploy):**
 
@@ -2470,7 +2470,7 @@ flowchart LR
 - **تريكة الامتحان:** الـ CodeDeploy مش بينشر على EC2 بس! ده يقدر ينشر الكود بتاعك على (AWS Fargate)، وعلى (AWS Lambda)، وحتى على سيرفرات الشركة بتاعتك (On-Premises Servers).
     
 - **الكلمة الدلالية في الامتحان:** `Automate code deployments`, `Maintain application uptime during deployment`.
-    
+    ![[Pasted image 20260604192025.png]]
 
 **4. مدير المصنع (AWS CodePipeline): 🚨 [أهم خدمة فيهم]**
 
@@ -2479,7 +2479,7 @@ flowchart LR
 - **السيناريو المعماري:** إنت بتقول للـ CodePipeline: "أول ما مبرمج يعمل Push لكود جديد في `CodeCommit`، ابعته فوراً لـ `CodeBuild` يختبره، ولو نجح، ابعته لـ `CodeDeploy` يرفعه على السيرفر". كل ده بيحصل أوتوماتيك كأنه شلال ورا بعضه!
     
 - **الكلمة الدلالية في الامتحان:** `Automate release pipelines`, `CI/CD`, `Visualize and automate the different stages`.
-    
+    ![[Pasted image 20260604192108.png]]
 
 ### ⚙️ المكملات السحرية للمطورين
 
