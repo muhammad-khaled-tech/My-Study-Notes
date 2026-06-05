@@ -14,7 +14,7 @@
               "type": "markdown",
               "state": {
                 "file": "Domain 3.md",
-                "mode": "source",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
@@ -238,6 +238,8 @@
   },
   "active": "30994cde348d4d46",
   "lastOpenFiles": [
+    "domain3_cheatsheet.md",
+    "Unconfirmed 601957.crdownload",
     "Pasted image 20260604225010.png",
     "Pasted image 20260604224954.png",
     "Pasted image 20260604224937.png",
@@ -248,7 +250,6 @@
     "Pasted image 20260604192108.png",
     "Pasted image 20260604192025.png",
     "Pasted image 20260604191925.png",
-    "Pasted image 20260604191858.png",
     "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Domain 3.md",
     "domain 1.md",
@@ -283,7 +284,6 @@
     "laravel/laravel_day2_cheatsheet.html",
     "laravel/Unconfirmed 898514.crdownload",
     "laravel/Unconfirmed 933819.crdownload",
-    "admin2/RHSA1_CommandMap.excalidraw",
     "Untitled.canvas"
   ]
 }
