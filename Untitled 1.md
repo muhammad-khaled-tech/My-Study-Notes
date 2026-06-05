@@ -239,6 +239,80 @@ flowchart TD
 
 ---
 
+## الجزء الثاني: عدّاد البيانات الخفي (AWS Data Transfer Rules)
+
+> 💡 **القاعدة المعمارية الذهبية في تسعير أمازون:** > "الدخول مجاني ومرحب به دائماً، لكن الخروج أو التحرك الداخلي له ثمن!"
+
+### ⚙️ مسارات التكلفة الأربعة (Data Transfer Paths)
+
+بدلاً من الحفظ، تخيل البيانات كأنها سيارات تتحرك في شبكة طرق أمازون، وهذه هي بوابات الرسوم:
+
+- **[ مسار A ] الدخول إلى أمازون (Inbound / Data Transfer IN):**
+    
+    - **التكلفة:** 🟢 مجاني تماماً ($0.00).
+        
+    - **السيناريو:** رفع ملفات، إدخال بيانات لقاعدة البيانات، أو استقبال ترافيك من الإنترنت.
+        
+- **[ مسار B ] الخروج إلى الإنترنت (Outbound / Data Transfer OUT):**
+    
+    - **التكلفة:** 🔴 بفلوس (حسب حجم الجيجا بايت المستهلكة).
+        
+    - **السيناريو:** مستخدم بيحمل فيديو أو صورة من موقعك لبره (للإنترنت العام).
+        
+- **[ مسار C ] النقل الخارجي بين المناطق (Cross-Region / Cross-AZ):**
+    
+    - **التكلفة:** 🔴 بفلوس (لكنها أرخص من الخروج للإنترنت).
+        
+    - **السيناريو:** سيرفر في (AZ-A) بيبعت داتا لسيرفر في (AZ-B)، أو الداتا بتتنقل من أمريكا لأوروبا.
+        
+- **[ مسار D ] النقل الداخلي المغلق (Same AZ using Private IP):**
+    
+    - **التكلفة:** 🟢 مجاني تماماً ($0.00).
+        
+    - **السيناريو:** سيرفرين جوا نفس الأوضة (نفس الـ Availability Zone) وبيكلموا بعض من خلال الـ IP الداخلي الخاص بيهم.
+        
+
+
+```mermaid
+flowchart LR
+    %% Global Styling
+    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+    classDef free fill:#f6ffed,stroke:#52c41a,color:#000;
+    classDef cost fill:#fff1f0,stroke:#ff4d4f,color:#000;
+    classDef net fill:#f0f2f5,stroke:#8c8c8c,color:#000;
+
+    Web(("🌐 Internet")):::net
+    
+    subgraph AZ_A ["🏢 Availability Zone A"]
+        direction TB
+        EC2_1["🖥️ Web Server"]:::net
+        EC2_2["🗄️ Database"]:::net
+    end
+    
+    subgraph AZ_B ["🏢 Availability Zone B"]
+        direction TB
+        EC2_3["🖥️ Backup Server"]:::net
+    end
+
+    %% Flow Rules (Using Paths A, B, C, D)
+    Web -->|"(Path A) Inbound: FREE 🟢"| EC2_1
+    EC2_1 -->|"(Path B) Outbound: COST 🔴"| Web
+    EC2_1 <-->|"(Path D) Same AZ (Private IP): FREE 🟢"| EC2_2
+    EC2_1 <-->|"(Path C) Cross-AZ: COST 🔴"| EC2_3
+```
+
+### 📊 شفرات الامتحان: الخلاصة لأسئلة التسعير (البيانات)
+
+أمازون بتختبرك في هذه المسارات بالكلمات التالية:
+
+|**السيناريو في الامتحان (Exam Keyword)**|**الإجابة المعمارية الصحيحة**|
+|---|---|
+|`Cost of Data Transfer IN to AWS from the internet`|**FREE ($0.00)**|
+|`Cost of Data Transfer between EC2 instances in different Availability Zones`|**Incurs a charge (Cost associated)**|
+|`Lowest cost network communication between EC2 instances`|**Same Availability Zone using Private IP**|
+
+كده التنسيق بقى أحلى ومقسم بطريقة (المسارات) اللي هتريح عينك. انسخ ده، واديني الإشارة بكلمة **"المحطة التالتة"** عشان ندخل نختم الدومين بأدوات الرقابة والـ Dashboards المالية!
+
 ---
 # المحطة الثالثة: أدوات الرقابة، التحليل، والذكاء المالي (Financial Dashboards)
 
