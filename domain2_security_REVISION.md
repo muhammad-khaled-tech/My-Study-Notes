@@ -747,9 +747,9 @@ Amazon Detective            → investigates it, traces the root cause
 ```mermaid
 flowchart LR
     A[Security Event] --> B[GuardDuty / Macie / Inspector / Config]
-    B --> C[Security Hub\nAggregates findings]
+    B --> C[Security Hub</br>Aggregates findings]
     C --> D{Needs investigation?}
-    D -->|Yes| E[Amazon Detective\nRoot cause analysis]
+    D -->|Yes| E[Amazon Detective</br>Root cause analysis]
     D -->|No - auto-remediate| F[EventBridge → Lambda]
 ```
 
@@ -1084,20 +1084,20 @@ These are facts the exam expects you to know cold:
 
 ```mermaid
 flowchart TD
-    Root["🔐 Root Account\n(Account Owner)\nLock Away!"]
+    Root["🔐 Root Account</br>(Account Owner)</br>Lock Away!"]
     
     Root --> Admin["IAM Admin User"]
-    Admin --> Users["IAM Users\n(Real people)"]
-    Admin --> Groups["IAM Groups\n(Collection of users)"]
-    Admin --> Roles["IAM Roles\n(For AWS services)"]
+    Admin --> Users["IAM Users</br>(Real people)"]
+    Admin --> Groups["IAM Groups</br>(Collection of users)"]
+    Admin --> Roles["IAM Roles</br>(For AWS services)"]
     
-    Groups -->|"Inherit"| Policies["IAM Policies\n(JSON permissions)"]
+    Groups -->|"Inherit"| Policies["IAM Policies</br>(JSON permissions)"]
     Users -->|"Direct / inline"| Policies
     Roles --> Policies
     
-    Users -->|"Access via"| Console["🌐 AWS Console\n(Password + MFA)"]
-    Users -->|"Access via"| CLI["💻 AWS CLI\n(Access Keys)"]
-    Users -->|"Access via"| SDK["📦 AWS SDK\n(Access Keys)"]
+    Users -->|"Access via"| Console["🌐 AWS Console</br>(Password + MFA)"]
+    Users -->|"Access via"| CLI["💻 AWS CLI</br>(Access Keys)"]
+    Users -->|"Access via"| SDK["📦 AWS SDK</br>(Access Keys)"]
     
     Roles -->|"Attached to"| EC2["EC2 Instance"]
     Roles -->|"Attached to"| Lambda["Lambda Function"]
@@ -1108,11 +1108,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["API Request Made"] --> B{"Is there an\nexplicit DENY?"}
-    B -->|Yes| C["❌ DENIED\n(Explicit Deny wins always)"]
-    B -->|No| D{"Is there an\nexplicit ALLOW?"}
+    A["API Request Made"] --> B{"Is there an</br>explicit DENY?"}
+    B -->|Yes| C["❌ DENIED</br>(Explicit Deny wins always)"]
+    B -->|No| D{"Is there an</br>explicit ALLOW?"}
     D -->|Yes| E["✅ ALLOWED"]
-    D -->|No| F["❌ DENIED\n(Implicit Deny — default)"]
+    D -->|No| F["❌ DENIED</br>(Implicit Deny — default)"]
 ```
 
 ### 27.3 Shared Responsibility Model
@@ -1123,7 +1123,7 @@ flowchart TD
         H["Physical Hardware"]
         Net["Global Network"]
         Virt["Virtualization Layer"]
-        ManagedSvc["Managed Services\n(RDS, S3, DynamoDB)"]
+        ManagedSvc["Managed Services</br>(RDS, S3, DynamoDB)"]
     end
 
     subgraph Customer["👤 Customer Responsibility — Security IN the Cloud"]
@@ -1146,32 +1146,32 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    Internet["🌐 Internet\n(Attackers + Users)"] --> CF["CloudFront\n+ Route 53\n(Edge Network)"]
-    CF --> Shield["AWS Shield\nStandard (L3/L4 free)\nAdvanced ($3k/mo)"]
-    Shield --> WAF["AWS WAF\n(L7 - SQLi, XSS,\ngeo-block, rate-limit)"]
-    WAF --> ALB["Application\nLoad Balancer"]
-    ALB --> ASG["Auto Scaling Group\n(Scale to absorb traffic)"]
-    ASG --> EC2["EC2 Instances\n(Your app)"]
+    Internet["🌐 Internet</br>(Attackers + Users)"] --> CF["CloudFront</br>+ Route 53</br>(Edge Network)"]
+    CF --> Shield["AWS Shield</br>Standard (L3/L4 free)</br>Advanced ($3k/mo)"]
+    Shield --> WAF["AWS WAF</br>(L7 - SQLi, XSS,</br>geo-block, rate-limit)"]
+    WAF --> ALB["Application</br>Load Balancer"]
+    ALB --> ASG["Auto Scaling Group</br>(Scale to absorb traffic)"]
+    ASG --> EC2["EC2 Instances</br>(Your app)"]
 ```
 
 ### 27.5 Encryption Services Flow
 
 ```mermaid
 flowchart TD
-    Data["Your Data"] --> Choice{"Encryption\nNeeded?"}
+    Data["Your Data"] --> Choice{"Encryption</br>Needed?"}
     
-    Choice -->|"At Rest — AWS manages keys"| KMS["AWS KMS\n(Key Management Service)\nKey: aws/s3, aws/ebs\nor Customer CMK"]
+    Choice -->|"At Rest — AWS manages keys"| KMS["AWS KMS</br>(Key Management Service)</br>Key: aws/s3, aws/ebs</br>or Customer CMK"]
     
-    Choice -->|"At Rest — YOU manage keys"| HSM["AWS CloudHSM\n(Hardware Security Module)\nFIPS 140-2 Level 3"]
+    Choice -->|"At Rest — YOU manage keys"| HSM["AWS CloudHSM</br>(Hardware Security Module)</br>FIPS 140-2 Level 3"]
     
-    Choice -->|"In Transit — HTTPS"| ACM["AWS ACM\n(Certificate Manager)\nFree TLS/SSL certs\nAuto-renewal"]
+    Choice -->|"In Transit — HTTPS"| ACM["AWS ACM</br>(Certificate Manager)</br>Free TLS/SSL certs</br>Auto-renewal"]
     
-    Choice -->|"Secrets/Credentials"| SM["AWS Secrets Manager\nAuto-rotation\nKMS-encrypted\nRDS integration"]
+    Choice -->|"Secrets/Credentials"| SM["AWS Secrets Manager</br>Auto-rotation</br>KMS-encrypted</br>RDS integration"]
     
-    KMS --> Services["S3, EBS, RDS,\nRedshift, EFS..."]
+    KMS --> Services["S3, EBS, RDS,</br>Redshift, EFS..."]
     HSM --> Services
-    ACM --> LBs["ALB, CloudFront,\nAPI Gateway"]
-    SM --> Apps["Your applications\n(DB passwords, API keys)"]
+    ACM --> LBs["ALB, CloudFront,</br>API Gateway"]
+    SM --> Apps["Your applications</br>(DB passwords, API keys)"]
 ```
 
 ### 27.6 Threat Detection & Investigation Chain
@@ -1186,25 +1186,25 @@ flowchart TD
     end
 
     subgraph Detectors["🔍 Detectors"]
-        GD["GuardDuty\n(Active threats / ML)"]
-        Insp["Inspector\n(CVE vulnerabilities)"]
-        Mac["Macie\n(PII in S3)"]
-        Cfg["AWS Config\n(Config compliance)"]
-        IAMAA["IAM Access Analyzer\n(External sharing)"]
+        GD["GuardDuty</br>(Active threats / ML)"]
+        Insp["Inspector</br>(CVE vulnerabilities)"]
+        Mac["Macie</br>(PII in S3)"]
+        Cfg["AWS Config</br>(Config compliance)"]
+        IAMAA["IAM Access Analyzer</br>(External sharing)"]
     end
 
     subgraph Hub["🏢 Aggregation"]
-        SHub["Security Hub\n(Single pane of glass)"]
+        SHub["Security Hub</br>(Single pane of glass)"]
     end
 
     subgraph Investigate["🔬 Investigation"]
-        Det["Amazon Detective\n(Root cause analysis)"]
+        Det["Amazon Detective</br>(Root cause analysis)"]
     end
 
     subgraph Response["⚡ Response"]
         EB["EventBridge"]
-        Lam["Lambda\n(Auto-remediate)"]
-        SNS["SNS\n(Notify)"]
+        Lam["Lambda</br>(Auto-remediate)"]
+        SNS["SNS</br>(Notify)"]
     end
 
     Sources --> GD
@@ -1225,42 +1225,42 @@ flowchart TD
 ```mermaid
 flowchart TD
     subgraph Internal["🏢 Internal AWS Users"]
-        IAM["IAM\nCompany employees\nTrusted users"]
+        IAM["IAM</br>Company employees</br>Trusted users"]
     end
 
     subgraph Temp["⏱ Temporary Access"]
-        STS["AWS STS\nTemporary credentials\nCross-account roles\nIdentity federation"]
+        STS["AWS STS</br>Temporary credentials</br>Cross-account roles</br>Identity federation"]
     end
 
     subgraph External["📱 External App Users"]
-        Cog["Amazon Cognito\nMillions of users\nMobile & web apps\nSocial login"]
+        Cog["Amazon Cognito</br>Millions of users</br>Mobile & web apps</br>Social login"]
     end
 
     subgraph Enterprise["🏛 Enterprise / Federation"]
-        SSO["IAM Identity Center\n(SSO)\nOne login for all\nAWS accounts + apps"]
-        Dir["Directory Services\n- AWS Managed AD\n- AD Connector\n- Simple AD"]
+        SSO["IAM Identity Center</br>(SSO)</br>One login for all</br>AWS accounts + apps"]
+        Dir["Directory Services</br>- AWS Managed AD</br>- AD Connector</br>- Simple AD"]
     end
 
     IAM -->|"Assumes role via"| STS
     STS -->|"Provides to"| IAM
     Cog -->|"Federates with"| STS
     Dir -->|"Integrates with"| SSO
-    SSO -->|"Accesses"| AWSOrg["AWS Organization\n(All accounts)"]
+    SSO -->|"Accesses"| AWSOrg["AWS Organization</br>(All accounts)"]
 ```
 
 ### 27.8 KMS Key Types Decision Tree
 
 ```mermaid
 flowchart TD
-    Q1{"Do you need to\nmanage the key?"}
-    Q1 -->|"No, AWS handles it"| Q2{"Is it for a\nspecific AWS service?"}
-    Q1 -->|"Yes, I want control"| Q3{"Do you need\nhardware isolation?\n(FIPS 140-2 L3)"}
+    Q1{"Do you need to</br>manage the key?"}
+    Q1 -->|"No, AWS handles it"| Q2{"Is it for a</br>specific AWS service?"}
+    Q1 -->|"Yes, I want control"| Q3{"Do you need</br>hardware isolation?</br>(FIPS 140-2 L3)"}
     
-    Q2 -->|"Yes (S3, EBS, etc.)"| AWSManaged["AWS Managed Key\n(aws/s3, aws/ebs...)"]
-    Q2 -->|"AWS internal use"| AWSOwned["AWS Owned Key\n(invisible to you)"]
+    Q2 -->|"Yes (S3, EBS, etc.)"| AWSManaged["AWS Managed Key</br>(aws/s3, aws/ebs...)"]
+    Q2 -->|"AWS internal use"| AWSOwned["AWS Owned Key</br>(invisible to you)"]
     
-    Q3 -->|"Yes"| BYOK["CloudHSM Keys\n(Custom keystore\nin your HSM cluster)"]
-    Q3 -->|"No"| CMK["Customer Managed Key\n(You create, control,\ncan rotate, BYOK)"]
+    Q3 -->|"Yes"| BYOK["CloudHSM Keys</br>(Custom keystore</br>in your HSM cluster)"]
+    Q3 -->|"No"| CMK["Customer Managed Key</br>(You create, control,</br>can rotate, BYOK)"]
 ```
 
 ---
