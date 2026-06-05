@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Domain 4.md",
+                "file": "Domain 2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Domain 4"
+              "title": "Domain 2"
             }
           }
         ],
@@ -250,10 +250,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "a4263eb0ef45c795",
+  "active": "15d8e2dfb89aec09",
   "lastOpenFiles": [
-    "Aws practitioner/new/domain4_billing_pricing_support.md",
     "Domain 4.md",
+    "Aws practitioner/new/domain4_billing_pricing_support.md",
     "domain3_cheatsheet.md",
     "Domain 3.md",
     "domain1_cheatsheet.md",
