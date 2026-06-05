@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Domain 3.md",
-                "mode": "preview",
+                "file": "domain3_cheatsheet.md",
+                "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Domain 3"
+              "title": "domain3_cheatsheet"
             }
           }
         ]
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -238,6 +237,7 @@
   },
   "active": "30994cde348d4d46",
   "lastOpenFiles": [
+    "Domain 3.md",
     "domain1_cheatsheet.md",
     "Unconfirmed 604034.crdownload",
     "domain4_cheatsheet.md",
@@ -257,7 +257,6 @@
     "Pasted image 20260604192025.png",
     "Pasted image 20260604191925.png",
     "Aws practitioner/new/domain4_billing_pricing_support.md",
-    "Domain 3.md",
     "domain 1.md",
     "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
     "Aws practitioner/new/domain1_part2_global_wellarchitected.md",

@@ -1,14 +1,5 @@
----
-tags: [aws, clf-c02, domain3, cheat-sheet, مراجعة]
-domain: "Domain 3 — Cloud Technology & Services — 34% من الامتحان"
-status: final-revision
-aliases: [D3 Cheat Sheet, Cloud Technology Revision]
----
 
 # ⚡ Domain 3 — Cloud Technology & Services
-### الـ Cheat Sheet الشامل — مافيش كلمة فاتت
-
----
 
 ## 📋 فهرس سريع
 - [[#🖥️ EC2 — الـ Compute Engine]]
