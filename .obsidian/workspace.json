@@ -69,12 +69,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Untitled 1.md",
+                "file": "Domain 3.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 1"
+              "title": "Domain 3"
             }
           }
         ],
@@ -294,12 +294,14 @@
   },
   "active": "95903d918735c254",
   "lastOpenFiles": [
+    "weakness_analysis_and_revision.md",
+    "Unconfirmed 352200.crdownload",
+    "Untitled 1.md",
     "domain1_mega_revision.md",
     "Unconfirmed 990153.crdownload",
     "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
     "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "domains1_and_4_REVISION.md",
-    "Untitled 1.md",
     "domain2_security_REVISION.md",
     "domain2_cheatsheet.md",
     "domain3_revision_SUNDAY_EXAM.md",
@@ -338,8 +340,6 @@
     "odoo/odoo_views_deep_dive.md",
     "odoo/odoo_day1_study_guide.md",
     "odoo/Unconfirmed 514064.crdownload",
-    "odoo/chapter_01_odoo_intro_and_first_module.md",
-    "odoo/Unconfirmed 904400.crdownload",
     "Untitled.canvas"
   ]
 }
