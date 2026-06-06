@@ -90,7 +90,8 @@
     "domain3_cheatsheet.md": "rtl",
     "Aws practitioner/new/domain4_billing_pricing_support.md": "rtl",
     "Domain 4.md": "rtl",
-    "domain2_security_REVISION.md": "ltr"
+    "domain2_security_REVISION.md": "ltr",
+    "domains1_and_4_REVISION.md": "auto"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,

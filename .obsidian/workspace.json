@@ -55,12 +55,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "domains1_and_4_REVISION.md",
+                "file": "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "domains1_and_4_REVISION"
+              "title": "domain1_part1_cloud_fundamentals"
             }
           },
           {
@@ -294,6 +294,8 @@
   },
   "active": "95903d918735c254",
   "lastOpenFiles": [
+    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
+    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "domains1_and_4_REVISION.md",
     "Untitled 1.md",
     "domain2_security_REVISION.md",
@@ -324,8 +326,6 @@
     "Pasted image 20260604192025.png",
     "Pasted image 20260604191925.png",
     "domain 1.md",
-    "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
-    "Aws practitioner/new/domain1_part2_global_wellarchitected.md",
     "Untitled.md",
     "Aws practitioner/new/domain2_security_part2.md",
     "Aws practitioner/new/domain2_security_part1.md",
