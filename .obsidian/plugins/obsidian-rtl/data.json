@@ -91,7 +91,8 @@
     "Aws practitioner/new/domain4_billing_pricing_support.md": "rtl",
     "Domain 4.md": "rtl",
     "domain2_security_REVISION.md": "ltr",
-    "domains1_and_4_REVISION.md": "auto"
+    "domains1_and_4_REVISION.md": "auto",
+    "weakness_analysis_and_revision.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,

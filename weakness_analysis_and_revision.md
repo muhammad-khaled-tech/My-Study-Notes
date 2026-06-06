@@ -190,9 +190,10 @@
 #### WEAKNESS #7: S3 Storage Classes
 **غلطت في S3 Express One Zone**
 
-| Question | You Chose | Correct |
-|---|---|---|
+| Question                           | You Chose   | Correct                 |
+| ---------------------------------- | ----------- | ----------------------- |
 | "Single-digit milliseconds access" | S3 Standard | **S3 Express One Zone** |
+|                                    |             |                         |
 
 **S3 Classes Quick Reference:**
 
