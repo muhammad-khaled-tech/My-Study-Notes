@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 364.51103591918945
+    "width": 364.51103591918945,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -235,8 +236,12 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "a4263eb0ef45c795",
+  "active": "275119dd4c74fed0",
   "lastOpenFiles": [
+    "domain4_billing_mega_revision.md",
+    "Unconfirmed 157974.crdownload",
+    "domain2_security_mega_revision.md",
+    "Unconfirmed 389680.crdownload",
     "domains1_and_4_REVISION.md",
     "weakness_analysis_and_revision.md",
     "domain1_mega_revision.md",
@@ -261,7 +266,6 @@
     "domain4_cheatsheet.md",
     "Unconfirmed 588012.crdownload",
     "Unconfirmed 549560.crdownload",
-    "Unconfirmed 601957.crdownload",
     "Pasted image 20260604225010.png",
     "Pasted image 20260604224954.png",
     "Pasted image 20260604224937.png",
@@ -280,9 +284,6 @@
     "Aws practitioner/new/domain3b_part3_wellarchitected_ecosystem.md",
     "Aws practitioner/new/domain3b_part2_ml_migration.md",
     "Aws practitioner/new/domain3a_part3_Compute_Deploy_Integration.md",
-    "odoo/odoo_views_deep_dive.md",
-    "odoo/odoo_day1_study_guide.md",
-    "odoo/Unconfirmed 514064.crdownload",
     "Untitled.canvas"
   ]
 }
