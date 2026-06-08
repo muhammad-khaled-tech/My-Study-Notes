@@ -20,8 +20,19 @@
               "icon": "lucide-file",
               "title": "domain1_mega_revision"
             }
+          },
+          {
+            "id": "a217414b9390c226",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -236,15 +247,15 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "275119dd4c74fed0",
+  "active": "a217414b9390c226",
   "lastOpenFiles": [
+    "domain1_mega_revision.md",
     "domain4_billing_mega_revision.md",
     "Unconfirmed 157974.crdownload",
     "domain2_security_mega_revision.md",
     "Unconfirmed 389680.crdownload",
     "domains1_and_4_REVISION.md",
     "weakness_analysis_and_revision.md",
-    "domain1_mega_revision.md",
     "Aws practitioner/new/domain1_part1_cloud_fundamentals.md",
     "domain3_cheatsheet.md",
     "Domain 2.md",
