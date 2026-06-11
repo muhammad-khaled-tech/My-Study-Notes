@@ -1,6 +1,6 @@
 # M5 Prompts — الـ 7 Sessions كاملة
-> ITI Attendance & Grading Platform · Vue 3 · Antigravity IDE
-> **كل prompt هنا جاهز للـ paste مباشرة في الـ Agent Panel**
+
+> ITI Attendance & Grading Platform · Vue 3 · Antigravity IDE **كل prompt هنا جاهز للـ paste مباشرة في الـ Agent Panel** **v5.0 — updated against Postman collection (self-driving)**
 
 ---
 
@@ -17,7 +17,7 @@
 ## ⚠️ REAL API ENDPOINTS — READ BEFORE ANY SESSION
 
 ```
-Verified against backend source code. These are the ONLY real M5 endpoints:
+Verified against Postman collection (self-driving). These are the ONLY real M5 endpoints:
 
 AUTH
   POST /api/login                              → { token, user: { id, name, role, student_id, instructor_id, expires_at } }
@@ -26,36 +26,41 @@ AUTH
 
   ⚠️ /me does NOT return cohort_id directly.
      After fetchMe(), call GET /api/students/{student_id} to get cohort_id.
+  ✅ login response includes user.student_id directly — confirmed in Postman.
 
 STUDENT
   GET  /api/students/{student}                 → student profile (includes cohort_id)
-  GET  /api/students/{student}/ledger          → { balance, ... }
+  GET  /api/students/{student}/ledger          → { balance, max, is_at_risk, ... }
   GET  /api/students/{student}/ledger/entries  → paginated [ { delta, balance_after, reason, ... } ]
+  ⚠️  ledger/entries is NOT in the Postman collection but exists in backend source — keep two-call approach.
 
 GRADES
   GET  /api/students/{student}/grade-card      → full grade card (grades, components, tags, notes)
 
 EXCUSE REQUESTS
+  ⚠️  Not present in Postman collection — endpoint confirmed in backend source code.
   GET  /api/excuse-requests                    → student's own list (scoped server-side by role)
   POST /api/excuse-requests                    → submit excuse — body: { attendance_record_id, reason, attachment? }
   GET  /api/excuse-requests/{excuse}           → single excuse
 
 SESSIONS (for upcoming sessions + QR)
-  GET  /api/sessions                           → list all sessions
+  GET  /api/sessions                           → list all sessions (flat, all cohorts)
   GET  /api/sessions/{session}/qr-code         → { qr_payload, expires_in: 15, refresh_at }
   GET  /api/sessions/{session}/attendance      → attendance records (instructor/admin only)
+  ⚠️  Sessions are generated server-side via POST /api/engagements/{id}/sessions/generate
+      The student-facing frontend only reads GET /api/sessions — never calls generate.
 
 ATTENDANCE
-  POST /api/attendance/scan                    → { session_qr_code: string } → check-in/out
-  ⚠️  Field is session_qr_code (NOT session_token)
-  ⚠️  Value is the raw qr_payload string decoded by jsQR (it's an encrypted token)
+  POST /api/attendance/scan                    → { session_qr_code: string, student_id: number }
+  ✅  UPDATED: body now requires BOTH session_qr_code AND student_id (confirmed Postman line 1470)
+  ⚠️  session_qr_code value is the raw qr_payload string decoded by jsQR (encrypted token)
   ⚠️  QR expires in 15 seconds — handle 400 "expired" response
 
 ANNOUNCEMENTS
   GET  /api/cohorts/{cohort}/announcements     → list for cohort
 
 DOES NOT EXIST (do not call these):
-  ❌ GET /student/dashboard     → compose manually from /me + /ledger + /sessions
+  ❌ GET /student/dashboard     → compose manually from /me + /students/{id} + /ledger + /sessions + /announcements
   ❌ GET /student/ledger        → real path: /students/{student_id}/ledger
   ❌ GET /student/unexcused-sessions → not an endpoint
   ❌ POST /api/excuses          → real is POST /api/excuse-requests
@@ -65,11 +70,11 @@ DOES NOT EXIST (do not call these):
 ---
 
 ## Session 1 — Foundation
-**Model: Gemini 3.5 Flash (Medium)**
-**Goal: Build the complete foundation layer with REAL API endpoints**
+
+**Model: Gemini 3.5 Flash (Medium)** **Goal: Build the complete foundation layer with REAL API endpoints**
 
 ```
-Load skills: @antigravity-workflows @senior-frontend
+/antigravity-workflows /senior-frontend
 
 STEP 0 — SET ENV:
   Open .env.local (copy from .env.example if missing).
@@ -98,9 +103,9 @@ STEP 2 — src/stores/auth.js (currently empty — write from scratch):
     token: ref(localStorage.getItem('auth_token') ?? null),
 
     isAuthenticated: computed(() => !!token.value),
-    studentId:    computed(() => user.value?.student_id    ?? null),  // ← from /me response
-    instructorId: computed(() => user.value?.instructor_id ?? null),  // ← from /me response
-    cohortId:     computed(() => user.value?.cohort_id     ?? null),  // ← added after fetchStudent()
+    studentId:    computed(() => user.value?.student_id    ?? null),  // ← from login/me response directly
+    instructorId: computed(() => user.value?.instructor_id ?? null),  // ← from login/me response
+    cohortId:     computed(() => user.value?.cohort_id     ?? null),  // ← added after fetchStudentProfile()
 
     async login(email, password):
       POST /api/login { email, password }
@@ -108,7 +113,7 @@ STEP 2 — src/stores/auth.js (currently empty — write from scratch):
       On success:
         token.value = response.data.token
         localStorage.setItem('auth_token', token.value)
-        user.value = response.data.user   // already has student_id
+        user.value = response.data.user   // already has student_id directly ✅
         If user.value.student_id → await fetchStudentProfile(user.value.student_id)
 
     async fetchMe():
@@ -136,6 +141,9 @@ STEP 3 — src/stores/ledger.js (currently empty — write from scratch):
   NOTE: The ledger has TWO separate endpoints:
     - GET /api/students/{student_id}/ledger          → balance only
     - GET /api/students/{student_id}/ledger/entries  → paginated timeline entries
+  ⚠️  ledger/entries is confirmed in backend source — not in Postman collection.
+      Keep the two-call approach. If /entries returns 404 at runtime, log the error
+      and set entries.value = [] without blocking the balance display.
 
   defineStore('ledger', () => {
     balance: ref(250),
@@ -150,22 +158,28 @@ STEP 3 — src/stores/ledger.js (currently empty — write from scratch):
 
     async fetchLedger(studentId: number):
       loading.value = true
-      Call BOTH in parallel with Promise.all:
+      Call BOTH in parallel with Promise.allSettled (not Promise.all — entries may 404):
         GET /api/students/{studentId}/ledger
         GET /api/students/{studentId}/ledger/entries
       Map results:
-        balance.value    = ledgerData.balance ?? ledgerData.data?.balance
-        max.value        = ledgerData.max ?? ledgerData.data?.max ?? 250
-        is_at_risk.value = ledgerData.is_at_risk ?? (balance.value < 150)
-        entries.value    = Array.isArray(entriesData)
-                           ? entriesData
-                           : entriesData.data ?? []
-      On error: set error.value
+        If ledger call fulfilled:
+          balance.value    = ledgerData.balance ?? ledgerData.data?.balance
+          max.value        = ledgerData.max ?? ledgerData.data?.max ?? 250
+          is_at_risk.value = ledgerData.is_at_risk ?? (balance.value < 150)
+        If entries call fulfilled:
+          entries.value    = Array.isArray(entriesData)
+                             ? entriesData
+                             : entriesData.data ?? []
+        If entries call rejected: entries.value = [] (silent — don't block UI)
+      On ledger call error: set error.value
 
     return { balance, max, is_at_risk, entries, loading, error, isAtRisk, balanceColor, fetchLedger }
   })
 
 STEP 4 — src/stores/excuse.js (does not exist — create it):
+
+  ⚠️  /api/excuse-requests endpoints confirmed in backend source.
+      Not present in Postman collection — keep as-is.
 
   defineStore('excuse', () => {
     excuseRequests: ref([]),   // student's own list from GET /api/excuse-requests
@@ -208,12 +222,12 @@ STEP 5 — src/stores/attendance.js (currently empty — write from scratch):
     lastScanResult: ref(null),
     loading: ref(false),
 
-    async submitScan(qrValue: string):
-      // ⚠️ Field name is session_qr_code (NOT session_token)
-      // qrValue = raw string decoded by jsQR from the displayed QR image
+    async submitScan(qrValue: string, studentId: number):
+      // ✅ UPDATED: body requires BOTH session_qr_code AND student_id (confirmed Postman)
+      // qrValue = raw encrypted string decoded by jsQR — do NOT parse or decode further
       loading.value = true
       try:
-        POST /api/attendance/scan { session_qr_code: qrValue }
+        POST /api/attendance/scan { session_qr_code: qrValue, student_id: studentId }
         On 200/201: scanState.value = 'success', lastScanResult.value = response.data
         On 409: scanState.value = 'duplicate', lastScanResult.value = error.response.data
         On 400:
@@ -269,11 +283,11 @@ RULES:
 ---
 
 ## Session 2 — StudentDashboard
-**Model: Gemini 3.1 Pro (High)**
-**Goal: Main student home screen — composed from multiple real endpoints**
+
+**Model: Gemini 3.1 Pro (High)** **Goal: Main student home screen — composed from multiple real endpoints**
 
 ```
-Load skills: @antigravity-workflows @stitch-ui-design @antigravity-design-expert @senior-frontend @ui-component
+/antigravity-workflows /stitch-ui-design /antigravity-design-expert /senior-frontend /ui-component
 
 DESIGN SOURCE: @stitch-exports/student_dashboard_iti_platform/code.html
 REFERENCE SCREENSHOT: @stitch-exports/student_dashboard_iti_platform/screen.png
@@ -299,10 +313,14 @@ The dashboard must be composed from these real API calls:
     // 2. Fetch ledger balance
     await ledgerStore.fetchLedger(studentId)
 
-    // 3. Fetch upcoming sessions
+    // 3. Fetch sessions (flat list — student reads GET /api/sessions)
     const sessionsRes = await api.get('/sessions')
     upcomingSessions.value = (sessionsRes.data?.data ?? sessionsRes.data)
-      .filter(s => new Date(s.date ?? s.starts_at) >= new Date())
+      .filter(s => {
+        // ⚠️ field name uncertain — keep both fallbacks
+        const d = s.date ?? s.starts_at
+        return d && new Date(d) >= new Date()
+      })
       .slice(0, 5)
 
     // 4. Fetch announcements for cohort
@@ -361,11 +379,11 @@ RULES:
 ---
 
 ## Session 3 — LedgerBalanceView
-**Model: Gemini 3.1 Pro (High)**
-**Goal: Ledger balance + deduction timeline — two separate API calls**
+
+**Model: Gemini 3.1 Pro (High)** **Goal: Ledger balance + deduction timeline — two separate API calls**
 
 ```
-Load skills: @antigravity-workflows @stitch-ui-design @antigravity-design-expert @ui-component
+/antigravity-workflows /stitch-ui-design /antigravity-design-expert /ui-component
 
 DESIGN SOURCE: @stitch-exports/attendance_ledger_iti_student_portal/code.html
 REFERENCE SCREENSHOT: @stitch-exports/attendance_ledger_iti_student_portal/screen.png
@@ -376,10 +394,11 @@ STORES:
   import { useAuthStore } from '@/stores/auth'
   import { useLedgerStore } from '@/stores/ledger'
 
-REAL API (two separate endpoints):
+REAL API (two separate endpoints — both called inside ledgerStore.fetchLedger):
   GET /api/students/{studentId}/ledger         → balance object
   GET /api/students/{studentId}/ledger/entries → paginated entries array
-  Both are called inside ledgerStore.fetchLedger(studentId) from Session 1.
+  ⚠️  If /entries returns 404 at runtime the store silently sets entries = [] —
+      the view should handle an empty entries array gracefully.
 
 onMounted:
   const authStore = useAuthStore()
@@ -416,7 +435,7 @@ NOT a table — vertical timeline:
 MAIN VIEW — src/views/attendance/LedgerBalanceView.vue:
 1. BalanceHeroCard (pass ledgerStore values)
 2. Section header: "Deduction History" (Playfair Display 20px) + count badge
-3. LedgerTimeline
+3. LedgerTimeline — show empty state "No deductions recorded yet." if entries is empty
 4. CTA button — only if any entry has delta < 0:
    "Submit an Excuse Request →"
    Full-width, height 52px, background #8B1A1A, hover #6B1212
@@ -431,11 +450,11 @@ After building: screenshot and compare with reference.
 ---
 
 ## Session 4 — ExcuseFormView
-**Model: Gemini 3.1 Pro (High)**
-**Goal: Excuse submission — POST /api/excuse-requests with attendance_record_id**
+
+**Model: Gemini 3.1 Pro (High)** **Goal: Excuse submission — POST /api/excuse-requests with attendance_record_id**
 
 ```
-Load skills: @antigravity-workflows @stitch-ui-design @file-uploads @ui-component
+/antigravity-workflows /stitch-ui-design /file-uploads /ui-component
 
 DESIGN SOURCE: @stitch-exports/excuse_submission_iti_student_portal/code.html
 REFERENCE SCREENSHOT: @stitch-exports/excuse_submission_iti_student_portal/screen.png
@@ -448,10 +467,9 @@ STORES:
   import api from '@/services/api'
 
 REAL API ENDPOINTS:
+  ⚠️  Excuse endpoints confirmed in backend source — not present in Postman collection.
   GET  /api/sessions                → all sessions (filter past ones client-side)
-  GET  /api/sessions/{id}/attendance → attendance records for a session
-                                       ⚠️ This is instructor-only (403 for students)
-                                       Use fallback strategy below instead.
+  GET  /api/sessions/{id}/attendance → instructor-only (403 for students) — use fallback below
   GET  /api/excuse-requests         → student's already-submitted excuses
   POST /api/excuse-requests         → { attendance_record_id, reason, attachment? }
   ⚠️  Body uses attendance_record_id — NOT session_id
@@ -463,19 +481,22 @@ onMounted:
   // Fetch past sessions for the dropdown
   const sessionsRes = await api.get('/sessions')
   const pastSessions = (sessionsRes.data?.data ?? sessionsRes.data)
-    .filter(s => new Date(s.date ?? s.starts_at) < new Date())
+    .filter(s => {
+      // ⚠️ field name uncertain — keep both fallbacks
+      const d = s.date ?? s.starts_at
+      return d && new Date(d) < new Date()
+    })
 
   // Fetch student's existing excuse requests
   await excuseStore.fetchExcuseRequests()
-  // excuseRequests contain attendance_record_id — use to exclude already-excused sessions
   const excusedRecordIds = excuseStore.excuseRequests.map(e => e.attendance_record_id)
 
-  // Fetch the student's own attendance records to get attendance_record.id per session
+  // Fetch the student's own attendance records via ledger entries
   // GET /api/students/{studentId}/ledger/entries gives ledger entries with attendance_record_id
   const entriesRes = await api.get('/students/' + studentId + '/ledger/entries')
   const entries = entriesRes.data?.data ?? entriesRes.data
 
-  // Build dropdown: past sessions where student has an attendance_record (via ledger entries)
+  // Build dropdown: past sessions where student has an attendance record (via ledger entries)
   // and has NOT already submitted an excuse
   availableItems.value = pastSessions
     .map(session => {
@@ -486,17 +507,15 @@ onMounted:
       if (!recordId) return null
       if (excusedRecordIds.includes(recordId)) return null
       return {
-        label: formatDate(session.date) + ' — ' + (session.type ?? session.engagement?.type ?? 'Session'),
+        label: formatDate(session.date ?? session.starts_at) + ' — ' + (session.type ?? session.engagement?.type ?? 'Session'),
         attendance_record_id: recordId
       }
     })
     .filter(Boolean)
 
   NOTE: Log the raw entries response to confirm field names before writing the map above.
-        The actual field path for attendance_record_id may differ.
         If ledger entries do not expose session_id, fall back to showing all past sessions
-        and let the server validate — the server returns 403 if the record doesn't belong
-        to the student, and 422 if an excuse already exists.
+        and let the server validate — the server returns 422 if an excuse already exists.
 
 COMPONENT 1 — src/components/attendance/ExcuseUploadZone.vue:
 Props: { modelValue: File | null }
@@ -552,11 +571,11 @@ After building: screenshot and compare with reference.
 ---
 
 ## Session 5 — QrScannerView
-**Model: Gemini 3.1 Pro (High)**
-**Goal: Mobile QR check-in — POST /api/attendance/scan**
+
+**Model: Gemini 3.1 Pro (High)** **Goal: Mobile QR check-in — POST /api/attendance/scan**
 
 ```
-Load skills: @antigravity-workflows @stitch-ui-design @progressive-web-app @mobile-developer @antigravity-design-expert
+/antigravity-workflows /stitch-ui-design /progressive-web-app /mobile-developer /antigravity-design-expert
 
 DESIGN SOURCE: @stitch-exports/qr_scanner_iti_student_portal/code.html
 REFERENCE SCREENSHOT: @stitch-exports/qr_scanner_iti_student_portal/screen.png
@@ -568,12 +587,14 @@ DEPENDENCY: Check package.json for jsqr. If missing, run: npm install jsqr
 Import as: import jsQR from 'jsqr'
 
 STORE: import { useAttendanceStore } from '@/stores/attendance'
+AUTH:  import { useAuthStore } from '@/stores/auth'
 
 REAL API:
   POST /api/attendance/scan
-  Body: { session_qr_code: string }
-  ⚠️  Field is session_qr_code — NOT session_token
-  ⚠️  Value is the raw encrypted string decoded by jsQR (do NOT parse or decode it further)
+  ✅ UPDATED Body: { session_qr_code: string, student_id: number }
+  ⚠️  BOTH fields are required — confirmed in Postman collection.
+  ⚠️  session_qr_code value is the raw encrypted string decoded by jsQR — do NOT decode further
+  ⚠️  student_id comes from authStore.studentId
   ⚠️  QR expires every 15 seconds — instructor refreshes on their side automatically
 
   Responses:
@@ -604,7 +625,9 @@ CAMERA:
 
   handleScan(qrValue):
     // qrValue is the raw encrypted payload string — pass it directly, do not decode
-    await attendanceStore.submitScan(qrValue)
+    // studentId comes from authStore — required by the scan endpoint
+    const authStore = useAuthStore()
+    await attendanceStore.submitScan(qrValue, authStore.studentId)
     // scanState is updated inside the store
 
   onUnmounted: clearInterval + stream.getTracks().forEach(t => t.stop())
@@ -650,24 +673,25 @@ After building: set devtools to 390px, screenshot, compare with reference.
 ---
 
 ## Session 6 — StudentGradeCardView
-**Model: Gemini 3.1 Pro (High)**
-**Goal: Academic summary — GET /api/students/{id}/grade-card**
+
+**Model: Gemini 3.1 Pro (High)** **Goal: Academic summary — GET /api/students/{id}/grade-card**
 
 ```
-Load skills: @antigravity-workflows @stitch-ui-design @antigravity-design-expert @ui-component
+/antigravity-workflows /stitch-ui-design /antigravity-design-expert /ui-component
 
 DESIGN SOURCE: @stitch-exports/student_grade_card_iti_portal/code.html
 REFERENCE SCREENSHOT: @stitch-exports/student_grade_card_iti_portal/screen.png
 
 TASK: Build StudentGradeCardView.vue + 3 SVG sub-components
 
-REAL API ENDPOINT (confirmed in backend source):
+REAL API ENDPOINT (confirmed in Postman collection — section 6):
   GET /api/students/{student_id}/grade-card
-  → Returns StudentGradeCardResource with:
-    student, labGroup, grades (with gradeComponent → course), tags, notes
-
-  ⚠️ No M6 grading store needed — call the endpoint directly from this view.
-  ⚠️ DO NOT touch src/stores/grading.js — M6 owns it.
+  → Returns StudentGradeCardResource
+  ⚠️  Log the full response before building any UI — field names are unconfirmed.
+      Map whatever the endpoint returns. Do NOT assume field names.
+  ⚠️  DO NOT touch src/stores/grading.js — M6 owns it.
+  ⚠️  lab_group_id is used server-side for grade entry — the view does NOT need to handle it.
+      Just display what the grade-card endpoint returns.
 
 STORES:
   import { useAuthStore } from '@/stores/auth'
@@ -678,7 +702,7 @@ onMounted:
   const studentId = authStore.studentId
   const res = await api.get('/students/' + studentId + '/grade-card')
   gradeCard.value = res.data?.data ?? res.data
-  // Log gradeCard.value to console BEFORE building the UI
+  // ✅ Log gradeCard.value to console BEFORE building the UI
   // Confirm actual field names: grades[].normalized_score, grades[].override_value,
   //   gradeComponent.weight, gradeComponent.course.name, gradeComponent.course.max_score
 
@@ -729,11 +753,11 @@ After building: screenshot and compare with reference.
 ---
 
 ## Session 7 — Integration + Polish + PR
-**Model: Claude Sonnet 4.6 (Thinking)**
-**⚠️ One message only — paste as a single prompt, do not continue the conversation**
+
+**Model: Claude Sonnet 4.6 (Thinking)** **⚠️ One message only — paste as a single prompt, do not continue the conversation**
 
 ```
-Load skills: @code-review-excellence @production-code-audit @systematic-debugging
+/code-review-excellence /production-code-audit /systematic-debugging
 
 TASK: Full M5 integration review against live backend at http://13.60.179.178/api
 
@@ -746,28 +770,30 @@ READ FIRST:
 ──────────────────────────────────────────────
 1. API CONNECTIONS — test real endpoints
 ──────────────────────────────────────────────
-These are the REAL M5 endpoints (verified from backend source code):
+These are the REAL M5 endpoints (verified from backend source + Postman collection):
 
   GET  /api/me                                  → { id, name, role, student_id, instructor_id }
   GET  /api/students/{id}                       → student profile with cohort_id
   GET  /api/students/{id}/ledger                → ledgerStore balance
-  GET  /api/students/{id}/ledger/entries        → ledgerStore entries (paginated)
-  GET  /api/students/{id}/grade-card            → full grade card
-  GET  /api/sessions                            → dashboard upcoming + excuse dropdown
+  GET  /api/students/{id}/ledger/entries        → ledgerStore entries (not in Postman — test carefully)
+  GET  /api/students/{id}/grade-card            → full grade card (confirmed Postman section 6)
+  GET  /api/sessions                            → dashboard upcoming + excuse dropdown (confirmed Postman)
   GET  /api/cohorts/{id}/announcements          → dashboard announcements
-  GET  /api/excuse-requests                     → excuseStore
+  GET  /api/excuse-requests                     → excuseStore (confirmed backend source, not in Postman)
   POST /api/excuse-requests                     → body: { attendance_record_id, reason, attachment? }
-  POST /api/attendance/scan                     → body: { session_qr_code: string }
+  POST /api/attendance/scan                     → body: { session_qr_code: string, student_id: number }
 
 For each: make the actual request, log status code + response shape.
 Flag any field name mismatch between API response and store mapping.
 Fix mismatches in the store (not in the view).
 
 KEY FIELD CHECKS:
-  auth store:    studentId = user.student_id (NOT user.id)
+  auth store:    studentId = user.student_id (confirmed from login + /me responses)
   ledger store:  entries fields = delta, balance_after, reason, created_at
+                 entries fetched with Promise.allSettled — 404 on /entries is silent
   excuse store:  POST body uses attendance_record_id (NOT session_id)
-  attendance:    POST body uses session_qr_code (NOT session_token)
+  attendance:    POST body uses BOTH session_qr_code AND student_id ✅ (confirmed Postman)
+  sessions:      date field may be session.date OR session.starts_at — handle both fallbacks
 
 ──────────────────────────────────────────────
 2. AT-RISK FLAG
@@ -805,6 +831,7 @@ Scan all 5 views + components:
   □ Hardcoded colors instead of CSS variables
   □ vue-tsc --noEmit errors
   □ Any write to grading.js (not allowed — M6 owns it)
+  □ attendance/scan store method called with only 1 arg (must pass studentId as 2nd arg)
 
 ──────────────────────────────────────────────
 6. PR DESCRIPTION
@@ -815,7 +842,7 @@ Scan all 5 views + components:
 - StudentDashboard.vue — composed from /me + /students/{id} + /ledger + /sessions + /announcements
 - LedgerBalanceView.vue + BalanceHeroCard + LedgerTimeline
 - ExcuseFormView.vue + ExcuseUploadZone (POST /api/excuse-requests with attendance_record_id)
-- QrScannerView.vue — jsQR + POST /api/attendance/scan { session_qr_code } (390px mobile)
+- QrScannerView.vue — jsQR + POST /api/attendance/scan { session_qr_code, student_id } (390px mobile)
 - StudentGradeCardView.vue — SVG ring, sparkline, bars (no chart libraries)
 - src/stores/auth.js, ledger.js, attendance.js, excuse.js (all from scratch)
 
@@ -832,7 +859,7 @@ balance < 150 → crimson styling in dashboard SummaryCard + LedgerBalanceView
 [attach screenshots from built-in browser]
 
 ### Known issues / TODOs
-(list any field name mismatches discovered during integration)
+(list any field name mismatches or 404s discovered during integration)
 ```
 
 ---
@@ -843,20 +870,22 @@ balance < 150 → crimson styling in dashboard SummaryCard + LedgerBalanceView
 Backend:    http://13.60.179.178/api
 Dev:        http://localhost:5173
 Auth:       Bearer token → localStorage key 'auth_token'
-Student ID: authStore.studentId → from user.student_id (GET /api/me)
+Student ID: authStore.studentId → from user.student_id (login response + GET /api/me)
 Cohort ID:  authStore.cohortId  → from GET /api/students/{student_id} (2nd call in fetchMe)
 
-Real M5 endpoints (verified from backend source code):
-  GET  /api/me                                ← student_id is here now ✓
+Real M5 endpoints (Postman collection + backend source):
+  GET  /api/me                                ← student_id confirmed ✅
   GET  /api/students/{id}                     ← cohort_id is here
   GET  /api/students/{id}/ledger
-  GET  /api/students/{id}/ledger/entries      ← SEPARATE from ledger!
-  GET  /api/students/{id}/grade-card          ← confirmed endpoint for Session 6
-  GET  /api/sessions
+  GET  /api/students/{id}/ledger/entries      ← SEPARATE from ledger — not in Postman, in source ✅
+  GET  /api/students/{id}/grade-card          ← confirmed Postman section 6 ✅
+  GET  /api/sessions                          ← confirmed Postman ✅
   GET  /api/cohorts/{id}/announcements
-  GET  /api/excuse-requests
+  GET  /api/excuse-requests                   ← backend source only, not in Postman ⚠️
   POST /api/excuse-requests                   ← body: attendance_record_id (NOT session_id)
-  POST /api/attendance/scan                   ← body: session_qr_code (NOT session_token)
+  POST /api/attendance/scan                   ← body: session_qr_code + student_id ✅ UPDATED
+
+Session date field: session.date ?? session.starts_at — keep both fallbacks ⚠️
 
 Model per session:
   1 Foundation   → Flash (Medium)
@@ -865,20 +894,9 @@ Model per session:
 
 At-Risk: balance < 150 → crimson #DC2626 everywhere
 QR Note: expires every 15s — 'expired' state needed in scanner
+Skill syntax in Antigravity: /skill-name (e.g. /antigravity-workflows)
 ```
 
 ---
 
-*M5 Prompts v4.0 — verified against backend source code*
-ENDOFFILE
-echo "done"
-Output
-
-done
-Done
-
-
-
-
-
-
+_M5 Prompts v5.0 — updated against Postman collection (self-driving)_ _Changes from v4.0:_ _- attendance/scan body now includes student_id (confirmed Postman line 1470)_ _- submitScan() store method signature updated to (qrValue, studentId)_ _- handleScan() in QrScannerView now passes authStore.studentId as 2nd arg_ _- ledger store uses Promise.allSettled — /entries 404 is silent, not blocking_ _- session date fallback (date ?? starts_at) applied in all 3 places it's used_ _- excuse endpoints kept as-is with source-confirmed warning comment_ _- grade-card view: lab_group_id concern removed — view just displays what endpoint returns_ _- skill syntax updated to /skill-name format for Antigravity IDE_ _- Session 7 code quality checklist adds: submitScan 2-arg check_
