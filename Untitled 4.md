@@ -29,7 +29,7 @@
 عمك أحمد سامي، أكيد مش لازم تشوف الفيديو كله، بس خد اللي يفكرك ويراجعلك على الدنيا. وعادي أي مصدر تاني في البايثون، بس أحمد سامي بيفتح الدماغ جدًا:
 
 - [ ] [فيديو بايثون – أحمد سامي](https://youtu.be/mlbe7Vxr7yA?si=qWtagTFbSRTBp-vc)
-
+- [ ] كورس fastapi -- فيه بايثون كمان - [fastapi](https://banquemisr25.udemy.com/course/fastapi-the-complete-course/)
 
 
 ---
