@@ -412,4 +412,148 @@ class Data,Split,Regression,Classification supervised;
 |`Highly interpretable`, `Human-readable rules`, `Prone to overfitting`|**Decision Trees**|شجرة القرار هي أكتر خوارزمية الـ البشر بيقدروا يقرأوا القواعد بتاعتها كأنها `If/Else`، بس عيبها إنها بتبصم.|
 
 ---
+## Phase 2 - Part 2: Unsupervised & Reinforcement Learning (خوارزميات الاستكشاف والتعلم المعزز)
 
+### 1. أصل الحكاية والمشكلة المعمارية (The Core Problem)
+
+في الـ Supervised Learning إحنا كنا مرفهين، الداتا جاية بـ Labels وإجابات نموذجية. المشكلة الحقيقية في هندسة البيانات إن 90% من الداتا اللي في الشركات (زي الـ Logs، سلوكيات المستخدمين في الموقع، أو التكست الخام) بتيجي **بدون أي Labels**. عندنا المتغير `X` بس، ومفيش `Y`.
+
+المشكلة الثانية: أحياناً مبيكونش عندنا داتا من الأساس! تخيل إنك بتبرمج Agent عشان يضارب في البورصة أو روبوت يمشي. مفيش "داتا تاريخية" هتعلمه كل سيناريو ممكن يحصل، لازم ينزل البيئة الحية ويتعلم بـ "التجربة والخطأ".
+
+هنا بيتدخل الـ Unsupervised Learning والـ Reinforcement Learning كحلول معمارية للتعامل مع "المجهول".
+
+### 2. التشريح العميق لخوارزميات الاستكشاف (Unsupervised Learning)
+
+بما إن مفيش Labels، هدف الموديل هنا مش "التوقع" (Prediction)، هدفه هو "استكشاف البنية الخفية" للداتا (Discovering Latent Structures).
+
+#### 🗂️ أ. التجميع (Clustering Algorithms)
+
+الهدف هو تجميع البيانات المتشابهة في جروبات، من غير ما نكون عارفين مسبقاً إيه هي الجروبات دي.
+
+**1. خوارزمية K-Means (التقسيم المركزي):**
+
+- **الميكانيكا (Lloyd's Algorithm):** بتجبر الخوارزمية إنها تقسم الداتا لعدد محدد من التجمعات (K). بنرمي نقط وهمية (Centroids) بشكل عشوائي. كل نقطة داتا تروح تلزق في أقرب Centroid. بعدين الـ Centroid يحسب المتوسط (Mean) بتاع النقط اللي لزقت فيه ويتحرك للمركز الجديد. تفضل اللفة دي تتعاد لحد ما النقط تثبت (Convergence).
+    
+- **معمارية التقييم:** بنقيس جودتها بحاجة اسمها `WCSS (Within-Cluster Sum of Squares)`، يعني المسافة بين النقط والمركز بتاعها.
+    
+- **فخاخ الـ K-Means:** لازم تحدد رقم الـ `K` مسبقاً (عن طريق طريقة اسمها Elbow Method). وتفترض إن التجمعات شكلها "دائري" (Spherical)، وبتتأثر جداً بالـ Outliers (القيم الشاذة).
+    
+
+**2. خوارزمية DBSCAN (التجميع الكثافي):**
+
+- **الميكانيكا:** دي الخوارزمية اللي بتعالج عيوب K-Means. مش بتحتاج تقولها عدد الـ Clusters كام! بتشتغل عن طريق البحث عن "المناطق المزدحمة" (High-density regions). لو لقت نقط كتير متجمعة جنب بعض في مسافة `eps`، بتعتبرهم Cluster.
+    
+- **الميزة المعمارية:** بتقدر تكتشف Clusters بأشكال هندسية غريبة (مش شرط دوائر)، والأهم إنها بتقدر تعزل النقط المتطرفة لوحدها وتسميها `Noise` (شواذ).
+    
+
+#### 📉 ب. تقليل الأبعاد (Dimensionality Reduction)
+
+الهدف هو ضغط البيانات وتقليل حجمها بدون فقدان المعلومات الجوهرية (Variance).
+
+**1. خوارزمية PCA (Principal Component Analysis):**
+
+- **الميكانيكا:** لو عندك داتا فيها 100 عامود (Features)، الـ PCA بيعمل تحويل رياضي (Linear Projection / Eigenvectors) عشان يدمج العواميد دي ويطلعلك مثلاً 10 عواميد جديدة (Principal Components) شايلين 95% من المعنى الأصلي بتاع الداتا.
+    
+- **الاستخدام:** ضغط البيانات لتسريع الـ Training، وتقليل الـ Noise.
+    
+
+**2. خوارزميات t-SNE & UMAP:**
+
+- **الاستخدام (في الـ GenAI):** دي خوارزميات غير خطية (Non-linear). بنستخدمها بشكل أساسي عشان نقدر نرسم الـ Vector Embeddings بتاعة الـ LLMs. الـ Embedding بيبقى 1024 بُعد، الخوارزميات دي بتضغطه لـ 2D أو 3D عشان نقدر نشوفه بعنينا كبشر في شاشة ونفهم الكلمات المتشابهة.
+    
+
+### 3. التشريح العميق للتعلم المعزز (Reinforcement Learning & RLHF)
+
+ده الـ Paradigm اللي بيعتمد على المكافأة والعقاب. مفيش داتا متسجلة للتدريب، في "تفاعل حي".
+
+#### 🎮 أ. الميكانيكا الأساسية (Core Mechanics)
+
+السيستم بيتكون من:
+
+- **Agent (المتعلم):** الكود بتاعنا.
+    
+- **Environment (البيئة):** العالم اللي الـ Agent بيتحرك فيه.
+    
+- **State (الحالة `S`):** وضع البيئة الحالي.
+    
+- **Action (الحركة `A`):** القرار اللي الـ Agent خده.
+    
+- **Reward (المكافأة `R`):** السكور اللي الـ Agent خده بعد ما عمل الحركة.
+    
+- **الهدف الرياضي:** الـ Agent بيحاول يبني **Policy `π`** (دليل استرشادي) يخليه يختار الـ Action اللي يعظم إجمالي المكافآت المستقبلية (Expected cumulative return). الخوارزمية الأشهر هنا هي **Q-Learning**.
+    
+
+#### 🧠 ب. دور التعلم المعزز في الذكاء التوليدي (RLHF - Exam Critical)
+
+خوارزميات الـ LLMs زي (Claude و GPT) في الأصل متدربة على "توقع الكلمة الجاية" من الإنترنت كله (يعني ممكن تشتم أو تخرف). إزاي بنخلي الموديل "مؤدب ومساعد" (Aligned)؟ عن طريق تقنية **RLHF (Reinforcement Learning from Human Feedback)**، وبتتم على 3 مراحل معمارية:
+
+1. **SFT (Supervised Fine-Tuning):** بنجيب ناس تكتب أسئلة وإجابات نموذجية ممتازة، وندرب الـ LLM عليها عشان يتعلم شكل الـ "محادثة".
+    
+2. **Reward Model (نموذج المكافأة):** نخلي الـ LLM يجاوب على سؤال بـ 4 إجابات مختلفة. ونجيب بشر (Human Annotators) يرتبوا الإجابات دي من الأحسن للأسوأ. بندرب موديل تاني (Reward Model) على الترتيب ده، عشان يبقى هو "القاضي" اللي بيقيم الإجابات.
+    
+3. **PPO (Proximal Policy Optimization):** دي خوارزمية الـ RL. بنخلي الـ LLM يولد إجابات، والـ Reward Model يديله سكور (مكافأة). خوارزمية PPO بتعدل أوزان الـ LLM عشان يزود من الإجابات اللي بتعجب القاضي ويبعد عن الإجابات اللي بتترفض.
+    
+
+### 4. المجاز المعماري (The Abstract Concepts)
+
+- **K-Means vs DBSCAN (المدير الكلاسيكي vs المدير الذكي):**
+    
+    - الـ K-Means هو مدير دخل مخزن مكركب وقال للعمال: "قسمولي الحاجات دي لـ 3 أكوام بالظبط، ماليش دعوة".
+        
+    - الـ DBSCAN هو مدير دخل المخزن وقال: "أي حاجة تلاقوها متكدسة فوق بعض اعتبروها كومة، وأي حاجة واقعة لوحدها في الركن ارموها في الزبالة (Noise/Outliers)".
+        
+- **PCA (تقليل الأبعاد):** تخيل إنك ماسك مجسم 3D لعربية، وسلطت عليه كشاف نور عشان يعكس ضله على الحيطة (2D). إنت كده قللت الأبعاد من 3 لـ 2، بس لسه قادر تتعرف إن دي عربية من شكل الضل.
+    
+- **RLHF (تأديب العبقري):** الـ LLM عامل زي طفل عبقري قرأ كل كتب مكتبة الإسكندرية بس معندوش ذكاء اجتماعي. الـ RLHF هي مرحلة "التربية"؛ كل ما الطفل يجاوب بأدب نديله بونبوني (Reward)، وكل ما يجاوب بوقاحة نزعقله (Penalty)، لحد ما يفهم إتيكيت الكلام.
+    
+
+
+
+```mermaid
+graph TD
+
+classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+classDef unsupervised fill:#fffbe6,stroke:#faad14,color:#000;
+classDef rl fill:#f6ffed,stroke:#52c41a,color:#000;
+classDef algo fill:#fff,stroke:#595959,color:#000;
+
+subgraph Unsupervised_Learning_Engine ["🗂️ Unsupervised Learning (Unlabeled Data)"]
+    direction TB
+    UnData["Raw Unlabeled Data (X only)"] --> Cluster["Clustering Tasks"]
+    UnData --> DimRed["Dimensionality Reduction"]
+    
+    Cluster --> KMeans["K-Means<br>(Must specify K, spherical clusters)"]:::algo
+    Cluster --> DBSCAN["DBSCAN<br>(Finds dense regions, isolates noise)"]:::algo
+    
+    DimRed --> PCA["PCA<br>(Linear compression, keeps variance)"]:::algo
+    DimRed --> TSNE["t-SNE / UMAP<br>(Visualizing LLM Embeddings)"]:::algo
+end
+
+subgraph Reinforcement_Learning_GenAI ["🎮 Reinforcement Learning (RLHF for LLMs)"]
+    direction TB
+    Phase1["1. SFT<br>(Supervised Fine-Tuning)"] --> Phase2
+    Phase2["2. Reward Model<br>(Humans rank LLM outputs)"] --> Phase3
+    Phase3["3. PPO Optimization<br>(RL updates LLM weights)"]:::algo
+    
+    Phase3 -.->|"Maximizes Reward"| Phase2
+end
+
+class Unsupervised_Learning_Engine,UnData,Cluster,DimRed unsupervised;
+class Reinforcement_Learning_GenAI,Phase1,Phase2 rl;
+```
+
+### 6. دستور الامتحان (Exam Traps & Keyword Mapping)
+
+الـ Keywords دي بتفصل بين الخوارزميات المتقدمة في الامتحان:
+
+|**فخ السيناريو في الامتحان (The Trap/Keyword)**|**الخوارزمية / الإجابة المطلوبة**|**التفسير المعماري (Why?)**|
+|---|---|---|
+|`Requires specifying number of clusters in advance`, `Elbow method`|**K-Means Clustering**|الـ K-Means أعمى، لازم تديله حرف الـ K (عدد التجمعات) قبل ما يشتغل.|
+|`Clusters of arbitrary shape`, `Identify outliers or noise`|**DBSCAN**|الـ DBSCAN بيعتمد على الكثافة (Density-based)، عشان كده بيقدر يعزل الـ Outliers ويتعامل مع الأشكال الغريبة.|
+|`Reduce number of features`, `Retain variance`, `Compress data`|**PCA (Principal Component Analysis)**|ده الحل الكلاسيكي لضغط الـ Features رياضياً بدون فقدان جوهر الداتا.|
+|`Visualize high-dimensional embeddings in 2D or 3D`|**t-SNE** أو **UMAP**|دي الأدوات القياسية لتمثيل الـ Embeddings المعقدة بتاعة الـ LLMs مرئياً.|
+|`Align model with human preferences`, `Human annotators rank responses`, `Reward model`|**RLHF (Reinforcement Learning from Human Feedback)**|البصمة الثابتة لأي سؤال بيسأل عن إزاي بنخلي الـ LLMs آمنة ومناسبة للبشر.|
+
+**(بنسخك للرسالة دي في الـ Obsidian، إنت كده معاك Phase 2 بالكامل ومحركات الـ ML بقت في جيبك. اديني إشارة البدء عشان ندخل في Phase 3: The ML Lifecycle، واللي فيها فخاخ الـ Data Leakage والـ Data Wrangling اللي بيعشقوها في الامتحانات!)**
+
+---
