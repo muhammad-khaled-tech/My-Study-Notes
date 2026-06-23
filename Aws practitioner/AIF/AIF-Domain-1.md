@@ -84,38 +84,39 @@ Code snippet
 
 ```mermaid
 graph TD
-    classDef default font-weight:bold,font-size:14px,stroke-width:2px;
-    classDef classical fill:#f0f2f5,stroke:#595959,color:#000;
-    classDef ai fill:#f9f0ff,stroke:#722ed1,color:#000;
-    classDef agent fill:#e6fffc,stroke:#13c2c2,color:#000;
 
-    subgraph Classical_Engineering [⚙️ Classical Software Engineering]
-        direction LR
-        Data1[Raw Data] --> Rules[Manual Rules <br> if/else] --> Output1[Output]
-    end
+classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+classDef classical fill:#f0f2f5,stroke:#595959,color:#000;
+classDef ai fill:#f9f0ff,stroke:#722ed1,color:#000;
+classDef agent fill:#e6fffc,stroke:#13c2c2,color:#000;
 
-    subgraph The_AI_Evolution [🚀 The AI Evolution]
-        direction TB
-        
-        AI_Layer[<b>Artificial Intelligence</b> <br> Mimics human logic. Can be Rule-Based.]
-        
-        ML_Layer[<b>Machine Learning</b> <br> Learns Rules from Data and Answers.]
-        
-        DL_Layer[<b>Deep Learning</b> <br> Uses Neural Networks. Auto-extracts features.]
-        
-        Gen_Layer[<b>Generative AI</b> <br> Learns patterns to create NET-NEW content.]
-        
-        Agent_Layer[<b>Agentic AI (v1.1)</b> <br> Orchestrates GenAI with Tools & Memory.]
+subgraph Classical_Engineering ["⚙️ Classical Software Engineering"]
+    direction LR
+    Data1["Raw Data"] --> Rules["Manual Rules <br> if/else"] --> Output1["Output"]
+end
 
-        AI_Layer ==> ML_Layer
-        ML_Layer ==> DL_Layer
-        DL_Layer ==> Gen_Layer
-        Gen_Layer ==> Agent_Layer
-    end
+subgraph The_AI_Evolution ["🚀 The AI Evolution"]
+    direction TB
+    
+    AI_Layer["<b>Artificial Intelligence</b> <br> Mimics human logic. Can be Rule-Based."]
+    
+    ML_Layer["<b>Machine Learning</b> <br> Learns Rules from Data and Answers."]
+    
+    DL_Layer["<b>Deep Learning</b> <br> Uses Neural Networks. Auto-extracts features."]
+    
+    Gen_Layer["<b>Generative AI</b> <br> Learns patterns to create NET-NEW content."]
+    
+    Agent_Layer["<b>Agentic AI (v1.1)</b> <br> Orchestrates GenAI with Tools & Memory."]
 
-    class Classical_Engineering classical;
-    class The_AI_Evolution ai;
-    class Agent_Layer agent;
+    AI_Layer ==> ML_Layer
+    ML_Layer ==> DL_Layer
+    DL_Layer ==> Gen_Layer
+    Gen_Layer ==> Agent_Layer
+end
+
+class Classical_Engineering classical;
+class The_AI_Evolution ai;
+class Agent_Layer agent;
 ```
 
 ### 5. دستور الامتحان (Exam Traps & Keyword Mapping)
@@ -215,13 +216,8 @@ graph TD
 - **الـ High Variance (طالب الـ Overfitting):** طالب "بصمجي" بدرجة امتياز. حفظ امتحانات السنين اللي فاتت بالمللي، لدرجة إنه حفظ إن "لو السؤال مكتوب بخط أحمر تبقى إجابته أ". دخل الامتحان التجريبي (Training) جاب 100%. دخل الفاينال (Testing) لقى نفس الأسئلة بس مكتوبة بخط أزرق.. سقط! الموديل ده حفظ الدوشة (Noise) وفشل في التعميم (Generalization).
     
 
-### 4. اللوحة المعمارية: دورة التشغيل وفخاخ التدريب (Mermaid)
 
-Code snippet
-
-![](data:image/png;base64,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)
-
-```
+```mermaid
 graph TD
     classDef default font-weight:bold,font-size:14px,stroke-width:2px;
     classDef training fill:#e6f7ff,stroke:#1890ff,color:#000;
@@ -274,6 +270,5 @@ graph TD
 |`Balancing model complexity to minimize total error`|**Bias-Variance Tradeoff**|المقايضة الهندسية الأساسية لمنع الموديل من إنه يتغبى أو يبصم.|
 |`Model capability not explicitly trained for, arising from massive scale`|**Emergent Capabilities (LLMs)**|قدرات مفاجئة بتظهر في الـ LLMs لما تكبر (زي قدرتها على كتابة كود وهي متدربة على نصوص عامة).|
 
-إحنا كده **قفلنا Phase 1 بالكامل** (الـ 2 Parts بتوعها) وبنينا أساس معماري لا يمكن يتهز.
 
-بلغني أول ما تـ Sync الداتا دي في الـ Obsidian، عشان نفتح النار على **Phase 2: Types of ML Learning Paradigms (الـ Supervised والـ Unsupervised والـ RL والخوارزميات بتاعتهم)** بأقصى تفصيل! 🚀
+----
