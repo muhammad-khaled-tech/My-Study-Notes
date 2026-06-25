@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Aws practitioner/AIF/AIF-Domain-1.md",
+                "file": "Aws practitioner/AIF/AIF-C01_Domain1_Fundamentals_DeepDive.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "AIF-Domain-1"
+              "title": "AIF-C01_Domain1_Fundamentals_DeepDive"
             }
           }
         ]
@@ -238,8 +238,9 @@
   },
   "active": "f8ff720a4c7aaa47",
   "lastOpenFiles": [
-    "Aws practitioner/AIF/AIF-C01_Domain1_Fundamentals_DeepDive.md",
+    "Aws practitioner/AIF/AIF-C01_Domain2_GenAI_DeepDive.md",
     "Aws practitioner/AIF/AIF-Domain-1.md",
+    "Aws practitioner/AIF/AIF-C01_Domain1_Fundamentals_DeepDive.md",
     "Aws practitioner/AIF",
     "Untitled 3.md",
     "Untitled 4.md",
@@ -283,7 +284,6 @@
     "Pasted image 20260604192025.png",
     "Pasted image 20260604191925.png",
     "domain 1.md",
-    "Aws practitioner/new/domain2_security_part2.md",
     "Untitled.canvas"
   ]
 }
