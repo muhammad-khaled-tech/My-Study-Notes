@@ -824,3 +824,263 @@ end
 |`Used to prevent training-serving skew`, `Store features for training and real-time inference`|**Amazon SageMaker Feature Store**|دي الخدمة اللي بتضمن إن الداتا اللي دربت بيها الموديل هي هي بنفس الـ Format اللي بتجيله في الـ Production.|
 
 ---
+
+## Phase 4: Model Evaluation Metrics (مقاييس التقييم المعمارية)
+
+### 1. أصل الحكاية والمشكلة المعمارية (The Core Problem)
+
+الـ Data Scientist المبتدئ بيجري دايماً ورا مقياس الـ **Accuracy (الدقة)**. لو عمل موديل بيكتشف عمليات النصب في البنك (Fraud Detection)، ولقى الدقة 99%، بيطير من الفرحة ويرفعه Production.
+
+المشكلة المعمارية الكارثية هنا: البنك بيعمل مليون عملية في اليوم، منهم 100 عملية نصب بس (Imbalanced Data). لو الموديل ده كان "غبي" ومتبرمج إنه يقول على **كل العمليات** "سليمة" (Not Fraud)، هيطلع صح في 999,900 عملية، ودقته هتبقى 99.9%.. بس الـ 100 عملية نصب عدوا والبنك اتخرب بيته!
+
+من هنا، هندسة الـ ML رمت الـ Accuracy في الزبالة (في حالة البيانات غير المتوازنة)، وابتكرت مقاييس تفصيلية تقيس الموديل بيغلط "إزاي" وفين بالظبط.
+
+### 2. التشريح العميق لطبقات التقييم (Deep Architectural Dive)
+
+عشان نقيم أي موديل، لازم الأول نعرف هو Classification ولا Regression، لأن كل واحد ليه أدوات قياس مختلفة تماماً.
+
+#### 🗂️ أ. مقاييس التصنيف (Classification Metrics)
+
+الأساس هنا هو مصفوفة الارتباك (Confusion Matrix). دي جدول 2x2 بيقسم توقعات الموديل لـ 4 أرباع:
+
+1. **True Positive (TP):** الموديل قال "حرامي" وطلع فعلاً "حرامي". (برافو).
+    
+2. **True Negative (TN):** الموديل قال "عميل محترم" وطلع فعلاً "محترم". (برافو).
+    
+3. **False Positive (FP - Type I Error):** الموديل قال "حرامي" بس طلع "عميل محترم" وتصرفاته عادية. (إنذار كاذب / إزعاج).
+    
+4. **False Negative (FN - Type II Error):** الموديل قال "عميل محترم" بس طلع "حرامي" وسرق البنك. (كارثة صامتة / مصيبة).
+    
+
+**المقاييس المشتقة من المصفوفة:**
+
+- **Accuracy (الدقة):** `(TP + TN) / Total`. مضللة جداً لو الداتا مش متوازنة (Imbalanced).
+    
+- **Precision (الدقة الإيجابية):** `TP / (TP + FP)`.
+    
+    - _السؤال اللي بتجاوبه:_ "من وسط كل اللي الموديل مسكهم وقال عليهم حرامية، كام واحد طلع حرامي بجد؟"
+        
+    - _التركيز:_ بتقلل الـ False Positives. (بنركز عليها لو الإزعاج أو الإنذار الكاذب تكلفته عالية، زي فلتر الـ Spam، لو حط إيميل الشغل المهم في الـ Spam هتبقى مشكلة).
+        
+- **Recall / Sensitivity (الاستدعاء):** `TP / (TP + FN)`.
+    
+    - _السؤال اللي بتجاوبه:_ "من وسط الحرامية الحقيقيين كلهم اللي في الداتا، الموديل قدر يصطاد كام واحد؟"
+        
+    - _التركيز:_ بتقلل الـ False Negatives. (بنركز عليها جداً في الطب والأمن.. مفيش مشكلة نكشف على المريض مرتين (FP)، بس منسيبوش يموت وهو مريض ومكتشفناهوش (FN)).
+        
+- **F1-Score:** `2 * (Precision * Recall) / (Precision + Recall)`.
+    
+    - _الفكرة:_ ده الـ Harmonic Mean (المتوسط التوافقي) بينهم. لو إنت محتار والبيزنس طالب توازن بين الـ Precision والـ Recall وعندك Imbalanced Data، الرقم ده هو اللي بتعتمد عليه.
+        
+
+#### 📈 ب. مقاييس الانحدار (Regression Metrics)
+
+هنا مفيش Confusion Matrix لأن الموديل بيتوقع أرقام (مثال: سعر البيت). التقييم بيكون بحساب "المسافة" بين توقع الموديل والسعر الحقيقي.
+
+- **MAE (Mean Absolute Error):** متوسط الخطأ المطلق. بيجيب الفرق بين التوقع والحقيقة ويجمعهم. (مقاوم للـ Outliers).
+    
+- **MSE (Mean Squared Error):** متوسط الخطأ المربع. بيربع الفرق قبل ما يجمعه. (بيعاقب الأخطاء الكبيرة بشراسة، لو الموديل غلط في رقم كبير، الـ MSE هيضرب في السما).
+    
+- **RMSE (Root Mean Squared Error):** جذر الـ MSE. الميزة الهندسية هنا إن نتيجته بتطلع بنفس "وحدة القياس" بتاعة الداتا (يعني لو بتتوقع بالدولار، الـ RMSE بيطلع بالدولار، فسهل تشرحه للمدير المالي).
+    
+- **R² (Coefficient of Determination):** من 0 لـ 1. بيقولك الموديل قدر يفسر كام في المية من التغيرات اللي في الداتا. (لو 1 يبقى موديل مثالي، لو 0 يبقى الموديل زيه زي لو أخدنا متوسط الأسعار).
+    
+
+#### 💼 ج. مقاييس البيزنس (Business Metrics - AIF-C01 v1.1)
+
+الامتحان الجديد ضاف الجزء ده عشان يتأكد إنك مش مجرد أكاديمي:
+
+- **Cost per user / interaction:** التكلفة الإجمالية للإنفراسركتشر مقسومة على عدد التوقعات.
+    
+- **ROI (العائد على الاستثمار):** الفلوس اللي الموديل وفرها أو جابها ناقص تكلفة تشغيله.
+    
+
+### 3. المجاز المعماري (The Fire Alarm Metaphor)
+
+عشان عمرك ما تتلخبط بين الـ Precision والـ Recall في الامتحان، افتكر "إنذار الحريق":
+
+- **True Positive (TP):** في حريقة، والإنذار زمر.
+    
+- **False Positive (FP - Low Precision):** واحد بيشوي لحمة في البلكونة، الإنذار زمر ورش مية وبوظ العفش. (إزعاج عالي، تكلفة مادية، بس مفيش أرواح راحت).
+    
+- **False Negative (FN - Low Recall):** البيت بيولع، والإنذار فضل ساكت مزمرش! (كارثة، خسارة أرواح).
+    
+
+لو الشقة بتاعتك، هتخلي حساسية الإنذار عالية جداً (High Recall) عشان تضمن إن مفيش حريقة هتفوتك، حتى لو زمر مرة بالغلط (Low Precision). لكن لو بتعمل فلتر إيميلات، هتفضل الـ (High Precision) عشان مديرك ميتجننش إن إيميلات الشغل بتروح للسبام.
+
+### 4. اللوحة المعمارية: شجرة اتخاذ القرار للمقاييس (Mermaid)
+
+Code snippet
+
+```mermaid
+graph TD
+
+classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+classDef question fill:#e6f7ff,stroke:#1890ff,color:#000;
+classDef metric fill:#f6ffed,stroke:#52c41a,color:#000;
+classDef note fill:#fffbe6,stroke:#faad14,color:#000;
+
+subgraph Metrics_Decision_Tree ["🌳 How to Choose the Right Metric?"]
+    direction TB
+    
+    Q1{"What is the ML Task?"}:::question
+    
+    Q1 -->|Predicting Numbers| RegTask["Regression Task"]
+    RegTask --> Q2{"Are there large outliers?"}:::question
+    Q2 -->|Yes, don't over-penalize| MAE["Use MAE"]:::metric
+    Q2 -->|No, penalize large errors| RMSE["Use RMSE (Same Unit)"]:::metric
+    
+    Q1 -->|Categorizing Data| ClassTask["Classification Task"]
+    ClassTask --> Q3{"Is the dataset balanced?"}:::question
+    Q3 -->|Yes (50% Cat, 50% Dog)| Acc["Use Accuracy"]:::metric
+    Q3 -->|No (99% Normal, 1% Fraud)| Q4{"What is the Business Risk?"}:::question
+    
+    Q4 -->|Cost of False Alarm (FP) is High<br>e.g., Spam Filter| Prec["Optimize for Precision"]:::metric
+    Q4 -->|Cost of Missing a Case (FN) is Fatal<br>e.g., Cancer Detection| Rec["Optimize for Recall (Sensitivity)"]:::metric
+    Q4 -->|Need a balance between both| F1["Use F1-Score"]:::metric
+end
+```
+
+### 5. دستور الامتحان (Exam Traps & Keyword Mapping)
+
+أسئلة الجزء ده في الامتحان بتكون "موقف بيزنس" بيطلب منك تختار المقياس الصح. دي الشفرة:
+
+|**فخ السيناريو في الامتحان (The Trap/Keyword)**|**المقياس المطلوب (The Answer)**|**التفسير المعماري (Why?)**|
+|---|---|---|
+|`Highly imbalanced dataset`, `Only 1% of transactions are fraudulent`|**F1-Score** أو **Precision/Recall**|الـ Accuracy في الداتا دي مضللة تماماً (فخ صريح). لازم تروح للـ F1-Score.|
+|`Minimize the risk of missing a sick patient`, `Disease screening`, `Safety-critical`|**Recall (Sensitivity)**|تكلفة الـ False Negative (تجاهل حالة مريضة) كارثية، فلازم نعظم الـ Recall.|
+|`Avoid flagging legitimate emails as spam`, `Minimize false alarms`|**Precision**|هنا إحنا خايفين من الـ False Positives (اتهام بريء)، فبنعظم الـ Precision.|
+|`Penalize large errors heavily in continuous predictions`|**MSE** أو **RMSE**|الـ Squared error (التربيع) بيضخم الأرقام الكبيرة، فبيعاقب الموديل بشدة لو غلط غلطة كبيرة.|
+|`Evaluate economic efficiency of the ML system`, `Operational overhead`|**Cost per interaction** أو **ROI**|لما يطلب Metric له علاقة بالـ Business objectives (فلوس وتكلفة)، اختار مقاييس البيزنس.|
+
+---
+## Phase 5: The AWS ML Ecosystem (رصة أمازون المعمارية للذكاء الاصطناعي)
+
+### 1. أصل الحكاية والمشكلة المعمارية (The Core Problem)
+
+الشركات كلها بتجري ورا الـ AI، بس مش كل الشركات عندها رفاهية إنها تعين فريق كامل من الـ Data Scientists بمرتبات خرافية عشان يبنوا موديل بيتعرف على وشوش الموظفين في البصمة!
+
+المشكلة المعمارية هنا هي الـ **(Build vs. Buy)**. هل تبني الموديل من الصفر وتدفع تكاليف سيرفرات وتدريب (Compute Costs)، ولا تشتري "مخ جاهز" متدرب وتكلمه بـ API Call؟
+
+أمازون حلت الأزمة دي بإنها قسمت خدمات الـ ML لطبقات (Tiers)، بتبدأ من الـ APIs السهلة جداً لأي Backend Developer، لحد الـ IDE المعقد المخصص لعلماء البيانات.
+
+### 2. التشريح العميق لطبقات أمازون (AWS ML Stack Deep Dive)
+
+#### 🚀 الطبقة الأولى: خدمات الـ AI الجاهزة (Managed AI Services)
+
+دي طبقة الـ (No ML Expertise Required). إنت كمهندس بتبعت Request فيه الداتا، وأمازون ترد عليك بـ JSON فيه النتيجة.
+
+**1. خدمات الرؤية (Vision):**
+
+- **Amazon Rekognition:** بتديله صورة أو فيديو. بيطلعلك: وجوه الناس، مشاعرهم، الـ Objects اللي في الصورة، وبيقدر يعمل (Content Moderation) عشان يفلتر الصور الإباحية أو العنيفة.
+    
+- **Amazon Textract:** أوعى تقول عليه OCR عادي! ده بيقرأ الـ "مستندات المعقدة". لو اديته صورة فاتورة، هيطلعلك الجداول (Tables) والـ Key-Value pairs (زي Total: $50)، مش مجرد تكست مرصوص.
+    
+
+**2. خدمات اللغة والنصوص (Language/NLP):**
+
+- **Amazon Comprehend:** دكتور التحليل النفسي للنصوص. تديله ريفيو لعميل، يقولك الـ Sentiment (إيجابي/سلبي)، ويطلعلك الـ Entities (أماكن، أسماء، تواريخ)، والأهم: بيعمل **PII Redaction** (بيشفر البيانات الحساسة زي أرقام الكريدت كارد من التكست).
+    
+- **Amazon Translate:** ترجمة عصبية (Neural) سريعة، وبتدعم الـ Custom Terminology لو عندك مصطلحات خاصة بشركتك مش عاوزها تترجم حرفياً.
+    
+
+**3. خدمات الصوت والمحادثة (Speech & Chatbots):**
+
+- **Amazon Transcribe:** بيحول الصوت لتكست (Speech-to-Text). الميزة المعمارية: بيعمل Speaker Diarization (يعني يقدر يفرق بين صوت العميل وصوت موظف خدمة العملاء في المكالمة).
+    
+- **Amazon Polly:** العكس (Text-to-Speech). بياخد التكست يحوله لصوت بشري طبيعي.
+    
+- **Amazon Lex:** المحرك اللي مبني عليه المساعد الصوتي Alexa. بنستخدمه عشان نبني Chatbots بتفهم الـ Intents (نوايا العميل) وتنفذها.
+    
+
+**4. خدمات البيزنس (Business Logic):**
+
+- **Amazon Personalize:** محرك التوصيات (Recommendation Engine) زي بتاع Netflix. بياخد داتا كليكات اليوزر ويقترحله المنتجات اللي ممكن يشتريها.
+    
+- **Amazon Forecast:** محرك التوقع الزمني (Time-series). بياخد داتا مبيعات السنين اللي فاتت، ويتوقعلك مبيعات الشهر الجاي عشان تضبط المخازن.
+    
+- **Amazon Kendra:** محرك بحث ذكي (Enterprise Search) للملفات الداخلية بتاعة الشركة، شغال بالـ ML عشان يفهم "معنى" السؤال مش مجرد الكلمات المفتاحية.
+    
+
+#### ⚙️ الطبقة الثانية: بيئة SageMaker (The Workbench)
+
+لو الخدمات الجاهزة مش مكفياك (مثلاً عاوز تتوقع احتمالية إصابة مريض بمرض نادر بناءً على جينات معينة)، لازم تبني موديل مخصص. هنا بتدخل الـ SageMaker Ecosystem.
+
+- **تجهيز البيانات:** * **Ground Truth:** خدمة بتخلي "بشر" حقيقيين يخشوا يعلموا على الداتا (Labeling) عشان الموديل يتدرب عليها.
+    
+    - **Data Wrangler:** أداة Visual جوه SageMaker لتنظيف الداتا (Wrangling) من غير ما تكتب كود بايثون كتير.
+        
+- **التدريب والبحث:** * **JumpStart:** ده الـ Hub بتاع أمازون. بتلاقي فيه خوارزميات جاهزة ونماذج Open-source (زي Llama و Stable Diffusion) تقدر تعملها Fine-tuning بضغطة زرار.
+    
+    - **Automatic Model Tuning (AMT):** المحرك اللي بيجرب إعدادات الموديل (Hyperparameters) عشان يوصل لأفضل دقة باستخدام الـ Bayesian Optimization اللي شرحناه.
+        
+- **الرقابة والحوكمة (Governance):**
+    
+    - **Clarify:** المحقق السري. بيكتشف الـ Bias (التحيز) في الموديل، وبيشرح الموديل أخد القرار ده ليه (Explainability).
+        
+    - **Model Monitor:** الرادار اللي شغال في الـ Production عشان يلقط الـ Data Drift اللي بيحصل بعد الـ Deployment.
+        
+
+#### 🧑‍⚖️ الطبقة الثالثة: Amazon A2I (Augmented AI)
+
+- **الميكانيكا:** مهما كان الموديل قوي، أحياناً ثقته في الإجابة بتكون قليلة (Low Confidence). הـ A2I بياخد الـ Predictions الضعيفة دي ويحولها لـ "موظف بشري" عشان يراجعها ويأكد عليها قبل ما تروح للعميل. (Human-in-the-loop).
+    
+
+### 3. المجاز المعماري (The Restaurant Metaphor)
+
+- **AWS Managed AI (الـ Delivery):** إنت جعان، فبتفتح أوبر إيتس تطلب بيتزا. سريعة، مضمونة، ومفيش مجهود (API Call). بس عيبها إنك متقدرش تدخل المطبخ وتقول للشيف يقلل الملح. بتاخدها زي ما هي.
+    
+- **Amazon SageMaker (تأجير مطبخ تجاري):** إنت هنا الشيف. أمازون بتأجرلك البوتاجاز (Compute) والمقادير وأدوات التقطيع (Data Wrangler & JumpStart). إنت اللي بتطبخ الوصفة السرية بتاعتك من الصفر للعميل.
+    
+- **Amazon A2I (مراقب الجودة):** ده المتر دوتيل (Maitre D) اللي واقف على باب المطبخ. لو الشيف مطلع طبق شكله غريب أو شاكك فيه (Low Confidence)، المتر بيدوقه الأول (Human Review) قبل ما ينزل للترابيزة.
+    
+
+### 4. اللوحة المعمارية: خريطة خدمات الـ ML (Mermaid)
+
+
+
+```mermaid
+graph TD
+
+classDef default font-weight:bold,font-size:14px,stroke-width:2px;
+classDef api fill:#f6ffed,stroke:#52c41a,color:#000;
+classDef sage fill:#e6f7ff,stroke:#1890ff,color:#000;
+classDef human fill:#fffbe6,stroke:#faad14,color:#000;
+
+subgraph AI_Services ["🤖 Level 1: Managed AI APIs (No ML Skills Needed)"]
+    direction TB
+    Vis["<b>Vision:</b> Rekognition (Images), Textract (Forms/OCR)"]:::api
+    Lang["<b>Language:</b> Comprehend (NLP/PII), Translate"]:::api
+    Speech["<b>Speech:</b> Transcribe (Speech->Text), Polly (Text->Speech)"]:::api
+    Logic["<b>Logic:</b> Lex (Chatbots), Personalize (Recommendations)"]:::api
+end
+
+subgraph SageMaker_Ecosystem ["⚙️ Level 2: Amazon SageMaker (For Data Scientists)"]
+    direction TB
+    Prep["<b>Prep:</b> Ground Truth (Labeling), Data Wrangler (ETL)"]:::sage
+    Train["<b>Train:</b> JumpStart (Open Models), AMT (Tuning)"]:::sage
+    Monitor["<b>Monitor:</b> Clarify (Bias), Model Monitor (Drift)"]:::sage
+end
+
+subgraph Human_In_The_Loop ["🧑‍⚖️ Level 3: Human Oversight"]
+    direction TB
+    A2I["<b>Amazon A2I (Augmented AI)</b><br>Routes low-confidence predictions to Humans"]:::human
+end
+
+AI_Services --> SageMaker_Ecosystem
+SageMaker_Ecosystem --> Human_In_The_Loop
+```
+
+### 5. دستور الامتحان (Exam Traps & Disambiguation)
+
+أمازون بتعشق تلخبطك بين الخدمات اللي شبه بعض. الجدول ده هو حائط الصد بتاعك:
+
+|**فخ السيناريو في الامتحان (The Trap/Keyword)**|**الخدمة المطلوبة (The Answer)**|**التفسير المعماري (Why?)**|
+|---|---|---|
+|`Extract data from scanned forms`, `Tables and Key-Value pairs`|**Amazon Textract**|لو قالك "صور وجوه ومحتوى سيء" تختار Rekognition، لكن لو "ورق وفواتير وجداول" تختار Textract.|
+|`Detect and redact PII`, `Find sentiment in text`|**Amazon Comprehend**|الـ Comprehend هو المحلل اللغوي الأقوى لفلترة البيانات الحساسة من النصوص الخام.|
+|`Human review of low-confidence predictions` vs `Human labeling for training data`|**A2I** (Review) vs **Ground Truth** (Labeling)|(فخ خطير): הـ A2I بيراجع النتيجة **في الـ Production** (بعد ما الموديل يشتغل). הـ Ground Truth بيعمل Labels **قبل التدريب** عشان نبني الموديل أصلاً.|
+|`Detect bias in ML models`, `Explain feature attribution/importance`|**SageMaker Clarify**|الكلمة المفتاحية للـ Clarify هي הـ Bias (التحيز) والـ Explainability (قدرته يفسر القرار).|
+|`Access open-source models (Llama, Stable Diffusion)`, `One-click deployment`|**SageMaker JumpStart**|ده المتجر بتاع الـ Open-source اللي جوه بيئة SageMaker.|
+
+---
