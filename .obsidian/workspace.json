@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -238,9 +237,11 @@
   },
   "active": "f8ff720a4c7aaa47",
   "lastOpenFiles": [
+    "Aws practitioner/AIF/AIF-C01_Domain3_Applications_of_Foundation_Models.md",
+    "Aws practitioner/AIF/Unconfirmed 452261.crdownload",
     "Aws practitioner/AIF/AIF-C01_Domain2_GenAI_DeepDive.md",
-    "Aws practitioner/AIF/AIF-Domain-1.md",
     "Aws practitioner/AIF/AIF-C01_Domain1_Fundamentals_DeepDive.md",
+    "Aws practitioner/AIF/AIF-Domain-1.md",
     "Aws practitioner/AIF",
     "Untitled 3.md",
     "Untitled 4.md",
@@ -272,7 +273,6 @@
     "domain1_cheatsheet.md",
     "Unconfirmed 604034.crdownload",
     "domain4_cheatsheet.md",
-    "Unconfirmed 588012.crdownload",
     "Pasted image 20260604225010.png",
     "Pasted image 20260604224954.png",
     "Pasted image 20260604224937.png",
@@ -283,7 +283,6 @@
     "Pasted image 20260604192108.png",
     "Pasted image 20260604192025.png",
     "Pasted image 20260604191925.png",
-    "domain 1.md",
     "Untitled.canvas"
   ]
 }
