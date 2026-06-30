@@ -31,3 +31,8 @@
 "event_logs:embedding:progress_reported": {"key":"embedding:progress_reported","ct":303,"first_at":1767705477543,"last_at":1782564900285,"class_name":"EventLog"},
 "event_logs:item:embedded": {"key":"item:embedded","ct":38402,"first_at":1767705477927,"last_at":1782564908618,"class_name":"EventLog"},
 "event_logs:embedding:completed": {"key":"embedding:completed","ct":108,"first_at":1767705768568,"last_at":1782564908619,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":585,"first_at":1767705772065,"last_at":1782573223410,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":586,"first_at":1767705772065,"last_at":1782584023669,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":587,"first_at":1767705772065,"last_at":1782594823204,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":588,"first_at":1767705772065,"last_at":1782605623216,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":589,"first_at":1767705772065,"last_at":1782616423212,"class_name":"EventLog"},
