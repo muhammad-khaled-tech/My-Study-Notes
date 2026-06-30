@@ -206,31 +206,45 @@ flowchart LR
 
 ## 📚 ليستة التوبيكس اللي محتاج تذاكرها (Copy-Paste جوه البرومبت)
 
-رتبهم حسب الأولوية بتاعتك (الفجوات الأهم الأول):
+ترتيب منهجي (Curriculum Order) — كل موضوع بيبني على اللي قبله، فاتبع الترتيب ده زي ما هو:
 
-### الأسبوع 1 — أولوية قصوى (فجوات كاملة)
+### المرحلة 1: أساسيات الـ Arrays/Strings (حجر الأساس لكل حاجة بعد كده)
+- Hash Map / Hash Set
+- Two Pointers
+- Sliding Window (Fixed Size)
+- Sliding Window (Variable Size)
+- Prefix Sum
+
+### المرحلة 2: الترتيب والبحث (بيبني على فهمك للـ Arrays)
+- Sorting Algorithms (Merge Sort, Quick Sort) & متى تستخدم كل واحد
+- Binary Search (on Array)
+- Binary Search on Answer (الباترن المتقدم)
+
+### المرحلة 3: الهياكل الخطية المتسلسلة (Linear → Pointer-based)
+- Stack (Monotonic Stack, Matching Brackets)
+- Queue & Deque
 - Linked List (Reverse, Cycle Detection, Merge, Fast & Slow Pointers)
+
+### المرحلة 4: الهياكل الشجرية (بتبني على مفهوم الـ Pointers والـ Recursion من المرحلة اللي فاتت)
 - Binary Tree Traversal (DFS: Preorder / Inorder / Postorder + BFS: Level Order)
 - Binary Search Tree (BST) Operations & Validation
+- Tries (Prefix Trees)
 
-### الأسبوع 2 — Graphs + باترنز ناقصة
+### المرحلة 5: الجرافس (امتداد طبيعي لمفهوم الـ Trees والـ BFS/DFS)
 - Graph BFS
 - Graph DFS
 - Union-Find (Disjoint Set)
+- Topological Sort
+- Shortest Path Algorithms (Dijkstra)
+
+### المرحلة 6: التيكنيكات المتقدمة اللي بتستخدم كل اللي فات كأدوات
 - Heap / Priority Queue (Top-K problems)
 - Backtracking (Subsets, Permutations, Combinations)
-
-### الأسبوع 3 — تقوية و Sliding Window صريح
-- Sliding Window (Fixed Size)
-- Sliding Window (Variable Size)
-- 1D Dynamic Programming
-- 2D Dynamic Programming
 - Greedy Algorithms
 
-### مراجعة سريعة (عندك فيها أساس كويس بالفعل)
-- Two Pointers
-- Hash Map / Hash Set
-- Binary Search (on Array)
-- Stack (Monotonic Stack, Matching Brackets)
+### المرحلة 7: القمة — Dynamic Programming (بتحتاج فهم Recursion + Backtracking كويس قبلها)
+- 1D Dynamic Programming
+- 2D Dynamic Programming
+- DP on Trees/Graphs (اختياري لو الوقت سمح)
 
 > استخدم اسم التوبيك بالظبط زي ما هو مكتوب فوق، والصقه مكان `[اذكر الـ Pattern أو الموضوع المطلوب]` في أول سطر، وكمان في آخر سطر `اكتبلي الملف الكامل لتيكنيك [...]`.
