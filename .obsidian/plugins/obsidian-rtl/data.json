@@ -94,7 +94,8 @@
     "domains1_and_4_REVISION.md": "auto",
     "weakness_analysis_and_revision.md": "rtl",
     "domain1_mega_revision.md": "rtl",
-    "Aws practitioner/AIF/AIF-Domain-1.md": "rtl"
+    "Aws practitioner/AIF/AIF-Domain-1.md": "rtl",
+    "problem solving/HashMap_HashSet_Deep_Dive.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
