@@ -72,25 +72,6 @@ while count <= 5:
     count += 1  # Increment — without this, infinite loop!
 print("Done!")
 ```
-<details>
-<summary><b>📋 مثال إضافي: تخمين رقم</b></summary>
-
-```python
-import random
-
-secret = random.randint(1, 10)
-guess = 0
-
-while guess != secret:
-    guess = int(input("Guess the number (1-10): "))
-    if guess < secret:
-        print("Too low!")
-    elif guess > secret:
-        print("Too high!")
-
-print(f"You got it! The number was {secret}.")
-```
-</details>
 
 ---
 
