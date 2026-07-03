@@ -38,3 +38,5 @@
 "event_logs:embedding:progress_reported": {"key":"embedding:progress_reported","ct":309,"first_at":1767705477543,"last_at":1782918094485,"class_name":"EventLog"},
 "event_logs:item:embedded": {"key":"item:embedded","ct":39103,"first_at":1767705477927,"last_at":1782918098817,"class_name":"EventLog"},
 "event_logs:embedding:completed": {"key":"embedding:completed","ct":111,"first_at":1767705768568,"last_at":1782918098817,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":600,"first_at":1767705772065,"last_at":1782924971663,"class_name":"EventLog"},
+"event_logs:plugin:new_version_available": {"key":"plugin:new_version_available","ct":601,"first_at":1767705772065,"last_at":1782946571946,"class_name":"EventLog"},
