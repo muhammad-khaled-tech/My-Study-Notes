@@ -219,22 +219,6 @@ for i in range(3):
         pass  # TODO: implement later
     print(f"Item: {i}")
 ```
-<details>
-<summary><b>📋 مثال إضافي: البحث عن أول رقم سالب</b></summary>
-
-```python
-numbers = [10, 5, -3, 8, -1, 7]
-
-for num in numbers:
-    if num < 0:
-        print(f"First negative number found: {num}")
-        break
-    print(f"{num} is positive")
-else:
-    # This else runs only if loop completes without break
-    print("No negative numbers found!")
-```
-</details>
 
 ---
 
