@@ -471,4 +471,330 @@ for author in authors:
 Both `aggregate` and `annotate` are used to perform database-level statistical calculations (like Count, Avg, Sum). The difference is the scope of their output. `aggregate` calculates values over the entire QuerySet and returns a Python dictionary containing the final calculated values (terminal operation). `annotate`, however, behaves like a SQL `GROUP BY`; it calculates summary values for each individual item in the QuerySet and attaches that result as a new attribute to each object, returning a new QuerySet that can be further filtered or ordered.
 
 ---
-<!-- CONTINUE_HERE_1 -->
+## الجزء الثالث: Django REST Framework (DRF) — بناء واجهات الـ API
+
+### 15. ايه هو الـ Serializer وليه محتاجينه؟ (Serializer vs ModelSerializer)
+
+> [!info] أصل الحكاية
+> الـ API بيتكلم بلغة عالمية زي الـ JSON، لكن Django بيتكلم بلغة الـ Python Objects والـ QuerySets. الـ Serializer هو المترجم اللي بيقف في النص. بياخد الـ QuerySets (Complex Data) ويحولها لـ JSON (Serialization)، وبياخد الـ JSON من اليوزر ويحوله لـ Python Data Types بعد ما يعمل Data Validation (Deserialization).
+>
+> الـ `Serializer` العادي عامل زي الـ `Form`، بتكتب كل Field بإيدك.
+> الـ `ModelSerializer` عامل زي الـ `ModelForm`، بيقرأ من الـ Model مباشرة ويوفر عليك تكرار الكود، وكمان بيعمل implementation للـ `create` و `update` لوحده.
+
+#### الكود في الملعب
+```python
+from rest_framework import serializers
+from .models import Book
+
+# 1. Regular Serializer (More Control, More Boilerplate)
+class BookSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    title = serializers.CharField(max_length=200)
+    price = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+    def create(self, validated_data):
+        return Book.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.title = validated_data.get('title', instance.title)
+        instance.price = validated_data.get('price', instance.price)
+        instance.save()
+        return instance
+
+# 2. ModelSerializer (Fast, DRY)
+class BookModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = ['id', 'title', 'price']
+        # fields = '__all__' # Not recommended for security and stability
+```
+
+### الفايدة الانترفيوية
+"Explain the difference between Serializer and ModelSerializer in DRF."
+
+**الإجابة المثالية:**
+A `Serializer` provides full control over how data is serialized and validated, but requires manually defining fields and overriding `create()` and `update()` methods. A `ModelSerializer` is an abstraction over `Serializer` that automatically generates fields based on a Django Model, creates default validation logic based on model constraints, and implements default `create()` and `update()` methods. I use `ModelSerializer` for standard CRUD APIs closely tied to a database table, and a base `Serializer` for complex APIs that involve multiple models or external data structures.
+
+---
+
+### 16. إيه الفرق بين APIView و GenericAPIView و ViewSets؟
+
+> [!tip] أصل الحكاية
+> الـ DRF بيديك كذا مستوى من التجريد (Abstraction) عشان تبني الـ Views:
+> 1. **APIView:** ده الأساس (زي View في Django). بتكتب فيه كل حاجة (get, post, put) بإيدك. أقصى درجات التحكم، بس أكتر كود.
+> 2. **GenericAPIView + Mixins:** مستوى أعلى شوية. بتحدد الـ `queryset` والـ `serializer_class`، وبتستخدم Mixins (زي `ListModelMixin`, `CreateModelMixin`) عشان تعمل الـ logic بتاع القراءة أو الكتابة بسرعة.
+> 3. **ViewSets (ModelViewSet):** ده "الوحش". بيضم كل الـ CRUD operations (list, retrieve, create, update, destroy) في كلاس واحد. وبدل ما تربطه بـ URL لكل action، بتستخدم الـ **Router** وهو بيكتب الـ URLs كلها لوحده.
+
+#### مقارنة سريعة بالكود
+```python
+from rest_framework.views import APIView
+from rest_framework.generics import ListCreateAPIView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.response import Response
+
+# 1. APIView (Explicit)
+class BookListAPIView(APIView):
+    def get(self, request):
+        books = Book.objects.all()
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
+
+# 2. GenericAPIView (ListCreateAPIView is a GenericAPIView with Mixins)
+class BookListGenericView(ListCreateAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+
+# 3. ModelViewSet (Ultimate Abstraction)
+class BookViewSet(ModelViewSet):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+```
+
+### الفايدة الانترفيوية
+"When would you choose to use an APIView vs a ViewSet in DRF?"
+
+**الإجابة المثالية:**
+I use `APIView` when the endpoint doesn't strictly map to standard database CRUD operations (e.g., an endpoint calling an external payment gateway, or triggering a background task). It gives maximum flexibility. I use `ViewSets` (specifically `ModelViewSet`) along with `Routers` when building standard RESTful resources (CRUD) that map directly to a database model, because it keeps the code incredibly DRY and automatically generates conventional URL routing.
+
+---
+
+### 17. إزاي بنأمن الـ API؟ (Authentication & Permissions)
+
+> [!warning] أصل الحكاية
+> **Authentication (المصادقة):** أنت مين؟ (Who are you?) - زي الـ Token أو الـ JWT.
+> **Permissions (الصلاحيات):** مسموحلك تعمل إيه؟ (What can you do?) - هل ليك صلاحية تقرأ بس، ولا تعدل وتمسح؟
+>
+> في الـ DRF، الـ Authentication بيحدد هوية اليوزر، والـ Permissions بتحدد هل الـ Action ده مسموح ليه ولا لأ.
+
+#### الكود في الملعب
+```python
+from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.authentication import TokenAuthentication
+
+# 1. Custom Permission
+class IsAuthorOrReadOnly(BasePermission):
+    """
+    Custom permission to only allow authors of an object to edit it.
+    """
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request (GET, HEAD or OPTIONS)
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return True
+        # Write permissions are only allowed to the author of the book.
+        return obj.author == request.user
+
+# 2. View Configuration
+class BookViewSet(ModelViewSet):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    
+    # Who are you?
+    authentication_classes = [TokenAuthentication]
+    # What can you do?
+    permission_classes = [IsAuthenticated, IsAuthorOrReadOnly]
+```
+
+### الفايدة الانترفيوية
+"Explain the difference between Authentication and Permissions in DRF."
+
+**الإجابة المثالية:**
+Authentication is the process of identifying *who* the user is (e.g., via Session, Token, or JWT), which populates `request.user`. Permissions, evaluated after authentication, determine *what* that authenticated user is allowed to do (e.g., `IsAuthenticated`, `IsAdminUser`, or custom object-level permissions like `IsOwnerOrReadOnly`). DRF evaluates authentication first, and if successful, moves to check the permission classes before executing the view logic.
+
+---
+
+## الجزء الرابع: Advanced Django (مواضيع التنين المجنح)
+
+### 18. الـ Signals في Django: إمتى نستخدمها وإمتى نهرب منها؟
+
+> [!danger] أصل الحكاية
+> الـ Signals عبارة عن "Event Dispatcher". بتسمح لـ "Sender" (زي الـ Model) إنه يبعت رسالة لـ "Receiver" (دالة) أول ما يحصل حدث معين (زي `post_save` أو `pre_delete`).
+> الميزة: بتفصل الكود عن بعضه (Decoupling). لو عايز أبعت إيميل ترحيب أول ما اليوزر يتسجل، الـ User Model مش لازم يعرف حاجة عن كود الإيميل.
+> العيب (ولازم تقوله في الانترفيو): الـ Signals بتخلي تتبع الكود (Debugging) صعب جداً، لأنك مش شايف الاستدعاء قدام عينك (Implicit Flow). وكمان هي Synchronous، يعني لو الإيميل أخد 5 ثواني عشان يتبعت، الـ Request هيعلق 5 ثواني.
+
+#### الكود في الملعب
+```python
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+# Receiver function
+@receiver(post_save, sender=User)
+def send_welcome_email(sender, instance, created, **kwargs):
+    if created:
+        # User is created newly, not updated
+        print(f"Sending welcome email to {instance.email}")
+        # In a real app, do this asynchronously via Celery!
+```
+
+### الفايدة الانترفيوية
+"What are Django Signals, and what are the drawbacks of using them?"
+
+**الإجابة المثالية:**
+Django Signals implement the Observer pattern, allowing decoupled applications to get notified when certain actions occur elsewhere in the framework (like `post_save` or `pre_delete`). While great for decoupling logic (like creating a user profile automatically when a user is created), they have significant drawbacks: they make the code harder to debug due to implicit execution flow, and they execute synchronously in the same thread, meaning a slow signal receiver will block the HTTP response. I prefer overriding the `save()` method or using background tasks (like Celery) when possible, reserving signals only for decoupling logic across strictly independent apps.
+
+---
+
+### 19. إيه هو الـ Middleware بيعمل إيه؟
+
+> [!info] أصل الحكاية
+> الـ Middleware عامل زي "البوابات" اللي بيعدي عليها الـ Request وهو رايح للـ View، والـ Response وهو راجع من الـ View لليوزر.
+> أي Middleware ممكن يعدل في الـ Request قبل ما يوصل (زي مثلاً يضيف الـ `request.user` في الـ `AuthenticationMiddleware`)، أو يعدل في الـ Response (زي إضافة Security Headers).
+
+#### الكود في الملعب (Custom Middleware)
+```python
+import time
+
+class RequestTimingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        # One-time configuration and initialization.
+
+    def __call__(self, request):
+        # 1. Code executed BEFORE the view (Request phase)
+        start_time = time.time()
+
+        # 2. Call the next middleware / or the view itself
+        response = self.get_response(request)
+
+        # 3. Code executed AFTER the view (Response phase)
+        duration = time.time() - start_time
+        response['X-Page-Generation-Duration-ms'] = int(duration * 1000)
+
+        return response
+```
+
+### الفايدة الانترفيوية
+"What is a Middleware in Django, and what is its typical use case?"
+
+**الإجابة المثالية:**
+Middleware is a framework of hooks into Django's request/response processing. It's a lightweight, low-level "plugin" system for globally altering Django's input or output. Each middleware component is responsible for doing some specific function (e.g., `AuthenticationMiddleware` adds the user to the request, `CsrfViewMiddleware` verifies CSRF tokens). I write custom middleware when I need to apply global logic across all views, such as request logging, enforcing custom security headers, or capturing request execution times.
+
+---
+
+### 20. الـ Caching في Django: إزاي تسرع الـ App بتاعك؟
+
+> [!tip] أصل الحكاية
+> الداتابيز بطيئة وعمليات الـ Rendering بطيئة. الـ Caching معناه إنك تحتفظ بنتيجة عملية معقدة في الـ RAM (زي Redis أو Memcached) عشان المرة الجاية تجيبها في لمح البصر بدل ما تحسبها تاني.
+> 
+> مستويات الـ Caching في Django:
+> 1. **Per-site cache:** بتكيش الموقع كله (مش عملي لو الموقع فيه حاجات dynamic لكل يوزر).
+> 2. **Per-view cache:** بتكيش نتيجة View معينة لمدة معينة.
+> 3. **Template fragment cache:** بتكيش حتة معينة في الـ HTML (زي Menu).
+> 4. **Low-level cache API:** بتكيش داتا معينة براحتك، ودي الأهم للمطور المحترف.
+
+#### الكود في الملعب (Low-level Cache)
+```python
+from django.core.cache import cache
+from .models import ExpensiveReport
+
+def get_monthly_report():
+    # 1. Try to get data from Cache (RAM)
+    report_data = cache.get('monthly_report_data')
+    
+    if not report_data:
+        # 2. Cache MISS: Calculate the heavy logic
+        print("Calculating heavy report from Database...")
+        report_data = ExpensiveReport.objects.calculate_massive_report()
+        
+        # 3. Save to cache for 1 hour (3600 seconds)
+        cache.set('monthly_report_data', report_data, 3600)
+    else:
+        # 4. Cache HIT! Super fast
+        print("Got report from RAM!")
+        
+    return report_data
+```
+
+### الفايدة الانترفيوية
+"How would you optimize a slow Django endpoint that performs heavy database aggregations?"
+
+**الإجابة المثالية:**
+First, I would ensure the queries are optimized using `select_related`/`prefetch_related` and that appropriate database indexes are in place. If the logic is inherently heavy and the data doesn't change every second, I would implement **Caching** using an in-memory store like **Redis**. I'd use Django's low-level cache API (`cache.get()` and `cache.set()`) to store the aggregated result for a specific Time-To-Live (TTL). When the underlying data is updated, I would proactively invalidate the cache (`cache.delete()`) to prevent serving stale data.
+
+---
+## الجزء الخامس: Testing — إزاي تتأكد إن كودك شغال؟
+
+### 21. ليه نكتب Tests؟ وإيه الفرق بين Unit Test و Integration Test؟
+
+> [!info] أصل الحكاية
+> المبرمج الشاطر مش بس بيكتب كود شغال، ده بيكتب كود يضمن إنه هيفضل شغال حتى لو اتعدل بعدين (Regression).
+> 1. **Unit Test:** بتختبر حتة صغيرة جداً ومعزولة من الكود (دالة أو ميثود واحدة) من غير ما تعتمد على الداتابيز أو APIs خارجية (بنستخدم Mocks).
+> 2. **Integration Test:** بتختبر كذا حتة مع بعض (زي إن الـ View بيكلم الـ ORM ويسجل في الداتابيز ويرجع JSON سليم). في Django غالباً بنعمل Integration Tests باستخدام الـ `Test Client`.
+
+#### الكود في الملعب (Using `pytest-django`)
+```python
+import pytest
+from django.urls import reverse
+from .models import Book
+
+# @pytest.mark.django_db tells pytest this test needs database access
+@pytest.mark.django_db
+def test_create_book():
+    # 1. Arrange (Setup data)
+    book = Book.objects.create(title="Django Guide", price=100.00)
+    
+    # 2. Act (Do the action)
+    saved_book = Book.objects.get(id=book.id)
+    
+    # 3. Assert (Check the result)
+    assert saved_book.title == "Django Guide"
+    assert Book.objects.count() == 1
+
+@pytest.mark.django_db
+def test_book_api_endpoint(client):
+    # Integration test using Django's Test Client
+    Book.objects.create(title="API Book", price=50.0)
+    
+    url = reverse('book-list') # Assuming a route named 'book-list'
+    response = client.get(url)
+    
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]['title'] == "API Book"
+```
+
+### الفايدة الانترفيوية
+"How do you test your Django applications?"
+
+**الإجابة المثالية:**
+I write tests to ensure code reliability and prevent regressions. I typically use `pytest` with `pytest-django` because of its clean fixture system and concise `assert` syntax. I write Unit Tests to verify isolated business logic (often mocking database calls for speed), and Integration Tests using Django's Test `client` or `APIClient` (from DRF) to verify the entire request-response cycle, including database interactions, routing, and serialization.
+
+---
+
+## الجزء السادس: Deployment — رفع الشغل على السيرفر
+
+### 22. إيه هم WSGI و ASGI؟ وليه محتاجين Gunicorn و Nginx؟
+
+> [!danger] أصل الحكاية
+> الـ `manage.py runserver` ده معمول للـ Development بس. لو شغلته في الـ Production السيرفر هيقع من أول 10 يوزرز!
+>
+> 1. **WSGI (Web Server Gateway Interface):** ده المعيار اللي بيخلي السيرفر (زي Gunicorn) يعرف يكلم كود الـ Python (زي Django). وهو Synchronous (طلب ورا طلب).
+> 2. **ASGI (Asynchronous Server Gateway Interface):** ده المعيار الجديد اللي بيدعم الـ Async، يعني يقدر يهندل آلاف الطلبات في نفس الوقت (زي WebSockets أو Django Channels). بنستخدم معاه سيرفرات زي Uvicorn أو Daphne.
+> 3. **Gunicorn / Uvicorn (Application Server):** بياخد الـ Request من الـ Web Server ويشغل كود البايثون ويطلع الـ Response. بيشغل كذا Worker عشان يهندل طلبات توازي.
+> 4. **Nginx (Web Server / Reverse Proxy):** ده اللي بيستقبل الطلب من الإنترنت. لو الطلب عايز صورة أو CSS (Static Files)، الـ Nginx بيرد فوراً (لأنه سريع جداً في الـ Static). لو الطلب محتاج Logic، الـ Nginx بيحوله (Reverse Proxy) للـ Gunicorn.
+
+#### الرسمة المعمارية للـ Deployment
+```mermaid
+graph LR
+    A[Client Browser] -->|HTTP Request| B(Nginx)
+    B -->|Static Files| C[(Static Folder)]
+    B -->|Reverse Proxy| D(Gunicorn/Uvicorn)
+    D -->|WSGI/ASGI| E[Django Application]
+    E -->|SQL| F[(PostgreSQL)]
+```
+
+### الفايدة الانترفيوية
+"Explain the typical deployment stack for a Django application."
+
+**الإجابة المثالية:**
+A production-ready Django deployment typically involves a Reverse Proxy (like Nginx), an Application Server (like Gunicorn), and the Django App itself. Nginx sits at the front, handling SSL termination, serving static/media files extremely efficiently, and protecting against basic DDoS attacks. For dynamic requests, Nginx acts as a reverse proxy, passing the request to Gunicorn. Gunicorn translates the HTTP request into a Python WSGI dictionary and passes it to Django. If the application requires asynchronous features (like WebSockets), I replace WSGI with ASGI, using Uvicorn or Daphne instead of Gunicorn.
+
+---
+
+## الخاتمة: نصيحة للإنترفيو
+في انترفيو الباك إند بتاع Django:
+1. **الصراحة:** لو متعرفش حاجة، قول "معرفهاش بس ممكن أدور عليها كذا كذا".
+2. **"ليه" مش بس "إزاي":** الإنترفيور مش عايز يسمع كود، عايز يسمع ليه اخترت الـ `ModelViewSet` بدل `APIView`، وليه عملت `select_related`.
+3. **الداتابيز هي البطل:** أي سؤال فيه Performance، دايماً فكر في الـ Database Queries والـ N+1 Problem الأول.
+
+بالتوفيق يا بطل! 🚀
