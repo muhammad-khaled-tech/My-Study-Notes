@@ -189,7 +189,7 @@ curl http://192.168.1.10:3000/api/emails
 في سياق الويب، المتصفح (أو أي تطبيق موبايل، أو حتى سكريبت بيستدعي API) هو الـ Client اللي بيبدأ الطلب دايماً، والسيرفر هو اللي بينتظر الطلبات ويرد عليها. لاحظ الكلمة "بينتظر" — السيرفر مبيبدأش الكلام من نفسه عادةً، هو Passive وبيستنى حد يكلمه (فيه استثناءات زي الـ WebSockets هنشرحها بعدين في الموضوع الرابع).
 
 ```mermaid
-sequenceDiagram<br>    participant C as Client (Browser/App)<br>    participant S as Server (Backend)<br><br>    C->>S: HTTP Request (GET /api/emails)<br>    Note over S: السيرفر بيعالج الطلب<br>    Note over S: بيتكلم مع الـ Database لو محتاج<br>    S-->>C: HTTP Response (Status 200 + JSON Data)<br>    Note over C: المتصفح/التطبيق بيعرض النتيجة
+sequenceDiagram<br/>    participant C as Client (Browser/App)<br/>    participant S as Server (Backend)<br/><br/>    C->>S: HTTP Request (GET /api/emails)<br/>    Note over S: السيرفر بيعالج الطلب<br/>    Note over S: بيتكلم مع الـ Database لو محتاج<br/>    S-->>C: HTTP Response (Status 200 + JSON Data)<br/>    Note over C: المتصفح/التطبيق بيعرض النتيجة
 ```
 
 #### مثال 1: مين الـ Client ومين الـ Server في مشروعك الحالي
@@ -324,7 +324,7 @@ UDP مش أسوأ، هو بس مصمم لهدف مختلف. لو استخدمت 
 بما إننا فهمنا في Q6 إن TCP بروتوكول "موثوق"، السؤال الطبيعي: إزاي بيضمن الموثوقية دي من أول لحظة؟ الإجابة إن قبل ما أي بيانات فعلية تتبعت، الطرفين (Client وServer) لازم "يتفقوا" الأول إن كل واحد فيهم جاهز فعلاً يستقبل ويبعت. العملية دي اسمها Three-Way Handshake، وفكّر فيها زي مكالمة تليفون: إنت بترن (SYN)، الطرف التاني بيرد ويقولك "أيوه سامعك، وأنا كمان عايز أتكلم" (SYN-ACK)، وإنت بترد "تمام، يلا نبدأ" (ACK). بعد الخطوات التلاتة دي بس، الاتصال يبقى "مؤسس" (Established) والبيانات الفعلية تبدأ تتبادل.
 
 ```mermaid
-sequenceDiagram<br>    participant C as Client<br>    participant S as Server<br><br>    C->>S: 1. SYN (عايز أبدأ اتصال، ده رقم التسلسل بتاعي)<br>    S-->>C: 2. SYN-ACK (تمام، استلمت طلبك، وده رقم التسلسل بتاعي أنا)<br>    C->>S: 3. ACK (تمام، الاتصال اتأكد من الطرفين)<br>    Note over C,S: الاتصال بقى Established، البيانات الفعلية تبدأ دلوقتي
+sequenceDiagram<br/>    participant C as Client<br/>    participant S as Server<br/><br/>    C->>S: 1. SYN (عايز أبدأ اتصال، ده رقم التسلسل بتاعي)<br/>    S-->>C: 2. SYN-ACK (تمام، استلمت طلبك، وده رقم التسلسل بتاعي أنا)<br/>    C->>S: 3. ACK (تمام، الاتصال اتأكد من الطرفين)<br/>    Note over C,S: الاتصال بقى Established، البيانات الفعلية تبدأ دلوقتي
 ```
 
 ليه دي مهمة أمنياً وليس بس تقنياً؟ لأن الخطوات دي بتمنع سيناريوهات زي إن Client يبعت بيانات لسيرفر مش جاهز أصلاً، أو إن السيرفر يفضل مستني بيانات من Client اتقفل أو مش موجود. كل طرف بيتأكد فعلياً من وجود واستعداد الطرف التاني قبل ما "يستثمر" موارد في الاتصال ده.
@@ -372,7 +372,7 @@ curl -v https://example.com
 عملية الـ TLS Handshake بتحصل بعد الـ TCP Handshake مباشرة:
 
 ```mermaid
-sequenceDiagram<br>    participant C as Client<br>    participant S as Server<br><br>    Note over C,S: TCP Handshake اتم بالفعل<br>    C->>S: Client Hello (النسخ والخوارزميات المدعومة)<br>    S-->>C: Server Hello + الشهادة (Certificate) + المفتاح العام<br>    Note over C: المتصفح بيتحقق من الشهادة عبر جهة موثوقة (CA)<br>    C->>S: بيبعت مفتاح مشفّر بالمفتاح العام بتاع السيرفر<br>    Note over C,S: الطرفين دلوقتي عندهم مفتاح سري مشترك<br>    Note over C,S: كل البيانات بعد كده بتتشفر بالمفتاح ده
+sequenceDiagram<br/>    participant C as Client<br/>    participant S as Server<br/><br/>    Note over C,S: TCP Handshake اتم بالفعل<br/>    C->>S: Client Hello (النسخ والخوارزميات المدعومة)<br/>    S-->>C: Server Hello + الشهادة (Certificate) + المفتاح العام<br/>    Note over C: المتصفح بيتحقق من الشهادة عبر جهة موثوقة (CA)<br/>    C->>S: بيبعت مفتاح مشفّر بالمفتاح العام بتاع السيرفر<br/>    Note over C,S: الطرفين دلوقتي عندهم مفتاح سري مشترك<br/>    Note over C,S: كل البيانات بعد كده بتتشفر بالمفتاح ده
 ```
 
 الشهادة (Certificate) دي بيصدرها طرف تالت موثوق اسمه Certificate Authority (CA)، ودورها إثبات إن السيرفر اللي بتكلمه فعلاً هو اللي بيقول عليه نفسه (زي هوية رسمية)، مش موقع مزوّر بيتنصت على بياناتك.
@@ -964,7 +964,7 @@ curl -X GET "https://api.inboxsalescopilot.com/api/v1/emails" \
 رجعنا هنا للسؤال المعلّق من Q10: لو HTTP Stateless بالكامل والسيرفر بينسى كل حاجة بعد كل طلب، إزاي بقى المواقع بتفتكرك إنك مسجل دخول وإنت بتتنقل بين الصفحات؟ الإجابة العملية الأولى والأقدم تاريخياً هي الـ Cookies. فكّر في الـ Cookie زي "بطاقة دخول" بيدهالك السيرفر أول ما تسجل دخول، وإنت بتحطها في جيبك (المتصفح بيخزنها تلقائياً)، وكل مرة تروح فيها لنفس المكان، بتوريهم البطاقة من غير ما حد يسألك "مين إنت؟" من الأول.
 
 ```mermaid
-sequenceDiagram<br>    participant C as Client (Browser)<br>    participant S as Server<br><br>    C->>S: POST /login (username + password)<br>    Note over S: السيرفر يتأكد من البيانات ويعمل Session جديدة<br>    S-->>C: Response + Set-Cookie: sessionId=abc123<br>    Note over C: المتصفح يخزن الـ Cookie تلقائياً<br>    C->>S: GET /profile (Cookie: sessionId=abc123 مرفقة تلقائياً)<br>    Note over S: السيرفر يدور على sessionId في مخزن الـ Sessions<br>    S-->>C: Response 200 + بيانات البروفايل
+sequenceDiagram<br/>    participant C as Client (Browser)<br/>    participant S as Server<br/><br/>    C->>S: POST /login (username + password)<br/>    Note over S: السيرفر يتأكد من البيانات ويعمل Session جديدة<br/>    S-->>C: Response + Set-Cookie: sessionId=abc123<br/>    Note over C: المتصفح يخزن الـ Cookie تلقائياً<br/>    C->>S: GET /profile (Cookie: sessionId=abc123 مرفقة تلقائياً)<br/>    Note over S: السيرفر يدور على sessionId في مخزن الـ Sessions<br/>    S-->>C: Response 200 + بيانات البروفايل
 ```
 
 ```http
@@ -1116,7 +1116,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 كملنا في Q21 إن المتصفح بيطبق قيود الـ CORS، لكن فيه تفصيلة مهمة: مش كل طلب Cross-Origin بيتعامل معاه المتصفح بنفس الطريقة. لبعض الطلبات "الحساسة" (زي طلبات فيها Methods غير القياسية أو Headers مخصصة)، المتصفح بيبعت أولاً طلب استطلاعي صغير اسمه **Preflight Request** بـ Method اسمه `OPTIONS`، وده زي ما تبعت رسالة "لو سمحت، ينفع أبعتلك الطلب ده أصلاً؟" قبل ما تبعت الطلب الحقيقي، عشان تتأكد إن السيرفر موافق على النوع ده من الطلبات قبل ما تكشف أي بيانات فعلية.
 
 ```mermaid
-sequenceDiagram<br>    participant C as Browser<br>    participant S as Server<br><br>    Note over C: الـ Client عايز يبعت PUT مع Headers مخصصة<br>    C->>S: OPTIONS /api/v1/emails/456 (Preflight)<br>    Note over S: السيرفر بيرد بإيه اللي مسموح بيه<br>    S-->>C: Access-Control-Allow-Methods: PUT<br>    S-->>C: Access-Control-Allow-Headers: Content-Type, Authorization<br>    Note over C: المتصفح شاف إن PUT مسموح، دلوقتي يبعت الطلب الحقيقي<br>    C->>S: PUT /api/v1/emails/456 (الطلب الفعلي)<br>    S-->>C: 200 OK
+sequenceDiagram<br/>    participant C as Browser<br/>    participant S as Server<br/><br/>    Note over C: الـ Client عايز يبعت PUT مع Headers مخصصة<br/>    C->>S: OPTIONS /api/v1/emails/456 (Preflight)<br/>    Note over S: السيرفر بيرد بإيه اللي مسموح بيه<br/>    S-->>C: Access-Control-Allow-Methods: PUT<br/>    S-->>C: Access-Control-Allow-Headers: Content-Type, Authorization<br/>    Note over C: المتصفح شاف إن PUT مسموح، دلوقتي يبعت الطلب الحقيقي<br/>    C->>S: PUT /api/v1/emails/456 (الطلب الفعلي)<br/>    S-->>C: 200 OK
 ```
 
 الطلبات اللي "بسيطة" (Simple Requests — زي GET أو POST بـ Content-Type محدد زي `text/plain`) مبتحتاجش Preflight خالص، لكن أي طلب بيستخدم Methods زي PUT أو DELETE، أو بيحمل Headers مخصصة زي `Authorization`، أو Content-Type زي `application/json`، بيتطلب Preflight إجباري.
@@ -1438,7 +1438,7 @@ GET /emails?version=2
 في Q19 وQ20 شفنا الفرق بين 401 و403 و400 والـ Status Codes المختلفة، لكن سؤال عملي أهم في تصميم API حقيقي: طيب لما الخطأ يحصل، الـ Body بتاع الرد نفسه هيبقى شكله إيه؟ لو كل Endpoint في مشروعك بيرجّع شكل خطأ مختلف (واحد بيرجّع `{"error": "..."}`، وتاني `{"message": "..."}`، وتالت `{"errors": [...]}`)، الـ Frontend هيتعب جداً في التعامل مع الأخطاء دي بشكل موحّد. الحل المعياري المتعارف عليه هو استخدام صيغة موحّدة زي RFC 7807 (Problem Details for HTTP APIs).
 
 ```mermaid
-flowchart TD<br>    A[Client بيبعت Request غلط] --> B{Server بيتحقق من الـ Validation}<br>    B -- فشل --> C[يبني Error Object موحّد]<br>    C --> D[يرجع Status Code مناسب + Body بصيغة ثابتة]<br>    B -- نجح --> E[يكمل معالجة الطلب عادي]
+flowchart TD<br/>    A[Client بيبعت Request غلط] --> B{Server بيتحقق من الـ Validation}<br/>    B -- فشل --> C[يبني Error Object موحّد]<br/>    C --> D[يرجع Status Code مناسب + Body بصيغة ثابتة]<br/>    B -- نجح --> E[يكمل معالجة الطلب عادي]
 ```
 
 ```json
@@ -1488,7 +1488,7 @@ flowchart TD<br>    A[Client بيبعت Request غلط] --> B{Server بيتحق�
 بعد ما بنينا API منظّم ومتسق في الأسئلة اللي فاتت، فيه خطر عملي حقيقي: لو Sales Engineer (أو Script غلط، أو حتى هجوم متعمد) بعت آلاف الـ Requests في ثانية واحدة لـ `/emails`، السيرفر ممكن يقع أو يبطّئ لكل المستخدمين التانيين. الحل هو الـ Rate Limiting: تحديد أقصى عدد Requests مسموح بيها لكل Client في فترة زمنية معينة.
 
 ```mermaid
-sequenceDiagram<br>    participant C as Client<br>    participant S as Server<br>    participant R as Rate Limiter (Redis)<br><br>    C->>S: Request #1<br>    S->>R: Check current count for this Client<br>    R-->>S: Count = 5 (under limit)<br>    S-->>C: 200 OK + X-RateLimit-Remaining: 95<br>    Note over C,S: بعد كام دقيقة، الكلاينت بيبعت طلبات كتير جداً<br>    C->>S: Request #101<br>    S->>R: Check current count<br>    R-->>S: Count = 101 (over limit!)<br>    S-->>C: 429 Too Many Requests + Retry-After: 30
+sequenceDiagram<br/>    participant C as Client<br/>    participant S as Server<br/>    participant R as Rate Limiter (Redis)<br/><br/>    C->>S: Request #1<br/>    S->>R: Check current count for this Client<br/>    R-->>S: Count = 5 (under limit)<br/>    S-->>C: 200 OK + X-RateLimit-Remaining: 95<br/>    Note over C,S: بعد كام دقيقة، الكلاينت بيبعت طلبات كتير جداً<br/>    C->>S: Request #101<br/>    S->>R: Check current count<br/>    R-->>S: Count = 101 (over limit!)<br/>    S-->>C: 429 Too Many Requests + Retry-After: 30
 ```
 
 ```json
@@ -1700,7 +1700,7 @@ type Mutation {
 اتفقنا في Q33 إن الـ Schema بيحدد "شكل" البيانات المتاحة، لكن السؤال العملي: طيب لما يوصل Query معين، مين اللي فعلياً بيروح يجيب البيانات دي من الـ Database أو من API خارجي؟ الإجابة هي مفهوم اسمه Resolver: كل Field في الـ Schema (سواء في Query أو Mutation أو حتى في Type نفسه) ليه دالة Resolver مخصصة بتعرف إزاي تجيب القيمة بتاعته بالظبط. الجزء المهم اللي بيفرق GraphQL عن REST هنا إن الـ Resolvers بتتنفذ بشكل هرمي (Tree-like)، ظبط زي شكل الـ Query نفسه.
 
 ```mermaid
-flowchart TD<br>    A[Query يوصل: email فيه sender وthread] --> B[Resolver: Query.email يجيب الإيميل الأساسي من DB]<br>    B --> C[Resolver: Email.sender يجيب بيانات المرسل]<br>    B --> D[Resolver: Email.thread يجيب بيانات الـ Thread]<br>    C --> E[كل النتائج بتتجمّع في شكل JSON واحد مطابق للـ Query]<br>    D --> E
+flowchart TD<br/>    A[Query يوصل: email فيه sender وthread] --> B[Resolver: Query.email يجيب الإيميل الأساسي من DB]<br/>    B --> C[Resolver: Email.sender يجيب بيانات المرسل]<br/>    B --> D[Resolver: Email.thread يجيب بيانات الـ Thread]<br/>    C --> E[كل النتائج بتتجمّع في شكل JSON واحد مطابق للـ Query]<br/>    D --> E
 ```
 
 ```javascript
@@ -1757,7 +1757,7 @@ const resolvers = {
 كملنا على آخر فخ ذكرناه في Q34: مشكلة N+1 Query Problem. خليني أوضحها بمثال رقمي واضح عشان الصورة تبقى مكتملة قبل الحل. لو عندك Query بيطلب 20 إيميل وكل واحد فيهم عايز اسم المرسل بتاعه، الطريقة الساذجة هتعمل استعلام واحد يجيب الـ 20 إيميل (ده الـ "1")، وبعدين 20 استعلام منفصل تاني، كل واحد يجيب مرسل واحد بس (ده الـ "N")، يعني 21 استعلام Database لعملية كان المفروض تتعمل في استعلامين بس. المشكلة دي مش خاصة بـ GraphQL بس (بتحصل في ORMs عادية كمان)، لكنها بتبان بوضوح أكبر في GraphQL بسبب طبيعة الـ Resolvers الهرمية اللي شفناها في Q34.
 
 ```mermaid
-sequenceDiagram<br>    participant R as Resolver<br>    participant DL as DataLoader<br>    participant DB as Database<br><br>    Note over R: بيتنفذ 20 مرة (مرة لكل إيميل)<br>    R->>DL: load(senderId: 5)<br>    R->>DL: load(senderId: 8)<br>    R->>DL: load(senderId: 5) (نفس المرسل تاني)<br>    Note over DL: DataLoader بيجمع كل الطلبات دي في نفس الـ Tick<br>    DL->>DB: SELECT * FROM users WHERE id IN (5, 8, ...)<br>    DB-->>DL: نتيجة واحدة فيها كل المستخدمين<br>    DL-->>R: يرجع كل نتيجة لمكانها الصح (ومع Caching للتكرار)
+sequenceDiagram<br/>    participant R as Resolver<br/>    participant DL as DataLoader<br/>    participant DB as Database<br/><br/>    Note over R: بيتنفذ 20 مرة (مرة لكل إيميل)<br/>    R->>DL: load(senderId: 5)<br/>    R->>DL: load(senderId: 8)<br/>    R->>DL: load(senderId: 5) (نفس المرسل تاني)<br/>    Note over DL: DataLoader بيجمع كل الطلبات دي في نفس الـ Tick<br/>    DL->>DB: SELECT * FROM users WHERE id IN (5, 8, ...)<br/>    DB-->>DL: نتيجة واحدة فيها كل المستخدمين<br/>    DL-->>R: يرجع كل نتيجة لمكانها الصح (ومع Caching للتكرار)
 ```
 
 ```javascript
@@ -1861,7 +1861,7 @@ DataLoader بيعمل حاجتين مهمين: الأولى Batching، يعني 
 الـ Query والـ Mutation اللي شفناهم في Q33 كلاهما بيتبعوا نفس النمط: الـ Client بيطلب، السيرفر بيرد، خلاص. لكن تخيل معايا سيناريو في Inbox Sales Copilot: عايز الشاشة تتحدّث تلقائياً لما إيميل جديد يوصل، من غير ما المستخدم يعمل Refresh يدوي. هنا الـ Request-Response النموذجي ملوش لازمة، لأن السيرفر هو اللي محتاج "يبلّغ" الـ Client بحاجة جديدة، مش العكس. ده بالظبط الاستثناء اللي لمّحنا له في Q4 لما اتكلمنا إن السيرفر عادةً Passive إلا في حالات زي الـ WebSockets. GraphQL بيوفّر نوع تالت من العمليات اسمه Subscription، وبيشتغل عادةً فوق WebSocket Connection مستمر بدل الـ HTTP Request/Response العادي.
 
 ```mermaid
-sequenceDiagram<br>    participant C as Client<br>    participant S as Server<br>    participant PS as PubSub Broker<br><br>    C->>S: Subscribe: newEmailReceived(threadId: 456)<br>    Note over C,S: اتصال WebSocket بيفضل مفتوح ومستمر<br>    Note over S: إيميل جديد وصل فعلياً في الخلفية<br>    S->>PS: publish newEmailReceived event<br>    PS-->>S: نفس الحدث بيتوزع لكل الـ Subscribers المهتمين<br>    S-->>C: Push: البيانات الجديدة عن الإيميل<br>    Note over C: الواجهة بتتحدّث فوراً من غير Refresh
+sequenceDiagram<br/>    participant C as Client<br/>    participant S as Server<br/>    participant PS as PubSub Broker<br/><br/>    C->>S: Subscribe: newEmailReceived(threadId: 456)<br/>    Note over C,S: اتصال WebSocket بيفضل مفتوح ومستمر<br/>    Note over S: إيميل جديد وصل فعلياً في الخلفية<br/>    S->>PS: publish newEmailReceived event<br/>    PS-->>S: نفس الحدث بيتوزع لكل الـ Subscribers المهتمين<br/>    S-->>C: Push: البيانات الجديدة عن الإيميل<br/>    Note over C: الواجهة بتتحدّث فوراً من غير Refresh
 ```
 
 ```graphql
@@ -1999,7 +1999,7 @@ Microservices (خدمات مستقلة):
 لو رجعنا لمثال Microservices اللي شفناه في Q39، أو حتى مجرد Monolith عايز ياخد Scale (يعني تشغّل أكتر من نسخة منه للتعامل مع ضغط أكبر من المستخدمين)، هتحتاج مكوّن أساسي اسمه Load Balancer. الفكرة إن بدل ما كل المستخدمين يتكلموا مباشرة مع سيرفر واحد بعينه، بيتكلموا مع الـ Load Balancer، وهو اللي بيقرر يوجّه كل Request لأي سيرفر من مجموعة السيرفرات المتاحة (Server Pool)، بناءً على Algorithm معين.
 
 ```mermaid
-flowchart TD<br>    A[آلاف المستخدمين] --> LB[Load Balancer]<br>    LB --> S1[Server Instance 1]<br>    LB --> S2[Server Instance 2]<br>    LB --> S3[Server Instance 3]<br>    S1 --> DB[(Shared Database)]<br>    S2 --> DB<br>    S3 --> DB
+flowchart TD<br/>    A[آلاف المستخدمين] --> LB[Load Balancer]<br/>    LB --> S1[Server Instance 1]<br/>    LB --> S2[Server Instance 2]<br/>    LB --> S3[Server Instance 3]<br/>    S1 --> DB[(Shared Database)]<br/>    S2 --> DB<br/>    S3 --> DB
 ```
 
 ```
@@ -2084,7 +2084,7 @@ Vertical Scaling عادةً أغلى نسبياً لكل وحدة أداء إض�
 في كل الأسئلة اللي فاتت كنا بنتكلم عن الـ Request وهو بيوصل للسيرفر ويترد عليه، لكن بين اللحظتين دول، فيه خطوات كتير بتحصل بالترتيب: التحقق من الـ Authentication (هل المستخدم مسجل دخول؟ - هنتوسع فيها في الموضوع الجاي)، الـ Logging (تسجيل تفاصيل الطلب)، الـ Rate Limiting (اللي شفناه في Q30)، الـ Validation (اللي شفناه في Q21)، وأخيراً منطق الـ Endpoint نفسه. كل السيرفرات الحديثة (Express، NestJS، Django) بتنظّم الخطوات دي في نمط اسمه Middleware Pipeline: سلسلة من الدوال، كل واحدة بتاخد الـ Request، تعمل حاجة معينة، وتقرر إما تكمّل للي بعدها أو توقف السلسلة وترجّع رد فوري.
 
 ```mermaid
-flowchart LR<br>    A[Request يوصل] --> B[Logging Middleware]<br>    B --> C[Rate Limiting Middleware]<br>    C --> D{Authentication Middleware}<br>    D -- فشل --> E[يرجع 401 فوراً]<br>    D -- نجح --> F[Validation Middleware]<br>    F --> G[Route Handler الفعلي]<br>    G --> H[Response يرجع للـ Client]
+flowchart LR<br/>    A[Request يوصل] --> B[Logging Middleware]<br/>    B --> C[Rate Limiting Middleware]<br/>    C --> D{Authentication Middleware}<br/>    D -- فشل --> E[يرجع 401 فوراً]<br/>    D -- نجح --> F[Validation Middleware]<br/>    F --> G[Route Handler الفعلي]<br/>    G --> H[Response يرجع للـ Client]
 ```
 
 ```javascript
@@ -2136,7 +2136,7 @@ function authMiddleware(req, res, next) {
 في Q4 اتكلمنا إن سيرفر واحد ممكن يتكلم مع أكتر من Client في نفس اللحظة، لكن السؤال التقني الأعمق اللي بييجي في أي إنترفيو Node.js: إزاي ده بيحصل فعلياً وNode.js معروف عنه إنه Single-Threaded (يعني بيشغّل الكود على Thread واحد بس)؟ لو كل Request محتاج ينتظر الـ Thread الوحيد ده، مفروض الأداء يبقى سيء جداً مع آلاف المستخدمين. الحل موجود في مفهوم اسمه Event Loop، ومبدأ أساسي اسمه Non-Blocking I/O.
 
 ```mermaid
-sequenceDiagram<br>    participant EL as Event Loop (Thread واحد)<br>    participant DB as Database (I/O)<br>    participant FS as File System (I/O)<br><br>    EL->>DB: Request 1: اقرا من الداتابيز (Non-Blocking)<br>    Note over EL: مش بيستنى الرد، بيكمل فوراً للطلب التالي<br>    EL->>FS: Request 2: اقرا ملف (Non-Blocking)<br>    Note over EL: كمان مش بيستنى، بيكمل للطلب التالت<br>    DB-->>EL: رد Request 1 وصل (Callback بيتنفذ)<br>    FS-->>EL: رد Request 2 وصل (Callback بيتنفذ)
+sequenceDiagram<br/>    participant EL as Event Loop (Thread واحد)<br/>    participant DB as Database (I/O)<br/>    participant FS as File System (I/O)<br/><br/>    EL->>DB: Request 1: اقرا من الداتابيز (Non-Blocking)<br/>    Note over EL: مش بيستنى الرد، بيكمل فوراً للطلب التالي<br/>    EL->>FS: Request 2: اقرا ملف (Non-Blocking)<br/>    Note over EL: كمان مش بيستنى، بيكمل للطلب التالت<br/>    DB-->>EL: رد Request 1 وصل (Callback بيتنفذ)<br/>    FS-->>EL: رد Request 2 وصل (Callback بيتنفذ)
 ```
 
 ```javascript
@@ -2181,7 +2181,7 @@ app.get('/emails', async (req, res) => {
 كملنا مباشرة على المشكلة اللي ذكرناها آخر Q43: العمليات الثقيلة بتوقف الـ Event Loop لو اتنفذت مباشرة. لكن حتى لو استخدمت Worker Thread، فيه مشكلة تانية: تخيل مستخدم في Inbox Sales Copilot بيطلب "أرسل تقرير أسبوعي لكل الـ Threads بتاعته بالإيميل"، والعملية دي بتاخد 30 ثانية عشان تجمّع البيانات وتبني الملف وتبعته. لو خليت المستخدم يستنى الـ Response لحد ما العملية دي تخلص، هو هيحس إن التطبيق "واقف" أو معلّق، وممكن الـ Request نفسه يعمل Timeout قبل ما يخلص. الحل المعياري هو Message Queue: بدل ما تنفذ العملية مباشرة، بتحطها في "طابور" وترجع رد فوري للمستخدم إنها "استلمت الطلب"، وفيه Worker منفصل بيسحب من الطابور ده وينفذ العملية في الخلفية.
 
 ```mermaid
-sequenceDiagram<br>    participant C as Client<br>    participant API as API Server<br>    participant Q as Message Queue (e.g. RabbitMQ/SQS)<br>    participant W as Background Worker<br><br>    C->>API: POST /reports/generate<br>    API->>Q: ينشر Job جديد في الطابور<br>    API-->>C: 202 Accepted + jobId (رد فوري من غير انتظار)<br>    Note over C: المستخدم يقدر يكمل استخدام التطبيق عادي<br>    Q->>W: Worker يسحب الـ Job من الطابور<br>    Note over W: بيعالج التقرير (ممكن ياخد دقايق)<br>    W-->>C: بيبعت إشعار أو إيميل لما يخلص
+sequenceDiagram<br/>    participant C as Client<br/>    participant API as API Server<br/>    participant Q as Message Queue (e.g. RabbitMQ/SQS)<br/>    participant W as Background Worker<br/><br/>    C->>API: POST /reports/generate<br/>    API->>Q: ينشر Job جديد في الطابور<br/>    API-->>C: 202 Accepted + jobId (رد فوري من غير انتظار)<br/>    Note over C: المستخدم يقدر يكمل استخدام التطبيق عادي<br/>    Q->>W: Worker يسحب الـ Job من الطابور<br/>    Note over W: بيعالج التقرير (ممكن ياخد دقايق)<br/>    W-->>C: بيبعت إشعار أو إيميل لما يخلص
 ```
 
 ```javascript
@@ -2231,7 +2231,7 @@ queue.consume('generate-report', async (job) => {
 في Q43 شفنا إزاي Node.js بيتعامل مع آلاف الطلبات المتزامنة بكفاءة عالية، لكن فيه عنق زجاجة (Bottleneck) ممكن يفسد كل الميزة دي: كل Request بيحتاج يتكلم مع الـ Database، ولو كل Request فتح اتصال جديد بالكامل مع الـ Database ولما يخلص قفله، العملية دي (فتح اتصال TCP جديد، زي ما شفنا في Q7، مع الـ Database كل مرة) مكلفة جداً من ناحية الوقت والموارد، خصوصاً مع آلاف الطلبات في نفس الوقت. الحل هو Connection Pool: مجموعة اتصالات جاهزة ومفتوحة مسبقاً مع الـ Database، وكل Request بياخد اتصال من الـ Pool ده، يستخدمه، ويرجّعه للـ Pool تاني بدل ما يقفله نهائياً.
 
 ```mermaid
-flowchart LR<br>    subgraph Pool[Connection Pool - 10 اتصالات جاهزة]<br>        C1[اتصال 1: مشغول]<br>        C2[اتصال 2: متاح]<br>        C3[اتصال 3: متاح]<br>        C4[اتصال 4: مشغول]<br>    end<br>    R1[Request جديد] -->|ياخد اتصال متاح| C2<br>    R2[Request تاني] -->|ياخد اتصال متاح| C3<br>    R3[Request تالت] -->|كل الاتصالات مشغولة، بينتظر في طابور| Pool
+flowchart LR<br/>    subgraph Pool[Connection Pool - 10 اتصالات جاهزة]<br/>        C1[اتصال 1: مشغول]<br/>        C2[اتصال 2: متاح]<br/>        C3[اتصال 3: متاح]<br/>        C4[اتصال 4: مشغول]<br/>    end<br/>    R1[Request جديد] -->|ياخد اتصال متاح| C2<br/>    R2[Request تاني] -->|ياخد اتصال متاح| C3<br/>    R3[Request تالت] -->|كل الاتصالات مشغولة، بينتظر في طابور| Pool
 ```
 
 ```javascript
@@ -2287,7 +2287,7 @@ app.get('/emails', async (req, res) => {
 كملنا على مشكلة الأداء اللي بدأنا نلمّح ليها في Q45: حتى مع Connection Pool محسّن، لو نفس الاستعلام بيتكرر آلاف المرات في الدقيقة (زي "هات بيانات المستخدم الحالي" أو "هات إعدادات النظام العامة")، برضو بتحمّل الـ Database بشكل غير ضروري بالمرة. الحل الأشهر في الصناعة هو إضافة طبقة Caching باستخدام أداة زي Redis: مخزن بيانات في الذاكرة (In-Memory) سريع جداً، بيقف بين السيرفر والـ Database، وبيخزّن نسخة من النتائج المتكررة عشان ميحتاجش يروح للـ Database في كل مرة.
 
 ```mermaid
-flowchart TD<br>    A[Request: هات بيانات المستخدم 42] --> B{موجود في Redis Cache؟}<br>    B -- Cache Hit --> C[يرجّع البيانات من Redis فوراً - أسرع بكتير]<br>    B -- Cache Miss --> D[يروح للـ Database الأساسية]<br>    D --> E[يخزّن النتيجة في Redis لطلبات لاحقة]<br>    E --> F[يرجّع البيانات للمستخدم]
+flowchart TD<br/>    A[Request: هات بيانات المستخدم 42] --> B{موجود في Redis Cache؟}<br/>    B -- Cache Hit --> C[يرجّع البيانات من Redis فوراً - أسرع بكتير]<br/>    B -- Cache Miss --> D[يروح للـ Database الأساسية]<br/>    D --> E[يخزّن النتيجة في Redis لطلبات لاحقة]<br/>    E --> F[يرجّع البيانات للمستخدم]
 ```
 
 ```javascript
@@ -2432,7 +2432,7 @@ Signature: HMACSHA256(base64(header) + "." + base64(payload), SECRET_KEY)
 كملنا على المشكلة اللي انتهينا بيها في Q48: JWT صعب إبطاله فوراً. جزء كبير من التعامل مع المشكلة دي عملياً هو تصميم عمر الـ Token نفسه بذكاء، مش الاعتماد على Blacklist بس. الحل المعياري في الصناعة هو استخدام نوعين من الـ Tokens مع بعض: Access Token عمره قصير جداً (دقايق)، وRefresh Token عمره طويل (أيام أو أسابيع) بس بيتخزن بشكل أكتر أماناً ومش بيتبعت مع كل Request.
 
 ```mermaid
-sequenceDiagram<br>    participant C as Client<br>    participant S as Server<br><br>    C->>S: تسجيل دخول ناجح<br>    S-->>C: Access Token (15 دقيقة) + Refresh Token (7 أيام)<br>    Note over C: كل Request عادي بيستخدم الـ Access Token بس<br>    Note over C: بعد 15 دقيقة، الـ Access Token انتهى<br>    C->>S: طلب Access Token جديد + الـ Refresh Token<br>    S->>S: يتحقق إن الـ Refresh Token لسه صالح ومش في الـ Blacklist<br>    S-->>C: Access Token جديد (15 دقيقة تانية)
+sequenceDiagram<br/>    participant C as Client<br/>    participant S as Server<br/><br/>    C->>S: تسجيل دخول ناجح<br/>    S-->>C: Access Token (15 دقيقة) + Refresh Token (7 أيام)<br/>    Note over C: كل Request عادي بيستخدم الـ Access Token بس<br/>    Note over C: بعد 15 دقيقة، الـ Access Token انتهى<br/>    C->>S: طلب Access Token جديد + الـ Refresh Token<br/>    S->>S: يتحقق إن الـ Refresh Token لسه صالح ومش في الـ Blacklist<br/>    S-->>C: Access Token جديد (15 دقيقة تانية)
 ```
 
 ```javascript
@@ -2487,7 +2487,7 @@ app.post('/auth/refresh', async (req, res) => {
 مشروع زي Inbox Sales Copilot أساساً معتمد على التكامل مع Gmail، ولازم في مرحلة ما يطلب من المستخدم إذن للوصول لإيميلاته. السؤال المهم هنا: إزاي التطبيق بتاعك يقدر "يوصل" لبيانات Gmail بتاعة المستخدم من غير ما المستخدم يديك الباسورد بتاعه أصلاً؟ ده بالظبط اللي OAuth 2.0 اتصمم عشانه، وتحديداً الـ Authorization Code Flow، وهو المعيار الصناعي لتسجيل الدخول والوصول للموارد عبر طرف ثالث.
 
 ```mermaid
-sequenceDiagram<br>    participant U as المستخدم<br>    participant App as Inbox Sales Copilot<br>    participant G as Google (Authorization Server)<br><br>    U->>App: يدوس "تسجيل الدخول بجوجل"<br>    App->>G: بيوجّه المستخدم لصفحة تسجيل دخول جوجل<br>    U->>G: يسجّل دخوله ويوافق على الصلاحيات المطلوبة<br>    G-->>App: يرجّع Authorization Code (مؤقت وقصير العمر)<br>    App->>G: يستبدل الـ Code بـ Access Token (Server-to-Server، سري)<br>    G-->>App: Access Token + Refresh Token لـ Gmail API<br>    App->>G: يستخدم الـ Access Token عشان يجيب الإيميلات<br>    App-->>U: يعرض الإيميلات جوّه الواجهة
+sequenceDiagram<br/>    participant U as المستخدم<br/>    participant App as Inbox Sales Copilot<br/>    participant G as Google (Authorization Server)<br/><br/>    U->>App: يدوس "تسجيل الدخول بجوجل"<br/>    App->>G: بيوجّه المستخدم لصفحة تسجيل دخول جوجل<br/>    U->>G: يسجّل دخوله ويوافق على الصلاحيات المطلوبة<br/>    G-->>App: يرجّع Authorization Code (مؤقت وقصير العمر)<br/>    App->>G: يستبدل الـ Code بـ Access Token (Server-to-Server، سري)<br/>    G-->>App: Access Token + Refresh Token لـ Gmail API<br/>    App->>G: يستخدم الـ Access Token عشان يجيب الإيميلات<br/>    App-->>U: يعرض الإيميلات جوّه الواجهة
 ```
 
 #### مثال 1: ليه الخطوة الوسيطة (Authorization Code) موجودة أصلاً بدل رجوع Token مباشرة
@@ -2723,7 +2723,7 @@ const isMatch = await bcrypt.compare(plainPasswordFromLogin, user.hashedPassword
 في Q1 لمّحنا إن سيرفر في أمريكا ومستخدم في مصر هيعاني من Latency بسبب المسافة الفيزيائية — حتى لو السيرفر نفسه سريع جداً. وفي Q46 فهمنا إن Redis بيحل مشكلة الضغط على الـ Database داخل نفس السيرفر. لكن فيه مشكلة تانية مختلفة تماماً: حتى لو Redis رد في 1 ميللي ثانية، لو المستخدم في القاهرة والسيرفر في Oregon، البيانات لازم تقطع المسافة الفيزيائية دي فعلياً — وده لوحده بيضيف عشرات أو مئات الـ milliseconds. الـ CDN (Content Delivery Network) هو الحل المصمم تحديداً لمشكلة المسافة دي، وهو مش مجرد تسريع، هو إعادة تفكير في فين بالظبط البيانات بتتخزن وبتترد منين.
 
 ```mermaid
-flowchart TD<br>    A[مستخدم في القاهرة يطلب صورة] --> B{الـ CDN Edge Server في القاهرة/الإسكندرية عنده النسخة؟}<br>    B -- Cache Hit --> C[يرجّع الصورة من السيرفر القريب - Latency 10ms]<br>    B -- Cache Miss --> D[يروح للـ Origin Server في أمريكا]<br>    D --> E[يجيب الصورة ويخزّنها في الـ Edge Server المحلي]<br>    E --> F[يرجّعها للمستخدم ويخزّنها للطلبات الجاية - Latency 200ms لأول مرة بس]
+flowchart TD<br/>    A[مستخدم في القاهرة يطلب صورة] --> B{الـ CDN Edge Server في القاهرة/الإسكندرية عنده النسخة؟}<br/>    B -- Cache Hit --> C[يرجّع الصورة من السيرفر القريب - Latency 10ms]<br/>    B -- Cache Miss --> D[يروح للـ Origin Server في أمريكا]<br/>    D --> E[يجيب الصورة ويخزّنها في الـ Edge Server المحلي]<br/>    E --> F[يرجّعها للمستخدم ويخزّنها للطلبات الجاية - Latency 200ms لأول مرة بس]
 ```
 
 ```bash
@@ -2869,7 +2869,7 @@ CREATE INDEX idx_emails_unread ON emails(user_id, received_at)
 وصلنا لمرحلة زي Q41 فهمنا فيها Horizontal Scaling للـ Application Servers — بس إيه اللي بيحصل لما الـ Database نفسها تبقى العنق الزجاجة (Bottleneck)؟ وقتها مش كفاية تضيف سيرفرات Application أكتر، لأنهم كلهم بيضغطوا على نفس الـ Database Server الواحد. فيه استراتيجيتين رئيسيتين لـ Scaling الـ Database نفسها: الأولى بتتعامل مع مشكلة ضغط الـ Read (القراءة)، والتانية بتتعامل مع مشكلة حجم البيانات نفسه — وكل واحدة ليها سيناريوهاتها ومشاكلها المختلفة تماماً.
 
 ```mermaid
-flowchart LR<br>    subgraph Read Replicas<br>    A[Primary DB - كتابة فقط] -->|Replication| B[Replica 1 - قراءة]<br>    A -->|Replication| C[Replica 2 - قراءة]<br>    A -->|Replication| D[Replica 3 - قراءة]<br>    end<br>    subgraph Sharding<br>    E[User IDs 1-1M → Shard 1]<br>    F[User IDs 1M-2M → Shard 2]<br>    G[User IDs 2M-3M → Shard 3]<br>    end
+flowchart LR<br/>    subgraph Read Replicas<br/>    A[Primary DB - كتابة فقط] -->|Replication| B[Replica 1 - قراءة]<br/>    A -->|Replication| C[Replica 2 - قراءة]<br/>    A -->|Replication| D[Replica 3 - قراءة]<br/>    end<br/>    subgraph Sharding<br/>    E[User IDs 1-1M → Shard 1]<br/>    F[User IDs 1M-2M → Shard 2]<br/>    G[User IDs 2M-3M → Shard 3]<br/>    end
 ```
 
 ```javascript
@@ -3065,7 +3065,7 @@ app.use('/api/emails', authenticate, userRateLimiter, emailsController);
 وصلنا لسؤال من أكثر أسئلة الـ System Design شيوعاً في الإنترفيوهات الـ Senior، وفي نفس الوقت من أكتر المفاهيم اللي بتتقال بشكل خاطئ أو مبسّط أكتر من اللازم. CAP Theorem هو نظرية رياضية ثبُتت عام 2000 بتقول إن أي نظام بيانات موزّع (Distributed Database) لا يستطيع أن يضمن الثلاثة خصائص الآتية في نفس الوقت: الـ Consistency، والـ Availability، والـ Partition Tolerance. إنت دايماً لازم تختار اتنين بس — والـ Partition Tolerance مش اختياري فعلاً في أي نظام موزّع حقيقي، وده بيخلّي القرار الحقيقي هو: CP ولا AP؟
 
 ```mermaid
-flowchart TD<br>    A[CAP Theorem: اختار اتنين بس] --> B[C: Consistency<br>كل Node بيرجع نفس البيانات في نفس اللحظة]<br>    A --> C[A: Availability<br>كل Request لازم يجاوب حتى لو في Node واقعة]<br>    A --> D[P: Partition Tolerance<br>النظام يكمل شغله حتى لو الشبكة انقسمت]<br>    B --> E[CP Systems: MongoDB, HBase, ZooKeeper<br>يوقف الرد لو مش متأكد من البيانات]<br>    C --> F[AP Systems: Cassandra, CouchDB, DynamoDB<br>بيرجع بيانات ممكن تكون قديمة شوية]<br>    D --> G[بلا Partition Tolerance = غير عملي<br>الشبكات بتنقسم دايماً في الواقع]
+flowchart TD<br/>    A[CAP Theorem: اختار اتنين بس] --> B[C: Consistency<br/>كل Node بيرجع نفس البيانات في نفس اللحظة]<br/>    A --> C[A: Availability<br/>كل Request لازم يجاوب حتى لو في Node واقعة]<br/>    A --> D[P: Partition Tolerance<br/>النظام يكمل شغله حتى لو الشبكة انقسمت]<br/>    B --> E[CP Systems: MongoDB, HBase, ZooKeeper<br/>يوقف الرد لو مش متأكد من البيانات]<br/>    C --> F[AP Systems: Cassandra, CouchDB, DynamoDB<br/>بيرجع بيانات ممكن تكون قديمة شوية]<br/>    D --> G[بلا Partition Tolerance = غير عملي<br/>الشبكات بتنقسم دايماً في الواقع]
 ```
 
 #### مثال 1: Consistency مقابل Availability — سيناريو حقيقي في Banking
@@ -3228,7 +3228,7 @@ async function sendEmail(emailData) {
 كل Developer سمع جملة "بيشتغل عندي!" وكل DevOps Engineer كره الجملة دي. المشكلة الحقيقية إن بيئة تطوير الـ Developer (جهازه الشخصي) مختلفة عن بيئة السيرفر في الإنتاج — إصدار Node.js مختلف، إصدار PostgreSQL مختلف، مكتبات نظام مختلفة، متغيرات بيئة مختلفة. Docker حل المشكلة دي بجذريتها: بدل ما نبعت الـ Code بس ونأمل إن البيئة هتكون متشابهة، بنبعت الـ Code + البيئة كلها معاه في صندوق واحد (Container) — يشتغل بنفس الطريقة بالظبط في أي مكان.
 
 ```mermaid
-flowchart LR<br>    subgraph بدون Docker - المشكلة<br>    A[Dev Machine<br>Node 18, Postgres 14] -->|Code بس| B[Server<br>Node 16, Postgres 13]<br>    B --> C[💥 تعارض نسخ<br>اختلاف بيئات<br>بيشتغل عندي!]<br>    end<br>    subgraph مع Docker - الحل<br>    D[Dev Machine] -->|Code + البيئة كلها| E[Docker Image<br>Node 18 + Postgres 14<br>+ كل Dependencies]<br>    E --> F[أي Server]<br>    F --> G[✅ يشتغل بنفس الطريقة<br>في كل مكان]<br>    end
+flowchart LR<br/>    subgraph بدون Docker - المشكلة<br/>    A[Dev Machine<br/>Node 18, Postgres 14] -->|Code بس| B[Server<br/>Node 16, Postgres 13]<br/>    B --> C[💥 تعارض نسخ<br/>اختلاف بيئات<br/>بيشتغل عندي!]<br/>    end<br/>    subgraph مع Docker - الحل<br/>    D[Dev Machine] -->|Code + البيئة كلها| E[Docker Image<br/>Node 18 + Postgres 14<br/>+ كل Dependencies]<br/>    E --> F[أي Server]<br/>    F --> G[✅ يشتغل بنفس الطريقة<br/>في كل مكان]<br/>    end
 ```
 
 ```dockerfile
@@ -3374,7 +3374,7 @@ docker-compose logs app --follow
 في Q61 فهمنا إزاي Docker بيضمن إن البيئة متشابهة في كل مكان. لكن مازال فيه سؤال: إزاي كل مرة المطور يعمل Push للـ Code، الـ Code ده يوصل تلقائياً للـ Production من غير تدخل يدوي وبأمان؟ ده بالظبط اللي الـ CI/CD Pipeline بيعمله. CI (Continuous Integration) هو التأكد تلقائياً إن الـ Code الجديد سليم ومش بيكسر حاجة. CD (Continuous Delivery/Deployment) هو نقله تلقائياً للـ Staging أو الـ Production. بدون Pipeline، كل Deploy يدوي ويعتمد على شخص معين — وده مصدر أخطاء وـ Downtime.
 
 ```mermaid
-sequenceDiagram<br>    participant D as Developer<br>    participant G as GitHub<br>    participant CI as CI Runner (GitHub Actions)<br>    participant R as Docker Registry<br>    participant P as Production Server<br>    D->>G: git push origin main<br>    G->>CI: Trigger Workflow<br>    CI->>CI: Install dependencies<br>    CI->>CI: Run Tests (unit + integration)<br>    CI->>CI: Run Linter & Type Check<br>    CI->>CI: Build Docker Image<br>    CI->>R: Push Image (tagged with commit SHA)<br>    CI->>P: Deploy: pull new image + restart containers<br>    P->>CI: Health Check passed ✅<br>    CI->>G: Update deployment status<br>    G->>D: Deployment successful notification
+sequenceDiagram<br/>    participant D as Developer<br/>    participant G as GitHub<br/>    participant CI as CI Runner (GitHub Actions)<br/>    participant R as Docker Registry<br/>    participant P as Production Server<br/>    D->>G: git push origin main<br/>    G->>CI: Trigger Workflow<br/>    CI->>CI: Install dependencies<br/>    CI->>CI: Run Tests (unit + integration)<br/>    CI->>CI: Run Linter & Type Check<br/>    CI->>CI: Build Docker Image<br/>    CI->>R: Push Image (tagged with commit SHA)<br/>    CI->>P: Deploy: pull new image + restart containers<br/>    P->>CI: Health Check passed ✅<br/>    CI->>G: Update deployment status<br/>    G->>D: Deployment successful notification
 ```
 
 ```yaml
@@ -3655,7 +3655,7 @@ kubectl create secret generic inbox-secrets \
 كملنا على Q61 و Q62 واللي شفنا فيهم إن التطبيق بيشتغل داخل Container على Port معين (زي 3000). لكن في الإنتاج، المستخدم بيوصل لموقعك على Port 80 (HTTP) أو 443 (HTTPS) مش Port 3000. ومش منطقي إن تطبيق Node.js يشتغل مباشرة على الـ Port ده بـ Root Privileges. وكمان لو عندك أكتر من Service (Backend API، صفحة Static، WebSocket Server)، كيف كلهم يشتغلوا على نفس الـ Domain؟ الحل هو وضع Nginx كـ Reverse Proxy — برنامج بيستقبل كل الطلبات الواردة على Port 80/443 ويقررلها تروح فين.
 
 ```mermaid
-flowchart LR<br>    A[Internet Traffic<br>Port 80 / 443] --> B[Nginx - Reverse Proxy<br>يعمل SSL Termination<br>يحدد التوجيه]<br>    B -->|/api/*| C[Node.js App<br>Port 3000 - Container]<br>    B -->|/static/*| D[Static Files<br>HTML CSS JS]<br>    B -->|/ws| E[WebSocket Server<br>Port 3001]<br>    B -->|Load Balance| F[Node.js App<br>Port 3002 - Container 2]
+flowchart LR<br/>    A[Internet Traffic<br/>Port 80 / 443] --> B[Nginx - Reverse Proxy<br/>يعمل SSL Termination<br/>يحدد التوجيه]<br/>    B -->|/api/*| C[Node.js App<br/>Port 3000 - Container]<br/>    B -->|/static/*| D[Static Files<br/>HTML CSS JS]<br/>    B -->|/ws| E[WebSocket Server<br/>Port 3001]<br/>    B -->|Load Balance| F[Node.js App<br/>Port 3002 - Container 2]
 ```
 
 ```nginx
@@ -3772,7 +3772,7 @@ HTTPS مجاني الآن مع Let's Encrypt وCertbot — مفيش سبب لأ�
 في Q62 شفنا Pipeline بسيط بيوقف الـ Container القديم ويشغّل الجديد. المشكلة: في اللحظة بين `docker stop` و`docker run`، الـ Application مش موجود. الطلبات اللي بيجوا في الثانيتين دول بيرجعوا بـ 502 Bad Gateway. لو بتعمل Deploy بالليل مش مشكلة كبيرة، لكن لو مشروعك بيخدم مستخدمين في مناطق وقت مختلفة أو بيعمل عمليات حساسة مستمرة؟ Zero-Downtime Deployment هو ضمان إن المستخدم ما يحسش بالـ Deployment خالص.
 
 ```mermaid
-sequenceDiagram<br>    participant LB as Load Balancer / Nginx<br>    participant V1 as Container v1 - شغال<br>    participant V2 as Container v2 - جديد<br>    Note over V1,V2: Blue-Green Deployment<br>    LB->>V1: كل الطلبات تروح لـ v1<br>    V2->>V2: ابدأ Container الجديد<br>    V2->>V2: Health Check - هل v2 اشتغل؟<br>    LB->>V2: حوّل الطلبات لـ v2 بشكل تدريجي<br>    V1->>V1: انتظر انتهاء الطلبات الحالية Graceful Shutdown<br>    V1->>V1: أوقف v1 بأمان
+sequenceDiagram<br/>    participant LB as Load Balancer / Nginx<br/>    participant V1 as Container v1 - شغال<br/>    participant V2 as Container v2 - جديد<br/>    Note over V1,V2: Blue-Green Deployment<br/>    LB->>V1: كل الطلبات تروح لـ v1<br/>    V2->>V2: ابدأ Container الجديد<br/>    V2->>V2: Health Check - هل v2 اشتغل؟<br/>    LB->>V2: حوّل الطلبات لـ v2 بشكل تدريجي<br/>    V1->>V1: انتظر انتهاء الطلبات الحالية Graceful Shutdown<br/>    V1->>V1: أوقف v1 بأمان
 ```
 
 ```javascript
@@ -3924,7 +3924,7 @@ export class HealthController {
 كملنا على Docker Compose في Q61 اللي ممتاز لـ Development وبسيط للإنتاج الصغير. لكن تخيل إن مشروعك كبر وعندك 20 Container من خدمات مختلفة، وعندك 3 Production Servers مختلفين، وعايز لما Container واقع يرجع تلقائياً، وعايز تزود عدد الـ Containers أوتوماتيكياً لما الـ Load يزيد. Docker Compose مش مصمم للمشكلة دي. Kubernetes (K8s) هو نظام Orchestration يحل تحديداً المشاكل دي — لكنه بيجي بتعقيد كبير، وأغلب المشاريع الصغيرة والمتوسطة ما تحتاجهوش.
 
 ```mermaid
-flowchart TD<br>    subgraph Kubernetes Cluster<br>    A[Control Plane<br>بيقرر فين يشتغل كل Container] --> B[Node 1 - سيرفر فعلي<br>Pod: backend x2<br>Pod: worker x1]<br>    A --> C[Node 2 - سيرفر فعلي<br>Pod: backend x2<br>Pod: redis x1]<br>    A --> D[Node 3 - سيرفر فعلي<br>Pod: backend x1<br>Pod: postgres x1]<br>    end<br>    E[Load Balancer خارجي] --> B<br>    E --> C<br>    E --> D
+flowchart TD<br/>    subgraph Kubernetes Cluster<br/>    A[Control Plane<br/>بيقرر فين يشتغل كل Container] --> B[Node 1 - سيرفر فعلي<br/>Pod: backend x2<br/>Pod: worker x1]<br/>    A --> C[Node 2 - سيرفر فعلي<br/>Pod: backend x2<br/>Pod: redis x1]<br/>    A --> D[Node 3 - سيرفر فعلي<br/>Pod: backend x1<br/>Pod: postgres x1]<br/>    end<br/>    E[Load Balancer خارجي] --> B<br/>    E --> C<br/>    E --> D
 ```
 
 ```yaml
@@ -4064,7 +4064,7 @@ kubectl rollout history deployment/inbox-backend
 وصلنا للسؤال الأخير، وهو من أهمهم في الـ Senior interviews: الـ Deployment نجح، التطبيق شغال — وبعدين مستخدم بيشتكي إن الحاجة بطيئة أو مكسورة. كيف بتعرف المشكلة، وكيف بتحددها، وكيف بتعرف كانت موجودة من امتى؟ فيه فرق جوهري بين Monitoring (متابعة مقاييس محددة معروفة) وObservability (القدرة على فهم ما بيحصل جوّه النظام من المخرجات بتاعته). المشاريع الإنتاجية الجادة مش بتتابع بعيونها بس — بيكون عندهم نظام يحسسهم بأي مشكلة قبل المستخدم يحس بيها.
 
 ```mermaid
-flowchart LR<br>    A[Inbox Sales Copilot App] -->|Metrics: CPU, Memory, Request Rate, Error Rate| B[Prometheus - تجمع المقاييس]<br>    A -->|Logs: JSON structured logs| C[Loki / CloudWatch Logs]<br>    A -->|Traces: request journey across services| D[Jaeger / OpenTelemetry]<br>    B --> E[Grafana - Dashboard & Alerts]<br>    C --> E<br>    D --> E<br>    E -->|Alert: Error Rate > 1%| F[PagerDuty / Slack Alert]<br>    F --> G[On-Call Engineer - يصحى يحل المشكلة]
+flowchart LR<br/>    A[Inbox Sales Copilot App] -->|Metrics: CPU, Memory, Request Rate, Error Rate| B[Prometheus - تجمع المقاييس]<br/>    A -->|Logs: JSON structured logs| C[Loki / CloudWatch Logs]<br/>    A -->|Traces: request journey across services| D[Jaeger / OpenTelemetry]<br/>    B --> E[Grafana - Dashboard & Alerts]<br/>    C --> E<br/>    D --> E<br/>    E -->|Alert: Error Rate > 1%| F[PagerDuty / Slack Alert]<br/>    F --> G[On-Call Engineer - يصحى يحل المشكلة]
 ```
 
 ```javascript
