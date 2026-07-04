@@ -951,3 +951,245 @@ def get_merchants_with_product_count():
 ### الفايدة الانترفيوية
 * **صيغة السؤال:** Differentiate between aggregate() and annotate() in Django ORM.
 * **الإجابة المثالية:** الـ `aggregate()` بنستخدمه عشان نعمل عملية حسابية (زي Sum, Avg, Count) على الـ QuerySet بالكامل ونطلع بنتيجة إجمالية واحدة. الناتج بتاعه بيكون (Dictionary) ومش (QuerySet) فمش بنقدر نعمل عليه فلترة بعد كده. أما الـ `annotate()` فهو مكافئ للـ `GROUP BY` في الـ SQL، بيعمل العملية الحسابية لكل ريكورد جوة الـ QuerySet وبيضيف النتيجة كأنها (Virtual Field) لكل أوبجكت. الـ `annotate()` بيرجع (QuerySet) عادي جداً، فبنقدر نعمل بعده `filter()` أو `order_by()` بناءً على الحقل الجديد اللي إحنا لسه ضايفينه.
+
+---
+
+## الجزء الثالث: الـ Django REST Framework والـ Serializers (DRF - Serializers)
+
+### Q15 — إيه هو الـ (Django REST Framework - DRF) وليه بنحتاجه بدل ما نرجع JSON من جانجو العادي؟
+
+#### أصل الحكاية
+تخيل إن جانجو هو مصنع بيصنع صفحات HTML ويرجعها للبراوزر. بس في الزمن ده، موبايل أبلكيشن أو React Frontend مش بيفهم HTML، هو محتاج الداتا صافية (Raw Data) بصيغة JSON.
+ممكن نستخدم جانجو العادي ونعمل `JsonResponse`، بس الموضوع متعب جداً لو عندنا علاقات معقدة، يوزرز، وصلاحيات. الـ (DRF) هو إضافة (Third-party App) لجانجو، فكرته إنه بيدينا أدوات جاهزة وممتازة عشان نحول الـ Models بتاعتنا لـ JSON (عن طريق السرياليزر)، ونتعامل مع الـ Requests والـ Responses بشكل احترافي، ونتحكم مين مسموح له يشوف الداتا دي (Auth & Permissions). باختصار، DRF بيخلي جانجو العادي يتكلم لغة الـ APIs بطلاقة.
+
+#### مثال 1: ليه DRF أحسن من جانجو العادي؟
+```python
+import json
+from django.http import JsonResponse, HttpRequest
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from myapp.models import Product
+from myapp.serializers import ProductSerializer
+
+# الطريقة المتعبة (بدون DRF): لازم تحول الداتا يدوياً وتراعي أنواع الداتا (زي التاريخ)
+def get_product_django_way(request: HttpRequest, pk: int) -> JsonResponse:
+    try:
+        product = Product.objects.get(pk=pk)
+        data = {
+            "id": product.id,
+            "name": product.name,
+            "price": str(product.price), # لو نسيت تحول الـ Decimal هيحصل إيرور
+        }
+        return JsonResponse(data)
+    except Product.DoesNotExist:
+        return JsonResponse({"error": "Not found"}, status=404)
+
+# الطريقة النظيفة بـ DRF: السرياليزر بيعمل كل حاجة، والـ Response بيتعامل مع الـ Content Type
+@api_view(['GET'])
+def get_product_drf_way(request: HttpRequest, pk: int) -> Response:
+    product = Product.objects.get(pk=pk)
+    serializer = ProductSerializer(product)
+    return Response(serializer.data)
+```
+
+#### الفايدة الانترفيوية
+* **صيغة السؤال:** Why use Django REST Framework when Django has JsonResponse?
+* **الإجابة المثالية:** صح إننا ممكن نبني API بجانجو العادي، لكن DRF بيوفر (Ecosystem) كامل بيوفر وقت هائل. أهم أسبابه: أولاً، بيوفر الـ (Serializers) اللي بتسهل تحويل الداتا المعقدة والـ QuerySets لـ JSON والعكس، وتتأكد من صحة الداتا (Validation). ثانياً، بيوفر (ViewSets) و (Routers) بتكتب الـ CRUD operations في سطرين. ثالثاً، نظام الـ (Authentication and Permissions) الجاهز فيه بيخلي حماية الـ API سهلة جداً ومش محتاجة اختراع العجلة من الصفر.
+
+---
+
+### Q16 — إيه هو الـ (Serializer) وإيه الفرق بين الـ (Serialization) والـ (Deserialization)؟
+
+#### أصل الحكاية
+الـ Serializer هو "المُترجم" في عالم الـ APIs. 
+لما اليوزر يطلب داتا (GET)، المترجم ده بياخد الـ Python Objects المعقدة (زي الـ QuerySet والـ Model instance) اللي البراوزر مش بيفهمها، ويحولها لنص JSON. العملية دي اسمها **(Serialization)**.
+ولما اليوزر يبعت داتا (POST/PUT)، المترجم بياخد الـ JSON ده، يحوله لـ Python Dictionary، يتأكد إن الداتا دي سليمة (Validation)، وبعدين يحولها لـ Object يتحفظ في الداتا بيز. العملية دي اسمها **(Deserialization)**.
+
+#### مثال 1: المترجم وهو بيحول الداتا رايح جاي
+```python
+from rest_framework import serializers
+
+class ProductSerializer(serializers.Serializer):
+    # بنعرف الحقول اللي المترجم هيتعامل معاها
+    name = serializers.CharField(max_length=100)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+    # لازم نحدد إزاي نعمل Deserialization
+    def create(self, validated_data: dict):
+        return Product.objects.create(**validated_data)
+
+# Serialization (From Object to JSON)
+# serializer = ProductSerializer(product_instance)
+# print(serializer.data) -> {"name": "Laptop", "price": "1000.00"}
+
+# Deserialization (From JSON to Object)
+# serializer = ProductSerializer(data={"name": "Mouse", "price": "50.00"})
+# if serializer.is_valid():
+#     serializer.save() -> Calls create()
+```
+
+#### الفايدة الانترفيوية
+* **صيغة السؤال:** Explain the role of a Serializer in DRF and the difference between serialization and deserialization.
+* **الإجابة المثالية:** الـ Serializer هو حلقة الوصل بين الـ Database والـ Client. عملية الـ (Serialization) هي تحويل الداتا المعقدة الخاصة ببايثون (زي الـ Model Instances) لـ (Native Python Datatypes) عشان نقدر نحولها لـ JSON ونرد بيها على الـ Client. أما عملية الـ (Deserialization) فهي العكس؛ بناخد الـ JSON اللي جاي في الـ Request، نحوله لـ Python Types، نعمله (Validation) عشان نتأكد إن الداتا صحيحة وآمنة، ولو تمام، بنبني منها Model Instance جديد أو نحدث واحد موجود في الداتا بيز.
+
+---
+
+### Q17 — إيه الفرق بين الـ (Serializer) العادي والـ (ModelSerializer)؟ وليه بنستخدم التاني أكتر؟
+
+#### أصل الحكاية
+الـ `Serializer` العادي عامل زي الموظف اللي بتديله تفاصيل كل حقل بالظبط وتكتبله إزاي يحفظ الداتا (تكتب دالة `create` و `update` بإيدك). 
+لكن بما إننا في 90% من الأوقات بنعمل سرياليزر لـ Model موجود أصلاً في الداتا بيز، ليه نعيد كتابة الحقول تاني ونكرر نفسنا؟ 
+هنا بييجي الـ `ModelSerializer`، ده موظف شاطر بيبص على الـ Model بتاعك ويستنتج كل الحقول اللي جواه لوحده، وبيعمل دوال الـ `create` و `update` جاهزة من غير ما تكتبها. ده تطبيق صريح لمبدأ الـ (DRY - Don't Repeat Yourself).
+
+#### مثال 1: الفرق بين الاتنين في كمية الكود
+```python
+from rest_framework import serializers
+from myapp.models import Product
+
+# 1. Regular Serializer (Boilerplate-heavy)
+class RegularProductSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=100)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    
+    def create(self, validated_data):
+        return Product.objects.create(**validated_data)
+        
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.price = validated_data.get('price', instance.price)
+        instance.save()
+        return instance
+
+# 2. ModelSerializer (Clean and DRY)
+class ProductModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price']
+        # it magically handles create() and update() based on the model!
+```
+
+#### الفايدة الانترفيوية
+* **صيغة السؤال:** When would you use a standard Serializer over a ModelSerializer?
+* **الإجابة المثالية:** بنستخدم الـ `ModelSerializer` في معظم الحالات لأنه بيقلل تكرار الكود (DRY). هو بيولد الـ Fields تلقائياً من الـ Model وبيبني الـ default validators، وبيمتلك implementations جاهزة لدوال الـ `create` والـ `update`. لكن، بنلجأ للـ `Serializer` العادي لما نكون بنتعامل مع داتا ملهاش علاقة بالـ Database Models خالص (زي مثلاً Endpoint بياخد داتا يعملها معالجة، يبعت إيميل، أو يكلم 3rd party API من غير ما يحفظ حاجة في الداتا بيز).
+
+---
+
+### Q18 — إزاي بنعمل (Validation) للداتا اللي جاية من اليوزر؟ وإيه الفرق بين الـ (Field-level validation) والـ (Object-level validation)؟
+
+#### أصل الحكاية
+"عمرك ما تثق في داتا جاية من اليوزر!" ده قانون الباك إند. الـ DRF بيعمل فحص تلقائي على نوع الداتا (يعني لو متوقع رقم واليوزر بعت حروف هيرفض). بس لو عايزين شروط خاصة للبيزنس بتاعنا (مثلاً السعر مينفعش يكون أقل من 10)، بنكتب دوال خاصة للـ Validation.
+* الـ **Field-level** بيفكر في حقل واحد بس (دالة اسمها `validate_field_name`).
+* الـ **Object-level** بيفكر في كذا حقل مع بعض، بيشوف الداتا كلها ككتلة واحدة (دالة اسمها `validate`).
+
+#### مثال 1: كتابة شروط Validation للبيزنس
+```python
+from rest_framework import serializers
+from myapp.models import Event
+
+class EventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = ['name', 'start_date', 'end_date', 'tickets_available']
+
+    # 1. Field-level Validation: بتشتغل على حقل واحد بس
+    def validate_tickets_available(self, value: int) -> int:
+        if value < 0:
+            raise serializers.ValidationError("عدد التذاكر مينفعش يكون بالسالب!")
+        return value
+
+    # 2. Object-level Validation: بتشتغل على الداتا كلها عشان تقارن حقلين ببعض
+    def validate(self, data: dict) -> dict:
+        # بنقارن تاريخ البداية بالنهاية
+        if data['start_date'] > data['end_date']:
+            raise serializers.ValidationError("تاريخ النهاية مينفعش يكون قبل البداية!")
+        return data
+```
+
+#### الفايدة الانترفيوية
+* **صيغة السؤال:** Distinguish between Field-level and Object-level validation in DRF.
+* **الإجابة المثالية:** الـ (Field-level validation) بيتم عن طريق كتابة دالة بصيغة `validate_<field_name>`، وبنستخدمها لما يكون شرط القبول معتمد على الحقل ده لوحده، زي التأكد إن السعر مش سالب. أما الـ (Object-level validation) بيتم عن طريق الـ Override لدالة `validate(self, data)`، وبنستخدمها لما يكون الشرط معتمد على علاقة بين أكتر من حقل في نفس الـ Request، زي التأكد إن تاريخ نهاية الخصم أكبر من تاريخ البداية. الـ Field-level بيتنفذ الأول، وبعدين الـ Object-level.
+
+---
+
+### Q19 — إزاي نتعامل مع الـ (Nested Serializers)؟ وإيه التحدي اللي بيقابلنا في الـ create/update؟
+
+#### أصل الحكاية
+في أوقات كتير الداتا بتبقى متداخلة (JSON جوه JSON)، زي منتج وجواه بيانات التاجر بتاعه، مش مجرد الـ ID بتاع التاجر.
+عشان نعمل ده بنحط سرياليزر جوه سرياليزر (Nested Serializers). الموضوع سهل جداً في الـ `GET` (الـ Read)، بس التحدي الحقيقي بيبدأ لما اليوزر يبعت `POST` وفيه Nested Data. الـ DRF بيرفع إيده ويقولك: "أنا معرفش أحفظ المنتجات والتجار في نفس الوقت أوتوماتيك، إنت اللي لازم تكتب دالة الـ `create` أو `update` بإيدك عشان تحدد مين يتحفظ قبل مين".
+
+#### مثال 1: القراءة والكتابة في Nested Data
+```python
+from rest_framework import serializers
+from myapp.models import Merchant, Product
+
+class MerchantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Merchant
+        fields = ['id', 'name', 'email']
+
+class ProductSerializer(serializers.ModelSerializer):
+    # السرياليزر المتداخل (هيظهر كـ Object كامل مش مجرد ID)
+    merchant = MerchantSerializer()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price', 'merchant']
+
+    # لازم نعمل Override للـ create عشان نحفظ الداتا المتداخلة
+    def create(self, validated_data: dict) -> Product:
+        # 1. بنفصل بيانات التاجر من القاموس
+        merchant_data = validated_data.pop('merchant')
+        
+        # 2. بنحفظ التاجر الأول في الداتا بيز عشان نحصل على الـ ID بتاعه
+        merchant_obj = Merchant.objects.create(**merchant_data)
+        
+        # 3. بنحفظ المنتج ونربطه بالتاجر اللي لسه مخلوق
+        product = Product.objects.create(merchant=merchant_obj, **validated_data)
+        return product
+```
+
+#### الفايدة الانترفيوية
+* **صيغة السؤال:** How does DRF handle Nested Serializers for write operations (POST/PUT)?
+* **الإجابة المثالية:** الـ DRF بيدعم الـ Nested Serializers بشكل تلقائي في عمليات الـ (Read-only)، لكن بالنسبة لعمليات الـ (Write)، الـ `ModelSerializer` مبيعرفش يتعامل مع الداتا المتداخلة (Writable nested data) بشكل أوتوماتيكي. عشان نحفظ داتا في علاقة، لازم نعمل (Override) لدالة `create()` أو `update()`. في الدالة دي، بنعمل `pop()` للـ Nested data من الـ `validated_data`، وبننفذ عملية حفظ الأوبجكت المرتبط الأول أو العكس حسب طبيعة الـ (Foreign Key)، وبعدين ندمجهم سوا.
+
+---
+
+### Q20 — إيه هو الـ (SerializerMethodField) وإزاي بنضيف داتا مش موجودة في الداتا بيز للـ Response؟
+
+#### أصل الحكاية
+ساعات بنبقى عايزين نرجع داتا للفرونت إند مش موجودة صراحة كعمود في الداتا بيز. مثلاً: حقل بيحسب الوقت الباقي على انتهاء الخصم، أو حقل بيجمع قيمة المنتجات. هنا بنستخدم الـ `SerializerMethodField`، ده حقل سحري بيتربط بدالة جوه السرياليزر، والدالة دي بتعمل أي عملية حسابية معقدة وترجع النتيجة. الداتا دي بتبقى (Read-only) بطبيعة الحال.
+
+#### مثال 1: حساب حقل جديد أثناء الـ Serialization
+```python
+from rest_framework import serializers
+from myapp.models import Product
+from django.utils import timezone
+
+class ProductDetailedSerializer(serializers.ModelSerializer):
+    # بنعرف الحقل الجديد (الاسم الافتراضي للدالة لازم يبدأ بـ get_)
+    discount_status = serializers.SerializerMethodField()
+    final_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price', 'discount_status', 'final_price']
+
+    # الدالة بتاخد الـ object الحالي كباراميتر وتعمل الحسبة
+    def get_discount_status(self, obj: Product) -> str:
+        if obj.discount_end_date and obj.discount_end_date > timezone.now():
+            return "Active Discount"
+        return "No Discount"
+
+    def get_final_price(self, obj: Product) -> float:
+        # بنحسب السعر بعد الخصم كأنه Field في الـ JSON
+        return float(obj.price) * 0.9 if getattr(obj, 'is_discounted', False) else float(obj.price)
+```
+
+> [!warning] فخ الأداء
+> خد بالك، الـ `SerializerMethodField` بيتنفذ على كل ريكورد. لو كتبت جواه كود بيعمل Database Query (زي إنك تجيب عدد الكومنتات)، هتعمل (N+1 Query Problem) كارثية! الحل إنك تستخدم `annotate` في الـ Views قبل ما تبعت الداتا للسرياليزر.
+
+#### الفايدة الانترفيوية
+* **صيغة السؤال:** What is a SerializerMethodField and what is the biggest performance risk when using it?
+* **الإجابة المثالية:** الـ `SerializerMethodField` هو حقل (Read-only) بيسمحلي أضيف قيمة للـ JSON Response ناتجة عن دالة (Custom Method) موجودة جوه السرياليزر، واسم الدالة بياخد الـ Prefix `get_` متبوع باسم الحقل. أكبر خطر له هو أداء الداتا بيز (Performance bottleneck). لو استعلمنا عن الداتا بيز جوة الـ Method دي، هيحصلنا (N+1 Problem) لأن الدالة دي بتتندى مع كل ريكورد على حدة. عشان نتجنب ده، لازم نعمل الـ Calculations المطلوبة باستخدام `annotate` على مستوى الـ QuerySet في الـ View، والسرياليزر مجرد بيقرا القيمة الجاهزة دي بدون `SerializerMethodField`.
+
