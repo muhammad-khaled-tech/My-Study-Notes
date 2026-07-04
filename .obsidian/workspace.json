@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "python/03-Lists-And-Tuples.md",
+                "file": "python/Untitled.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "03-Lists-And-Tuples"
+              "title": "Untitled"
             }
           }
         ]
@@ -238,6 +238,10 @@
   },
   "active": "f8ff720a4c7aaa47",
   "lastOpenFiles": [
+    "python/05-Functions-Deep-Dive.md",
+    "python/Untitled.md",
+    "python/04-Dictionaries-And-Sets.md",
+    "python/03-Lists-And-Tuples.md",
     "python/02-Loops-And-Iterations.md",
     "python/Python_Advanced_Interview_Notes (1).md",
     "python/Unconfirmed 890880.crdownload",
@@ -251,9 +255,6 @@
     "python/08-OOP-Advanced.md",
     "python/07-OOP-Basics.md",
     "python/06-Strings-And-Files.md",
-    "python/05-Functions-Deep-Dive.md",
-    "python/04-Dictionaries-And-Sets.md",
-    "python/03-Lists-And-Tuples.md",
     "python/Python_Interview_Review_Prompt.md",
     "python/Python_Advanced_Interview_Notes.md",
     "python/12-30-Interview-Questions.md",
@@ -270,7 +271,6 @@
     "problem solving/OOP_SOLID_DesignPatterns_Java_Prompt (1).md",
     "problem solving/binary_search_on_answer_tutorial.md",
     "problem solving/DSA_Zero_to_Hero.md",
-    "python/projects/python_interview_60qa.md",
     "problem solving/Unconfirmed 681712.crdownload",
     "python/Unconfirmed 362078.crdownload",
     "problem solving/Unconfirmed 372944.crdownload",

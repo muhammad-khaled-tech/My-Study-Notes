@@ -97,7 +97,11 @@
     "Aws practitioner/AIF/AIF-Domain-1.md": "rtl",
     "problem solving/HashMap_HashSet_Deep_Dive.md": "rtl",
     "Aws practitioner/AIF/AIF-C01_Domain1_Fundamentals_DeepDive.md": "rtl",
-    "python/02-Loops-And-Iterations.md": "rtl"
+    "python/02-Loops-And-Iterations.md": "rtl",
+    "python/03-Lists-And-Tuples.md": "rtl",
+    "python/04-Dictionaries-And-Sets.md": "rtl",
+    "python/05-Functions-Deep-Dive.md": "rtl",
+    "python/Untitled.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
