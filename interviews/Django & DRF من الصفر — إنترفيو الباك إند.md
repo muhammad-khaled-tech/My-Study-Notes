@@ -1193,3 +1193,528 @@ class ProductDetailedSerializer(serializers.ModelSerializer):
 * **صيغة السؤال:** What is a SerializerMethodField and what is the biggest performance risk when using it?
 * **الإجابة المثالية:** الـ `SerializerMethodField` هو حقل (Read-only) بيسمحلي أضيف قيمة للـ JSON Response ناتجة عن دالة (Custom Method) موجودة جوه السرياليزر، واسم الدالة بياخد الـ Prefix `get_` متبوع باسم الحقل. أكبر خطر له هو أداء الداتا بيز (Performance bottleneck). لو استعلمنا عن الداتا بيز جوة الـ Method دي، هيحصلنا (N+1 Problem) لأن الدالة دي بتتندى مع كل ريكورد على حدة. عشان نتجنب ده، لازم نعمل الـ Calculations المطلوبة باستخدام `annotate` على مستوى الـ QuerySet في الـ View، والسرياليزر مجرد بيقرا القيمة الجاهزة دي بدون `SerializerMethodField`.
 
+
+
+---
+
+## 📌 الموضوع الخامس: Authentication & Permissions
+
+### 27. إيه الفرق الجوهري بين الـ (Authentication - 401) والـ (Permissions - 403)؟
+
+**أصل الحكاية:**
+الفرق بين الـ (Authentication) والـ (Permissions) عامل بالظبط زي الفرق بين إنك تطلّع بطاقتك أو الباسبور بتاعك لموظف الأمن على باب الشركة، وبين إنك تحاول تدخل مكتب المدير التنفيذي.
+- **الـ (Authentication):** بتجاوب على سؤال "أنت مين؟". بتثبت هويتك للسيستم (عن طريق يوزرنيم وباسوورد، أو توكن). لو السيستم معرفش أنت مين، هيرد عليك بـ `401 Unauthorized`.
+- **الـ (Permissions):** بتجاوب على سؤال "هل مسموحلك تعمل الأكشن ده؟". بعد ما السيستم عرف أنت مين، بيشوف صلاحياتك. يعني ممكن تكون موظف في الشركة (Authenticated)، بس مش مسموحلك تدخل غرفة السيرفرات. لو حاولت تدخل، السيستم هيرد بـ `403 Forbidden`.
+
+في DRF، الـ Request بيعدي الأول على الـ Authentication Classes عشان يحدد هوية اليوزر، وبعدها يعدي على الـ Permission Classes عشان يحدد هل اليوزر ده مسموح له ينفذ الـ View ولا لأ.
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "الـ Authentication هو عملية تحديد هوية الـ Client (Who are you?)، ولو فشلت بيرجع `401 Unauthorized`. الـ Authorization أو الـ Permissions هي عملية التحقق من صلاحيات الـ Client ده (Are you allowed to do this?)، ولو فشلت بيرجع `403 Forbidden`. في DRF، الـ Authentication بتشتغل الأول عشان تملى الـ `request.user`، وبعدها الـ Permissions بتستخدم الـ `request.user` ده عشان تاخد قرار المنع أو السماح."
+
+> [!warning] Checkpoint (فخ الإنترفيوهات)
+> ناس كتير بتتلخبط بين `401` و `403`. افتكر دايماً: `401` يعني أنا مش عارفك (سجل دخول الأول)، و `403` يعني أنا عارفك بس أنت ملكش صلاحية (أنت يوزر عادي والصفحة دي للـ Admin).
+
+### 28. إيه هي أنواع الـ (Authentication) المتاحة في DRF؟ (Session, Token, JWT)
+
+**أصل الحكاية:**
+الـ APIs بتحتاج طريقة عشان تعرف مين اللي بيبعت الـ Request (لأن الـ HTTP نفسه Stateless، مبيفتكرش حاجة). DRF بيوفر كذا طريقة:
+
+1. **Session Authentication:**
+السيستم بيعتمد على الـ Cookies. أول ما تسجل دخول، السيرفر بيبعت Session ID يتخزن في البراوزر، ومع كل ريكويست البراوزر بيبعته تلقائي. ده ممتاز جداً لو الباك إند والفرونت إند شغالين في نفس المكان (زي Django Templates) أو لو الفرونت إند بيقدر يهندل الـ Cookies كويس مع الـ CSRF Tokens.
+
+2. **Token Authentication (Basic):**
+كل يوزر بيكون ليه Token ثابت عبارة عن String طويل متخزن في الداتا بيز. اليوزر بيبعت الـ Token ده في الـ Headers بتاعة الـ Request (مثلاً `Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b`). عيبه إن السيرفر بيحتاج يعمل Query للداتا بيز مع كل ريكويست عشان يتأكد إن التوكن ده موجود وصالح.
+
+3. **JWT (JSON Web Tokens):**
+التوكن هنا مش متخزن في الداتا بيز أصلاً! هو عبارة عن String مشفر (أو بالأصح Signed) جواه داتا عن اليوزر (زي الـ ID بتاعه). السيرفر بيعمل Verify للتوكن ده باستخدام Secret Key موجود عنده. ده الـ Standard حالياً للـ Mobile Apps والـ SPAs (زي React و Vue) لأن السيرفر مش محتاج يكلم الداتا بيز مع كل ريكويست.
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "في DRF بنستخدم 3 أنواع رئيسية: Session للـ Web Browsers والـ Monolithic apps، و Basic Token Auth اللي بيخزن التوكن في الداتابيز ومناسب للمشاريع الصغيرة، والـ JWT وهو الـ Stateless approach الأفضل للـ Microservices والـ SPAs لأن السيرفر بيعمل Validation للتوكن عن طريق الـ Cryptographic Signature من غير ما يضرب الداتابيز مع كل ريكويست، وده بيحسن الـ Scalability."
+
+> [!info] معلومة عالسريع
+> الـ Token Authentication العادي بتاع DRF التوكن بتاعه ملوش تاريخ انتهاء (Expiration) بشكل افتراضي، عكس الـ JWT اللي تصميمه مبني على فكرة الـ Access Token (عمره قصير) والـ Refresh Token (عمره أطول).
+
+### 29. إيه هو الـ (JWT - JSON Web Tokens) وإزاي بيشتغل مع DRF؟ وليه هو الـ Standard؟
+
+**أصل الحكاية:**
+الـ JWT عبارة عن باسبور إلكتروني السيرفر بيطلعه لليوزر. الباسبور ده متكون من 3 أجزاء مفصولين بنقطة (`Header.Payload.Signature`):
+- **Header:** بيقول إيه نوع التوكن ونوع التشفير.
+- **Payload:** الداتا الفعلية زي الـ `user_id` وتاريخ الانتهاء `exp`.
+- **Signature:** ده الختم السري بتاع السيرفر اللي بيضمن إن محدش لعب في الباسبور.
+
+في DRF، بنستخدم مكتبة زي `djangorestframework-simplejwt`. لما اليوزر يبعت يوزرنيم وباسوورد، المكتبة بتديله 2 توكنز:
+1. **Access Token:** عمره قصير جداً (مثلاً 5 دقايق). اليوزر بيستخدمه عشان يطلب الداتا.
+2. **Refresh Token:** عمره أطول (مثلاً يوم أو أسبوع). لما الـ Access يخلص، اليوزر يبعت الـ Refresh عشان ياخد Access جديد من غير ما يطلب الباسوورد تاني.
+
+**ليه هو الـ Standard؟**
+عشان هو Stateless. السيرفر مش مضطر يحفظ ملايين التوكنز في الميموري أو الداتا بيز. السيرفر بياخد التوكن، يعمل حسبة معينة بالـ Secret Key بتاعه، ولو الحسبة طلعت صح، يبقى التوكن سليم واليوزر يقدر يدخل. ده بيوفر موارد السيرفر جداً.
+
+**مثال كود لإعداد SimpleJWT:**
+```python
+# settings.py
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+# urls.py
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+from django.urls import path
+
+urlpatterns = [
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'), # Login
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+]
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "الـ JWT هو Stateless authentication mechanism بيعتمد على Cryptographic signatures. بيتكون من Header و Payload و Signature. ميزته الكبيرة الـ Scalability لأن الـ validation بيتم بمعادلات رياضية مش بـ DB lookups. بنستخدم `SimpleJWT` مع DRF عشان نطبق الـ Access/Refresh token pattern، وده بيقلل الـ Security risks لأن الـ Access token عمره قصير، ولما بينتهي بنستخدم الـ Refresh token عشان نطلع واحد جديد."
+
+> [!danger] تحذير أمني
+> متخزنش أي بيانات حساسة (زي الباسوورد) جوة الـ Payload بتاع الـ JWT، لأن أي حد معاه التوكن يقدر يعمله Decode ويقرا الداتا اللي فيه، التشفير بيكون للـ Signature بس مش للـ Payload.
+
+### 30. إيه هي الـ (Permissions) المبنية جاهزة في DRF؟
+
+**أصل الحكاية:**
+DRF بييجي معاه شوية صلاحيات (Permissions) جاهزة بتغطي معظم الحالات الطبيعية اللي هتحتاجها. بتعرف الـ Permission في الـ View جوه متغيّر اسمه `permission_classes`.
+
+أشهر الأنواع الجاهزة:
+1. `AllowAny`: الباب مفتوح للكل، سواء مسجل دخول أو لأ (ودي الديفولت لو مش محدد حاجة).
+2. `IsAuthenticated`: لازم اليوزر يكون عامل لوجين وباعث توكن سليم، غير كده هيرجع 401/403.
+3. `IsAdminUser`: بيسمح بس لليوزرز اللي عندهم `is_staff=True` (مش شرط الـ superuser بس).
+4. `IsAuthenticatedOrReadOnly`: لو بتبعت `GET` ريكويست (القراءة) فمسموح لأي حد، بس لو هتعمل `POST` أو `PUT` أو `DELETE` (تعديل) لازم تكون مسجل دخول.
+
+**مثال تطبيقي:**
+```python
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from typing import Any
+
+class ArticleList(APIView):
+    # أي حد يقدر يشوف المقالات، بس المسجل بس يقدر يضيف مقال جديد
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request: Any) -> Response:
+        return Response({"message": "List of articles for everyone."})
+
+    def post(self, request: Any) -> Response:
+        return Response({"message": "Article created! You are authenticated."})
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "DRF بيوفر built-in permissions زي `IsAuthenticated` لحماية الـ endpoints، و `IsAuthenticatedOrReadOnly` اللي بتسمح بالـ SAFE_METHODS (GET, HEAD, OPTIONS) لأي يوزر بس بتطلب Authentication للـ unsafe methods. كمان فيه `IsAdminUser` للـ staff users. وبنقدر نحطها على مستوى المشروع كله في `settings.py` أو على مستوى كل View باستخدام `permission_classes`."
+
+### 31. إزاي نكتب (Custom Permission) خاصة بينا؟ وإيه الفرق الدقيق بين `has_permission` و `has_object_permission`؟
+
+**أصل الحكاية:**
+في أوقات الصلاحيات الجاهزة مش بتكفي. مثلاً، عاوزين الـ View يسمح بتعديل البوست لو اليوزر هو "صاحب البوست" بس. هنا بنعمل Custom Permission عن طريق إننا نورث من `BasePermission`.
+
+الكلاس ده جواه دالتين مهمين جداً ولازم تفهم الفرق بينهم:
+1. `has_permission(self, request, view)`:
+دي بتشتغل **أول حاجة** على مستوى الـ Request ككل والـ View. بتسأل: "هل اليوزر ده مسموح له يدخل الـ View ده أصلاً من على الباب؟". لو رجعت `False`، الريكويست هيترفض فوراً.
+
+2. `has_object_permission(self, request, view, obj)`:
+دي بتشتغل **بعد** الـ `has_permission`، ولما تكون بتتعامل مع (Object معين) زي `retrieve` أو `update` أو `destroy`. بتسأل: "اليوزر دخل الـ View، بس هل مسموح له يلمس الـ Object (السجل) ده تحديداً؟".
+
+**مثال كود (اليوزر يعدل الحاجه بتاعته بس):**
+```python
+from rest_framework import permissions
+from typing import Any
+from django.db.models import Model
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+    
+    def has_permission(self, request: Any, view: Any) -> bool:
+        # السماح للكل بالدخول للـ View (مثلاً لو هيعمل List)
+        # أو نطلب إنه يكون مسجل دخول على الأقل
+        return bool(request.user and request.user.is_authenticated)
+
+    def has_object_permission(self, request: Any, view: Any, obj: Model) -> bool:
+        # Read permissions are allowed to any request (GET, HEAD, OPTIONS)
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        # Write permissions are only allowed to the owner of the snippet.
+        # نفترض إن الموديل فيه حقل اسمه owner
+        return obj.owner == request.user
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "عشان نعمل Custom Permission بنورث من `BasePermission` ونعمل override لـ `has_permission` و `has_object_permission`. الـ `has_permission` بتُنفذ على مستوى الـ View بالكامل (زي الـ list والـ create)، بينما `has_object_permission` بتُنفذ لما بنعمل action على object محدد (زي الـ retrieve أو الـ update) وبتأخد الـ object كـ parameter عشان نقدر نقارن بياناته (زي الـ `owner`) ببيانات الـ `request.user`."
+
+> [!tip] خد بالك (Checkpoint)
+> دالة `has_object_permission` **مش بتشتغل** في الـ List views (لأن مفيش Object واحد بنتعامل معاه). هي بتشتغل بس لما بتنده دالة `get_object()`، زي في حالة الـ Detail views. فلو بتعمل View بيجيب لستة، لازم تفلتر اللستة دي في دالة `get_queryset` مش بالـ Permissions.
+
+---
+
+## 📌 الموضوع السادس: Advanced DRF & Performance
+
+### 32. ليه بنحتاج (Pagination)؟ وإيه الفرق بين الـ (PageNumber), (LimitOffset), والـ (Cursor Pagination)؟
+
+**أصل الحكاية:**
+تخيل لو الداتا بيز بتاعتك فيها مليون ريكورد، وحد عمل `GET` ريكويست للستة دي. السيرفر هيحاول يجيب المليون ريكورد كلهم، ويعملهم Serialization، ويبعتهم للبراوزر. النتيجة؟ السيرفر هيهنج والبراوزر هيعمل Crash. الـ Pagination هو الحل، بنقسم الداتا لصفحات صغيرة (مثلاً 10 ريكوردز في الصفحة).
+
+DRF بيوفر 3 أنواع أساسية:
+1. **PageNumberPagination:**
+أشهر نوع. بتقول للـ API أنا عاوز صفحة رقم كذا (`?page=2`).
+- **الميزة:** سهل جداً واليوزر بيقدر يتنقل لأي صفحة مباشرة.
+- **العيب:** مع الداتا الضخمة جداً، الـ Database بتستخدم `OFFSET`، وده بطيء جداً في الـ Queries الكبيرة.
+
+2. **LimitOffsetPagination:**
+بتبعت للـ API أنت عاوز كام ريكورد وهتبدأ منين (`?limit=10&offset=20` يعني هات 10 ريكوردز بعد أول 20).
+- **الميزة:** مرونة أكتر للـ Client يحدد الحجم اللي هو عاوزه.
+- **العيب:** نفس عيب الـ PageNumber لأنه بيستخدم `OFFSET` في الداتا بيز وبرضو بيكون بطيء مع الداتا الكبيرة.
+
+3. **CursorPagination:**
+بدل ما نقول "هات من ريكورد رقم 1000"، بنقول "هات الريكوردز اللي بعد الريكورد اللي الـ ID بتاعه X". هو بيستخدم حقل معين (غالباً الـ `created_at` أو الـ `id`) كـ Cursor (مؤشر).
+- **الميزة:** سريع جداً جداً مع الداتا الضخمة، مهما كبرت الداتا الـ Query بيفضل سريع لأنه بيعتمد على الـ Index بتاع الداتا بيز (زي `WHERE id > X`).
+- **العيب:** مقدرش أروح لصفحة معينة في النص (يعني مقدرش أقوله وديني صفحة 50)، أنا مسموحلي أروح للصفحة اللي وراها (Next) أو اللي قبلها (Previous) بس.
+
+**مثال كود لتشغيل الـ Cursor Pagination:**
+```python
+# settings.py
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.CursorPagination',
+    'PAGE_SIZE': 100
+}
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "الـ Pagination ضروري لحماية السيرفر وتقليل الـ Response time. الـ `PageNumber` والـ `LimitOffset` كويسين للمشاريع العادية، بس في الـ Large Scale applications بنستخدم الـ `CursorPagination` عشان هو بيعتمد على Database Indices بدل الـ `OFFSET` اللي بيبطأ الـ Query أدائه مع الـ deep pages. الـ Cursor بيوفر O(1) time complexity في الـ DB queries بس بيمنع الـ random access للصفحات."
+
+### 33. إيه هو الـ (Throttling) وإزاي بيحمي الـ API بتاعك؟
+
+**أصل الحكاية:**
+الـ Throttling (أو الـ Rate Limiting) عامل زي رجل المرور اللي بيمنع الزحمة. لو يوزر معين (أو هاكر) قرر يبعت آلاف الـ Requests في ثانية واحدة عشان يوقع السيرفر (DDoS) أو يعمل Brute-force، الـ Throttling بيقفله. بيحدد عدد معين من الـ Requests مسموح بيها في وقت معين (مثلاً 100 ريكويست في اليوم، أو 5 في الدقيقة).
+
+في DRF عندنا أنواع مبنية جاهزة:
+- `AnonRateThrottle`: لليوزرز اللي مش مسجلين دخول (بيعتمد على الـ IP Address).
+- `UserRateThrottle`: لليوزرز المسجلين (بيعتمد على الـ User ID).
+- `ScopedRateThrottle`: بنحدد ليميت لـ View معين بالاسم، مش للسيستم كله.
+
+**مثال كود:**
+```python
+# settings.py
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '10/minute',  # 10 ريكويست في الدقيقة للمجهول
+        'user': '1000/day'    # 1000 ريكويست في اليوم لليوزر المسجل
+    }
+}
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "الـ Throttling هو عملية تحديد عدد الـ requests اللي يقدر الـ client يبعتها في فترة زمنية محددة. ده بيحمي الـ API من الـ Abuse زي الـ DDoS attacks أو الـ Web Scraping العنيف. DRF بيـ implement ده عن طريق `UserRateThrottle` للـ authenticated users و `AnonRateThrottle` اعتماداً على الـ IP. وبيستخدم الـ Cache backend (زي Redis) عشان يخزن عدد الـ requests."
+
+### 34. إزاي بنعمل (Caching) للـ DRF Views وليه هو مهم جداً؟
+
+**أصل الحكاية:**
+لو عندك Endpoint بترجع إحصائيات معقدة جداً، والسيرفر بياخد 3 ثواني عشان يحسبها من الداتا بيز. لو دخل 100 يوزر في نفس اللحظة، السيرفر هيحسبها 100 مرة وهينهار. هنا بييجي دور الـ Caching.
+
+الـ Caching معناه إن السيرفر بيحسب النتيجة مرة واحدة، ويحفظها في ميموري سريعة جداً (زي Redis أو Memcached). ولما حد يطلب نفس الداتا تاني، السيرفر بيرد عليه من الميموري دي في أجزاء من الثانية من غير ما يروح للداتا بيز أصلاً.
+
+في Django و DRF نقدر نستخدم ديكوريتور اسمه `@method_decorator(cache_page(60 * 15))` عشان نكيّش الرد بتاع الـ View لمدة ربع ساعة مثلاً.
+
+**مثال تطبيقي:**
+```python
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from typing import Any
+
+class HeavyDataView(APIView):
+    # نكيّش النتيجة دي لمدة 15 دقيقة (60 ثانية * 15)
+    @method_decorator(cache_page(60 * 15))
+    def get(self, request: Any) -> Response:
+        # كود تقيل جداً بيعمل عمليات حسابية معقدة
+        data = {"stats": "This took a lot of time to calculate"}
+        return Response(data)
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "الـ Caching بيعلي الـ Read performance جداً وبيقلل الـ Load على الداتا بيز عن طريق تخزين الـ Responses في In-memory store زي Redis. بنقدر نطبقه في DRF باستخدام `cache_page` decorator على مستوى الـ View بالكامل. بس لازم ناخد بالنا من الـ Cache Invalidation (إمتى نمسح الكاش لما الداتا تتغير) عشان منرجعش Stale data للـ users."
+
+> [!warning] Checkpoint (تحذير مهم)
+> أوعى تكيّش (Cache) داتا حساسة أو داتا خاصة بيوزر معين باستخدام كاش عام، عشان ممكن يوزر يشوف داتا يوزر تاني. في الحالات دي بنستخدم طرق كاشنج متقدمة بتعتمد على الـ headers أو الـ user session.
+
+### 35. إيه هي استراتيجيات (API Versioning) في DRF وليه بنعملها؟
+
+**أصل الحكاية:**
+تخيل إنك عامل موبايل أبلكيشن والناس نزلته. بعد سنة، قررت تغير شكل الداتا اللي بترجع من الـ API بشكل جذري. لو غيرتها في الـ API القديم، الأبلكيشنات القديمة اللي على موبايلات الناس هتبوظ وتضرب إيرور (Breaking Change). 
+
+عشان كده بنعمل Versioning (إصدارات). بنسيب `v1` شغال زي ما هو للناس القديمة، وبنعمل `v2` للناس اللي بتنزل التحديث الجديد.
+
+DRF بيوفر طرق كتير لتحديد الـ Version، أشهرهم:
+1. **URLPathVersioning:** (الأشهر والأوضح).
+الرقم بيكون في الـ URL نفسه (مثلاً `/api/v1/users/` و `/api/v2/users/`).
+2. **NamespaceVersioning:**
+بنعرف الـ Versions في ملف الـ `urls.py` كـ namespaces.
+3. **QueryParameterVersioning:**
+بيتبعت كـ Query String (مثلاً `/api/users/?version=1`).
+4. **AcceptHeaderVersioning:**
+الرقم بيتبعت في الهيدر بتاع الـ Request مخفي عن الـ URL (البعض بيعتبره الأكثر احترافية للـ RESTful standards).
+
+**مثال كود لإعداد الـ URL Versioning:**
+```python
+# settings.py
+REST_FRAMEWORK = {
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'DEFAULT_VERSION': 'v1',
+    'ALLOWED_VERSIONS': ['v1', 'v2'],
+}
+
+# urls.py
+from django.urls import path, re_path
+# urlpatterns setup would follow here
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "الـ API Versioning هو الطريقة اللي بنـ Handle بيها الـ Breaking changes من غير ما نأثر على الـ clients القديمة. في DRF، أفضل طريقة من ناحية الـ visibility والـ Caching هي الـ `URLPathVersioning`. ولكن لو حابين نتبع الـ strict REST principles، بنستخدم الـ `AcceptHeaderVersioning`. بنحدد الاستراتيجية في الـ Settings وبنقدر نـ access الـ version الحالي من `request.version`."
+
+---
+
+## 📌 الموضوع السابع: Advanced Django & Architecture
+
+### 36. إيه هي الـ (Signals) في جانجو؟ وإمتى نستخدمها وإمتى نبعد عنها؟
+
+**أصل الحكاية:**
+الـ Signals في جانجو عاملة زي الـ Event Listeners (أو الـ Pub/Sub pattern مبسط). فكرتها إن لما يحصل أكشن معين في حتة، جانجو بيبعت إشارة (Signal) لكل أجزاء الكود اللي مستنية الإشارة دي عشان تعمل رد فعل، من غير ما يكونوا متصلين ببعض بشكل مباشر (Decoupling).
+
+أشهر الـ Signals الجاهزة:
+- `pre_save` و `post_save`: بتشتغل قبل أو بعد ما الـ Model يتعمله `.save()`.
+- `pre_delete` و `post_delete`: بتشتغل قبل أو بعد الحذف.
+- `post_migrate`: بعد ما أوامر المايجريشن تخلص.
+
+**مثال كود (إنشاء بروفايل تلقائي أول ما اليوزر يتكريت):**
+```python
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from .models import Profile
+
+# هنا بنقول للـ Signal: راقب الموديل بتاع الـ User
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:  # لو ده يوزر جديد لسة متكريت
+        Profile.objects.create(user=instance)
+```
+
+**إمتى نبعد عنها؟ (Implicit vs Explicit)**
+الـ Signals بتخلي الكود **ضمني أو مخفي (Implicit)**. يعني لو حد بيقرا كود إنشاء اليوزر، مش هيشوف أي سطر بيقول "اعمل بروفايل"، وفجأة هيلاقي بروفايل اتعمل، وده بيصعّب الـ Debugging جداً! 
+عشان كده، **لا تستخدم الـ Signals** لو الأكشنين ليهم علاقة ببعض في نفس التطبيق (مثلاً لو أوردر اتعمل، اخصم من المخزن). الأفضل هنا تكتبها بوضوح (Explicitly) في الـ Service layer أو جوة الـ `save()` method.
+نستخدم الـ Signals بس لما نكون بنربط بين اتنين Apps ميعرفوش بعض (مثلاً الـ Users app والـ Notifications app).
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "الـ Signals بتوفر Decoupled architecture. بنستخدمها لما نكون محتاجين نبلغ Apps تانية بـ event حصل من غير ما نربطهم ببعض (Tight coupling). لكن من أسوأ عيوبها إنها بتخلي الكود Implicit وصعب تتبعه وبيصعب الـ Testing. كمان الـ Signals بتشتغل بشكل Synchronous يعني بتوقف الـ Request لحد ما تخلص. القاعدة: Explicit is better than implicit، لو تقدر تستخدم Service function، هيكون أفضل بكتير من الـ Signal."
+
+### 37. إزاي الـ (Middleware) بيشتغل في جانجو؟ (دورة حياة الـ Request)
+
+**أصل الحكاية:**
+الـ Middleware هو عبارة عن بوابات تفتيش (أو فلاتر) الـ Request بيعدي عليها قبل ما يوصل للـ View، ولما الـ View يخلص ويطلع الـ Response، بيرجع يعدي على نفس البوابات دي تاني وهو طالع لليوزر.
+
+**استخداماته:**
+- إضافة داتا للـ request (زي الـ `AuthenticationMiddleware` اللي بيحط `request.user`).
+- الحماية والأمان (زي الـ `CsrfViewMiddleware` اللي بيتأكد من التوكن).
+- تعديل الـ Response قبل ما يتبعت (زي إضافة Headers معينة).
+
+**دورة الحياة (الرحلة):**
+عشان تتخيلها صح، شوف الرسمة دي:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Middleware_1
+    participant Middleware_2
+    participant View
+    
+    Client->>Middleware_1: HTTP Request
+    Middleware_1->>Middleware_2: process_request()
+    Middleware_2->>View: process_request()
+    Note over View: Business Logic Execute
+    View-->>Middleware_2: HTTP Response
+    Middleware_2-->>Middleware_1: process_response()
+    Middleware_1-->>Client: HTTP Response
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "الـ Middleware هو Hook بيدخل في الـ Request/Response lifecycle. بيشتغل كـ Layer حوالين الـ View. الـ Request بيعدي على الـ Middlewares بالترتيب من فوق لتحت (زي ما مكتوبين في `settings.MIDDLEWARE`) باستخدام `process_request`، والـ Response بيرجع يعكس الترتيب من تحت لفوق باستخدام `process_response`. بنستخدمه في حاجات الـ Cross-cutting concerns زي الـ Logging، الـ Authentication، والـ CORS headers."
+
+### 38. ليه بنحتاج (Background Tasks - Celery)؟ وإزاي بيشتغل مع (Redis/RabbitMQ)؟
+
+**أصل الحكاية:**
+تخيل يوزر رفع ملف Excel فيه 10 آلاف سطر، والسيرفر محتاج 3 دقايق عشان يقرأ الملف ويسجله في الداتا بيز. لو عملنا ده جوة الـ View العادي، البراوزر بتاع اليوزر هيفضل يحمل 3 دقايق، وممكن الـ Connection يقع (Timeout).
+الحل؟ ناخد الشغلانة التقيلة دي نديها لـ (عامل ورا الكواليس) يخلصها براحته، ونرد على اليوزر فوراً ونقوله: "جارِ معالجة الملف، هنبعتلك إشعار لما يخلص".
+
+هنا بييجي دور **Celery**. الـ Celery هو الـ Worker اللي بينفذ المهام دي في الخلفية بره الـ Request lifecycle.
+
+**المنظومة بتشتغل إزاي؟**
+عشان جانجو يكلم Celery، محتاجين "صندوق بريد" في النص نحط فيه الرسايل والمهام. صندوق البريد ده بنسميه **Message Broker** (وأشهرهم Redis أو RabbitMQ).
+1. جانجو بيبعت الـ Task يحطها في الـ Broker.
+2. Celery Worker بيكون مراقب الـ Broker، يسحب الـ Task ويبدأ ينفذها.
+
+**مثال كود لتشغيل تاسك:**
+```python
+# tasks.py
+from celery import shared_task
+import time
+
+@shared_task
+def send_marketing_emails():
+    # عملية هتاخد وقت طويل
+    time.sleep(10)
+    return "Emails sent!"
+
+# views.py
+from .tasks import send_marketing_emails
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+
+@api_view(['POST'])
+def trigger_emails(request):
+    # الـ delay هي اللي بتبعت التاسك للـ Background
+    send_marketing_emails.delay()
+    return Response({"message": "Emails are being sent in the background!"})
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "بنستخدم Celery للـ Asynchronous tasks والـ Scheduled jobs (Cron jobs) عشان منعملش Block للـ HTTP Request/Response cycle في العمليات التقيلة زي إرسال الإيميلات أو الـ Image processing. الـ Architecture بيعتمد على 3 أجزاء: الـ Django Producer اللي بيخلق الـ task، الـ Message Broker زي Redis أو RabbitMQ اللي بيخزن طابور المهام (Queue)، والـ Celery Worker اللي بيعمل Consume للـ tasks دي وينفذها في Background process."
+
+### 39. مقارنة معمارية: Django مقابل FastAPI
+
+**أصل الحكاية:**
+في السنين الأخيرة، ظهر FastAPI كـ تريند قوي جداً وبدأ يسحب من رصيد Django في بعض المشاريع. الإنترفيور دايماً بيحب يختبر أنت فاهم إمتى تختار إيه.
+
+| وجه المقارنة | Django (DRF) | FastAPI |
+| :--- | :--- | :--- |
+| **المعمارية الأساسية** | Synchronous في الأساس (رغم دعم الـ Async مؤخراً) بيعتمد على Threads. | Asynchronous من الأساس (مبني على ASGI و uvloop) سريع جداً في الـ I/O. |
+| **الـ ORM** | بييجي معاه Django ORM القوي جداً بس الـ Async فيه لسة بيتحسن. | مفيش ORM افتراضي، بنستخدم SQLAlchemy مع Alembic. |
+| **السرعة والأداء** | أبطأ نسبياً، ومناسب للتطبيقات المعتمدة على الـ CPU أو الـ CRUD المعتاد. | سريع جداً (يقارب Node.js و Go) وممتاز للـ Real-time والـ I/O heavy operations. |
+| **التوثيق (Docs)** | بتحتاج مكتبات زي `drf-yasg` أو `spectacular` عشان تعمل Swagger. | بيـ Auto-generate الـ Swagger و Redoc من الـ Type hints مباشرة. |
+| **نوع المشروع المناسب** | المشاريع اللي محتاجة Admin Panel جاهزة، Auth سيستم معقد، وشغل سريع (Batteries included). | الـ Microservices، مشاريع الـ Machine Learning، والـ APIs اللي محتاجة أداء عالي جداً. |
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "Django هو Batteries-included framework ممتاز للـ Monolithic applications والمشاريع اللي محتاجة الـ Admin panel والـ ORM الـ Mature بتاعه للـ rapid development. بينما FastAPI هو Micro-framework مبني على الـ Asynchronous I/O والـ Pydantic، ممتاز لو ببني Microservice محتاجة High concurrency أو لو الموديل بتاعي Machine learning model بيعمل I/O waiting كتير. اختيار واحد فيهم بيعتمد على الـ Use case مش مجرد إن واحد أحسن من التاني."
+
+### 40. الـ Testing في جانجو: (pytest-django, mock, APIClient)
+
+**أصل الحكاية:**
+كتابة التيست في الباك إند مش رفاهية، دي شبكة الأمان بتاعتك اللي بتخليك تعمل Refactoring وأنت مطمن. 
+رغم إن جانجو فيه `TestCase` مبني على `unittest` بتاع بايثون، بس الصناعة حالياً متجهة بقوة لـ **`pytest`** عشان الكود بتاعه أنضف وأقل (Boilerplate أقل) وبيدعم الـ Fixtures بشكل مرن جداً.
+
+أهم أدوات الـ Testing للـ APIs:
+1. **APIClient:**
+ده براوزر وهمي بنستخدمه جوة التيست عشان نبعت `GET` و `POST` للـ Endpoints بتاعتنا ونتأكد إنها بترجع الداتا الصح والـ Status code المظبوط (مثلاً 200 أو 400).
+
+2. **Mocking:**
+لو الـ View بتاعك بيكلم External API (زي بوابات الدفع Stripe، أو بيبعت رسالة لـ Slack). مستحيل كل ما ترن التيست تخليه يبعت ريكويست حقيقي ويدفع فلوس! هنا بنعمل Mock (خداع أو تقليد) للـ External call ونقول للتيست "اعتبر إن Stripe رد عليك بـ Success وكمل تيست".
+
+**مثال كود باستخدام pytest:**
+```python
+import pytest
+from rest_framework.test import APIClient
+from django.urls import reverse
+
+# الـ mark.django_db ضروري عشان التيست يقدر يكتب ويمسح من الداتا بيز
+@pytest.mark.django_db
+def test_create_article_unauthenticated():
+    client = APIClient()
+    url = reverse('article-list')
+    data = {'title': 'New Test Article', 'content': 'Hello world'}
+    
+    response = client.post(url, data)
+    
+    # نتأكد إن اليوزر اللي مش مسجل دخول أترفض
+    assert response.status_code == 401
+```
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "في الـ Testing بفضل أستخدم `pytest` مع `pytest-django` لكتابة Tests بشكل Clean واعتماداً على الـ Fixtures لتجهيز الداتا. للـ End-to-end integration tests للـ APIs بستخدم `APIClient` من DRF عشان أعمل Simulate للـ HTTP requests. وبالنسبة للـ External dependencies زي الـ 3rd party APIs، بستخدم `unittest.mock.patch` عشان أعمل Isolate للـ Unit tests وأضمن إنها تبقى سريعة ومستقلة (Deterministic)."
+
+---
+
+## 📌 الموضوع الثامن: أسئلة الإنترفيو النظرية والـ Best Practices
+
+### 41. إيه الفرق بين الـ (Web Server - Nginx) والـ (WSGI/ASGI - Gunicorn)؟ وليه بنحتاجهم هما الاتنين؟
+
+**أصل الحكاية:**
+لما بتيجي ترفع مشروع جانجو على سيرفر حقيقي (Production)، `python manage.py runserver` مبيستخدمش، لأنه سيرفر بدائي للتطوير بس ومش بيستحمل الضغط.
+
+عشان البروجيكت يشتغل صح، بنحتاج طبقتين:
+1. **Web Server (زي Nginx):**
+ده الموظف اللي واقف على باب الشركة. بيستقبل كل الـ HTTP Requests اللي جاية من الإنترنت. 
+- لو الريكويست طالب صورة أو ملف CSS (Static files)، Nginx بيرد عليه فوراً لأنه سريع جداً في الملفات دي.
+- لو الريكويست طالب بيانات ديناميكية (محتاجة جانجو)، Nginx مبيفهمش بايثون! فبيبعت الريكويست للطبقة التانية.
+
+2. **Application Server (زي Gunicorn للـ WSGI أو Uvicorn للـ ASGI):**
+ده المترجم اللي بيقف في النص بين Nginx وبين كود جانجو. بياخد الريكويست من Nginx، يحوله لصيغة بايثون تفهمها، يديها لجانجو، ياخد النتيجة من جانجو، ويترجمها تاني ويبعتها لـ Nginx عشان يرد على اليوزر. 
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "Nginx هو Reverse Proxy و Web Server وظيفته يستقبل الـ Traffic، يهندل الـ SSL certificates، ويـ serve الـ Static والـ Media files لأنه highly optimized للـ I/O operations. لكن Nginx مبيفهمش كود بايثون، هنا بنحتاج Gunicorn كـ WSGI HTTP Server. وظيفته إنه يترجم الـ HTTP requests لـ Python dictionaries مفهومة لجانجو، ويدير الـ Worker processes عشان يقدر يهندل Concurrent requests في نفس الوقت."
+
+### 42. إزاي تتعامل مع الـ (Database Migrations) بأمان في الـ Production؟ (Zero-Downtime)
+
+**أصل الحكاية:**
+لو ضفت حقل جديد في الداتا بيز (مثلاً `age`) وعملت `makemigrations` و `migrate` على السيرفر، ممكن السيستم يقع لثواني أو دقايق لو الداتا بيز ضخمة والجدول فيه ملايين الريكوردز (عشان الجدول بيتعمله Lock).
+
+عشان نعمل تحديثات من غير ما السيستم يقع (Zero-Downtime)، لازم نتبع خطوات دقيقة، خصوصاً لو بنمسح عمود أو بنغير اسمه:
+لو عاوز تغير اسم عمود من `first_name` لـ `given_name`:
+- **خطوة 1:** اعمل عمود جديد اسمه `given_name` وسيب القديم زي ما هو. اعمل Migrate.
+- **خطوة 2:** نزل كود جديد يكتب في العمودين في نفس الوقت، واعمل Data Migration سكريبت ينقل الداتا القديمة للعمود الجديد في الخلفية.
+- **خطوة 3:** نزل كود بيقرا ويكتب من العمود الجديد بس.
+- **خطوة 4 (بعدين):** امسح العمود القديم براحتك.
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "لتحقيق Zero-Downtime migrations، بنتجنب الـ Destructive operations (زي الحذف أو تغيير الأسماء) في خطوة واحدة، لأن ده بيعمل Table Locks في قواعد البيانات وممكن يوقع الـ App. دايماً بنقسم العملية لـ Backward-compatible phases. بنضيف الـ schema الجديدة الأول، بنعدل الكود عشان يكتب في القديم والجديد (Dual Writing)، بنعمل Backfill للداتا، وبعد ما نتأكد إن كله تمام بنعمل Drop للـ schema القديمة في مرحلة منفصلة."
+
+### 43. مشكلة الـ N+1 في الـ ORM (تذكير سريع وأهمية)
+
+**أصل الحكاية:**
+دي أهم مشكلة أداء في جانجو وسألنا عليها بالتفصيل في الجزء التاني من الملف (ارجع لـ Q11). بس بنأكد عليها هنا لأنها سؤال نظري لا يخلو منه أي إنترفيو.
+
+**الفائدة الانترفيوية (إزاي تجاوب بخلاصة):**
+> "الـ N+1 Problem بتحصل لما الـ ORM يعمل Query أساسي عشان يجيب N records، وبعدين يعمل N Queries إضافية جوه لوب عشان يجيب الـ Related data لكل ريكورد. ده بيعمل Load كارثي على الداتا بيز. بنحلها بإننا نخلي الـ Query يـ fetch الداتا بدري (Eager Loading) باستخدام `select_related()` لـ Foreign Keys و `prefetch_related()` لـ Many-to-Many والـ Reverse relations."
+
+### 44. إشرح الـ (CSRF) والـ (CORS) وإزاي جانجو بيتعامل معاهم؟
+
+**أصل الحكاية:**
+دول أشهر مشكلتين Security بيقابلوا أي مطور باك إند وفرونت إند:
+
+1. **CORS (Cross-Origin Resource Sharing):**
+البراوزر بطبيعته بيمنع أي موقع (مثلاً `frontend.com`) إنه يطلب داتا من سيرفر تاني (`api.backend.com`) كنوع من الحماية، إلا لو السيرفر التاني قال للبراوزر "أنا موافق". 
+- **في جانجو:** بننزل مكتبة `django-cors-headers` وبنحط `frontend.com` في لستة `CORS_ALLOWED_ORIGINS` في الـ `settings.py`.
+
+2. **CSRF (Cross-Site Request Forgery):**
+تخيل إنك مسجل دخول في بنك، ودخلت موقع هاكر، الهاكر خلى البراوزر بتاعك يبعت ريكويست (في الخفاء) للبنك عشان يحول فلوس. البنك هيشوف إن الريكويست جاي منك (عشان الـ Session بتاعتك مفتوحة) وهينفذه!
+عشان نمنع ده، جانجو بيبعت "كلمة سر مؤقتة" مخفية في الفورم (CSRF Token). الريكويست لازم يرجع بكلمة السر دي، لو الهاكر بعت ريكويست، مش هيكون معاه كلمة السر دي فالسيرفر هيرفضه.
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "الـ CORS هو Browser Security Mechanism بيمنع الـ web pages من إنها تعمل API requests لـ Domain مختلف، وبنحله في جانجو عن طريق إرسال الـ CORS Headers الصحيحة اللي بتسمح للـ Frontend domain. أما الـ CSRF فهو هجوم بيستغل الـ User session، وجانجو بيحميه عن طريق الـ `CsrfViewMiddleware` اللي بيشترط وجود CSRF Token فريد مع كل Unsafe request (زي POST/PUT). في الـ Stateless APIs اللي بتستخدم JWT، الـ CSRF مش مشكلة كبيرة لأننا مش بنعتمد على الـ Cookies."
+
+### 45. الـ Best Practices لهيكلة مشاريع جانجو الكبيرة (Architecture)
+
+**أصل الحكاية:**
+لما البروجيكت بيكبر (آلاف السطور)، الطريقة التقليدية (إنك تكتب كل الـ Logic جوة الـ Views) بتخلي الكود بشع، وصعب تعمل عليه تيست، وصعب تعيد استخدامه (Fat Views). 
+الطريقة التانية إنك تحط اللوجيك في الـ Models (Fat Models). ده أحسن شوية، بس لو اللوجيك بيتعامل مع كذا موديل مع بعض، الدنيا هتبوظ.
+
+**الحل المعماري الاحترافي (Service Layer Pattern):**
+بنقسم الكود لطبقات:
+1. **Views (الواجهة):** مهمتها بس تستقبل الـ Request، تنادي الـ Serializer عشان يعمل Validation، وبعدين تبعت الداتا لـ Service.
+2. **Services (البيزنس لوجيك):** ملف `services.py` بنكتب فيه Functions بايثون عادية جداً (مش مرتبطة بالـ Web) فيها العقل المدبر بتاع الأبلكيشن.
+3. **Selectors (قراءة الداتا):** ملف `selectors.py` بنكتب فيه كل الـ ORM Queries المعقدة اللي بتقرا الداتا.
+
+**الفائدة الانترفيوية (إزاي تجاوب):**
+> "عشان نخلي المشروع Maintainable والـ Testing بتاعه سهل، بفضل أستخدم الـ Service Layer architecture. بنخلي الـ Views مجرد Thin routing layer بتعمل Validation للـ input، وبننقل الـ Core Business Logic لـ Service functions مستقلة. والـ Complex DB queries بنعزلها في Selectors. التقسيمة دي بتخلينا نعيد استخدام الكود بسهولة سواء من الـ API، أو الـ Celery Tasks، أو الـ Django Management Commands."
+
