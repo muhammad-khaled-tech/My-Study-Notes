@@ -1,0 +1,147 @@
+أنت خبير Backend Development (تحديداً في إطار عمل Django و Django REST Framework) وكاتب محتوى تعليمي بالعامية المصرية، ومهمتك إنك تكتب ملف Markdown واحد كبير (بأسلوب Obsidian) اسمه "Django & DRF من الصفر — إنترفيو الباك إند" يغطي المواضيع التالية بالترتيب ده بالظبط، من صفر مطلق لأعمق نقطة في كل موضوع، عشان أذاكر منه لإنترفيو.
+
+ملحوظة مهمة عن نطاق الملف: الملف ده لازم يتعامل مع (Django) و (DRF) كأدوات لبناء أنظمة حقيقية، ولغتك الافتراضية للكود هي Python. يعني:
+
+* استخدم Python بأحدث ميزاتها (Type Hints مثلاً) لتوضيح الأكواد.
+* ركز جداً على المقارنات الجوهرية (زي Function-Based Views مقابل Class-Based Views، أو ModelSerializer مقابل Serializer العادي).
+* أي مفهوم فيه أزمة أداء شهيرة (زي الـ N+1 Query Problem في الـ ORM) لازم يتشرح بالتفصيل الممل وتوريني حله بالكود.
+* لو المفهوم ليه علاقة بالـ Architecture (زي الـ MVT أو دور الـ Serializer) لازم تضيف جدول مقارنة (Markdown Table) أو توضيح بصري.
+
+هيكل الملف:
+Frontmatter في الأول:
+
+```yaml
+---
+tags: [django, drf, python, backend, interview-prep, api]
+part: 1
+covers: "MVT Architecture · ORM & QuerySets · Serializers · Views & ViewSets · Auth & Permissions · Advanced Performance (N+1, Caching) · Signals & Middleware"
+---
+
+```
+
+عنوان رئيسي: `# 🧱 Django & DRF من الصفر (Q1 → نهاية الملف)`
+Callout افتتاحي:
+
+> [!info] 📖 إزاي تذاكر الملف ده؟
+> [جملتين بتشرح إن الملف ده بيغطي رحلة بناء الـ API من أول الـ Request ما يدخل لحد ما الداتا ترجع، وإن كل سؤال بيبني على اللي قبله]
+
+بنية كل سؤال (طبّقها بالظبط على كل Q):
+عنوان السؤال بصيغة سؤال عامي طبيعي: `## Q{N} — [السؤال هنا بالعامية؟]`
+
+### أصل الحكاية — فقرة عامية دسمة (مش سطرين)، ولازم:
+
+* تربط الفكرة الجديدة بسؤال سابق في الملف ("زي ما شفنا في Q{X}...") مش تبدأ من فاضي.
+* توضح "منطق تفكير" الفريم وورك نفسه بصيغة حوارية (مثلاً: "الـ ORM بيفكر: أنا مش هروح للداتا بيز غير لما تجبرني - Lazy Evaluation").
+* فيها تشبيه (metaphor) واضح، وتنتهي بتوضيح المشكلة العملية اللي المفهوم ده جاي يحلها، مش مجرد تعريف جاف.
+* **كود** — استخدم Python/Django. فيه كومنتات إنجليزي بس جوا الكود — runnable ومباشر. لو المفهوم ليه طريقتين (FBV vs CBV) وريهم بالكودين جنب بعض. كل code block لازم يتسبق بجملة أو اتنين بتشرح ليه الناتج كده.
+* 2–3 code snippets إضافية، كل واحد بعنوان فرعي دراماتيكي يوصف نوعه (زي `#### مثال 1: فخ الـ N+1 Query` أو `#### مثال 2: الحل السحري بـ prefetch_related`) تغطي: (أ) حالة بسيطة، (ب) edge case أو خطأ شائع، (ج) حالة عملية شبه واقعية.
+
+### الفايدة الانترفيوية — تتكون من جزئين إجباريين:
+
+* صيغة السؤال  بالظبط زي ما هيتسأل في الإنترفيو، زي "Explain the N+1 problem in Django..." أو "What is the difference between Select_related and Prefetch_related?"
+* **الإجابة المثالية:** فقرة كاملة (مش نقاط) تجاوب على السؤال ده بعمق، جاهزة إنها تتقال بالظبط في الإنترفيو. بس الفقرة تكون بالمصري
+
+Callouts حسب الحاجة:
+
+> [!tip] Checkpoint — ملخص سريع لما المفروض تكون فاهمه
+> [!warning] — فخ شائع بيوقع فيه الناس
+> [!danger] — فخ خطير بيبان في الإنترفيو بالظبط (زي الخلط بين Authentication و Permissions)
+> --- فاصل بين كل سؤال والتاني.
+
+قواعد اللغة والأسلوب:
+
+* الشرح النثري كله بالعامية المصرية — مفيش فصحى خالص.
+* الكومنتات جوا الكود إنجليزي بس — مش عربي، مش مزيج.
+* الإنجليزي في الشرح النثري ممنوع يتكتب بحروف عربية — حتى لو الكلمة تقنية، اكتبها بالإنجليزي أو حطها بين قوسين، مثلاً: "الـ (QuerySet)".
+* ماتكتبش خاتمة أو ملخص في آخر الملف — كمل شرح وأمثلة لآخر لحظة.
+* كل جملة لازم تضيف فهم فعلي، مفيش حشو.
+* الشرح دسم مش code snippets مجردة: لو فيه تكلفة أداء أو ميموري مرتبطة بالمفهوم، اذكرها بالتحديد.
+* في أي سؤال بيتكلم عن الـ Architecture أو دورة حياة الـ Request (زي الـ Middleware أو MVT) لازم تضيف UML Diagram بصيغة Mermaid (`mermaid`) يوضح العلاقة بصريًا.
+
+قاعدة التدرج داخل كل موضوع:
+كل موضوع بيتغطى بسلسلة أسئلة تبدأ بسيطة جداً وتتصاعد تدريجياً:
+
+* أول سؤال: تعريف الفكرة الأساسية من غير افتراض أي معرفة مسبقة.
+* الأسئلة الوسطى: edge cases وأخطاء تصميمية شائعة.
+* آخر سؤال في الموضوع: أعمق نقطة فيه + أشهر فخ إنترفيو مرتبط بيه.
+
+ترقيم الأسئلة:
+رقّم الأسئلة تسلسلياً عبر كل الملف من Q1 لآخر سؤال من غير ما ترجع لـ Q1 في كل موضوع جديد.
+
+المحتوى المطلوب بالترتيب ده بالظبط:
+
+📌 الموضوع 1: Django Basics & MVT Architecture
+غطّي الأسئلة دي بالتسلسل:
+
+1. إيه هو الـ (Django) أصلاً وإيه مبدأ الـ "Batteries Included" اللي بيميزه؟
+2. إيه الفرق بين الـ (Project) والـ (App) في جانجو؟ وليه متقسمين كده؟
+3. إيه هي معمارية الـ (MVT - Model View Template) وإزاي بتختلف عن الـ (MVC) الشهيرة؟ (محتاج Mermaid diagram لدورة حياة الـ Request).
+4. إزاي الـ (URL Routing) بيشتغل؟ وإزاي بنربط الـ URL بـ View معين؟
+5. إيه الفرق الأساسي بين الـ (Function-Based Views - FBVs) والـ (Class-Based Views - CBVs) في جانجو العادي؟ وإمتى نستخدم كل واحد؟
+
+📌 الموضوع 2: Django ORM (The Core)
+غطّي الأسئلة دي بالتسلسل:
+6. إيه هو الـ (ORM) وإيه المشكلة اللي بيحلها مقارنة بكتابة (Raw SQL)؟
+7. إيه الفرق بين الـ (makemigrations) والـ (migrate)؟ وإيه اللي بيحصل في الداتا بيز بالظبط؟
+8. إيه الفرق الجوهري بين (null=True) و (blank=True) في الـ (Models)؟ (أشهر سؤال إنترفيو للمبتدئين).
+9. إيه هي العلاقات في الداتا بيز وإزاي بنعملها في جانجو؟ (OneToOne, ForeignKey, ManyToMany).
+10. إيه هو مبدأ الـ (Lazy Evaluation) في الـ (QuerySets)؟ وليه هو سلاح ذو حدين؟
+11. إيه هي مشكلة الـ (N+1 Query Problem) بالتفصيل الكامل؟ (شرح الكارثة اللي بتحصل في الأداء).
+12. إزاي نحل الـ (N+1) باستخدام الـ (select_related) والـ (prefetch_related)؟ وإيه الفرق بينهم على مستوى أوامر الـ SQL الفعلية؟ (جدول مقارنة ضروري).
+13. إيه هي الـ (Q Objects) والـ (F Objects)؟ وإزاي بيحلوا مشاكل الاستعلامات المعقدة والـ (Race Conditions)؟
+14. إزاي نعمل (Aggregation) و (Annotation) في جانجو عشان نطلّع إحصائيات من الداتا بيز (زي الـ GROUP BY في الـ SQL)؟
+
+📌 الموضوع 3: DRF - Serializers
+غطّي الأسئلة دي بالتسلسل:
+15. إيه هو الـ (Django REST Framework - DRF) وليه بنحتاجه بدل ما نرجع JSON من جانجو العادي؟
+16. إيه هو الـ (Serializer) وإيه الفرق بين الـ (Serialization) والـ (Deserialization)؟
+17. إيه الفرق بين الـ (Serializer) العادي والـ (ModelSerializer)؟ وليه بنستخدم التاني أكتر؟
+18. إزاي بنعمل (Validation) للداتا اللي جاية من اليوزر؟ وإيه الفرق بين الـ (Field-level validation) والـ (Object-level validation)؟
+19. إزاي نتعامل مع الـ (Nested Serializers)؟ وإيه التحدي اللي بيقابلنا لما نحب نعمل `create` أو `update` في nested data؟
+20. إيه هو الـ (SerializerMethodField) وإزاي بنستخدمه عشان نضيف داتا مش موجودة في الداتا بيز للـ Response؟
+
+📌 الموضوع 4: DRF - Views, ViewSets & Routers
+غطّي الأسئلة دي بالتسلسل:
+21. إيه الفرق بين الـ `@api_view` والـ `APIView` في الـ (DRF)؟
+22. إيه هي الـ (Generic Views) والـ (Mixins)؟ وإزاي بيوفروا علينا كتابة كود متكرر لعمليات الـ CRUD؟
+23. إيه هو الـ (ViewSet) والـ (ModelViewSet)؟ وليه هما قمة الهرم في تقليل الكود؟
+24. إيه هو الـ (Router) في الـ (DRF) وإزاي بيولد الـ URLs أوتوماتيك للـ ViewSets؟
+25. إزاي نضيف (Custom Action) جوا الـ ViewSet؟ وإيه الفرق بين `detail=True` و `detail=False`؟
+26. إمتى نستخدم (APIView) وإمتى (Generic View) وإمتى (ModelViewSet)؟ (قاعدة القرار للمهندسين).
+
+📌 الموضوع 5: Authentication & Permissions
+غطّي الأسئلة دي بالتسلسل:
+27. إيه الفرق الجوهري بين الـ (Authentication - 401) والـ (Permissions - 403)؟ (سؤال إنترفيو مهم جداً).
+28. إيه هي أنواع الـ (Authentication) المتاحة في DRF؟ (Session, Token, JWT).
+29. إيه هو الـ (JWT - JSON Web Tokens) وإزاي بيشتغل مع DRF (باستخدام SimpleJWT)؟ وليه هو الـ Standard في الـ APIs حالياً؟
+30. إيه هي الـ (Permissions) المبنية جاهزة في DRF (زي `IsAuthenticated` و `IsAuthenticatedOrReadOnly`)؟
+31. إزاي نكتب (Custom Permission) خاصة بينا؟ وإيه الفرق الدقيق بين `has_permission` و `has_object_permission`؟
+
+📌 الموضوع 6: Advanced DRF & Performance
+غطّي الأسئلة دي بالتسلسل:
+32. ليه بنحتاج (Pagination)؟ وإيه الفرق بين الـ (PageNumber), (LimitOffset), والـ (Cursor Pagination)؟ (وليه الـ Cursor هو الأحسن للداتا الضخمة؟).
+33. إزاي نعمل (Filtering) و (Searching) في الـ API باستخدام (DjangoFilterBackend)؟
+34. إيه هو الـ (Throttling) وإزاي بيحمي الـ API بتاعتنا من الـ DDoS attacks والـ Brute force؟
+35. إيه هو الـ (Caching) في جانجو؟ وإزاي نكيّش (Cache) الـ Responses بتاعة الـ API عشان نحسن الأداء؟
+
+📌 الموضوع 7: Django Advanced & Architecture Concepts
+غطّي الأسئلة دي بالتسلسل:
+36. إيه هو الـ (Middleware) في جانجو؟ وإزاي بياعترض الـ Request قبل ما يوصل للـ View والـ Response وهو راجع؟ (شرح بصري مطلوب).
+37. إيه هي الـ (Django Signals)؟ وإمتى نستخدمها (زي `post_save` و `pre_delete`)؟
+38. ليه الـ Senior Developers بيحذروا من الإفراط في استخدام الـ (Signals)؟ (الـ Hidden Logic ومشاكل الأداء).
+39. أين نضع الـ (Business Logic) في تطبيقات جانجو الكبيرة؟ (Fat Models vs Services/Selectors layer - نمط هندسي).
+40. إيه هي فكرة الـ (Celery) بشكل مبسط وليه بنربطه مع جانجو للـ (Background/Asynchronous Tasks)؟
+
+📌 الموضوع 8: أشهر أسئلة الباك إند النظرية الخاصة بـ Django
+غطّي الأسئلة دي بالتسلسل — دي أسئلة إنترفيو صريحة:
+41. "Explain the full lifecycle of a Request in Django from URL to Response."
+42. "How does Django handle concurrent requests? Is it asynchronous?" (الإجابة لازم تغطي الـ WSGI والـ ASGI).
+43. "What happens if you run `makemigrations` and someone else alters the DB directly?"
+44. "What are Context Processors in Django?"
+45. "If a Django API endpoint is extremely slow, what are the exact steps you would take to debug and optimize it?" (خطوات عملية من أول الـ django-debug-toolbar لحد الـ Indexing).
+46. "When would you completely AVOID using Django for a project?"
+
+قاعدة الاستمرارية (الأهم):
+متوقفش الكتابة نفسك ولا تلخص ولا تختصر عشان "تخلص الملف بسرعة". اكتب باستفاضة وأمثلة كتير على طول لحد ما توصل فعلياً لآخر الـ tokens المسموحة ليك في الرد، حتى لو وقفت في نص سؤال أو نص جملة. ممنوع تعمل خاتمة أو ملخص نهائي في آخر أي رد — كمل شرح وأمثلة بس. لو حسيت إنك قرّبت من الحد، كمل في نفس الجملة، وأنا هقولك "كمل" وانت تكمل بالظبط من نفس النقطة اللي وقفت فيها من غير ما تعيد أو تلخص اللي فات.
+ابدأ دلوقتي من Q1 وامشي بالترتيب.
+output: markdown file in the workspace here in  /interviews
