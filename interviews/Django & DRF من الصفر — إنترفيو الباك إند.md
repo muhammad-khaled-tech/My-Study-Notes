@@ -778,3 +778,228 @@ def print_merchant_names_bad() -> None:
 * **الإجابة المثالية:** الـ (Lazy Evaluation) في جانجو يعني إن الـ (QuerySet) مش بيتنفذ في قاعدة البيانات فوراً وقت إنشائه. جانجو بيقعد يجمع شروط الفلترة والترتيب ويبني كود الـ SQL في الميموري، ومش بيبعت الاستعلام الفعلي للداتا بيز غير لما نطلب الداتا دي بشكل صريح (Evaluation Trigger) زي إننا نلف عليها بـ (Loop) أو نحولها لـ (List) أو نعمل عليها عمليات فحص. الميزة إنها بتوفر استعلامات غير ضرورية وتسمح بدمج الفلاتر، وعيبها إن المطور لو مش فاهمها ممكن يعمل استعلامات متكررة من غير ما يقصد ويسبب مشاكل أداء كبيرة للسيستم.
 
 ---
+
+## الجزء الخامس: مواضيع متقدمة في البنية والأداء (Architecture & Performance)
+
+### Q21: إيه هو الـ Middleware في جانجو وإزاي بيشتغل؟ (Django Middleware Architecture)
+**أصل الحكاية:**
+الـ Middleware هو عبارة عن طبقات أو بوابات بيعدي عليها الـ Request قبل ما يوصل للـ View، وبيعدي عليها الـ Response وهو راجع من الـ View للمستخدم. بنستخدمه عشان ننفذ منطق عام يتطبق على كل الـ Requests زي الـ Authentication، التعامل مع الـ CORS، تسجيل الـ Logs، أو ضغط الـ Data.
+
+**مثال عملي بالكود:**
+```python
+from typing import Callable, Any
+from django.http import HttpRequest, HttpResponse
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+
+class RequestTimeLoggingMiddleware:
+    """
+    ميدلوير بيحسب الوقت اللي خده الريكويست عشان يتنفذ
+    """
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        self.get_response = get_response
+        # الـ setup بيحصل مرة واحدة بس أول ما السيرفر يشتغل
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        # الكود هنا بيتنفذ قبل ما الريكويست يوصل للـ View (أو للميدلوير اللي بعده)
+        start_time = time.time()
+
+        # بنبعت الريكويست يكمل رحلته
+        response = self.get_response(request)
+
+        # الكود هنا بيتنفذ بعد ما الـ View يخلص ويرجع الـ Response
+        duration = time.time() - start_time
+        logger.info(f"Request to {request.path} took {duration:.4f} seconds")
+
+        return response
+```
+
+**الفايدة الانترفيوية:**
+* **صيغة السؤال في الإنترفيو:** Explain Django Middleware and how you create a custom one.
+* **الإجابة المثالية:** الـ Middleware في جانجو بيشتغل كـ (Hook) في دورة حياة الـ Request/Response. بنرتب الميدلويرز في الـ `settings.py` كأنهم طبقات بصل (Onion architecture). كل ميدلوير بياخد الـ Request، ممكن يعدل فيه، وبعدين يمرره للي بعده من خلال `get_response`، ولما الـ View يخلص، الـ Response بيرجع يمر على كل الميدلويرز بالعكس. بنعمل Custom Middleware عن طريق كلاس بياخد `get_response` في الـ `__init__`، وبننفذ اللوجيك بتاعنا جوة دالة `__call__`، سواء قبل الـ `get_response` (للريكويست) أو بعده (للريسبونس).
+
+---
+
+### Q22: إزاي بتدير عملية الـ Authentication والـ Permissions في DRF؟ والفرق بين Token و JWT؟
+**أصل الحكاية:**
+الـ Authentication هو "أنت مين؟" والـ Permissions هي "مسموح لك تعمل إيه؟". في DRF، الـ Authentication بيبني الـ `request.user`، والـ Permissions بتتحقق إذا كان الـ `user` ده يقدر ينفذ الأكشن ده ولا لأ.
+أشهر طرق الـ Auth للـ APIs هي الـ Token Authentication (التوكن بيتخزن في الداتا بيز وكل ريكويست بيعمل استعلام عشان يتأكد منه) والـ JWT (JSON Web Token) (التوكن بيحتوي على البيانات نفسها ومش محتاج استعلام من الداتا بيز، مجرد بنفك التشفير ونتأكد من الـ Signature).
+
+**مثال عملي بالكود:**
+```python
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.request import Request
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+class IsMerchantUser(BasePermission):
+    """
+    Custom Permission عشان نتأكد إن اليوزر نوعه تاجر
+    """
+    def has_permission(self, request: Request, view: APIView) -> bool:
+        # الـ Authentication بيضمن إن اليوزر موجود، الـ Permission بيتأكد من الصلاحية
+        return bool(request.user and request.user.is_authenticated and hasattr(request.user, 'merchant_profile'))
+
+    def has_object_permission(self, request: Request, view: APIView, obj: Any) -> bool:
+        # بنتأكد إن التاجر ده هو صاحب الأوبجكت
+        return obj.owner == request.user
+
+class SecureDataView(APIView):
+    # بنحدد طريقة التأكد من الهوية (JWT)
+    authentication_classes = [JWTAuthentication]
+    # بنحدد الصلاحيات المطلوبة
+    permission_classes = [IsAuthenticated, IsMerchantUser]
+
+    def get(self, request: Request) -> Response:
+        return Response({"message": "Secure data accessed successfully!"})
+```
+
+**الفايدة الانترفيوية:**
+* **صيغة السؤال في الإنترفيو:** How does DRF handle Auth vs Permissions? Why choose JWT over standard Tokens?
+* **الإجابة المثالية:** DRF بيفصل بين تحديد الهوية (Authentication) اللي بيعبي الـ `request.user`، وبين الصلاحيات (Permissions) اللي بتقرر الموافقة أو الرفض. بنستخدم كلاسات مخصصة زي `BasePermission` عشان نتحكم في الـ `has_permission` على مستوى الـ Endpoint ككل، و `has_object_permission` على مستوى الريكورد الواحد. بالنسبة للفرق، الـ Standard Token بيتخزن في الداتا بيز وبيعمل (I/O overhead) مع كل ريكويست. أما الـ JWT فهو (Stateless)، بيشيل الداتا (Payload) زي الـ user_id ومُوقّع بـ (Secret Key). الـ JWT أفضل في الـ Microservices والأنظمة اللي عليها ضغط لأننا بنتحقق منه بـ (CPU calculation) من غير ما نكلم الداتا بيز.
+
+---
+
+### Q23: إيه أهمية الـ Pagination وإيه أنواعها في DRF؟ (Pagination & Filtering)
+**أصل الحكاية:**
+لما يكون عندنا آلاف الريكوردز، مستحيل نرجعهم كلهم في ريسبونس واحد لأن ده هيوقع الميموري بتاعة السيرفر وهيخلي الـ API بطيء جداً. الـ Pagination بيقسم الداتا لصفحات. والـ Filtering بيخلينا نرجع الداتا اللي بتطابق شروط معينة بس عشان نقلل حجم البيانات.
+
+**مثال عملي بالكود:**
+```python
+from rest_framework.pagination import PageNumberPagination, CursorPagination
+from rest_framework.generics import ListAPIView
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+from myapp.models import Product
+from myapp.serializers import ProductSerializer
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class ProductListView(ListAPIView):
+    queryset = Product.objects.filter(is_active=True).order_by('-created_at')
+    serializer_class = ProductSerializer
+    
+    # تحديد نوع التقسيم
+    pagination_class = StandardResultsSetPagination
+    
+    # تفعيل الفلترة والبحث والترتيب
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    
+    # الحقول المسموح بالفلترة المباشرة بيها
+    filterset_fields = ['category', 'in_stock']
+    # الحقول المسموح بالبحث النصي فيها
+    search_fields = ['name', 'description']
+    # الحقول المسموح الترتيب بناءً عليها
+    ordering_fields = ['price', 'created_at']
+```
+
+**الفايدة الانترفيوية:**
+* **صيغة السؤال في الإنترفيو:** What pagination styles does DRF provide and when to use Cursor Pagination?
+* **الإجابة المثالية:** DRF بيوفر كذا نوع: `PageNumberPagination` (التقليدي، بيستخدم LIMIT/OFFSET وبيجيب رقم الصفحة بس مشكلته إنه بطيء جداً مع الداتا الكبيرة عشان الـ DB بتسكان كل الريكوردز اللي قبل الـ OFFSET)، و `LimitOffsetPagination`، و `CursorPagination`. الـ Cursor Pagination هو الأفضل من ناحية الأداء مع الجداول الضخمة (Big Data) لأنه بيعتمد على قيمة مؤشر (مثلاً الـ ID أو timestamp) وبيعمل استعلام بـ `WHERE id > cursor`، وده بيستغل الـ Indexing في الداتا بيز ومبيعملش Table Scan كامل، بس عيبه إننا منقدرش ننط لصفحة معينة في النص، بنتحرك قدام ورا بس.
+
+---
+
+### Q24: إزاي بنحسن أداء الـ API باستخدام الـ Caching في جانجو؟ (Redis/Memcached)
+**أصل الحكاية:**
+لو عندنا Endpoint بيرجع بيانات مش بتتغير كتير وبياخد وقت طويل عشان يتحسب أو يجمع داتا من كذا مكان، من الغباء إننا نخليه ينفذ نفس الشغل لكل مستخدم. الحل إننا نحفظ النتيجة النهائية (JSON Response) في ميموري سريعة جداً زي Redis أو Memcached لفترة معينة، وأي ريكويست ييجي نرجعله النتيجة المحفوظة دي مباشرة من غير ما نلمس الداتا بيز.
+
+**مثال عملي بالكود:**
+```python
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.request import Request
+from django.core.cache import cache
+
+class ExpensiveReportView(APIView):
+    
+    # كاش للفيو كله لمدة 15 دقيقة
+    @method_decorator(cache_page(60 * 15))
+    def get(self, request: Request) -> Response:
+        # الكود ده هيتنفذ مرة واحدة كل 15 دقيقة
+        report_data = self.calculate_heavy_report()
+        return Response(report_data)
+        
+    def calculate_heavy_report(self) -> dict:
+        # تجميع داتا معقدة جداً
+        return {"total_sales": 1000000, "top_products": [...]}
+
+class CustomCacheExampleView(APIView):
+    def get(self, request: Request) -> Response:
+        cache_key = f"user_stats_{request.user.id}"
+        
+        # بنحاول نجيب الداتا من الكاش الأول
+        data = cache.get(cache_key)
+        
+        if not data:
+            # لو مش موجودة، بنحسبها
+            data = {"stats": "some expensive calculation"}
+            # بنحفظها في الكاش لمدة ساعة
+            cache.set(cache_key, data, timeout=3600)
+            
+        return Response(data)
+```
+
+**الفايدة الانترفيوية:**
+* **صيغة السؤال في الإنترفيو:** How do you implement caching in Django and invalidate it when data changes?
+* **الإجابة المثالية:** بنستخدم الـ Caching على مستويات مختلفة. ممكن نكش الـ View بالكامل باستخدام `@cache_page` لو الداتا عامة ومش مرتبطة باليوزر. وممكن نكش أجزاء معينة (Low-level caching) باستخدام `cache.set` و `cache.get`. لو الداتا اتغيرت، لازم نعمل (Cache Invalidation) عن طريق مسح المفتاح `cache.delete` وقت ما يحصل الـ Update. Redis هو الخيار الأفضل لأنه بيدعم (Data structures) معقدة و(Persistence)، بعكس Memcached اللي بيخزن (Strings) بس في الميموري.
+
+---
+
+### Q25: إيه الفرق بين Django Test Case و Pytest؟ وإزاي بتكتب Tests للـ APIs؟
+**أصل الحكاية:**
+كتابة الـ Tests مش رفاهية، دي الحاجة الوحيدة اللي بتضمن إن كودك لما يتغير ميكسرش أجزاء تانية في السيستم. جانجو بييجي بـ `TestCase` مبني على `unittest` بتاع بايثون، بس في الصناعة دلوقتي الأغلب بيستخدم `pytest` لأنه بيكتب كود أقل (Less boilerplate)، بيوفر (Fixtures) ممتازة، ونتيجته أوضح بكتير.
+
+**مثال عملي بالكود:**
+```python
+import pytest
+from rest_framework.test import APIClient
+from django.urls import reverse
+from myapp.models import Product
+
+# بنستخدم Fixture عشان نجهز الداتا قبل التست
+@pytest.fixture
+def api_client() -> APIClient:
+    return APIClient()
+
+@pytest.fixture
+def sample_product(db) -> Product:
+    # الـ db fixture بتسمح للـ pytest يكتب في الداتا بيز بتاعة التست
+    return Product.objects.create(name="Test Product", price=100.0)
+
+# بنحدد إن التست ده بيتعامل مع الداتا بيز
+@pytest.mark.django_db
+def test_get_product_list(api_client: APIClient, sample_product: Product) -> None:
+    # Arrange
+    url = reverse('product-list')
+    
+    # Act
+    response = api_client.get(url)
+    
+    # Assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['name'] == "Test Product"
+
+@pytest.mark.django_db
+def test_create_product_unauthorized(api_client: APIClient) -> None:
+    url = reverse('product-list')
+    data = {"name": "New Product", "price": 50.0}
+    
+    response = api_client.post(url, data)
+    
+    # لازم يترفض لأننا معملناش Authentication
+    assert response.status_code == 401
+```
+
+**الفايدة الانترفيوية:**
+* **صيغة السؤال في الإنترفيو:** How do you test Django APIs and why prefer Pytest over standard unittest?
+* **الإجابة المثالية:** بكتب الـ Tests للـ APIs باستخدام `APIClient` من DRF عشان أعمل (Integration tests) تتأكد من الـ Request، الـ Routing، الـ Serializer، والـ Response. بفضل استخدام `pytest` و `pytest-django` لكذا سبب: أولاً، مفيش داعي أعمل كلاسات بتورث من `TestCase` وبكتب دوال عادية. ثانياً، بستخدم عبارة `assert` العادية بدل دوال زي `assertEqual` الطويلة. ثالثاً، نظام الـ (Fixtures) في `pytest` بيخلي إعادة استخدام التجهيزات (Setup logic) زي إنشاء يوزر وهمي أسهل بكتير وبقدر أشاركه بين ملفات التست بسهولة.
+
