@@ -779,227 +779,175 @@ def print_merchant_names_bad() -> None:
 
 ---
 
-## الجزء الخامس: مواضيع متقدمة في البنية والأداء (Architecture & Performance)
 
-### Q21: إيه هو الـ Middleware في جانجو وإزاي بيشتغل؟ (Django Middleware Architecture)
-**أصل الحكاية:**
-الـ Middleware هو عبارة عن طبقات أو بوابات بيعدي عليها الـ Request قبل ما يوصل للـ View، وبيعدي عليها الـ Response وهو راجع من الـ View للمستخدم. بنستخدمه عشان ننفذ منطق عام يتطبق على كل الـ Requests زي الـ Authentication، التعامل مع الـ CORS، تسجيل الـ Logs، أو ضغط الـ Data.
+## Q11 — إيه هي مشكلة الـ (N+1 Query Problem) بالتفصيل الكامل؟
 
-**مثال عملي بالكود:**
+### أصل الحكاية
+زي ما شفنا في Q10، الـ (Lazy Evaluation) بيأجل الاستعلام لحد ما نحتاج الداتا. المشكلة بتبدأ لما نكون بنعمل (Loop) على QuerySet، وجوا اللوب ده بنحاول نوصل لـ Object مرتبط بالريكورد الأساسي (زي مثلاً إننا نلف على منتجات ونجيب اسم التاجر بتاع كل منتج).
+الـ ORM بيفكر: "أنت طلبت مني المنتجات، جبتلك المنتجات في استعلام واحد (ده الـ 1). دلوقتي جوة اللوب، أنت بتسألني عن التاجر بتاع أول منتج؟ حاضر هعمل استعلام أجيبه. التاجر بتاع تاني منتج؟ حاضر استعلام تاني"... وهكذا. 
+يعني لو عندنا 100 منتج، هنعمل استعلام أساسي (1) + 100 استعلام فرعي (N) = 101 استعلام! دي كارثة في الأداء بتوقع السيرفر لو الترافيك زاد، لأن كل استعلام بياخد وقت (Network Call) للداتا بيز.
+
+#### مثال 1: فخ الـ N+1 Query (الكارثة)
 ```python
-from typing import Callable, Any
-from django.http import HttpRequest, HttpResponse
-import time
-import logging
-
-logger = logging.getLogger(__name__)
-
-class RequestTimeLoggingMiddleware:
-    """
-    ميدلوير بيحسب الوقت اللي خده الريكويست عشان يتنفذ
-    """
-    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
-        self.get_response = get_response
-        # الـ setup بيحصل مرة واحدة بس أول ما السيرفر يشتغل
-
-    def __call__(self, request: HttpRequest) -> HttpResponse:
-        # الكود هنا بيتنفذ قبل ما الريكويست يوصل للـ View (أو للميدلوير اللي بعده)
-        start_time = time.time()
-
-        # بنبعت الريكويست يكمل رحلته
-        response = self.get_response(request)
-
-        # الكود هنا بيتنفذ بعد ما الـ View يخلص ويرجع الـ Response
-        duration = time.time() - start_time
-        logger.info(f"Request to {request.path} took {duration:.4f} seconds")
-
-        return response
-```
-
-**الفايدة الانترفيوية:**
-* **صيغة السؤال في الإنترفيو:** Explain Django Middleware and how you create a custom one.
-* **الإجابة المثالية:** الـ Middleware في جانجو بيشتغل كـ (Hook) في دورة حياة الـ Request/Response. بنرتب الميدلويرز في الـ `settings.py` كأنهم طبقات بصل (Onion architecture). كل ميدلوير بياخد الـ Request، ممكن يعدل فيه، وبعدين يمرره للي بعده من خلال `get_response`، ولما الـ View يخلص، الـ Response بيرجع يمر على كل الميدلويرز بالعكس. بنعمل Custom Middleware عن طريق كلاس بياخد `get_response` في الـ `__init__`، وبننفذ اللوجيك بتاعنا جوة دالة `__call__`، سواء قبل الـ `get_response` (للريكويست) أو بعده (للريسبونس).
-
----
-
-### Q22: إزاي بتدير عملية الـ Authentication والـ Permissions في DRF؟ والفرق بين Token و JWT؟
-**أصل الحكاية:**
-الـ Authentication هو "أنت مين؟" والـ Permissions هي "مسموح لك تعمل إيه؟". في DRF، الـ Authentication بيبني الـ `request.user`، والـ Permissions بتتحقق إذا كان الـ `user` ده يقدر ينفذ الأكشن ده ولا لأ.
-أشهر طرق الـ Auth للـ APIs هي الـ Token Authentication (التوكن بيتخزن في الداتا بيز وكل ريكويست بيعمل استعلام عشان يتأكد منه) والـ JWT (JSON Web Token) (التوكن بيحتوي على البيانات نفسها ومش محتاج استعلام من الداتا بيز، مجرد بنفك التشفير ونتأكد من الـ Signature).
-
-**مثال عملي بالكود:**
-```python
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, BasePermission
-from rest_framework.request import Request
-from rest_framework_simplejwt.authentication import JWTAuthentication
-
-class IsMerchantUser(BasePermission):
-    """
-    Custom Permission عشان نتأكد إن اليوزر نوعه تاجر
-    """
-    def has_permission(self, request: Request, view: APIView) -> bool:
-        # الـ Authentication بيضمن إن اليوزر موجود، الـ Permission بيتأكد من الصلاحية
-        return bool(request.user and request.user.is_authenticated and hasattr(request.user, 'merchant_profile'))
-
-    def has_object_permission(self, request: Request, view: APIView, obj: Any) -> bool:
-        # بنتأكد إن التاجر ده هو صاحب الأوبجكت
-        return obj.owner == request.user
-
-class SecureDataView(APIView):
-    # بنحدد طريقة التأكد من الهوية (JWT)
-    authentication_classes = [JWTAuthentication]
-    # بنحدد الصلاحيات المطلوبة
-    permission_classes = [IsAuthenticated, IsMerchantUser]
-
-    def get(self, request: Request) -> Response:
-        return Response({"message": "Secure data accessed successfully!"})
-```
-
-**الفايدة الانترفيوية:**
-* **صيغة السؤال في الإنترفيو:** How does DRF handle Auth vs Permissions? Why choose JWT over standard Tokens?
-* **الإجابة المثالية:** DRF بيفصل بين تحديد الهوية (Authentication) اللي بيعبي الـ `request.user`، وبين الصلاحيات (Permissions) اللي بتقرر الموافقة أو الرفض. بنستخدم كلاسات مخصصة زي `BasePermission` عشان نتحكم في الـ `has_permission` على مستوى الـ Endpoint ككل، و `has_object_permission` على مستوى الريكورد الواحد. بالنسبة للفرق، الـ Standard Token بيتخزن في الداتا بيز وبيعمل (I/O overhead) مع كل ريكويست. أما الـ JWT فهو (Stateless)، بيشيل الداتا (Payload) زي الـ user_id ومُوقّع بـ (Secret Key). الـ JWT أفضل في الـ Microservices والأنظمة اللي عليها ضغط لأننا بنتحقق منه بـ (CPU calculation) من غير ما نكلم الداتا بيز.
-
----
-
-### Q23: إيه أهمية الـ Pagination وإيه أنواعها في DRF؟ (Pagination & Filtering)
-**أصل الحكاية:**
-لما يكون عندنا آلاف الريكوردز، مستحيل نرجعهم كلهم في ريسبونس واحد لأن ده هيوقع الميموري بتاعة السيرفر وهيخلي الـ API بطيء جداً. الـ Pagination بيقسم الداتا لصفحات. والـ Filtering بيخلينا نرجع الداتا اللي بتطابق شروط معينة بس عشان نقلل حجم البيانات.
-
-**مثال عملي بالكود:**
-```python
-from rest_framework.pagination import PageNumberPagination, CursorPagination
-from rest_framework.generics import ListAPIView
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
-from myapp.models import Product
-from myapp.serializers import ProductSerializer
-
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-class ProductListView(ListAPIView):
-    queryset = Product.objects.filter(is_active=True).order_by('-created_at')
-    serializer_class = ProductSerializer
-    
-    # تحديد نوع التقسيم
-    pagination_class = StandardResultsSetPagination
-    
-    # تفعيل الفلترة والبحث والترتيب
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    
-    # الحقول المسموح بالفلترة المباشرة بيها
-    filterset_fields = ['category', 'in_stock']
-    # الحقول المسموح بالبحث النصي فيها
-    search_fields = ['name', 'description']
-    # الحقول المسموح الترتيب بناءً عليها
-    ordering_fields = ['price', 'created_at']
-```
-
-**الفايدة الانترفيوية:**
-* **صيغة السؤال في الإنترفيو:** What pagination styles does DRF provide and when to use Cursor Pagination?
-* **الإجابة المثالية:** DRF بيوفر كذا نوع: `PageNumberPagination` (التقليدي، بيستخدم LIMIT/OFFSET وبيجيب رقم الصفحة بس مشكلته إنه بطيء جداً مع الداتا الكبيرة عشان الـ DB بتسكان كل الريكوردز اللي قبل الـ OFFSET)، و `LimitOffsetPagination`، و `CursorPagination`. الـ Cursor Pagination هو الأفضل من ناحية الأداء مع الجداول الضخمة (Big Data) لأنه بيعتمد على قيمة مؤشر (مثلاً الـ ID أو timestamp) وبيعمل استعلام بـ `WHERE id > cursor`، وده بيستغل الـ Indexing في الداتا بيز ومبيعملش Table Scan كامل، بس عيبه إننا منقدرش ننط لصفحة معينة في النص، بنتحرك قدام ورا بس.
-
----
-
-### Q24: إزاي بنحسن أداء الـ API باستخدام الـ Caching في جانجو؟ (Redis/Memcached)
-**أصل الحكاية:**
-لو عندنا Endpoint بيرجع بيانات مش بتتغير كتير وبياخد وقت طويل عشان يتحسب أو يجمع داتا من كذا مكان، من الغباء إننا نخليه ينفذ نفس الشغل لكل مستخدم. الحل إننا نحفظ النتيجة النهائية (JSON Response) في ميموري سريعة جداً زي Redis أو Memcached لفترة معينة، وأي ريكويست ييجي نرجعله النتيجة المحفوظة دي مباشرة من غير ما نلمس الداتا بيز.
-
-**مثال عملي بالكود:**
-```python
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.request import Request
-from django.core.cache import cache
-
-class ExpensiveReportView(APIView):
-    
-    # كاش للفيو كله لمدة 15 دقيقة
-    @method_decorator(cache_page(60 * 15))
-    def get(self, request: Request) -> Response:
-        # الكود ده هيتنفذ مرة واحدة كل 15 دقيقة
-        report_data = self.calculate_heavy_report()
-        return Response(report_data)
-        
-    def calculate_heavy_report(self) -> dict:
-        # تجميع داتا معقدة جداً
-        return {"total_sales": 1000000, "top_products": [...]}
-
-class CustomCacheExampleView(APIView):
-    def get(self, request: Request) -> Response:
-        cache_key = f"user_stats_{request.user.id}"
-        
-        # بنحاول نجيب الداتا من الكاش الأول
-        data = cache.get(cache_key)
-        
-        if not data:
-            # لو مش موجودة، بنحسبها
-            data = {"stats": "some expensive calculation"}
-            # بنحفظها في الكاش لمدة ساعة
-            cache.set(cache_key, data, timeout=3600)
-            
-        return Response(data)
-```
-
-**الفايدة الانترفيوية:**
-* **صيغة السؤال في الإنترفيو:** How do you implement caching in Django and invalidate it when data changes?
-* **الإجابة المثالية:** بنستخدم الـ Caching على مستويات مختلفة. ممكن نكش الـ View بالكامل باستخدام `@cache_page` لو الداتا عامة ومش مرتبطة باليوزر. وممكن نكش أجزاء معينة (Low-level caching) باستخدام `cache.set` و `cache.get`. لو الداتا اتغيرت، لازم نعمل (Cache Invalidation) عن طريق مسح المفتاح `cache.delete` وقت ما يحصل الـ Update. Redis هو الخيار الأفضل لأنه بيدعم (Data structures) معقدة و(Persistence)، بعكس Memcached اللي بيخزن (Strings) بس في الميموري.
-
----
-
-### Q25: إيه الفرق بين Django Test Case و Pytest؟ وإزاي بتكتب Tests للـ APIs؟
-**أصل الحكاية:**
-كتابة الـ Tests مش رفاهية، دي الحاجة الوحيدة اللي بتضمن إن كودك لما يتغير ميكسرش أجزاء تانية في السيستم. جانجو بييجي بـ `TestCase` مبني على `unittest` بتاع بايثون، بس في الصناعة دلوقتي الأغلب بيستخدم `pytest` لأنه بيكتب كود أقل (Less boilerplate)، بيوفر (Fixtures) ممتازة، ونتيجته أوضح بكتير.
-
-**مثال عملي بالكود:**
-```python
-import pytest
-from rest_framework.test import APIClient
-from django.urls import reverse
 from myapp.models import Product
 
-# بنستخدم Fixture عشان نجهز الداتا قبل التست
-@pytest.fixture
-def api_client() -> APIClient:
-    return APIClient()
-
-@pytest.fixture
-def sample_product(db) -> Product:
-    # الـ db fixture بتسمح للـ pytest يكتب في الداتا بيز بتاعة التست
-    return Product.objects.create(name="Test Product", price=100.0)
-
-# بنحدد إن التست ده بيتعامل مع الداتا بيز
-@pytest.mark.django_db
-def test_get_product_list(api_client: APIClient, sample_product: Product) -> None:
-    # Arrange
-    url = reverse('product-list')
+def get_product_merchant_names() -> list[str]:
+    # 1 Query: Fetch all products
+    products = Product.objects.all()
     
-    # Act
-    response = api_client.get(url)
-    
-    # Assert
-    assert response.status_code == 200
-    assert len(response.data['results']) == 1
-    assert response.data['results'][0]['name'] == "Test Product"
-
-@pytest.mark.django_db
-def test_create_product_unauthorized(api_client: APIClient) -> None:
-    url = reverse('product-list')
-    data = {"name": "New Product", "price": 50.0}
-    
-    response = api_client.post(url, data)
-    
-    # لازم يترفض لأننا معملناش Authentication
-    assert response.status_code == 401
+    names = []
+    # N Queries: Fetch merchant for EACH product
+    for product in products:
+        names.append(product.merchant.name) 
+        
+    return names
 ```
 
-**الفايدة الانترفيوية:**
-* **صيغة السؤال في الإنترفيو:** How do you test Django APIs and why prefer Pytest over standard unittest?
-* **الإجابة المثالية:** بكتب الـ Tests للـ APIs باستخدام `APIClient` من DRF عشان أعمل (Integration tests) تتأكد من الـ Request، الـ Routing، الـ Serializer، والـ Response. بفضل استخدام `pytest` و `pytest-django` لكذا سبب: أولاً، مفيش داعي أعمل كلاسات بتورث من `TestCase` وبكتب دوال عادية. ثانياً، بستخدم عبارة `assert` العادية بدل دوال زي `assertEqual` الطويلة. ثالثاً، نظام الـ (Fixtures) في `pytest` بيخلي إعادة استخدام التجهيزات (Setup logic) زي إنشاء يوزر وهمي أسهل بكتير وبقدر أشاركه بين ملفات التست بسهولة.
+> [!danger] فخ إنترفيو
+> في الإنترفيو، هيسألك "إزاي تكتشف إن عندك N+1؟" الإجابة العملية هي استخدام مكتبة `django-debug-toolbar` في الـ Development، أو إنك تلاحظ استعلامات متكررة جداً لنفس الجدول في الـ APM tools.
 
+### الفايدة الانترفيوية
+* **صيغة السؤال:** Explain the N+1 Query Problem in Django and how it affects performance.
+* **الإجابة المثالية:** مشكلة الـ (N+1) بتحصل لما بنستعلم عن داتا أساسية (استعلام واحد)، وبعدين نعمل (Loop) على النتيجة وداخل الـ Loop ده بنوصل لـ (Related Object) سواء كان ForeignKey أو ManyToMany. بسبب الـ (Lazy Evaluation)، جانجو بيضطر يعمل استعلام جديد منفصل لكل ريكورد عشان يجيب الداتا المرتبطة بيه، وده معناه لو بنعرض 100 ريكورد هنعمل 101 استعلام للداتا بيز بدل استعلام واحد أو اتنين. ده بيعمل ضغط هائل (Overhead) على الداتا بيز والنتورك وبيبطأ الـ Response Time جداً. بنحل المشكلة دي بأننا نعرّف جانجو من الأول يجيب الداتا المرتبطة معاه باستخدام `select_related` أو `prefetch_related`.
+
+---
+
+## Q12 — إزاي نحل الـ (N+1) باستخدام الـ (select_related) والـ (prefetch_related)؟
+
+### أصل الحكاية
+عشان نحل مشكلة الـ (N+1) اللي شفناها في Q11، لازم نبلغ جانجو من البداية: "بقولك إيه، وإنت رايح تجيب المنتجات، هات معاك بيانات التجار بالمرة عشان هنحتاجها". 
+جانجو بيوفرلنا أداتين للموضوع ده، وكل أداة ليها استخدام حسب نوع العلاقة:
+1. **`select_related`**: بيستخدم الـ `JOIN` في الـ SQL عشان يجيب كل حاجة في استعلام واحد كبير. ده بينفع مع العلاقات اللي بترجع ريكورد واحد بس (زي `ForeignKey` و `OneToOne`).
+2. **`prefetch_related`**: بيعمل استعلامين منفصلين تماماً، واحد للمنتجات، والتاني للتجار، وبيجمّعهم (Join) في الميموري بتاعة بايثون. ده بينفع مع العلاقات اللي بترجع أكتر من ريكورد (زي `ManyToMany` و الـ `ForeignKey` العكسي).
+
+| الأداة | نوع العلاقات المناسب ليها | بتشتغل إزاي في الـ SQL؟ | كم استعلام بيحصل؟ |
+|---------|---------------------------|-------------------------|-------------------|
+| `select_related` | ForeignKey, OneToOne | `INNER/LEFT JOIN` | استعلام واحد مدمج |
+| `prefetch_related`| ManyToMany, Reverse FK | `SELECT ... WHERE id IN (...)` | استعلامين (أو أكتر) |
+
+#### مثال 1: الحل السحري بـ select_related (للفورين كي)
+```python
+from myapp.models import Product
+
+def get_product_merchant_names_optimized() -> list[str]:
+    # 1 Query with SQL JOIN fetches both Product and Merchant data
+    products = Product.objects.select_related("merchant").all()
+    
+    names = []
+    for product in products:
+        # NO extra query here! Data is already loaded in memory.
+        names.append(product.merchant.name) 
+        
+    return names
+```
+
+#### مثال 2: الحل بـ prefetch_related (للماني تو ماني)
+```python
+from myapp.models import Product
+
+def get_product_tags_optimized() -> list[list[str]]:
+    # 2 Queries: One for Products, One for all related Tags
+    # Django matches them up in Python memory
+    products = Product.objects.prefetch_related("tags").all()
+    
+    tags_list = []
+    for product in products:
+        # NO extra queries in this loop!
+        tags = [tag.name for tag in product.tags.all()]
+        tags_list.append(tags)
+        
+    return tags_list
+```
+
+### الفايدة الانترفيوية
+* **صيغة السؤال:** What is the exact difference between select_related and prefetch_related, and when to use each?
+* **الإجابة المثالية:** الاتنين بيُستخدموا عشان يحلوا أزمة الـ N+1 Query Problem، بس الطريقة مختلفة. الـ `select_related` بيعمل `SQL JOIN` على مستوى الداتا بيز، فبيجيب الداتا الأساسية والمرتبطة في استعلام واحد، وده بنستخدمه مع الـ (Single-valued relationships) زي `ForeignKey` و `OneToOne`. أما الـ `prefetch_related` بيعمل استعلامين منفصلين، استعلام للجدول الأساسي واستعلام تاني باستخدام `IN` للجدول المرتبط، وبيعملهم (Mapping) جوة ميموري بايثون. وبنستخدمه مع الـ (Multi-valued relationships) زي `ManyToMany` أو الـ (Reverse ForeignKey) لأن الـ SQL JOIN في الحالات دي هيعمل (Data Duplication) ويستهلك ميموري ضخمة.
+
+---
+
+## Q13 — إيه هي الـ (Q Objects) والـ (F Objects)؟ وإزاي بيحلوا مشاكل الاستعلامات؟
+
+### أصل الحكاية
+الـ ORM بتاع جانجو سهل جداً، بس لما نيجي نكتب شروط معقدة شوية، بنلاقي نفسنا محتاجين أدوات متقدمة:
+الـ **`Q Objects`** بتفكر كأنها أقواس رياضية: "أنا عايز المنتجات اللي سعرها أقل من 100 **أو** التاجر بتاعها اسمه أحمد". جانجو العادي بيعمل (AND) دايماً بين شروط الفلتر، فالـ Q بيدينا قوة الـ (OR - `|`) والـ (NOT - `~`).
+الـ **`F Objects`** بتفكر كأنها إشارة مباشرة للحقل في الداتا بيز: "أنا عايز أزود سعر المنتج بـ 10 جنيه". بدل ما نجيب السعر من الداتا بيز، نزوده في بايثون، وبعدين نحفظه (واللي ممكن يعمل مشكلة Race Condition لو اتنين اشتروا في نفس اللحظة)، الـ F بتخلي الداتا بيز هي اللي تعمل العملية الحسابية دي بنفسها في مستوى الـ SQL.
+
+#### مثال 1: الفلترة المعقدة باستخدام Q Objects
+```python
+from django.db.models import Q
+from myapp.models import Product
+
+def get_special_products():
+    # Translates to: WHERE (price < 100 OR is_discounted = True) AND NOT (stock = 0)
+    products = Product.objects.filter(
+        Q(price__lt=100) | Q(is_discounted=True),
+        ~Q(stock=0)
+    )
+    return products
+```
+
+#### مثال 2: تفادي الكارثة بـ F Objects (Race Conditions)
+```python
+from django.db.models import F
+from myapp.models import Product
+
+def increment_views_bad(product_id: int) -> None:
+    # سيء جداً: بيجيب القيمة للميموري وبعدين يزودها
+    # لو 2 يوزرز عملوا كده في نفس الملي ثانية، الزيادة هتبقى 1 بدل 2
+    product = Product.objects.get(id=product_id)
+    product.views += 1
+    product.save()
+
+def increment_views_good(product_id: int) -> None:
+    # ممتاز: بيترجم لـ UPDATE product SET views = views + 1
+    # الداتا بيز هي اللي بتدير القفل (Locking) وتضمن صحة الرقم
+    Product.objects.filter(id=product_id).update(views=F("views") + 1)
+```
+
+### الفايدة الانترفيوية
+* **صيغة السؤال:** How do you perform complex queries with OR logic, and what is an F object used for?
+* **الإجابة المثالية:** بستخدم الـ `Q objects` عشان أعمل استعلامات معقدة فيها (OR) باستخدام علامة الـ Pipe `|` أو (NOT) باستخدام التيلدا `~`، لأن الـ `filter()` العادي بيعمل (AND) بس. أما الـ `F objects` فبستخدمها عشان أشير لقيمة عمود معين في الداتا بيز وأعمل عمليات حسابية عليه مباشرة على مستوى الـ SQL من غير ما أسحب الداتا لميموري بايثون. أهم فايدة للـ `F objects` هي تجنب الـ (Race Conditions) في حالات الـ (Concurrent updates) زي زيادة عدد المشاهدات، لأن التعديل بيحصل بقيمة العمود الحالية في الداتا بيز مش القيمة القديمة اللي اتسحبت في الـ Memory.
+
+---
+
+## Q14 — إزاي نعمل (Aggregation) و (Annotation) في جانجو؟
+
+### أصل الحكاية
+في أوقات كتير مبنبقاش عايزين الريكوردز نفسها، إحنا عايزين "إحصائيات" عنها، زي (متوسط الأسعار، مجموع المبيعات، عدد المنتجات).
+* الـ **`aggregate`** بيفكر: "أنا هطلع نتيجة نهائية واحدة للجدول كله". (زي ما تقول للداتا بيز: هاتيلي متوسط أسعار كل المنتجات). الناتج بيكون Dictionary.
+* الـ **`annotate`** بيفكر: "أنا هضيف حقل جديد مؤقت لكل ريكورد في الـ QuerySet بناءً على حسبة معينة". (زي ما تقول: هاتيلي كل التجار، وضيفي جنب كل تاجر عدد المنتجات اللي بيبيعها). الناتج بيكون QuerySet عادي بس فيه Attribute زيادة.
+
+#### مثال 1: حساب إحصائية نهائية (Aggregate)
+```python
+from django.db.models import Avg, Max
+from myapp.models import Product
+
+def get_price_statistics() -> dict[str, float]:
+    # Translates to: SELECT AVG(price) AS price__avg, MAX(price) AS max_price FROM product
+    stats = Product.objects.aggregate(
+        Avg(price), 
+        max_price=Max(price) # نقدر نحدد اسم الـ key في القاموس
+    )
+    # Output: {price__avg: 500.5, max_price: 2000.0}
+    return stats
+```
+
+#### مثال 2: إضافة معلومة لكل ريكورد (Annotate)
+```python
+from django.db.models import Count
+from myapp.models import Merchant
+
+def get_merchants_with_product_count():
+    # Translates to: SELECT merchant.*, COUNT(product.id) AS product_count FROM merchant GROUP BY merchant.id
+    merchants = Merchant.objects.annotate(
+        product_count=Count(product)
+    )
+    
+    for merchant in merchants:
+        # product_count is an injected attribute!
+        print(f"Merchant {merchant.name} has {merchant.product_count} products.")
+```
+
+### الفايدة الانترفيوية
+* **صيغة السؤال:** Differentiate between aggregate() and annotate() in Django ORM.
+* **الإجابة المثالية:** الـ `aggregate()` بنستخدمه عشان نعمل عملية حسابية (زي Sum, Avg, Count) على الـ QuerySet بالكامل ونطلع بنتيجة إجمالية واحدة. الناتج بتاعه بيكون (Dictionary) ومش (QuerySet) فمش بنقدر نعمل عليه فلترة بعد كده. أما الـ `annotate()` فهو مكافئ للـ `GROUP BY` في الـ SQL، بيعمل العملية الحسابية لكل ريكورد جوة الـ QuerySet وبيضيف النتيجة كأنها (Virtual Field) لكل أوبجكت. الـ `annotate()` بيرجع (QuerySet) عادي جداً، فبنقدر نعمل بعده `filter()` أو `order_by()` بناءً على الحقل الجديد اللي إحنا لسه ضايفينه.
