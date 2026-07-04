@@ -1151,4 +1151,1107 @@ print(acc.balance) # 79.70 exactly
 
 ### الفايدة الانترفيوية
 **"When should you use `decimal.Decimal` instead of `float`?"**
-الإجابة: بنستخدم `Decimal` لما نحتاج دقة عشري
+الإجابة: بنستخدم `Decimal` لما نحتاج دقة عشرية مطلقة، زي في الأنظمة المالية والمحاسبية، حيث إن الأخطاء الصغيرة في الـ float بتتراكم وتعمل مشاكل كبيرة. الـ Decimal بيمثل الأرقام بالنظام العشري زي ما إنت بتكتبها بالظبط من غير تقريب ثنائي.
+
+> [!danger] فخ خطير
+> ```python
+> # Passing a float to Decimal inherits the exact float imprecision!
+> d = Decimal(0.1) # Bad!
+> # Always pass strings or integers
+> d = Decimal('0.1') # Good!
+> ```
+
+> [!tip] Checkpoint
+> # استخدم Decimal للفلوس ولما تحتاج دقة عشرية مية في المية.
+> # إحسن تمرر string للـ Decimal مش float.
+
+---
+
+## Q16 — إيه الـ bool في بايثون وليه هو subclass من int؟ (True == 1، False == 0)
+
+### أصل الحكاية
+في بايثون، الـ `bool` (اللي قيمته `True` أو `False`) مش نوع مستقل بمعنى الكلمة، هو بالظبط subclass من الـ `int`. يعني تاريخياً بايثون ورثت الفكرة دي، فخلت `True` يساوي 1 و`False` يساوي 0. عشان كده إنت ممكن تعمل عمليات حسابية بـ `True` و`False` زيهم زي الأرقام، وممكن تعمل `sum()` على list من الـ bools عشان تعرف عددهم. ده سلوك مش موجود في كل اللغات، بس في بايثون ده الـ implementation الحقيقي.
+
+```python
+print(isinstance(True, int)) # True -> bool is a subclass of int
+
+print(True == 1)   # True
+print(False == 0)  # True
+
+# Arithmetic with booleans
+print(True + True) # 2
+print(False + 5)   # 5
+```
+
+**Snippet 1: حالة بسيطة (Summing booleans)**
+```python
+# Counting how many True values are in a list
+results = [True, False, True, True, False]
+# Since True is 1, sum() works perfectly
+count = sum(results)
+print(count) # 3
+```
+
+**Snippet 2: edge case (Indexing with booleans)**
+```python
+# Because True is 1 and False is 0, you can use them as list indices
+data = ["Off", "On"]
+
+state = True
+print(data[state]) # "On" (data[1])
+
+state = False
+print(data[state]) # "Off" (data[0])
+```
+
+**Snippet 3: حالة عملية (Bitmask operations)**
+```python
+# Read permissions as booleans
+READ = True
+WRITE = False
+EXECUTE = True
+
+# Treating them as ints to create a bitmask
+# (True is 1, False is 0) -> 101 in binary -> 5 in decimal
+permissions = (READ * 4) + (WRITE * 2) + (EXECUTE * 1)
+print(permissions) # 5
+```
+
+### الفايدة الانترفيوية
+**"Is `bool` a subclass of `int` in Python? Can you do math with booleans?"**
+الإجابة: أيوة، الـ `bool` هو subclass من الـ `int`. `True` بيساوي 1 و`False` بيساوي 0. عشان كده إنت تقدر تعمل عمليات حسابية بيهم، وتستخدمهم كـ indices، وتعملهم `sum()` عشان تعد الـ True values في الـ list.
+
+> [!warning] فخ شائع
+> ```python
+> # Checking identity instead of equality
+> print(True is 1) # False! They are equal in value, but not the same object in memory.
+> print(True == 1) # True
+> ```
+
+> [!tip] Checkpoint
+> # bool inherits from int.
+> # True = 1, False = 0.
+> # You can do math with them, but don't rely on it for readability unless it's a specific trick like sum().
+
+---
+
+## Q17 — إيه الـ None وإيه الفرق بينه وبين `0` و`False` و`""`؟
+
+### أصل الحكاية
+الـ `None` في بايثون معناه "لام شيء" أو "غياب القيمة". هو مش صفر، لأن الصفر قيمة رقمية. ومش `False`، لأن `False` قيمة منطقية. ومش نص فاضي. الـ `None` بيرمز لإن المتغير موجود (عملنا له assignment)، بس مفيش قيمة متسجل فيه. بايثون بترجع `None` تلقائياً من أي فانكشن مش راجعة حاجة، وهو الـ default value اللي بنستخدمه للـ arguments لما نتجنب الـ mutable default trap. الـ `None` هو Singleton (أوبجكت واحد بس في الميموري كله)، عشان كده دايماً بنقارنه بـ `is None` مش `== None`.
+
+```python
+# None represents the absence of a value
+x = None
+
+print(x is None) # True -> The correct way to check for None
+
+# None is NOT equal to falsy values in identity
+print(x == 0)      # False
+print(x == False)  # False
+print(x == "")     # False
+
+# But in a boolean context, None evaluates to False
+if not x:
+    print("x is falsy") # This prints
+```
+
+**Snippet 1: حالة بسيطة (Function default return)**
+```python
+def do_nothing():
+    pass
+
+result = do_nothing()
+print(result)       # None
+print(result is None) # True
+```
+
+**Snippet 2: edge case (Distinguishing None from 0)**
+```python
+# If 0 is a valid input, but None means "not provided"
+def set_volume(level=None):
+    if level is None:
+        print("Using default volume")
+    else:
+        print(f"Setting volume to {level}")
+
+set_volume(0)    # Setting volume to 0 (0 is a valid volume!)
+set_volume(None) # Using default volume
+```
+
+**Snippet 3: حالة عملية (Dictionary .get() method)**
+```python
+user = {"name": "Ali", "age": 30}
+
+# .get() returns None if the key doesn't exist, rather than throwing KeyError
+email = user.get("email")
+print(email)      # None
+print(email is None) # True
+```
+
+### الفايدة الانترفيوية
+**"What is `None` in Python, and how does it differ from `False` or `0`?"**
+الإجابة: الـ `None` بي represents الغياب التام للقيمة، يعني المتغير موجود بس فاضي. `False` و`0` دول قيم فعلية (boolean و integer). الـ `None` بي evaluate لـ False في الـ boolean context بس هو مش `False`. بما إن `None` هو Singleton (أوبجكت واحد بس في الميموري)، فالطريقة الصح المقارنة بيه هي `if x is None` مش `==`.
+
+> [!danger] فخ خطير
+> ```python
+> # Using '==' to check for None can be overridden by custom classes!
+> class Weird:
+>     def __eq__(self, other):
+>         return True # Says it's equal to everything, even None!
+> 
+> w = Weird()
+> print(w == None) # True (Misleading!)
+> print(w is None) # False (Correct, it's not the None object)
+> ```
+
+> [!tip] Checkpoint
+> # None = absence of value.
+> # None is a singleton, always use `is None`.
+> # None is falsy, but not equal to 0 or False.
+
+---
+
+## Q18 — إيه الـ Type Casting وإيه الفرق بين explicit وimplicit conversion؟
+
+### أصل الحكاية
+الـ Type Casting معناه إنك تحول من نوع بيانات لنوع تاني. في بايثون فيه نوعين من التحويل: Implicit (ضمني) وExplicit (صريح). الـ Implicit conversion بيحصل تلقائياً لما بايثون تشوف إنها حاجة آمنة ومفيهاش خسارة معلومات، زي لما تيجمع int مع float، بايثون بتحول الـ int لـ float عشان ماتخسرش الجزء العشري. الـ Explicit conversion هو لما إنت كمبرمج تتدخل وتقولها "حول ده لكده" باستخدام فانكشنز زي `int()` أو `str()`، وده بيحصل لما التحويل مش آمن أو مش تلقائي، زي تحويل نص لرقم.
+
+```python
+# Implicit Conversion (Automatic)
+an_int = 10
+a_float = 2.5
+# Python automatically converts 'an_int' to a float to avoid data loss
+result = an_int + a_float
+print(type(result)) # <class 'float'>
+print(result)       # 12.5
+
+# Explicit Conversion (Manual)
+a_string = "123"
+# We MUST explicitly tell Python to convert the string to an int
+an_int_from_str = int(a_string)
+print(type(an_int_from_str)) # <class 'int'>
+print(an_int_from_str + 5)   # 128
+```
+
+**Snippet 1: حالة بسيطة (Explicit string to number)**
+```python
+user_input = " 42 " # String from user input
+# int() automatically strips whitespace and converts
+num = int(user_input)
+print(num * 2) # 84
+```
+
+**Snippet 2: edge case (Loss of data in explicit conversion)**
+```python
+# Converting float to int truncates the decimal part (doesn't round!)
+price = 19.99
+int_price = int(price)
+print(int_price) # 19 (The .99 is lost forever)
+
+# Converting string with decimals to int directly fails!
+# int("19.99") -> ValueError!
+# You have to do it in two steps: int(float("19.99"))
+```
+
+**Snippet 3: حالة عملية (Parsing mixed data)**
+```python
+data = ["10", "20.5", "30", "abc", "40"]
+
+total = 0
+for item in data:
+    try:
+        # Try to convert to float first (handles both "10" and "20.5")
+        total += float(item)
+    except ValueError:
+        print(f"Cannot convert {item}")
+
+print(total) # 80.5
+```
+
+### الفايدة الانترفيوية
+**"What's the difference between implicit and explicit type casting?"**
+الإجابة: الـ Implicit conversion بيحصل أوتوماتيك من بايثون لما تتعامل مع نوعين متوافقين والتحويل آمن (زي int لـ float). الـ Explicit conversion بيحصل لما إنت تستخدم فانكشنز زي `int()` أو `str()` عشان تحول قيمة بنفسك، وده ضروري لما التحويل مش آمن أو ممكن يضيع داتا (زي float لـ int).
+
+> [!warning] فخ شائع
+> ```python
+> # int() does NOT round, it truncates towards zero.
+> print(int(-3.9)) # -3 (not -4)
+> 
+> # Use round() if you want to round
+> print(round(-3.9)) # -4
+> ```
+
+> [!tip] Checkpoint
+> # Implicit: Python does it safely (int + float = float).
+> # Explicit: You force it using int(), str(), float(), etc.
+> # int() truncates, it doesn't round.
+
+---
+
+## Q19 — إيه الـ Truthy والـ Falsy values وإزاي بايثون بتقيّمهم في الـ boolean context؟
+
+### أصل الحكاية
+في بايثون، أي حاجة ممكن تتعامل معاها كأنها `True` أو `False` جوه `if` أو `while`. المش لازم تكون من نوع `bool` عشان تقارنها. بايثون بتعمل evaluate للـ objects بتاعتها وبتقولك ده Truthy (يعني بيساوي True في السياق ده) أو Falsy (يعني بيساوي False). القاعدة بسيطة جداً: كل الـ objects الفاضية أو الصفرية بتبقى Falsy، وكل حاجة تانية بتبقى Truthy. يعني `0`، `0.0`، `""` (نص فاضي)، `[]` (لستة فاضية)، `{}` (ديكت فاضي)، و`None` كلهم Falsy. أي حاجة فيها داتا بتبقى Truthy.
+
+```python
+# Falsy values
+falsy_values = [0, 0.0, "", [], {}, set(), None, False]
+
+for val in falsy_values:
+    if not val:
+        print(f"{repr(val)} is Falsy")
+
+# Truthy values (everything else)
+truthy_values = [1, -1, "Hello", [0], {"key": ""}, [None]]
+
+for val in truthy_values:
+    if val:
+        print(f"{repr(val)} is Truthy")
+```
+
+**Snippet 1: حالة بسيطة (Checking for empty lists)**
+```python
+# Common Pythonic way to check if a list is empty
+my_list = []
+
+# BAD way
+if len(my_list) == 0:
+    print("Empty")
+
+# GOOD Pythonic way
+if not my_list:
+    print("Empty list!") # This runs because [] is falsy
+```
+
+**Snippet 2: edge case (Non-empty containers with falsy items)**
+```python
+# A list containing falsy values is still truthy because the list itself is not empty
+weird_list = [0, None, ""]
+
+if weird_list:
+    print("List is truthy!") # This runs!
+    print(len(weird_list)) # 3
+```
+
+**Snippet 3: حالة عملية (Default values using 'or')**
+```python
+# The 'or' operator returns the first truthy value
+user_input = "" # User didn't enter anything
+
+# If user_input is falsy (""), it falls back to "Guest"
+username = user_input or "Guest"
+print(username) # "Guest"
+
+user_input = "Ali"
+username = user_input or "Guest"
+print(username) # "Ali"
+```
+
+### الفايدة الانترفيوية
+**"What are Truthy and Falsy values in Python? Give examples."**
+الإجابة: بايثون بتقيّم الـ objects في الـ boolean context (زي `if`) بناءً على محتواها. الـ Falsy values هي: `False`، `None`، أي صفر رقمي (`0`، `0.0`)، وأي حاوية فاضية (`""`، `[]`، `{}`، `()`). أي حاجة تانية بتبقى Truthy. ده بيخلينا نكتب كود نظيف زي `if my_list:` بدل ما نكتب `if len(my_list) > 0:`.
+
+> [!danger] فخ خطير
+> ```python
+> # Checking if a number is valid vs checking if it's not None
+> def process(value):
+>     # If value is 0, this condition fails! 0 is falsy!
+>     if value:
+>         print("Processing")
+>     else:
+>         print("Skipping 0 or None")
+> 
+> process(0) # Skips 0! If 0 is a valid input, this is a bug.
+> 
+> # Correct way if 0 is valid:
+> if value is not None:
+>     print("Processing")
+> ```
+
+> [!tip] Checkpoint
+> # Falsy: 0, None, "", [], {}, ()
+> # Truthy: Everything else (including negative numbers!).
+> # Use `if my_list:` to check for empty, but use `if x is not None:` if 0 is a valid value.
+
+---
+
+## Q20 — إزاي تتحقق من الـ type؟ (`type()` vs `isinstance()` — الفرق مهم!)
+
+### أصل الحكاية
+لما تيجي تسأل "هل المتغير ده من نوع كذا؟"، فيه طريقتين: `type(x) == int` أو `isinstance(x, int)`. `type()` بتجيب النوع بالظبط من غير ما تبحث في الوراثة (inheritance). `isinstance()` بتشوف لو النوع ده أو أي أب (parent class) ليه. بما إن بايثون لغة بتعتمد على الـ OOP والـ inheritance كتير، فالـ `isinstance()` هي الـ best practice دايماً. لو استخدمت `type()` مع subclass، هتطلع False حتى لو الأب هو اللي بتدور عليه.
+
+```python
+class Animal:
+    pass
+
+class Dog(Animal):
+    pass
+
+d = Dog()
+
+# type() checks for EXACT type match
+print(type(d) == Dog)     # True
+print(type(d) == Animal)  # False! type() ignores inheritance
+
+# isinstance() checks for the type AND parent classes
+print(isinstance(d, Dog))   # True
+print(isinstance(d, Animal))# True! It knows Dog is an Animal
+```
+
+**Snippet 1: حالة بسيطة (Built-in types)**
+```python
+x = [1, 2, 3]
+
+# isinstance works perfectly for built-ins too
+print(isinstance(x, list)) # True
+
+# You can pass a tuple of types to check against multiple
+print(isinstance(x, (list, tuple, set))) # True
+```
+
+**Snippet 2: edge case (Booleans and integers)**
+```python
+# Remember Q16? bool is a subclass of int!
+print(isinstance(True, int)) # True!
+print(type(True) == int)     # False!
+
+# So if you check `isinstance(x, int)`, True will pass!
+```
+
+**Snippet 3: حالة عملية (Duck typing vs Type checking)**
+```python
+# Pythonic code often avoids type checking entirely (Duck Typing)
+def process_data(data):
+    # Instead of checking type, we check behavior (hasattr)
+    if hasattr(data, "__iter__"):
+        for item in data:
+            print(item)
+    else:
+        print("Not iterable")
+
+process_data([1, 2]) # Works
+process_data("Hi")   # Works
+process_data(42)     # Not iterable
+```
+
+### الفايدة الانترفيوية
+**"What is the difference between `type()` and `isinstance()`? Which one should you use?"**
+الإجابة: `type()` بترجع النوع المباشر للـ object بالظبط، وبتفشل لو الـ object من subclass. `isinstance()` بتنجح لو الـ object من النوع ده أو أي subclass بيرث منه. دايماً لازم تستخدم `isinstance()` لأنها بتحترم الـ OOP والـ inheritance. كمان `isinstance()` بتقبل tuple of types فتقدر تسأل عن أكتر من نوع في نفس الوقت.
+
+> [!warning] فخ شائع
+> ```python
+> # Using type() in if statements breaks polymorphism
+> if type(obj) == MyClass:
+>     obj.do_something()
+> 
+> # This will fail for anyone who subclassed MyClass!
+> # Use isinstance(obj, MyClass) instead.
+> ```
+
+> [!tip] Checkpoint
+> # `type()` is strict (exact match).
+> # `isinstance()` is flexible (checks inheritance).
+> # Always prefer `isinstance()` for type checking in Python.
+
+---
+
+## Q21 — إيه الفرق بين `bytes` و`bytearray` و`str`؟ وإمتى تستخدم كل واحدة؟
+
+### أصل الحكاية
+الـ `str` بتاعة بايثون 3 بتخزن النصوص كـ Unicode (حروف مفهومة للبشر). بس لما تيجي تبعت داتا على النتورك أو تكتبها في ملف binary، الكمبيوتر مش بيفهم الـ Unicode مباشرة، لازم داتا خام (raw data) من 0 و1، ودي بتبقى سلاسل من الـ bytes. الـ `bytes` هي sequence من الـ bytes بسها immutable (مش بتتعدل زي الـ str). الـ `bytearray` هي نفس الفكرة بس mutable (تقدر تعدل عليها زي الـ list). التحويل بينهم بيحصل عن طريق الـ encode (من str لـ bytes) والـ decode (من bytes لـ str).
+
+```python
+# String (Text, Unicode)
+text = "Hello"
+
+# Encode string to bytes (using UTF-8)
+byte_data = text.encode('utf-8')
+print(type(byte_data)) # <class 'bytes'>
+print(byte_data)        # b'Hello'
+
+# Decode bytes back to string
+decoded_text = byte_data.decode('utf-8')
+print(decoded_text)     # Hello
+
+# bytearray (Mutable bytes)
+mutable_bytes = bytearray(byte_data)
+mutable_bytes[0] = 74 # 'J' in ASCII
+print(mutable_bytes) # bytearray(b'Jello')
+```
+
+**Snippet 1: حالة بسيطة (Encoding Arabic text)**
+```python
+arabic_text = "أهلا"
+
+# UTF-8 represents Arabic characters as multiple bytes
+ar_bytes = arabic_text.encode('utf-8')
+print(ar_bytes) # b'\xd8\xa3\xd9\x87\xd9\x84\xd8\xa7'
+
+# If we try to decode with wrong encoding, it might fail or look like garbage
+print(ar_bytes.decode('utf-8')) # أهلا
+```
+
+**Snippet 2: edge case (Modifying bytearray)**
+```python
+# bytes are immutable
+b = b"test"
+# b[0] = 84 -> TypeError: 'bytes' object does not support item assignment
+
+# bytearray allows mutation
+ba = bytearray(b"test")
+ba[0] = 84 # 'T'
+print(ba) # bytearray(b'Test')
+```
+
+**Snippet 3: حالة عملية (Reading a file in binary mode)**
+```python
+# Writing binary data to a file (like an image)
+with open("test.bin", "wb") as f:
+    f.write(b"\x00\x01\x02\xFF")
+
+# Reading it back
+with open("test.bin", "rb") as f:
+    data = f.read()
+    print(data) # b'\x00\x01\x02\xff'
+    print(type(data)) # <class 'bytes'>
+```
+
+### الفايدة الانترفيوية
+**"What's the difference between `str`, `bytes`, and `bytearray`?"**
+الإجابة: الـ `str` بتخزن نصوص Unicode للبشر. الـ `bytes` بتخزن raw bytes (للملفات والناتورك) وهي immutable. الـ `bytearray` هي نفس حاجة زي الـ bytes بس mutable. التحويل بين `str` و`bytes` بيحصل عن طريق `encode()` و`decode()` وغالباً بنستخدم UTF-8.
+
+> [!danger] فخ خطير
+> ```python
+> # Mixing str and bytes causes TypeErrors in Python 3!
+> print("Hello" + b" World")
+> # TypeError: can only concatenate str (not "bytes") to str
+> 
+> # You must decode the bytes first, or encode the str
+> print("Hello" + b" World".decode('utf-8')) # Hello World
+> ```
+
+> [!tip] Checkpoint
+> # str = Human text (Unicode).
+> # bytes = Raw binary data (Immutable).
+> # bytearray = Raw binary data (Mutable).
+> # Use encode/decode to switch between str and bytes.
+
+---
+
+## Q22 — إيه الفرق بين `repr()` و`str()`؟ وإمتى بايثون بتستدعي كل واحدة تلقائياً؟
+
+### أصل الحكاية
+الـ `str()` بترجع نسخة "مقروءة" من الـ object، يعني شكل حلو للبشر العاديين. الـ `repr()` بترجع نسخة "دقيقة" من الـ object، شكلها تقني ومفروض تكون unambiguous (مفيهاش لبس). القاعدة الذهبية في بايثون إن الـ `repr()` مفروض لما تقراه أو تعمله print، تقدر تنسخه وتعمله `eval()` ويرجعلك الـ object نفسه. لما بتدوس `print()` بايثون بتنادي `__str__`. بس لما بتكتب اسم المتغير في الـ REPL (الشاشة التفاعلية) أو تشوفه جوا list، بايثون بتنادي `__repr__`.
+
+```python
+import datetime
+
+now = datetime.datetime.now()
+
+# str() is for humans (readable)
+print(str(now)) # 2023-10-25 14:30:22.123456
+
+# repr() is for developers (unambiguous, looks like valid code)
+print(repr(now)) # datetime.datetime(2023, 10, 25, 14, 30, 22, 123456)
+```
+
+**Snippet 1: حالة بسيطة (String example)**
+```python
+s = "Hello\nWorld"
+
+# str prints it formatted (with the actual newline)
+print(s)
+# Output:
+# Hello
+# World
+
+# repr shows the string literal exactly as it is in code (escaped)
+print(repr(s)) # 'Hello\nWorld'
+```
+
+**Snippet 2: edge case (List inside print)**
+```python
+class Person:
+    def __init__(self, name):
+        self.name = name
+        
+    def __str__(self):
+        return f"Person named {self.name}"
+        
+    def __repr__(self):
+        return f"Person('{self.name}')"
+
+p = Person("Ali")
+
+print(p) # Calls __str__ -> "Person named Ali"
+print([p]) # Calls __repr__ on the list, which calls __repr__ on items!
+# Output: [Person('Ali')]
+```
+
+**Snippet 3: حالة عملية (The eval() trick)**
+```python
+# A good repr can be evaluated to recreate the object
+import decimal
+d = decimal.Decimal('3.14')
+repr_str = repr(d) # "Decimal('3.14')"
+
+# eval runs the string as Python code
+d2 = eval(repr_str) 
+print(d == d2) # True
+```
+
+### الفايدة الانترفيوية
+**"What is the difference between `__str__` and `__repr__`?"**
+الإجابة: `__str__` بيدي تمثيل مقروء للبشر (بيتنادي لما تعمل `print` أو `str()`). `__repr__` بيدي تمثيل دقيق للمبرمجين (بيتنادي في الـ REPL، أو جوا collections زي الـ lists، أو لما تعمل `repr()`). هدف الـ `__repr__` إنه يكون unambiguous، والمثالي إنه يقدر يعيد إنشاء الـ object عن طريق `eval()`.
+
+> [!warning] فخ شائع
+> ```python
+> # If you only define __repr__, Python uses it for __str__ as well.
+> # But if you only define __str__, __repr__ defaults to something ugly like <__main__.MyClass object at 0x...>
+> class My:
+>     def __str__(self): return "Hi"
+> 
+> m = My()
+> print(m) # Hi
+> print([m]) # [<__main__.MyClass object at 0x7f8b9c2b3d90>] (Ugly!)
+> ```
+
+> [!tip] Checkpoint
+> # `str()` = readable, human-friendly.
+> # `repr()` = unambiguous, developer-friendly, used in REPL/lists.
+> # Always implement `__repr__` for your classes at minimum!
+
+---
+
+## Q23 — إيه `sys.maxsize` وإيه اختلاف حدود الأرقام بين البلاتفورمات؟
+
+### أصل الحكاية
+زي ما قلنا في Q12، الـ `int` في بايثون مفيش له حد أقصى (arbitrary precision). بس، بايثون بتستخدم الـ pointers داخلياً عشان تتعامل مع الميموري والـ containers. الـ `sys.maxsize` بيدّي أكبر رقم ممكن بايثون تستخدمه كـ index لـ list أو string أو أي container. ده الرقم بيتحدد بناءً على معمارية الجهاز (Architecture). لو الجهاز 32-bit، الرقم هيكون `2**31 - 1`. لو الجهاز 64-bit (وهو الغالبية)، الرقم هيكون `2**63 - 1`. مش معناه إنك مينفعش تعمل رقم أكبر من كده، معناه إنك مينفعش تعمل list فيها أكتر من كده عنصر.
+
+```python
+import sys
+
+# Maximum size for a container (list, str, etc.)
+print(sys.maxsize) 
+# On 64-bit: 9223372036854775807 (2**63 - 1)
+
+# You CAN have integers larger than sys.maxsize
+huge_num = sys.maxsize + 1
+print(huge_num) # 9223372036854775808 (Works perfectly, no overflow)
+
+# But you CANNOT create a list with sys.maxsize elements (not enough RAM)
+# [0] * sys.maxsize -> MemoryError
+```
+
+**Snippet 1: حالة بسيطة (Checking platform architecture)**
+```python
+import sys
+
+if sys.maxsize == 2**63 - 1:
+    print("Running on a 64-bit Python interpreter")
+elif sys.maxsize == 2**31 - 1:
+    print("Running on a 32-bit Python interpreter")
+```
+
+**Snippet 2: edge case (Floating point limits)**
+```python
+import sys
+
+# sys.maxsize is about integers and containers.
+# Floats have their own limit: sys.float_info.max
+print(sys.float_info.max) # 1.7976931348623157e+308
+
+# If you exceed the float max, you get 'inf' (infinity)
+print(sys.float_info.max * 2) # inf
+```
+
+**Snippet 3: حالة عملية (Slicing with maxsize)**
+```python
+import sys
+
+# A common trick to get the rest of a list from a certain index
+my_list = [1, 2, 3, 4, 5]
+# Instead of doing my_list[2:len(my_list)], you can use sys.maxsize
+# Python will automatically cap it to the length of the list
+rest = my_list[2:sys.maxsize]
+print(rest) # [3, 4, 5]
+
+# Note: usually we just do my_list[2:], but this shows why maxsize works in slices.
+```
+
+### الفايدة الانترفيوية
+**"What is `sys.maxsize`? Does it limit the size of Python integers?"**
+الإجابة: `sys.maxsize` بي represent أقصى حجم لحاوية (container) زي الـ list بناءً على معمارية الـ Python interpreter (32-bit ولا 64-bit). هو مش بيحد حجم الـ integers، لأن الـ int في بايثون arbitrary precision. بس بيحد أكبر رقم ممكن يتستخدم كـ index.
+
+> [!warning] فخ شائع
+> ```python
+> # Confusing sys.maxsize with sys.float_info.max
+> # sys.maxsize is for integers/containers indices.
+> # sys.float_info.max is the absolute limit for floating point numbers.
+> ```
+
+> [!tip] Checkpoint
+> # `sys.maxsize` = max container size/index (depends on 32/64 bit).
+> # Integers can exceed it.
+> # Floats have `sys.float_info.max`.
+
+---
+
+## Q24 — إيه edge cases الأرقام اللي بتبان في الإنترفيو؟ (`inf`, `nan`, `//`, `%` مع negative numbers)
+
+### أصل الحكاية
+في بايثون في حاجات في الأرقام بتلخبط الناس جداً في الإنترفيو. أول حاجة الـ `inf` (infinity) و`nan` (Not a Number). دول مش أرقام عادية، دول جايين من معيار الـ float. `inf` بتاعة بايثون أكبر من أي رقم، و`nan` هي نتيجة عمليات مش معروفة زي `0/0` بالـ float. أي عملية بتعملها مع `nan` بتطلع `nan`. حاجة تانية بتلخبط الناس هي الـ floor division (`//`) والـ modulo (`%`) لما تستخدمهم مع أرقام سالبة، لأن بايثون بتدور الـ floor division لتحت دايماً (ناحية السالب اللانهاية)، وده بيخلي الـ باقي (modulo) دايماً يبقى نفس إشارة المقسوم عليه (divisor).
+
+```python
+# Infinity and NaN
+pos_inf = float('inf')
+neg_inf = float('-inf')
+nan_val = float('nan')
+
+print(10 > pos_inf) # False
+print(-10 > neg_inf) # True
+
+# NaN is never equal to anything, even itself!
+print(nan_val == nan_val) # False
+print(nan_val is nan_val) # True (identity is true, but equality is false!)
+
+# Any operation with NaN results in NaN
+print(nan_val + 10) # nan
+```
+
+**Snippet 1: حالة بسيطة (Negative floor division)**
+```python
+# Positive floor division
+print(7 // 2) # 3 (3.5 floors to 3)
+
+# Negative floor division
+# -7 / 2 = -3.5. Floor goes DOWN towards negative infinity -> -4
+print(-7 // 2) # -4
+
+# Regular division
+print(-7 / 2) # -3.5
+```
+
+**Snippet 2: edge case (Negative modulo)**
+```python
+# The modulo result has the same sign as the divisor (second operand)
+# -7 % 2: -7 = (-4 * 2) + 1. Remainder is 1
+print(-7 % 2) # 1
+
+# 7 % -2: 7 = (-4 * -2) + (-1). Remainder is -1
+print(7 % -2) # -1
+
+# -7 % -2: -7 = (3 * -2) + (-1). Remainder is -1
+print(-7 % -2) # -1
+```
+
+**Snippet 3: حالة عملية (Checking for NaN safely)**
+```python
+import math
+
+val = float('nan')
+
+# NEVER use '==' to check for NaN
+if val == float('nan'): # This is False!
+    print("Is NaN")
+
+# Use math.isnan()
+if math.isnan(val):
+    print("Correctly identified as NaN") # This runs
+```
+
+### الفايدة الانترفيوية
+**"How do `//` and `%` behave with negative numbers in Python? What about `NaN`?"**
+الإجابة: الـ `//` (floor division) دايماً بي round لأسفل (ناحية سالب مالانهاية). عشان كده `-7 // 2` بتساوي `-4` مش `-3`. الـ `%` (modulo) نتيجته دايماً بياخد إشارة الـ divisor (الرقم التاني). بالنسبة لـ `NaN`، هو مش بيساوي أي حاجة حتى نفسه، فعشان نختبره لازم نستخدم `math.isnan()` مش `==`.
+
+> [!danger] فخ خطير
+> ```python
+> # Assuming -7 // 2 is -3 (like in C or Java)
+> # In Python, floor division goes to the lower integer.
+> # -3.5 floors to -4!
+> 
+> # Assuming you can check NaN with ==
+> if x != x: # This actually works for NaN because NaN != NaN, but it's bad practice!
+>     pass
+> # Use math.isnan(x) instead.
+> ```
+
+> [!tip] Checkpoint
+> # `//` rounds down (towards -inf).
+> # `%` takes the sign of the divisor.
+> # `float('inf')` is infinity.
+> # `float('nan')` never equals itself. Use `math.isnan()`.
+
+---
+
+## Q25 — إيه الـ arithmetic operators وإيه الفرق بين `/` و`//`؟
+
+### أصل الحكاية
+بايثون عندها كل عوامل الحساب الأساسية (الجمع، الطرح، الضرب، القسمة). بس القسمة عندها نوعين. القسمة العادية `/` دايماً بترجع float حتى لو القسمة تزن (يعني 10 قسمة 2 تطلع 5.0 مش 5). القسمة الـ floor `//` بتقسم وبتجيب أكبر عدد صحيح أصغر من النتيجة (بتدور لتحت). والـ modulo `%` بيجيب باقي القسمة. والـ exponent `**` بيضرب الرقم في نفسه.
+
+```python
+# Standard Division (Always returns float)
+print(10 / 2)  # 5.0
+print(10 / 3)  # 3.3333333333333335
+
+# Floor Division (Returns int if both are ints, float if any is float)
+print(10 // 2) # 5
+print(10 // 3) # 3
+
+# Floor division with float
+print(10.0 // 3) # 3.0
+```
+
+**Snippet 1: حالة بسيطة (Modulo and Exponent)**
+```python
+# Modulo (remainder)
+print(10 % 3) # 1
+
+# Exponent (power)
+print(2 ** 3) # 8
+print(4 ** 0.5) # 2.0 (Square root!)
+```
+
+**Snippet 2: edge case (Floor division with floats)**
+```python
+# Floor division with negative floats
+# 10.5 / 3 = 3.5. Floor is 3.0
+print(10.5 // 3) # 3.0
+
+# -10.5 / 3 = -3.5. Floor goes down to -4.0
+print(-10.5 // 3) # -4.0
+```
+
+**Snippet 3: حالة عملية (Checking even/odd)**
+```python
+def is_even(num):
+    # Using modulo to check if remainder is 0
+    return num % 2 == 0
+
+print(is_even(4)) # True
+print(is_even(7)) # False
+```
+
+### الفايدة الانترفيوية
+**"What is the difference between `/` and `//` in Python?"**
+الإجابة: الـ `/` هي القسمة العادية وبترجع `float` دايماً. الـ `//` هي الـ floor division، بترجع `int` لو الاتين `int`، وبتدور الناتج لتحت (ناحية سالب مالانهاية). يعني `10 // 3` بـ `3`، و`-10 // 3` بـ `-4`.
+
+> [!warning] فخ شائع
+> ```python
+> # Thinking // is just "chopping off the decimal part"
+> # It is FLOOR division, which goes down!
+> print(3.9 // 1) # 3.0 (Correct, chops it)
+> print(-3.1 // 1) # -4.0 (Not -3.0! It goes down to -4)
+> ```
+
+> [!tip] Checkpoint
+> # `/` = float division (always float).
+> # `//` = floor division (rounds down to negative infinity).
+> # `**` = exponent.
+> # `%` = modulo.
+
+---
+
+## Q26 — إيه الـ `**` operator وإيه precedence rules في بايثون؟ (مع أمثلة تعقيد)
+
+### أصل الحكاية
+الـ `**` عامل الأس (exponent). بايثون بتحترم ترتيب العمليات (PEMDAS). بس فيه قاعدتين غريبين في بايثون: الأولانية، الأس بيربط من اليمين لليسار (right-associative)، يعني `2 ** 3 ** 2` مش هتتضرب 2 في 3 الأول، هتتنفذ من اليمين: `2 ** (3**2)`. القاعدة التانية، عامل النفي `-` بيبدأ الأول قبل الـ `**` لو كان جوه الأقواس، بس لو بره، الـ `**` بيشغل الأول. كمان عوامل المقارنة زي `==` ليها precedence أقل من العوامل الحسابية، وعشان كده `not x == y` بتترجم لـ `not (x == y)` مش `(not x) == y`.
+
+```python
+# Exponent is right-associative
+# Evaluated as 2 ** (3 ** 2) -> 2 ** 9
+print(2 ** 3 ** 2) # 512
+
+# Unary minus vs Exponent precedence
+# ** has higher precedence than - on the right side
+print(-2 ** 2) # -4 (Evaluated as -(2 ** 2))
+
+# But if we use parentheses
+print((-2) ** 2) # 4
+```
+
+**Snippet 1: حالة بسيطة (Logical operators precedence)**
+```python
+x = True
+y = False
+
+# '==' has higher precedence than 'not'
+# This means: not (x == y)
+print(not x == y) # not (True == False) -> not False -> True
+
+# If we meant (not x) == y
+print((not x) == y) # (False) == False -> True (coincidentally same result here)
+```
+
+**Snippet 2: edge case (Precedence between 'and' and 'or')**
+```python
+# 'and' has higher precedence than 'or'
+# A or B and C is evaluated as A or (B and C)
+result = True or False and False
+print(result) # True (True or (False and False) -> True or False -> True)
+
+# To force the 'or' first, use parentheses
+result2 = (True or False) and False
+print(result2) # False (True and False -> False)
+```
+
+**Snippet 3: حالة عملية (Complex validation logic)**
+```python
+age = 25
+has_license = True
+has_permit = False
+
+# We want to allow if (age > 21 and has_license) OR has_permit
+# Because 'and' binds tighter, we can write it without parentheses:
+can_drive = age > 21 and has_license or has_permit
+print(can_drive) # True
+
+# BUT it's always better to use parentheses for readability!
+can_drive_clear = (age > 21 and has_license) or has_permit
+```
+
+### الفايدة الانترفيوية
+**"Explain operator precedence in Python. How does `not x == y` evaluate?"**
+الإجابة: بايثون بتحترم PEMDAS. الـ `**` right-associative. عوامل المقارنة (زي `==`) ليها precedence أعلى من الـ logical operators (`not`, `and`, `or`). عشان كده `not x == y` بتتقيّم لـ `not (x == y)`. والـ `and` ليها precedence أعلى من الـ `or`.
+
+> [!danger] فخ خطير
+> ```python
+> # The -2 ** 2 trap!
+> # People think (-2) * (-2) = 4
+> # Python sees -(2 ** 2) = -4
+> print(-2 ** 2) # -4!
+> 
+> # Always use parentheses for unary minus with exponent if you mean the base is negative.
+> print((-2) ** 2) # 4
+> ```
+
+> [!tip] Checkpoint
+> # `**` is right-associative: `2**3**2` = `2**9`.
+> # `-2 ** 2` = `-4`.
+> # `not x == y` = `not (x == y)`.
+> # `and` beats `or`.
+
+---
+
+## Q27 — إيه الـ comparison operators وإزاي بايثون بتسمح بـ chaining؟ (`1 < x < 10`)
+
+### أصل الحكاية
+في لغات تانية، عشان تتأكد إن رقم بين رقمين، لازم تكتب `x > 1 and x < 10`. بايثون جايبة حاجة حلوة جداً اسمها Chained Comparisons. إنت تقدر تكتبها بالظبط زي الرياضة: `1 < x < 10`. بايثون بتفهمها وبتترجمها لـ `1 < x and x < 10`. الميزة هنا مش بس شكلها حلو، بايثون بتحسب `x` مرة واحدة بس، ولو الجزء الأول `1 < x` طلع False، بايثون مش بتكمل وتعمل short-circuit. ده مفيد جداً لو `x` فانكشن مكلفة أو لوnull.
+
+```python
+x = 5
+
+# Chained comparison (Pythonic and efficient)
+print(1 < x < 10) # True
+
+# This is evaluated as: (1 < x) and (x < 10)
+# If the first is False, the second is not evaluated.
+print(10 < x < 20) # False
+```
+
+**Snippet 1: حالة بسيطة (Multiple operators in chain)**
+```python
+x = 5
+y = 10
+
+# You can chain different operators
+print(0 < x <= y < 20) # True (0 < 5 and 5 <= 10 and 10 < 20)
+```
+
+**Snippet 2: edge case (Evaluating function calls safely)**
+```python
+def get_value():
+    print("Calculating value...")
+    return 5
+
+# Because of chaining and short-circuiting:
+# If 1 < get_value() is False, get_value() won't be called again for the second check!
+# Wait, actually Python evaluates it once and reuses it.
+print(1 < get_value() < 10) 
+# Prints "Calculating value..." ONCE, then True.
+```
+
+**Snippet 3: حالة عملية (Checking bounds in arrays)**
+```python
+def get_neighbor(arr, index):
+    # Check if index is valid in one clean line
+    if 0 <= index < len(arr):
+        return arr[index]
+    return None
+
+data = [10, 20, 30]
+print(get_neighbor(data, 1)) # 20
+print(get_neighbor(data, 5)) # None
+```
+
+### الفايدة الانترفيوية
+**"How does comparison chaining work in Python? E.g., `1 < x < 10`"**
+الإجابة: بايثون بتسمح بكتابة المقارنات ورا بعض زي الرياضة `1 < x < 10`. بايثون بترجمها لـ `1 < x and x < 10`. الميزة إنها بتقيّم `x` مرة واحدة بس، وبتعمل short-circuit (لو أول مقارنة False، بتفصل ومش بتحسب التانية).
+
+> [!warning] فخ شائع
+> ```python
+> # Chaining is not the same as (1 < x) < 10!
+> # (1 < x) < 10 evaluates the boolean result of (1 < x) and compares it to 10.
+> # If x = 5: (1 < 5) is True. True < 10 -> 1 < 10 -> True (Coincidentally works)
+> # If x = 0: (1 < 0) is False. False < 10 -> 0 < 10 -> True (Wrong! 0 is not > 1)
+> ```
+
+> [!tip] Checkpoint
+> # `a < b < c` = `a < b and b < c`.
+> # `b` is evaluated only once.
+> # Short-circuits if any part is False.
+
+---
+
+## Q28 — إيه الـ logical operators (`and`, `or`, `not`) وإزاي بيشتغلوا بـ short-circuit evaluation؟
+
+### أصل الحكاية
+العوامل المنطقية `and` و`or` و`not` بيتستخدموا لدمج الشروط. بس بايثون (زي لغات تانية) بتعمل حاجة اسمها short-circuit evaluation. يعني إيه؟ معنى `and` إن الاتنين لازم يكونوا True. فلو بايثون شافت الجزء الأول False، مش هتدخل أصلاً تختبر الجزء التاني، لأن النتيجة أكيد False. ومعنى `or` إن واحد منهم بس True يبقى كفاية. فلو شافت الأول True، مش هتختبر التاني. ده بيحمينا من أخطاء الـ None وزي ما نقول `if user and user.is_active()`.
+
+```python
+# Short-circuit with 'and'
+# If the first is False, the second is NOT evaluated.
+def check_second():
+    print("Second checked!")
+    return True
+
+print(False and check_second()) # False (check_second never runs)
+
+# Short-circuit with 'or'
+# If the first is True, the second is NOT evaluated.
+print(True or check_second()) # True (check_second never runs)
+```
+
+**Snippet 1: حالة بسيطة (Preventing AttributeError)**
+```python
+user = None
+
+# If user is None, the second part is not evaluated.
+# This prevents: AttributeError: 'NoneType' object has no attribute 'is_admin'
+if user and user.is_admin():
+    print("Welcome admin")
+else:
+    print("Access denied") # This runs
+```
+
+**Snippet 2: edge case (Complex short-circuiting)**
+```python
+# Order matters for performance!
+# Put the cheapest/most likely to fail condition first.
+def expensive_check():
+    import time
+    time.sleep(2)
+    return True
+
+def cheap_check():
+    return False
+
+# If cheap_check is False, expensive_check is skipped!
+if cheap_check() and expensive_check():
+    print("This won't print, and no 2-second delay!")
+```
+
+**Snippet 3: حالة عملية (Validating inputs)**
+```python
+def process_file(filepath):
+    # Check if filepath is not None AND file exists
+    if filepath and os.path.exists(filepath):
+        # Only run if both are true
+        pass
+```
+
+### الفايدة الانترفيوية
+**"What is short-circuit evaluation in Python? Give an example."**
+الإجابة: هي إن بايثون بتبطل تقييم باقي الشروط لما النتيجة تبقى محسومة. في الـ `and`، لو الأول False، بايثون بترجع False فوراً من غير ما تختبر الباقي. في الـ `or`، لو الأول True، بترجع True فوراً. ده بينفعنا نكتب `if obj and obj.method()` عشان نتجنب أخطاء الـ None.
+
+> [!danger] فخ خطير
+> ```python
+> # Relying on side effects in logical operators
+> # If you put a function with side effects after 'and' or 'or', it might not run!
+> 
+> def send_email():
+>     print("Email sent")
+>     return True
+> 
+> is_valid = False
+> if is_valid and send_email(): # send_email() NEVER RUNS!
+>     pass
+> ```
+
+> [!tip] Checkpoint
+> # `and`: Stops at the first False.
+> # `or`: Stops at the first True.
+> # Useful for `if x and x.attr`.
+
+---
+
+## Q29 — إزاي `and` و`or` بترجع القيمة نفسها مش بس `True`/`False`؟ (مثال: `x = 0 or "default"`)
+
+### أصل الحكاية
+ده من أهم الأسئلة اللي بتفرق مبرمج بايثون المبتديء عن المتقدم. الـ `and` و`or` في بايثون مش بيرجعوا `True` أو `False` بالضرورة. هما بيرجعوا "القيمة" اللي وقف عندها الـ short-circuit. الـ `or` بيرجع أول قيمة Truthy يلاقيها، ولو كلهن Falsy بيرجع آخر واحدة. الـ `and` بيرجع أول قيمة Falsy يلاقيها، ولو كلهن Truthy بيرجع آخر واحدة. ده بيخلينا نعمل حاجات زي `x = name or "Guest"` (لو name فاضي، حط Guest)، أو `config = env_config and file_config`.
+
+```python
+# 'or' returns the first truthy value, or the last value if all are falsy.
+print(10 or 20)       # 10 (10 is truthy, stops here)
+print(0 or 20)        # 20 (0 is falsy, checks next)
+print(0 or "")        # "" (both falsy, returns the last one)
+
+# 'and' returns the first falsy value, or the last value if all are truthy.
+print(10 and 20)      # 20 (10 is truthy, checks next, returns last)
+print(0 and 20)       # 0 (0 is falsy, stops here and returns 0)
+```
+
+**Snippet 1: حالة بسيطة (Setting default values)**
+```python
+# The classic Pythonic default value pattern
+user_input = "" # Falsy
+
+# If user_input is falsy, fall back to "Guest"
+username = user_input or "Guest"
+print(username) # Guest
+
+user_input = "Ali"
+username = user_input or "Guest"
+print(username) # Ali
+```
+
+**Snippet 2: edge case (Chaining 'or')**
+```python
+# Chaining multiple 'or's returns the first truthy one
+config = env_config or file_config or default_config or "No config"
+# It will evaluate from left to right until it finds a truthy value.
+```
+
+**Snippet 3: حالة عملية (Conditional execution with 'and')**
+```python
+# You can use 'and' to run a function only if a condition is true
+is_logged_in = True
+
+# If is_logged_in is True, it evaluates and returns the second part (the function call)
+is_logged_in and print("Welcome back!") # Prints "Welcome back!"
+
+is_logged_in = False
+is_logged_in and print("Welcome back!") # Does nothing, returns False
+```
+
+### الفايدة الانترفيوية
+**"What do `and` and `or` return in Python? Are they strictly boolean?"**
+الإجابة: لأ، `and` و`or` في بايثون بيرجعوا الـ object نفسه اللي وقف عنده الـ evaluation. `or` بيرجع أول قيمة Truthy (أو آخر Falsy لو كلهن Falsy). `and` بيرجع أول قيمة Falsy (أو آخر Truthy لو كلهن Truthy). ده بيسمح بكتابة patterns زي `x = a or b` لتحديد default value من غير ما نستخدم `if`.
+
+> [!warning] فخ شائع
+> ```python
+> # Assuming 'or' returns a boolean
+> result = (5 or 0)
+> if result == True: # This is False! result is 5, not True.
+>     print("This won't print")
+> 
+> # Correct check
+> if result: # This checks truthiness, works fine.
+>     print("This prints")
+> ```
+
+> [!tip] Checkpoint
+> # `a or b`: Returns `a` if truthy, else `b`.
+> # `a and b`: Returns `a` if falsy, else `b`.
+> # This is NOT boolean logic, it's value returning!
