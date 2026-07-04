@@ -1,0 +1,3097 @@
+---
+tags: [python, interview-prep, بايثون-من-الصفر]
+part: 1
+covers: "Variables · Data Types · Operators · Strings · Collections · Control Flow · Functions · Exception Handling · Built-ins Toolbox"
+---
+
+# 🐍 بايثون من الصفر — الأساسيات (Q1 → نهاية الملف)
+
+> [!info] 📖 إزاي تذاكر الملف ده؟
+> الملف ده بيغطي المواضيع 1-8 زائد ملحق الـ built-in functions، وكل سؤال بيبني على اللي قبله — يعني متقفزش جوا الملف، امشي بالترتيب وهتحس إن كل حاجة بتتبنى فوق بعض من صفر لحد أعمق نقطة في كل موضوع.
+
+---
+
+# 📌 الموضوع 1: Variables & Memory Model
+
+## Q1 — إيه الـ Variable في بايثون وإزاي بايثون بتشوف "الاسم" و"الـ object" كحاجتين مختلفتين؟
+
+### أصل الحكاية
+
+الـ variable في بايثون مش "صندوق" بتحط فيه قيمة زي ما بيشرحوا في الكورسات الابتدائية. الـ variable ده **اسم** — تصوره زي بطاقة اسم بتعلقها على object موجود في الميموري. بايثون بتشوف الاسم والـ object كحاجتين منفصلتين تماماً.
+
+لما بتكتب `x = 5`، بايثون بتعمل خطوتين: الأول بتنشئ **object** من النوع int بقيمة 5 في الميموري، والتاني بتربط الاسم `x` بعنوان الـ object ده. لما بعدين بتكتب `y = x`، مش بتنسخ القيمة — بتعمل اسم تاني بيشاور على نفس الـ object اللي `x` بيشاور عليه. الاتنين "بطاقة اسم" مختلفة على نفس الشيء في الميموري.
+
+```python
+x = 5
+y = x
+
+# id() returns the memory address of the object
+print(id(x))       # e.g. 140712345678
+print(id(y))       # same address — both names point to the same object
+
+# reassigning x moves the name to a new object — y stays put
+x = 10
+print(x)           # 10
+print(y)           # 5 — y still points to the original object
+
+print(id(x))       # new address (the int object for 10)
+print(id(y))       # original address (the int object for 5)
+```
+
+```python
+# CASE A — simple values (immutable)
+a = "hello"
+b = a
+b = "world"        # moves the name b to a new string object
+print(a)           # "hello" — a didn't move
+```
+
+```python
+# CASE B — mutable object: BOTH names see the change
+a = [1, 2, 3]
+b = a              # b is NOT a copy — same object, two names
+b.append(99)
+print(a)           # [1, 2, 3, 99] — a "changed" too!
+print(a is b)      # True — same object in memory
+```
+
+```python
+# CASE C — real-world function gotcha
+def add_item(collection, item):
+    collection.append(item)   # modifies the original object!
+
+cart = ["milk", "bread"]
+add_item(cart, "eggs")
+print(cart)        # ["milk", "bread", "eggs"] — original was modified
+```
+
+### الفايدة الانترفيوية
+
+سؤال بيجي دايماً: *"Is Python pass-by-value or pass-by-reference?"* — الإجابة الصح هي لا ده ولا ده. بايثون بتستخدم **pass-by-object-reference** (أو pass-by-assignment). بتبعت الاسم الجديد يشاور على نفس الـ object — مش بتنسخ القيمة ومش بتبعت reference للمتغير نفسه.
+
+> [!tip] Checkpoint
+> - الـ variable = اسم بيشاور على object في الميموري
+> - `id()` بيديك عنوان الـ object
+> - `y = x` مش نسخة — اسمان على نفس الـ object
+> - الـ reassignment بيحرك الاسم لـ object جديد، مش بيعدل الـ object القديم
+
+> [!warning] فخ شائع
+> لما بتعمل `b = a` لـ list وبعدين بتعدل `b`، هتلاقي `a` اتعدلت برضو! لأنهم بيشاوروا على نفس الـ object. لو محتاج نسخة مستقلة استخدم `b = a.copy()` أو `b = a[:]`.
+
+---
+
+## Q2 — إيه قواعد التسمية الإجبارية وإيه الـ PEP 8 conventions المتعارف عليها؟
+
+### أصل الحكاية
+
+في بايثون فيه فرق مهم بين القواعد **الإجبارية** اللي لو خالفتها السينتاكس هيكسر، والـ **conventions** المتعارف عليها في الكوميونيتي اللي ممكن تخالفها بس هتبقى كودك وحش أمام أي Python developer تاني.
+
+القواعد الإجبارية: الاسم لازم يبدأ بحرف إنجليزي أو underscore `_`، يحتوي بس على حروف وأرقام وunderscore، ومش يكون reserved keyword زي `if` أو `for` أو `class`. وبايثون case-sensitive — يعني `name` و`Name` و`NAME` تلات متغيرات مختلفين.
+
+الـ PEP 8 conventions المتعارف عليها: `snake_case` للمتغيرات والـ functions، `UPPER_SNAKE_CASE` للـ constants، `PascalCase` للـ classes، `_single_underscore` للـ private بالاتفاق، `__double_underscore` للـ name mangling في الـ classes.
+
+```python
+# VALID names — all legal Python
+user_name    = "Ahmed"
+_private     = 42
+MAX_RETRIES  = 3       # constant — UPPER_SNAKE_CASE by convention
+__mangled    = "class internal"
+
+# INVALID names — SyntaxError
+# 2fast   = True       # starts with digit
+# user-name = "x"      # hyphen not allowed
+# for   = 5            # reserved keyword
+
+# case sensitivity
+data = "lowercase"
+Data = "PascalCase"
+DATA = "UPPER"
+print(data, Data, DATA)  # three completely separate variables
+```
+
+```python
+import keyword
+
+# see every reserved keyword
+print(keyword.kwlist)
+# ['False', 'None', 'True', 'and', 'as', 'assert', 'async',
+#  'await', 'break', 'class', 'continue', 'def', 'del', ...]
+
+print(keyword.iskeyword("for"))    # True
+print(keyword.iskeyword("data"))   # False
+```
+
+```python
+class BankAccount:
+    def __init__(self, balance):
+        self.__balance = balance  # stored internally as _BankAccount__balance
+
+    def get_balance(self):
+        return self.__balance
+
+acc = BankAccount(5000)
+# print(acc.__balance)           # AttributeError
+print(acc._BankAccount__balance) # 5000 — still reachable, just hidden
+
+# single _ as throwaway variable in loops
+for _ in range(3):
+    print("tick")   # _ = "I don't care about this value"
+```
+
+### الفايدة الانترفيوية
+
+سؤال بيجي في الإنترفيو: *"What's the difference between `_var`, `__var`, and `__var__`?"* — الأول convention للـ private، الثاني name mangling في الـ classes (بيغير الاسم فعلاً لـ `_ClassName__var`)، والثالث dunder method للـ Python internals ومش المفروض تخترعه لوحدك.
+
+> [!tip] Checkpoint
+> - إجباري: يبدأ بحرف أو `_`، حروف+أرقام+`_` بس، مش keyword
+> - Convention: `snake_case` للـ functions والمتغيرات، `PascalCase` للـ classes، `UPPER_SNAKE_CASE` للـ constants
+> - `_x` = private بالاتفاق، `__x` = name mangling، `__x__` = dunder/Python magic
+
+> [!danger] فخ إنترفيو
+> لو اتسألت "هل بايثون عندها private variables حقيقية؟"، الإجابة: لأ. الـ `_` و`__` conventions أو name mangling — مش access modifiers حقيقية. حتى `__balance` ممكن توصله من بره عبر `_ClassName__balance`.
+
+---
+
+## Q3 — إيه معنى إن بايثون Dynamically Typed وإيه الفرق بين dynamic وstatic typing؟
+
+### أصل الحكاية
+
+لما بنقول إن بايثون **dynamically typed** يعني إن الـ type بتاع الـ object بيتحدد وقت التشغيل (runtime)، مش وقت كتابة الكود. نفس الاسم ممكن يشاور على int دلوقتي وstring بعد شوية وlist بعدين — وده مش error في بايثون.
+
+اللي بيخلط ناس كتير هو الفرق بين حاجتين: **dynamically typed** مش معناها **weakly typed**. بايثون dynamically typed لكن **strongly typed** — يعني مش هتعمل implicit conversion تلقائي بين types مختلفة (مش هتجمع string وint من غير ما تطلب).
+
+```python
+# dynamically typed — type determined at runtime
+x = 10
+print(type(x))    # <class 'int'>
+
+x = "hello"
+print(type(x))    # <class 'str'> — same name, completely different type
+
+x = [1, 2, 3]
+print(type(x))    # <class 'list'> — changed again, no error
+
+# strongly typed — no implicit conversion
+try:
+    result = "10" + 5   # TypeError — Python won't do this silently
+except TypeError as e:
+    print(e)            # can only concatenate str (not "int") to str
+```
+
+```python
+# type hints — optional documentation, NOT enforcement
+def greet(name: str) -> str:
+    return f"Hello, {name}"
+
+# the hint is ignored at runtime
+result = greet(123)   # no error — hint is just for IDE and tools
+print(result)         # "Hello, 123"
+```
+
+```python
+# duck typing — Python cares about behavior, not type label
+def process(obj):
+    obj.speak()   # just call it — don't check the type
+
+class Dog:
+    def speak(self): print("Woof!")
+
+class Robot:
+    def speak(self): print("Beep boop!")
+
+for thing in [Dog(), Robot()]:
+    process(thing)   # works — both have .speak()
+```
+
+### الفايدة الانترفيوية
+
+سؤال مهم: *"What's the difference between dynamic typing and weak typing? Is Python weakly typed?"* — بايثون dynamically typed (الـ type بيتحدد runtime) لكن strongly typed (مفيش implicit conversion). الـ weakly typed زي JavaScript اللي بيعمل `"5" + 3 = "53"` تلقائياً — ده مش بايثون.
+
+> [!tip] Checkpoint
+> - **Dynamically typed**: الـ type بيتحدد runtime مش وقت الكتابة
+> - **Strongly typed**: مفيش implicit conversion بين types مختلفة
+> - **Duck typing**: بايثون بتهتم بالـ behavior (الـ methods) مش بالـ type label
+> - الـ type hints اختيارية ومش مطبّقة runtime — بس لـ IDEs وـ mypy
+
+> [!warning] فخ شائع
+> الـ type hints في بايثون **مش بتوقف الكود** لو الـ type غلط. لو عايز enforcement حقيقي، محتاج Pydantic أو dataclasses مع validation.
+
+---
+
+## Q4 — إيه الفرق الحقيقي بين `is` و`==`؟
+
+### أصل الحكاية
+
+`==` بتسأل: هل **القيمتين متساويتين**؟ أما `is` بتسأل: هل **الاسمين بيشاوروا على نفس الـ object في الميموري**؟ يعني `is` بشكل مبسط هي `id(a) == id(b)`.
+
+الخطورة إن فيه ظاهرتين ممكن يلخبطوا الصورة: **Small Integer Cache** — بايثون بتعمل cache لأرقام من -5 لـ 256، يعني كل كود بيستخدم الرقم 100 بيشاور على نفس الـ object. و**String Interning** — بايثون بتعمل cache لبعض الـ strings تلقائياً. النتيجة إن `is` مع الأرقام الصغيرة والـ strings البسيطة ممكن يرجع True حتى لو المتغيرات مش متربوطين صراحةً — وده سلوك implementation-dependent مش مضمون.
+
+```python
+# == compares VALUES
+a = [1, 2, 3]
+b = [1, 2, 3]
+print(a == b)    # True  — same values
+print(a is b)    # False — different objects in memory
+
+# is compares IDENTITY
+c = a
+print(a is c)    # True  — c IS a — same object, two names
+```
+
+```python
+# Small Integer Cache: -5 to 256 share objects
+x = 100
+y = 100
+print(x is y)    # True  — cached object
+
+p = 1000
+q = 1000
+print(p is q)    # False (usually) — beyond cache range
+print(p == q)    # True  — values are equal
+```
+
+```python
+# the ONLY correct use of `is` — singletons
+value = None
+
+if value is None:       # CORRECT — Pythonic
+    print("no value")
+
+if value == None:       # WRONG — not idiomatic, may trigger linter warning
+    print("don't do this")
+
+# None, True, False are singletons — always use `is` with them
+print(True is True)    # True  — always
+print(None is None)    # True  — always
+```
+
+### الفايدة الانترفيوية
+
+سؤال كلاسيكي: *"What's the difference between `is` and `==`? When should you use each?"* — `==` للمقارنة بالقيمة، `is` لمقارنة الهوية (نفس الـ object). في الكود الحقيقي، `is` بتتستخدم **بس** مع `None`، `True`، `False` لأنهم singletons. إياك تستخدم `is` لمقارنة أرقام أو strings عشان النتيجة implementation-dependent.
+
+> [!tip] Checkpoint
+> - `==` → value equality (بيستدعي `__eq__`)
+> - `is` → identity (نفس الـ object في الميموري)
+> - Small Integer Cache: -5 إلى 256 بيتشاروا على نفس الـ object دايماً
+> - دايماً `is None` / `is not None` — مش `== None`
+
+> [!danger] فخ إنترفيو
+> لو قلت "1000 is 1000 دايماً False"، ده مش دقيق 100%. في نفس الكود block ممكن Python تعيد استخدام نفس الـ object. الإجابة الصح: النتيجة implementation-dependent، ولازم نستخدم `==` للمقارنة بالقيم دايماً.
+
+---
+
+## Q5 — إيه معنى Mutable وImmutable وليه ده مهم؟
+
+### أصل الحكاية
+
+الـ **immutable** object هو اللي مينفعش يتعدل بعد ما اتنشأ في الميموري. لو حاولت "تغيره" بايثون بتنشئ object جديد. الـ **mutable** object هو اللي تقدر تعدله in-place من غير ما object جديد ينشأ.
+
+**الـ immutable في بايثون:** `int`، `float`، `bool`، `str`، `tuple`، `frozenset`، `bytes`
+**الـ mutable في بايثون:** `list`، `dict`، `set`، `bytearray`، والـ objects اللي بتعملها بنفسك (افتراضياً)
+
+الفهم ده مهم لأنه بيأثر على تلاتة حاجات: إزاي الـ objects بتتعامل لما تبعتها لـ functions، إزاي الـ hashing بيشتغل (المفتاح في الـ dict لازم يبقى hashable وبالتالي immutable)، والأخطر هو الـ **default mutable argument trap**.
+
+```python
+# immutable: str — can't change in-place
+s = "hello"
+# s[0] = "H"   # TypeError — 'str' doesn't support item assignment
+
+s = s.upper()  # creates a NEW string object, doesn't modify old one
+print(s)       # "HELLO"
+
+# mutable: list — changes in-place
+lst = [1, 2, 3]
+original_id = id(lst)
+lst[0] = 99             # modifies in-place
+lst.append(4)           # modifies in-place
+print(id(lst) == original_id)   # True — same object throughout!
+```
+
+```python
+# immutable tuple with mutable element inside — a common trap
+t = (1, [2, 3], 4)
+# t[0] = 99   # TypeError — can't reassign tuple element
+
+t[1].append(99)    # but the list INSIDE the tuple can be modified!
+print(t)           # (1, [2, 3, 99], 4) — the tuple "changed"?
+# actually the tuple itself didn't change — the list object it references did
+```
+
+```python
+# THE CLASSIC: default mutable argument trap
+# WRONG
+def add_to_list(item, lst=[]):    # lst=[] created ONCE when function is defined
+    lst.append(item)
+    return lst
+
+print(add_to_list("a"))   # ["a"]
+print(add_to_list("b"))   # ["a", "b"] — SURPRISE! list persists between calls
+print(add_to_list("c"))   # ["a", "b", "c"]
+
+# CORRECT
+def add_to_list_v2(item, lst=None):
+    if lst is None:
+        lst = []          # new list created every time function is called
+    lst.append(item)
+    return lst
+
+print(add_to_list_v2("a"))  # ["a"]
+print(add_to_list_v2("b"))  # ["b"] — fresh list each time
+```
+
+### الفايدة الانترفيوية
+
+سؤال مهم جداً: *"Why is using a mutable default argument a bug? How does Python handle it?"* — المطلوب تشرح إن الـ default argument بيتنشأ **مرة واحدة** وقت تعريف الـ function كجزء من الـ function object نفسه، مش كل مرة بيتنادى. كل الـ calls بتشارك نفس الـ object.
+
+> [!tip] Checkpoint
+> - **Immutable**: int، float، str، tuple، bytes — مينتغيروش in-place
+> - **Mutable**: list، dict، set — بيتغيروا in-place
+> - القاعدة الذهبية: مسخدمش mutable كـ default argument — استخدم `None`
+> - الـ mutable objects مش hashable — مينفعوش كـ dict keys ولا set elements
+
+> [!danger] فخ إنترفيو
+> `def f(x, lst=[])` — الـ list ده بيتنشأ مرة واحدة وبيتحفظ جوا الـ function object في `f.__defaults__`. كل call بتشارك نفس الـ list. لو حد سألك وطلب تثبت، اطبع `f.__defaults__` قبل وبعد الـ calls.
+
+---
+
+## Q6 — إزاي بايثون بتدير الميموري بالـ Reference Counting؟ وإمتى بيجي الـ Garbage Collector؟
+
+### أصل الحكاية
+
+بايثون بتستخدم نظامين بيشتغلوا مع بعض لإدارة الميموري.
+
+**الأول — Reference Counting:** كل object في CPython عنده عداد اسمه الـ reference count بيحسب كام اسم أو container بيشاور عليه. لما العداد يوصل صفر، بايثون بتحذف الـ object **فوراً** من الميموري — مش محتاجة تستنى.
+
+**التاني — Cyclic Garbage Collector:** الـ reference counting وحده مش كافي في حالة الـ **circular references** — لما A بيشاور على B وB بيشاور على A والاتنين مش متاحين من أي مكان تاني. كل واحد فيهم عنده reference count > 0، بس مفيش حد بيستخدمهم. هنا الـ `gc` module بييجي يعمل cleanup بشكل دوري.
+
+```python
+import sys
+
+x = [1, 2, 3]
+print(sys.getrefcount(x))   # 2 — x + the argument to getrefcount itself!
+
+y = x                        # add another reference
+print(sys.getrefcount(x))   # 3 — x + y + getrefcount arg
+
+del y                        # remove one reference
+print(sys.getrefcount(x))   # 2 — back to x + getrefcount arg
+
+# when refcount reaches 0, object is freed immediately
+z = "temporary"
+del z   # refcount → 0 → freed immediately
+```
+
+```python
+import gc
+
+class Node:
+    def __init__(self, val):
+        self.val = val
+        self.next = None
+
+# create circular reference
+a = Node(1)
+b = Node(2)
+a.next = b      # a → b
+b.next = a      # b → a — circular!
+
+del a
+del b
+# both objects are orphaned but refcount > 0 (they reference each other)
+# the cyclic GC will find and free them
+
+gc.collect()            # trigger manually
+print(gc.get_count())   # (gen0, gen1, gen2) collection stats
+```
+
+```python
+# GC generations — objects that survive collection move to older generations
+print(gc.get_threshold())  # (700, 10, 10) — default thresholds
+# generation 0 triggers every 700 allocations
+# generation 1 triggers every 10 gen0 collections
+# generation 2 triggers every 10 gen1 collections
+
+gc.disable()   # disable for performance-critical sections
+# ... tight loop ...
+gc.enable()
+gc.collect()   # clean up after the critical section
+```
+
+### الفايدة الانترفيوية
+
+سؤال بيجي في السينيور إنترفيوز: *"How does Python manage memory? What's the difference between reference counting and the garbage collector?"* — المطلوب: الاتنين موجودين، reference counting هو الأساسي وبيعمل cleanup فوري، والـ GC هو backup خصيصاً لحالات الـ circular references.
+
+> [!tip] Checkpoint
+> - **Reference Counting**: عداد على كل object — لما يوصل صفر، object يتحذف فوراً
+> - **Cyclic GC**: بيتعامل مع الـ circular references اللي reference counting عاجز عنها
+> - `sys.getrefcount(x)` بيرجع الـ refcount + 1 (بسبب الـ argument نفسه)
+> - `gc.collect()` لتشغيل الـ garbage collector يدوياً
+
+> [!warning] فخ شائع
+> `sys.getrefcount(x)` دايماً بيرجع قيمة أكبر بـ 1 من المتوقع، لأن تمرير `x` كـ argument للـ function نفسها بيزود الـ reference count مؤقتاً.
+
+---
+
+## Q7 — إيه الـ Shallow Copy والـ Deep Copy وإمتى تستخدم كل واحدة؟
+
+### أصل الحكاية
+
+لما بتعمل "نسخة" من object في بايثون، فيه تلات مستويات مختلفة جذرياً:
+
+**Assignment (`b = a`):** مش نسخة خالص — اسمان على نفس الـ object.
+
+**Shallow Copy:** object جديد ينشأ، لكن عناصره الجوانية بيشاوروا على نفس الـ objects اللي في الأصل. النسخة طبقة واحدة بس — "رفيعة".
+
+**Deep Copy:** object جديد وكل حاجة جوه بتتنسخ بشكل recursive. استقلالية كاملة.
+
+```python
+import copy
+
+original = [[1, 2], [3, 4]]
+
+# assignment — same object
+alias = original
+alias[0].append(99)
+print(original)    # [[1, 2, 99], [3, 4]] — affected!
+
+# reset
+original = [[1, 2], [3, 4]]
+
+# shallow copy — new outer list, same inner lists
+shallow = copy.copy(original)     # or original[:] or list(original)
+shallow[0].append(99)             # modifies the shared inner list
+print(original)   # [[1, 2, 99], [3, 4]] — still affected at inner level!
+
+shallow.append([5, 6])            # this doesn't affect original
+print(original)   # [[1, 2, 99], [3, 4]] — top-level is independent
+
+# reset
+original = [[1, 2], [3, 4]]
+
+# deep copy — fully independent at all levels
+deep = copy.deepcopy(original)
+deep[0].append(99)
+print(original)   # [[1, 2], [3, 4]] — untouched!
+print(deep)       # [[1, 2, 99], [3, 4]]
+```
+
+```python
+# shallow copy is FINE when nested objects are immutable
+config = {"host": "localhost", "port": 5432}
+config2 = config.copy()      # shallow — fine because strings/ints are immutable
+config2["host"] = "prod.server.com"
+print(config)    # {"host": "localhost", "port": 5432} — unchanged
+```
+
+```python
+import copy
+
+# deep copy is needed for nested mutable structures
+class Profile:
+    def __init__(self, name, tags):
+        self.name = name
+        self.tags = tags         # mutable list
+
+admin = Profile("admin", ["read", "write", "delete"])
+regular = copy.deepcopy(admin)
+regular.name = "regular"
+regular.tags.remove("delete")
+
+print(admin.tags)    # ["read", "write", "delete"] — untouched
+print(regular.tags)  # ["read", "write"]
+```
+
+### الفايدة الانترفيوية
+
+سؤال كلاسيكي: *"What's the difference between shallow copy and deep copy? What does `list.copy()` return?"* — `list.copy()` هي shallow copy. إجابة كاملة: shallow بتنسخ الـ container بس مش المحتوى الجواني. Deep بتنسخ كل حاجة recursively.
+
+> [!tip] Checkpoint
+> - **Assignment**: مش نسخة — نفس الـ object
+> - **Shallow copy**: object جديد، لكن المحتوى الجواني نفس الـ references
+> - **Deep copy**: كل حاجة جديدة ومستقلة recursively
+> - `copy.copy()` للـ shallow، `copy.deepcopy()` للـ deep
+
+> [!danger] فخ إنترفيو
+> `dict.copy()` وـ`list.copy()` وـ`list[:]` كلهم **shallow** copies مش deep. لو سألوك "إزاي تعمل نسخة كاملة من list جوا list؟" الإجابة `copy.deepcopy()` مش `list.copy()`.
+
+---
+
+## Q8 — إيه الـ LEGB Rule وإزاي بايثون بتدور على أي اسم؟
+
+### أصل الحكاية
+
+لما بتكتب اسم في بايثون، الـ interpreter بيدور عليه في أربع أماكن بالترتيب ده بالظبط:
+
+- **L — Local:** جوا الـ function الحالية
+- **E — Enclosing:** جوا الـ function اللي بتحيط بالـ function الحالية (في حالة nested functions)
+- **G — Global:** على مستوى الـ module (الملف)
+- **B — Built-in:** الـ built-ins المدمجة في بايثون زي `print` وـ`len` وـ`range`
+
+لو ملقاهوش في أي مكان → `NameError`. ودايماً بيمشي من الداخل للخارج — من L لـ B.
+
+```python
+global_var = "G"     # Global level
+
+def outer():
+    enclosing_var = "E"    # Enclosing level for inner()
+
+    def inner():
+        local_var = "L"    # Local level
+
+        print(local_var)      # found in Local
+        print(enclosing_var)  # found in Enclosing
+        print(global_var)     # found in Global
+        print(len)            # found in Built-in
+    
+    inner()
+
+outer()
+```
+
+```python
+counter = 0   # global
+
+def increment():
+    global counter   # explicitly use the GLOBAL counter
+    counter += 1
+
+increment()
+increment()
+print(counter)   # 2
+
+# WITHOUT global keyword:
+def broken():
+    counter += 1   # UnboundLocalError!
+    # Python sees the assignment and treats counter as LOCAL
+    # but it's used before assignment in local scope
+
+try:
+    broken()
+except UnboundLocalError as e:
+    print(e)   # local variable 'counter' referenced before assignment
+```
+
+```python
+def make_counter():
+    count = 0    # enclosing scope
+
+    def increment():
+        nonlocal count   # use the ENCLOSING count
+        count += 1
+        return count
+    
+    return increment
+
+counter = make_counter()
+print(counter())   # 1
+print(counter())   # 2
+print(counter())   # 3
+
+# if nonlocal was missing, count += 1 would raise UnboundLocalError
+```
+
+### الفايدة الانترفيوية
+
+سؤال في الإنترفيو: *"Explain Python's LEGB rule. What happens when you reference a variable in a nested function?"* — المطلوب تشرح الأربع levels بالترتيب وتذكر الـ `global` و`nonlocal` keywords.
+
+> [!tip] Checkpoint
+> - **LEGB**: Local → Enclosing → Global → Built-in (بالترتيب)
+> - `global x`: يخلي الكتابة تؤثر على الـ global variable
+> - `nonlocal x`: يخلي الكتابة تؤثر على الـ enclosing variable
+> - بدون الـ keywords، بايثون بتعمل variable محلي جديد عند أي assignment
+
+> [!danger] فخ إنترفيو
+> الـ `UnboundLocalError` بيجي من سلوك مفاجئ: لو بايثون شافت أي assignment للاسم جوا الـ function — **حتى لو الـ assignment بيجي بعد استخدام الاسم** — بتعتبره local في كل الـ function. ده بيفاجئ ناس كتير لأنهم بيتوقعوا إن السطر الأول يقرأ من الـ global والثاني يعمل local.
+
+---
+
+## Q9 — إيه الـ `del` statement وبيحذف الـ object فعلاً ولا بس الاسم؟
+
+### أصل الحكاية
+
+`del` في بايثون بتحذف **الاسم** (الـ binding)، مش الـ object بالضرورة. الـ object بيتحذف من الميموري بس لما الـ reference count بتاعه يوصل صفر — يعني لما ماتبقاش فيه أي اسم أو container بيشاور عليه. لو عندك اسمين بيشاوروا على نفس الـ object وحذفت واحد، الـ object فاضل في الميموري لأن التاني لسه بيشاور عليه.
+
+```python
+x = [1, 2, 3]
+y = x              # both names point to the same object
+
+del x              # removes the NAME x, NOT the object
+
+print(y)           # [1, 2, 3] — object is still alive
+# print(x)        # NameError — the name x is gone
+
+del y              # now refcount → 0 — object is freed
+```
+
+```python
+# del on list elements
+lst = [10, 20, 30, 40, 50]
+del lst[2]          # remove element at index 2
+print(lst)          # [10, 20, 40, 50]
+
+del lst[1:3]        # remove a slice
+print(lst)          # [10, 50]
+
+# del on dict keys
+d = {"a": 1, "b": 2, "c": 3}
+del d["b"]
+print(d)            # {"a": 1, "c": 3}
+```
+
+```python
+class Config:
+    def __init__(self):
+        self.debug = True
+        self.timeout = 30
+
+cfg = Config()
+del cfg.debug       # delete an attribute from the instance
+# print(cfg.debug)  # AttributeError
+print(cfg.timeout)  # 30 — still there
+
+# del on a nonexistent name
+try:
+    del undefined_var
+except NameError as e:
+    print(e)        # name 'undefined_var' is not defined
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"Does `del x` immediately free memory in Python?"* — مش دايماً. `del x` بيحذف الاسم ويقلل الـ reference count. لو وصل صفر، الـ object بيتحذف فوراً. لو فيه references تانية، الـ object بيفضل موجود.
+
+> [!tip] Checkpoint
+> - `del x` بيحذف الاسم مش الـ object
+> - الـ object بيتحذف لما الـ refcount يوصل صفر
+> - تقدر تحذف list elements، dict keys، object attributes
+> - مش `free()` أو `delete` — بايثون بتدير الميموري تلقائياً
+
+---
+
+## Q10 — إيه الـ `__slots__` وإمتى تستخدمه لتوفير الميموري؟
+
+### أصل الحكاية
+
+بشكل افتراضي، كل instance بتنشئه من class بيكون عنده `__dict__` خاص بيه — وده dict عادي بيخزن فيه كل الـ attributes. الـ dict ده مرن جداً (تقدر تضيف attributes في أي وقت) لكن بياكل ميموري كبيرة. لو عندك مليون instance، المليون dict دول بيكونوا تقل كبيرة في الميموري.
+
+`__slots__` بيقول لبايثون "أنا عارف الـ attributes المسموح بيها مسبقاً — مش محتاج dict." فبدل الـ dict الديناميكي، بايثون بتعمل fixed-size structure أصغر بكتير.
+
+```python
+import sys
+
+# without __slots__ — each instance has a __dict__
+class PersonNormal:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+# with __slots__ — no __dict__, fixed attributes
+class PersonSlots:
+    __slots__ = ["name", "age"]
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+p1 = PersonNormal("Ahmed", 25)
+p2 = PersonSlots("Ahmed", 25)
+
+print(sys.getsizeof(p1))           # e.g. 48 bytes (just the header)
+print(sys.getsizeof(p1.__dict__))  # e.g. 232 bytes (the dict!)
+
+print(sys.getsizeof(p2))           # e.g. 56 bytes (no dict overhead)
+# p2.__dict__ doesn't exist!
+```
+
+```python
+class PersonSlots:
+    __slots__ = ["name", "age"]
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+p = PersonSlots("Mohamed", 30)
+print(p.name)    # "Mohamed"
+
+# can't add attributes not in __slots__
+try:
+    p.email = "test@example.com"   # AttributeError!
+except AttributeError as e:
+    print(e)     # 'PersonSlots' object has no attribute 'email'
+```
+
+```python
+# __slots__ with inheritance — each class defines its own slots
+class Base:
+    __slots__ = ["x"]
+
+class Child(Base):
+    __slots__ = ["y"]   # adds y to x from Base
+
+c = Child()
+c.x = 1   # works — from Base
+c.y = 2   # works — from Child
+
+# WARNING: if Child doesn't define __slots__, it gets __dict__ back
+class BadChild(Base):
+    pass   # no __slots__ — has __dict__ again, defeating the purpose
+
+bc = BadChild()
+bc.anything = "oops"   # works because __dict__ is back
+```
+
+### الفايدة الانترفيوية
+
+سؤال advanced: *"What are `__slots__` and when would you use them?"* — لما هتنشئ millions of instances من class وعارف الـ attributes مسبقاً، `__slots__` بتوفر ميموري ضخمة بإنها بتمنع نشأ `__dict__` لكل instance.
+
+> [!tip] Checkpoint
+> - بالافتراضي، كل instance عنده `__dict__` بياكل ميموري
+> - `__slots__` بيحدد الـ attributes المسموح بيها ويمسح الـ `__dict__`
+> - بيوفر ميموري كبيرة مع millions of instances
+> - الـ attributes اللي مش في `__slots__` بتـ raise `AttributeError`
+
+> [!warning] فخ شائع
+> لو عملت subclass من class عندها `__slots__` من غير ما تحدد `__slots__` في الـ subclass، الـ subclass هتعمل `__dict__` تاني وتضيع الفايدة. لازم تحدد `__slots__` في كل الـ class hierarchy.
+
+---
+
+# 📌 الموضوع 2: Data Types
+
+## Q11 — إيه الـ built-in types الأساسية في بايثون وإيه الفرق بين كل واحدة؟
+
+### أصل الحكاية
+
+بايثون بيجي بمجموعة types مبنية فيه. كل type له غرض محدد وسلوك مختلف. فهم الـ categories مهم لأنه بيساعدك تختار الـ type الصح وتشرح الفروق في الإنترفيو.
+
+**النصوص:** `str`
+**الأرقام:** `int`، `float`، `complex`
+**المنطقية:** `bool`
+**اللا شيء:** `None` (النوع هو `NoneType`)
+**التسلسلات (sequences):** `list`، `tuple`، `range`، `str`
+**الـ Mapping:** `dict`
+**الـ Sets:** `set`، `frozenset`
+**الثنائية:** `bytes`، `bytearray`، `memoryview`
+
+```python
+# type() shows the exact type of any object
+print(type(42))           # <class 'int'>
+print(type(3.14))         # <class 'float'>
+print(type(True))         # <class 'bool'>
+print(type(None))         # <class 'NoneType'>
+print(type("hello"))      # <class 'str'>
+print(type([1, 2]))       # <class 'list'>
+print(type((1, 2)))       # <class 'tuple'>
+print(type({1, 2}))       # <class 'set'>
+print(type({"a": 1}))     # <class 'dict'>
+print(type(b"bytes"))     # <class 'bytes'>
+print(type(range(5)))     # <class 'range'>
+```
+
+```python
+# single-element tuple needs a comma — common gotcha
+print(type((5)))    # <class 'int'> — just parentheses!
+print(type((5,)))   # <class 'tuple'> — the comma makes it a tuple
+
+# everything is an object in Python
+print(type(int))    # <class 'type'>
+print(type(str))    # <class 'type'>
+print(type(type))   # <class 'type'> — type is its own metatype
+```
+
+```python
+import sys
+
+# relative sizes (CPython 3.11, 64-bit)
+print(sys.getsizeof(True))    # 28 bytes
+print(sys.getsizeof(1))       # 28 bytes
+print(sys.getsizeof(1.0))     # 24 bytes
+print(sys.getsizeof(""))      # 49 bytes — empty string
+print(sys.getsizeof([]))      # 56 bytes — empty list
+print(sys.getsizeof({}))      # 64 bytes — empty dict
+print(sys.getsizeof(set()))   # 216 bytes — empty set (more overhead)
+```
+
+### الفايدة الانترفيوية
+
+سؤال تمهيدي: *"What are the built-in data types in Python? What's the difference between mutable and immutable types?"* — ده بيفتح باب أسئلة أعمق. المطلوب تذكر الـ categories وتميز بين الـ mutable (list، dict، set) والـ immutable (int، str، tuple، frozenset).
+
+> [!tip] Checkpoint
+> - كل حاجة في بايثون object له type
+> - `bool` هي subclass من `int` (أهم نقطة في الـ type hierarchy)
+> - `(5)` مش tuple — `(5,)` هي tuple (لازم الفاصلة)
+> - `type` نفسها object من نوع `type`
+
+---
+
+## Q12 — إيه الـ int في بايثون وليه مفيش integer overflow؟
+
+### أصل الحكاية
+
+في أغلب اللغات، الـ integer بيكون حجمه ثابت في الميموري (32 أو 64 bit) وعنده حد أقصى. لو تعديت الحد بيحصل **integer overflow** وبترجع نتيجة غلط أو exception.
+
+بايثون عندها `int` ذو **arbitrary precision** — يعني بيكبر في الميموري تلقائياً حسب حجم الرقم. مفيش ceiling للأرقام في بايثون إلا الميموري المتاحة على الجهاز. ده بيخليه مثالي للـ cryptography والـ big number arithmetic.
+
+```python
+# no integer overflow in Python!
+huge = 10 ** 1000   # 1 followed by 1000 zeros
+print(type(huge))   # <class 'int'> — still a plain int
+
+import math
+print(math.factorial(50))
+# 30414093201713378043612608166979581188299763898377856
+
+# Python int grows in memory as needed
+import sys
+print(sys.getsizeof(0))        # 24 bytes
+print(sys.getsizeof(2**30))    # 28 bytes — fits in one internal "digit"
+print(sys.getsizeof(2**60))    # 32 bytes — needs two internal digits
+print(sys.getsizeof(2**90))    # 36 bytes — needs three
+```
+
+```python
+# floor division and modulo with negatives — interview-critical behavior
+print(17 // 5)     # 3
+print(-17 // 5)    # -4 — NOT -3! floor goes toward negative infinity
+print(17 // -5)    # -4 — NOT -3!
+
+print(17 % 5)      # 2
+print(-17 % 5)     # 3 — NOT -2! sign follows the divisor (5 is positive)
+print(17 % -5)     # -3 — NOT 2! sign follows the divisor (-5 is negative)
+
+# divmod returns both
+print(divmod(-17, 5))    # (-4, 3)
+```
+
+```python
+# pow(base, exp, mod) is efficient for cryptography — no need to compute huge intermediate
+p, q = 17, 19
+n = p * q   # 323
+message = 65
+e = 7
+
+ciphertext = pow(message, e, n)   # efficient modular exponentiation
+print(ciphertext)   # 123
+
+d = 103
+plaintext = pow(ciphertext, d, n)
+print(plaintext)    # 65 — recovered!
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"Does Python have integer overflow?"* — لأ. الـ int arbitrary precision. لكن الـ float عنده overflow (فوق ~1.8×10^308 بيتحول لـ `inf`). لو محتاج fixed-width integers للـ performance، تستخدم `numpy.int32` / `numpy.int64`.
+
+> [!tip] Checkpoint
+> - الـ int في بايثون arbitrary precision — مفيش overflow
+> - `//` هو floor division (يقرب للـ negative infinity) مش truncation
+> - `pow(base, exp, mod)` أسرع من `(base**exp) % mod` للأرقام الكبيرة
+> - الـ int بياخد ميموري أكتر من C int — بس مفيش overflow
+
+> [!danger] فخ إنترفيو
+> `(-17) // 5` في بايثون = `-4` مش `-3`! `//` هو floor division (تقريب للـ negative infinity) مش truncation (قطع ناحية الصفر). الفرق ده بيظهر بس مع الأرقام السالبة.
+
+---
+
+## Q13 — إيه الـ float وليه `0.1 + 0.2 != 0.3`؟
+
+### أصل الحكاية
+
+الـ `float` في بايثون بيتخزن بـ **IEEE 754 double precision** — 64 bit في الميموري. المشكلة إن معظم الكسور العشرية مش ليهم تمثيل دقيق في الثنائي (binary). نفس المشكلة بالظبط زي `1/3` في العشري — 0.333... ملهاش نهاية. `0.1` في الثنائي بردو ملهاش تمثيل منتهي، فبايثون بتخزن **أقرب قيمة ممكنة** — وده بيسبب أخطاء تراكمية.
+
+```python
+# the classic floating point surprise
+print(0.1 + 0.2)              # 0.30000000000000004 — NOT 0.3
+print(0.1 + 0.2 == 0.3)      # False
+
+# what Python ACTUALLY stores
+from decimal import Decimal
+print(Decimal(0.1))
+# Decimal('0.1000000000000000055511151231257827021181583404541015625')
+
+print(0.1 + 0.1 + 0.1 == 0.3)  # False
+print(0.5 + 0.25 == 0.75)       # True — powers of 2 are exact in binary
+```
+
+```python
+import sys, math
+
+# float limits
+print(sys.float_info.max)        # 1.7976931348623157e+308
+print(sys.float_info.epsilon)    # 2.220446049250313e-16 — smallest difference from 1.0
+
+# special float values
+inf = float('inf')
+nan = float('nan')
+
+print(inf + 1)       # inf
+print(inf - inf)     # nan — indeterminate form
+print(inf * 0)       # nan
+
+print(math.isinf(inf))   # True
+print(math.isnan(nan))   # True
+
+# NaN is never equal to anything — not even itself!
+print(nan == nan)    # False — unique behavior
+print(nan != nan)    # True
+```
+
+```python
+# round() uses Banker's Rounding (round half to even) — surprises many
+print(round(0.5))    # 0 — rounds to EVEN
+print(round(1.5))    # 2 — rounds to EVEN
+print(round(2.5))    # 2 — rounds to EVEN (NOT 3!)
+print(round(3.5))    # 4 — rounds to EVEN
+
+# float formatting
+pi = 3.14159265358979
+print(f"{pi:.2f}")        # "3.14"
+print(f"{pi:10.3f}")      # "     3.142" — width 10, right-aligned
+print(f"{pi:e}")          # "3.141593e+00" — scientific notation
+print(f"{1234567.89:,.2f}")  # "1,234,567.89" — with comma separator
+```
+
+### الفايدة الانترفيوية
+
+سؤال كلاسيكي: *"Why does `0.1 + 0.2 != 0.3` in Python?"* — لأن الـ float بيتخزن بـ IEEE 754 binary representation وأغلب الكسور العشرية مش ليها تمثيل دقيق في الثنائي. ده مش مشكلة في بايثون بس — ده في كل اللغات اللي بتستخدم IEEE 754.
+
+> [!tip] Checkpoint
+> - الـ float = IEEE 754 double precision (64 bit)
+> - أغلب الكسور العشرية مش دقيقة 100% في binary
+> - `NaN != NaN` دايماً — استخدم `math.isnan()`
+> - `round()` في بايثون = banker's rounding (round half to even)
+
+> [!danger] فخ إنترفيو
+> `round(2.5)` في بايثون بترجع `2` مش `3`! لأن بايثون بتستخدم banker's rounding (round half to even). المتوقع الساذج هو 3 — لكن الإجابة الصح 2.
+
+---
+
+## Q14 — إزاي تقارن float بشكل آمن؟
+
+### أصل الحكاية
+
+لأن الـ float مش دقيق 100%، مقارنة floats بـ `==` بتدي نتايج غلط. الحل إنك تتحقق إن الفرق بين الاتنين أصغر من قيمة tolerance مناسبة. بايثون 3.5+ وفّرت `math.isclose()` اللي بتعمل ده بشكل صح وآمن.
+
+```python
+import math
+
+# WRONG way
+print(0.1 + 0.2 == 0.3)       # False
+
+# RIGHT way — math.isclose()
+print(math.isclose(0.1 + 0.2, 0.3))   # True
+
+# isclose signature: isclose(a, b, *, rel_tol=1e-09, abs_tol=0.0)
+# passes if: abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+```
+
+```python
+import math
+
+# rel_tol: relative tolerance — good for numbers of similar magnitude
+price1 = 99.9990
+price2 = 100.0000
+print(math.isclose(price1, price2, rel_tol=0.0001))   # True — within 0.01%
+
+# abs_tol: absolute tolerance — needed when comparing near-zero values
+# rel_tol fails near zero because the relative scale breaks down
+print(math.isclose(0.0, 0.0000001, rel_tol=1e-9))     # False — rel fails
+print(math.isclose(0.0, 0.0000001, abs_tol=0.000001))  # True  — abs works
+```
+
+```python
+import math
+
+# in testing — don't use == for floats
+def calculate_circle_area(r):
+    return math.pi * r ** 2
+
+result = calculate_circle_area(1)
+expected = math.pi
+
+# WRONG test
+# assert result == expected   # might fail
+
+# RIGHT test
+assert math.isclose(result, expected), f"got {result}, expected {expected}"
+print("test passed!")  # test passed!
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"How do you safely compare floating point numbers in Python?"* — `math.isclose()` بدل `==`. وتختار الـ tolerance المناسبة: `rel_tol` للأرقام العادية، `abs_tol` للأرقام قريبة من الصفر.
+
+> [!tip] Checkpoint
+> - مسخدمش `==` لمقارنة floats
+> - `math.isclose(a, b)` هي الطريقة الصح
+> - `rel_tol` للأرقام الكبيرة، `abs_tol` للأرقام قريبة من الصفر
+> - في numpy: `np.isclose()` و`np.allclose()` لنفس الغرض
+
+---
+
+## Q15 — إمتى تستخدم `decimal.Decimal` بدل `float`؟
+
+### أصل الحكاية
+
+الـ `decimal.Decimal` بيتخزن الأرقام بشكل عشري دقيق (مش binary). ده مثالي للأنظمة المالية والمحاسبية لأن أخطاء الـ float فيها ممكن تكون كارثية. الـ `float` سريع ومناسب للعلوم والإحصاء وأي حسابات مش محتاجة دقة عشرية مطلقة، أما الـ Decimal فهو الاختيار لما بتتعامل مع فلوس.
+
+```python
+from decimal import Decimal, getcontext, ROUND_HALF_UP
+
+# float: imprecise
+print(0.1 + 0.2)    # 0.30000000000000004
+
+# Decimal: precise
+print(Decimal("0.1") + Decimal("0.2"))   # 0.3
+
+# CRITICAL: always use strings with Decimal — not floats!
+print(Decimal(0.1))     # Decimal('0.1000000000000000055511...') — wrong!
+print(Decimal("0.1"))   # Decimal('0.1') — correct!
+```
+
+```python
+from decimal import Decimal, getcontext, ROUND_HALF_UP
+
+# financial calculation
+price    = Decimal("29.99")
+quantity = 3
+tax_rate = Decimal("0.14")
+
+subtotal = price * quantity         # 89.97
+tax      = subtotal * tax_rate      # 12.5958
+total    = subtotal + tax           # 102.5958
+
+print(f"Subtotal: {subtotal}")      # Subtotal: 89.97
+print(f"Tax: {tax}")                # Tax: 12.5958
+print(f"Total: {total}")            # Total: 102.5958
+
+# rounding to 2 decimal places with ROUND_HALF_UP
+rounded = total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+print(f"Rounded: {rounded}")        # Rounded: 102.60
+```
+
+```python
+from decimal import Decimal, getcontext
+
+# control global precision
+getcontext().prec = 10   # 10 significant digits for all operations
+
+result = Decimal("1") / Decimal("3")
+print(result)    # 0.3333333333
+
+# when to use what:
+# float:   scientific computing, ML/AI, performance-critical, approximate results
+# Decimal: money, accounting, tax, any time exact decimal representation matters
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"When would you use `Decimal` instead of `float`?"* — في التطبيقات المالية والمحاسبية. الـ float بيخزن بشكل binary تقريبي وبيسبب أخطاء صغيرة قد تتراكم. الـ Decimal دقيق عشرياً لكن أبطأ.
+
+> [!tip] Checkpoint
+> - استخدم `Decimal` للمال والمحاسبة
+> - دايماً مرر string: `Decimal("0.1")` مش `Decimal(0.1)`
+> - `getcontext().prec` بيحدد الدقة
+> - `quantize()` للتقريب بـ rounding mode محدد
+
+---
+
+## Q16 — إيه الـ bool في بايثون وليه هو subclass من int؟
+
+### أصل الحكاية
+
+في بايثون، `bool` هي subclass **حقيقية** من `int`. `True` و`False` هما literally الـ integers 1 و0 بغلاف جميل. ده قرار design من بايثون للتوافق التاريخي وعشان الـ boolean operations تبقى أسرع. النتيجة إنك تقدر تعمل arithmetic operations على الـ booleans وده ممكن يبقى مفيد جداً.
+
+```python
+# bool is a subclass of int
+print(issubclass(bool, int))    # True
+print(isinstance(True, int))    # True
+print(isinstance(True, bool))   # True
+
+# True == 1, False == 0
+print(True == 1)     # True
+print(False == 0)    # True
+print(True == 2)     # False — True is 1, not "any non-zero"
+
+# arithmetic with booleans
+print(True + True)   # 2
+print(True * 5)      # 5
+print(False * 100)   # 0
+```
+
+```python
+# practical: counting True values
+flags = [True, False, True, True, False, True]
+print(sum(flags))    # 4 — counts True values efficiently
+
+# grades passing
+grades = [85, 90, 55, 72, 45, 88]
+passing = sum(g >= 60 for g in grades)
+print(f"{passing} passed out of {len(grades)}")   # 4 passed out of 6
+```
+
+```python
+# True and False are singletons
+print(True is True)     # True — always the same object
+print(False is False)   # True
+
+# idiomatic Python — check truthiness, not equality
+flag = True
+if flag:                # CORRECT — Pythonic
+    print("truthy")
+
+if flag == True:        # WORKS but not idiomatic
+    print("equal to True")
+
+if flag is True:        # OK only if you specifically need True (not just truthy)
+    print("exactly True")
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"Why does `True + True == 2` in Python?"* — لأن `bool` subclass من `int`، وـ`True` literally هو integer 1 وـ`False` هو 0. ده بيخلي `sum([True, False, True])` يشتغل كعداد للـ True values.
+
+> [!tip] Checkpoint
+> - `bool` subclass من `int` — `True` = 1، `False` = 0
+> - `sum([True, False, True])` = 2 (counts True values)
+> - `True` و`False` singletons — استخدم `is` معاهم
+> - Idiomatic Python: `if x:` مش `if x == True:`
+
+---
+
+## Q17 — إيه الـ None وإيه الفرق بينه وبين `0` و`False` و`""`؟
+
+### أصل الحكاية
+
+`None` هو الـ singleton الوحيد من نوع `NoneType` في بايثون. بيمثل **غياب قيمة** — مختلف جذرياً عن الصفر أو الـ string الفارغ أو الـ False. كلهم falsy في الـ boolean context، لكن لكل منهم معنى مختلف: الصفر قيمة عددية، الـ string الفارغ نص فارغ، الـ False قيمة منطقية، والـ None يعني "مفيش قيمة هنا خالص".
+
+```python
+# None is NOT the same as 0, False, or ""
+print(None == 0)       # False
+print(None == False)   # False
+print(None == "")      # False
+print(None is None)    # True — always the same singleton object
+
+# all are falsy — but semantically different
+for val in [None, 0, False, "", [], {}, set()]:
+    print(f"{repr(val):10} | bool → {bool(val)} | type → {type(val).__name__}")
+
+# function without explicit return returns None
+def do_nothing():
+    pass
+
+result = do_nothing()
+print(result)           # None
+print(result is None)   # True
+```
+
+```python
+# None as sentinel for optional arguments — the correct pattern
+def connect(host, port=None, timeout=None):
+    if port is None:
+        port = 5432
+    if timeout is None:
+        timeout = 30
+    return f"{host}:{port} timeout={timeout}s"
+
+print(connect("localhost"))         # localhost:5432 timeout=30s
+print(connect("prod.db", port=3306))  # prod.db:3306 timeout=30s
+```
+
+```python
+# correct vs wrong ways to check for None
+value = None
+
+if value is None:       # CORRECT — always use `is`
+    print("no value")
+
+if value is not None:   # CORRECT — for the opposite
+    print("has value")
+
+# None can be a dict key — it's hashable
+d = {None: "no key", 1: "one"}
+print(d[None])          # "no key"
+
+# filter None from a list
+data = [1, None, 3, None, 5]
+clean = [x for x in data if x is not None]
+print(clean)            # [1, 3, 5]
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What's the difference between `None`, `0`, `False`, and `""`?"* — كلهم falsy لكن types ومعاني مختلفة تماماً. `None` = غياب قيمة. `0` = عدد صحيح. `False` = قيمة منطقية. `""` = نص فارغ. دايماً `is None` للتحقق من None.
+
+> [!tip] Checkpoint
+> - `None` = غياب قيمة — singleton من نوع `NoneType`
+> - كلهم falsy لكن مختلفين في الـ type والمعنى
+> - دايماً `is None` مش `== None`
+> - Functions من غير return بترجع `None` تلقائياً
+
+---
+
+## Q18 — إيه الـ Type Casting وإيه الفرق بين explicit وimplicit conversion؟
+
+### أصل الحكاية
+
+**Explicit conversion** هو لما إنت بتقول لبايثون "حوّل الـ type ده لـ type تاني" باستخدام `int()`، `str()`، `float()` وغيرهم. **Implicit conversion** هو لما بايثون بتعمل التحويل تلقائياً من غير ما تطلب.
+
+بايثون بتعمل implicit conversion في حالات محدودة جداً — بس في الـ numeric tower (int + float = float). بخلاف كده، بايثون strongly typed وبتـ raise TypeError لو حاولت تخلط types مش compatible.
+
+```python
+# explicit conversion
+x   = int("42")          # str → int: 42
+y   = float("3.14")      # str → float: 3.14
+z   = str(100)            # int → str: "100"
+b   = bool(0)             # int → bool: False
+lst = list("hello")       # str → list: ['h','e','l','l','o']
+t   = tuple([1, 2, 3])   # list → tuple: (1, 2, 3)
+s   = set([1, 2, 2, 3])  # list → set: {1, 2, 3}
+
+# implicit conversion — only in numeric context
+result = 5 + 2.0          # int + float → float (implicit promotion)
+print(result)             # 7.0
+print(type(result))       # <class 'float'>
+
+# Python does NOT do implicit string conversion — unlike JavaScript
+try:
+    bad = "5" + 5         # TypeError
+except TypeError as e:
+    print(e)              # can only concatenate str (not "int") to str
+```
+
+```python
+# int() edge cases
+print(int("42"))       # 42
+print(int("101", 2))   # 5  — binary
+print(int("ff", 16))   # 255 — hexadecimal
+print(int(3.9))        # 3  — TRUNCATES toward zero, doesn't round!
+print(int(-3.9))       # -3 — truncation toward zero
+
+import math
+print(math.floor(-3.9))   # -4 — floor rounds toward negative infinity
+
+print(int(True))    # 1
+print(int(False))   # 0
+
+try:
+    int("hello")    # ValueError
+except ValueError as e:
+    print(e)        # invalid literal for int() with base 10: 'hello'
+```
+
+```python
+# numeric tower — implicit promotion order
+print(type(1 + 1))       # int   + int   = int
+print(type(1 + 1.0))     # int   + float = float
+print(type(1 + 1j))      # int   + complex = complex
+print(type(1.0 + 1j))    # float + complex = complex
+print(type(True + 1))    # bool  + int   = int (bool promoted to int)
+print(type(True + 1.0))  # bool  + float = float
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What's the difference between explicit and implicit type conversion in Python?"* — Explicit = استخدام `int()`، `str()`، إلخ. Implicit = بيحصل تلقائياً في عمليات الأرقام (int + float = float). بايثون strongly typed — مش بتعمل implicit conversion للـ strings أو بين types غير numeric.
+
+> [!tip] Checkpoint
+> - **Explicit**: `int()`, `str()`, `float()`, `bool()`, `list()`, `tuple()`, `set()`
+> - **Implicit**: int + float = float (numeric tower بس)
+> - `int()` بيـ truncate (مش يـ round) — `int(3.9)` = 3
+> - بايثون مش بتعمل implicit string ↔ int conversion
+
+---
+
+## Q19 — إيه الـ Truthy والـ Falsy values وإزاي بايثون بتقيّمهم؟
+
+### أصل الحكاية
+
+في بايثون، كل object بيتحول لـ bool لما يتستخدم في سياق يحتاج قيمة منطقية (الـ `if`، الـ `while`، الـ `and`/`or`). كل حاجة **truthy** ما عدا قائمة صغيرة محددة.
+
+الـ **falsy** values: `None`، `False`، الأرقام الصفرية (`0`، `0.0`، `0j`)، الـ containers الفارغة (`""`، `[]`، `()`، `{}`، `set()`، `b""`)، والـ objects اللي `__bool__` أو `__len__` بترجع False أو 0.
+
+```python
+# all falsy values
+falsy_examples = [None, False, 0, 0.0, 0j, "", [], (), {}, set(), b""]
+for v in falsy_examples:
+    print(f"{repr(v):12} → {bool(v)}")
+
+# truthy surprises — these catch people off guard
+print(bool(0.0001))   # True  — any non-zero float
+print(bool(-1))       # True  — negative numbers are truthy!
+print(bool("0"))      # True  — non-empty string is truthy
+print(bool("False"))  # True  — still non-empty string!
+print(bool([0]))      # True  — list with one element (even if it's 0)
+print(bool([[], []))) # True  — list with elements (even if nested empty)
+```
+
+```python
+# Pythonic usage — use truthiness directly
+def process(data):
+    if not data:              # checks empty/None/falsy cleanly
+        return "no data"
+    return f"processing {len(data)} items"
+
+print(process([]))          # "no data"
+print(process(None))        # "no data"
+print(process([1, 2, 3]))   # "processing 3 items"
+
+# VERBOSE way — avoid this
+def process_verbose(data):
+    if data is None or len(data) == 0:   # unnecessary complexity
+        return "no data"
+```
+
+```python
+# custom truthiness via __bool__ and __len__
+class Bag:
+    def __init__(self, items):
+        self.items = items
+    
+    def __len__(self):
+        return len(self.items)
+    # Python uses __len__ for truthiness if __bool__ is not defined
+
+bag = Bag([1, 2, 3])
+empty_bag = Bag([])
+print(bool(bag))        # True  — len is 3
+print(bool(empty_bag))  # False — len is 0
+
+if bag:
+    print("bag has items!")   # prints
+
+# and/or with truthiness
+user_input = ""
+display = user_input or "Anonymous"    # "" is falsy → "Anonymous"
+print(display)    # "Anonymous"
+
+name = "Ahmed"
+result = name and name.upper()   # "Ahmed" is truthy → evaluates second
+print(result)     # "AHMED"
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What values are falsy in Python? How do you customize an object's truthiness?"* — قائمة الـ falsy values + تعمل `__bool__` أو `__len__` في الـ class.
+
+> [!tip] Checkpoint
+> - الـ falsy: `None`، `False`، `0`، `""`، `[]`، `{}`، `set()`، `()`
+> - كل حاجة تانية truthy — حتى `"0"` وـ`"False"` وـ`[0]`!
+> - `__bool__` بيحدد truthiness للـ custom objects (أو `__len__` كبديل)
+> - `not value` أوضح من `value == False` أو `len(value) == 0`
+
+> [!danger] فخ إنترفيو
+> `bool([0])` = **True**! لأن الـ list مش فارغة — فيها element واحد. الـ list truthy لو فيها أي عناصر خالص حتى لو العنصر نفسه falsy. وكمان `bool("False")` = True لأن النص مش فارغ.
+
+---
+
+## Q20 — إزاي تتحقق من الـ type؟ (`type()` vs `isinstance()` — الفرق مهم!)
+
+### أصل الحكاية
+
+فيه طريقتين للتحقق من نوع الـ object:
+
+**`type(obj)`** بترجع الـ type الفعلي بالظبط — مش بتأخذ inheritance في الاعتبار خالص.
+
+**`isinstance(obj, cls)`** بتتحقق هل الـ object instance من الـ class دي **أو أي subclass منها** — بتأخذ inheritance في الاعتبار.
+
+في الـ idiomatic Python، `isinstance()` هو المفضل لأنه بيحترم الـ OOP principles ويشتغل مع الـ Abstract Base Classes.
+
+```python
+# type() — exact match only
+print(type(42) == int)       # True
+print(type(True) == int)     # False! — True is bool, not int
+print(type(True) == bool)    # True
+
+# isinstance() — respects inheritance
+print(isinstance(42, int))       # True
+print(isinstance(True, int))     # True  — bool IS-A int (subclass)
+print(isinstance(True, bool))    # True
+
+# isinstance with multiple types — tuple argument
+print(isinstance(42, (int, float)))     # True
+print(isinstance(3.14, (int, float)))   # True
+print(isinstance("hi", (int, float)))   # False
+```
+
+```python
+# when to use type() — only when you need EXACT type
+def strict_process(value):
+    if type(value) is int:      # only int, NOT bool!
+        return value * 2
+    raise TypeError(f"Expected int, got {type(value).__name__}")
+
+print(strict_process(5))      # 10
+# strict_process(True)        # TypeError — True is bool, not int
+
+# dispatch table using type()
+handlers = {
+    int:   lambda x: f"Integer: {x}",
+    float: lambda x: f"Float: {x:.2f}",
+    str:   lambda x: f"String: '{x}'"
+}
+
+def handle(val):
+    h = handlers.get(type(val))
+    return h(val) if h else f"Unknown: {type(val).__name__}"
+
+print(handle(42))     # Integer: 42
+print(handle(3.14))   # Float: 3.14
+print(handle(True))   # Unknown: bool — not caught by int handler
+```
+
+```python
+from collections.abc import Sequence, Mapping, Iterable
+
+# isinstance works with ABCs — very useful for generic functions
+print(isinstance([1, 2, 3], Sequence))     # True  — list is a Sequence
+print(isinstance((1, 2, 3), Sequence))     # True  — tuple is a Sequence
+print(isinstance("hello", Sequence))        # True  — str is a Sequence
+print(isinstance({1, 2}, Sequence))         # False — set is NOT a Sequence
+print(isinstance({"a": 1}, Mapping))        # True  — dict is a Mapping
+
+def process_collection(data):
+    if isinstance(data, Mapping):
+        return list(data.values())
+    elif isinstance(data, Sequence):
+        return list(data)
+    raise TypeError("expected a collection")
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What's the difference between `type()` and `isinstance()`? Which should you prefer?"* — `type()` exact match. `isinstance()` respects inheritance. في الغالب `isinstance()` أفضل لأنه أكثر flexibility مع الـ OOP والـ ABCs.
+
+> [!tip] Checkpoint
+> - `type(x) is int`: exact type — مش بيشوف subclasses
+> - `isinstance(x, int)`: يشوف الـ class وكل subclasses بتاعتها
+> - `isinstance(x, (int, float))`: بيتحقق من أكتر من type في نفس الوقت
+> - الـ idiomatic Python: استخدم `isinstance()` في الغالب
+
+> [!danger] فخ إنترفيو
+> `type(True) == int` يرجع **False** لأن `type(True)` هو `bool` مش `int`. لكن `isinstance(True, int)` يرجع **True** لأن `bool` subclass من `int`.
+
+---
+
+## Q21 — إيه الفرق بين `bytes` و`bytearray` و`str`؟
+
+### أصل الحكاية
+
+**`str`**: نص Unicode — sequence من الـ Unicode code points. ده اللي بتستخدمه للنصوص البشرية بكل اللغات.
+
+**`bytes`**: sequence من البايتات (أرقام من 0 لـ 255) — **immutable**. للبيانات الثنائية، الملفات، الشبكة، الـ cryptography.
+
+**`bytearray`**: نفس الـ bytes لكن **mutable** — تقدر تعدل البايتات in-place.
+
+في Python 3 الـ `str` والـ `bytes` منفصلين تماماً — مفيش implicit conversion بينهم. لازم `encode()` من str → bytes وـ`decode()` من bytes → str.
+
+```python
+# str: unicode text
+text = "مرحبا"
+print(type(text))   # <class 'str'>
+print(len(text))    # 5 — 5 Unicode characters
+
+# bytes: binary data (immutable)
+data = b"hello"
+print(type(data))   # <class 'bytes'>
+print(len(data))    # 5 — 5 bytes
+
+# bytearray: mutable binary data
+ba = bytearray(b"hello")
+ba[0] = 72            # ASCII for 'H' — modifies in-place
+print(ba)             # bytearray(b'Hello')
+
+# bytes is immutable
+try:
+    data[0] = 72      # TypeError
+except TypeError as e:
+    print(e)          # 'bytes' object does not support item assignment
+```
+
+```python
+# encoding str → bytes
+text = "Hello, العالم!"
+
+utf8_bytes = text.encode("utf-8")
+print(utf8_bytes)    # b'Hello, \xd8\xa7\xd9\x84...'
+print(len(text))     # 14 characters
+print(len(utf8_bytes))  # more than 14 — Arabic chars take 2+ bytes in UTF-8
+
+# decoding bytes → str
+decoded = utf8_bytes.decode("utf-8")
+print(decoded == text)   # True
+
+# encoding errors
+try:
+    "مرحبا".encode("ascii")   # UnicodeEncodeError — Arabic not in ASCII
+except UnicodeEncodeError as e:
+    print(e)
+```
+
+```python
+# practical use cases
+# use bytes for: file I/O (binary mode), network, crypto, images
+with open("image.jpg", "rb") as f:   # 'rb' = read binary
+    image_data = f.read()             # returns bytes
+
+# use bytearray when you need to modify bytes in-place
+def xor_cipher(data: bytes, key: int) -> bytes:
+    ba = bytearray(data)
+    for i in range(len(ba)):
+        ba[i] ^= key             # XOR each byte with key
+    return bytes(ba)
+
+encrypted = xor_cipher(b"secret", 0x42)
+decrypted = xor_cipher(encrypted, 0x42)  # XOR twice = original
+print(decrypted)   # b'secret'
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What's the difference between `str`, `bytes`, and `bytearray`?"* — `str` للنص Unicode، `bytes` للبيانات الثنائية immutable، `bytearray` للبيانات الثنائية mutable. في Python 3 لازم explicit encoding/decoding بين str وbytes.
+
+> [!tip] Checkpoint
+> - `str`: Unicode text — للنصوص البشرية
+> - `bytes`: binary data، immutable
+> - `bytearray`: binary data، mutable
+> - `str.encode("utf-8")` → bytes، `bytes.decode("utf-8")` → str
+
+---
+
+## Q22 — إيه الفرق بين `repr()` والـ `str()`؟
+
+### أصل الحكاية
+
+**`str(obj)`**: تمثيل "بشري مقروء" — المفروض يكون واضح وسهل للمستخدم.
+**`repr(obj)`**: تمثيل "تقني مفصل" — المفروض يكون unambiguous. في الغالب بيكون قيمة تقدر تحطها في الكود وتجيب نفس الـ object.
+
+لما بتستخدم `print()`، بايثون بتستدعي `__str__`. لما بتكتب اسم الـ object في الـ REPL (من غير print)، بايثون بتستدعي `__repr__`.
+
+```python
+s = "hello\nworld"
+
+print(str(s))     # hello
+                  # world     — interprets the escape sequence
+
+print(repr(s))    # 'hello\nworld' — shows the raw string with escape
+
+# datetime: str() vs repr()
+from datetime import datetime
+dt = datetime(2024, 1, 15, 10, 30)
+print(str(dt))    # 2024-01-15 10:30:00 — human-readable
+print(repr(dt))   # datetime.datetime(2024, 1, 15, 10, 30) — recreatable!
+```
+
+```python
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    
+    def __str__(self):
+        return f"({self.x}, {self.y})"       # human-friendly
+    
+    def __repr__(self):
+        return f"Point(x={self.x}, y={self.y})"   # technical
+
+p = Point(3, 4)
+print(str(p))    # (3, 4)       — uses __str__
+print(repr(p))   # Point(x=3, y=4) — uses __repr__
+print(p)         # (3, 4)       — print calls __str__
+
+# if __str__ is not defined, str() falls back to __repr__
+class Simple:
+    def __repr__(self):
+        return "Simple()"
+
+s = Simple()
+print(str(s))    # Simple() — fallback to __repr__
+```
+
+```python
+s = "hello\nworld"
+
+# f-string modifiers
+print(f"default: {s}")    # default: hello
+                           #          world
+print(f"repr:    {s!r}")  # repr:    'hello\nworld'
+print(f"str:     {s!s}")  # str:     hello
+                           #          world
+
+# !r is very useful for debugging
+items = [1, "two", None]
+print(f"items = {items!r}")   # items = [1, 'two', None]
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"When does Python call `__str__` vs `__repr__`?"* — `print()` وـ`str()` بتستدعي `__str__`. الـ REPL وـ`repr()` وـ`{x!r}` في f-strings بتستدعي `__repr__`. لو `__str__` مش معرّفة، `str()` بترجع لـ`__repr__`. العكس مش صح — `__repr__` فضاها لو `__str__` بس اتعرّفت.
+
+> [!tip] Checkpoint
+> - `str()` / `print()` → `__str__` (human-readable)
+> - `repr()` / REPL → `__repr__` (unambiguous/technical)
+> - لو عرّفت بس `__repr__`، `str()` بترجع ليه تلقائياً
+> - في f-strings: `{x!r}` = repr، `{x!s}` = str
+
+---
+
+## Q23 — إيه `sys.maxsize` وإيه اختلاف حدود الأرقام بين البلاتفورمات؟
+
+### أصل الحكاية
+
+`sys.maxsize` بيديك أكبر قيمة يقدر Python index يوصلها — وده بيعكس الـ pointer size في الـ platform. على الـ 64-bit: `2**63 - 1` ≈ 9.2×10^18. على الـ 32-bit: `2**31 - 1` ≈ 2.1×10^9. لكن ده مش الـ maximum integer في بايثون — بايثون مفيش maximum integer خالص.
+
+```python
+import sys
+
+print(sys.maxsize)          # 9223372036854775807 (64-bit)
+print(2**63 - 1)            # 9223372036854775807 — same!
+
+# Python int: no maximum
+big = 2**10000
+print(type(big))            # <class 'int'> — perfectly valid
+
+# float: has overflow
+print(sys.float_info.max)   # 1.7976931348623157e+308
+big_float = 1e308
+print(big_float * 10)       # inf — float overflows!
+```
+
+```python
+import sys
+
+# common algorithmic pattern — initialize with extreme values
+def find_min_max(numbers):
+    min_val = float('inf')    # better than sys.maxsize for floats
+    max_val = float('-inf')
+    for n in numbers:
+        if n < min_val: min_val = n
+        if n > max_val: max_val = n
+    return min_val, max_val
+
+print(find_min_max([3, 1, 4, 1, 5, 9]))   # (1, 9)
+
+# sys.maxsize useful for: checking list boundaries, platform-specific code
+print(sys.maxsize.bit_length())   # 63 on 64-bit systems
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"Is there a maximum integer in Python?"* — لأ. الـ Python int arbitrary precision. `sys.maxsize` بيعكس أكبر index ممكن على الـ platform (مش maximum integer). الـ float هو اللي عنده overflow.
+
+> [!tip] Checkpoint
+> - `sys.maxsize`: أكبر index ممكن (platform-dependent)
+> - الـ Python int: مفيش max — بيكبر مع الحاجة
+> - الـ Python float: overflow فوق ~1.8×10^308 → `inf`
+> - استخدم `float('inf')` و`float('-inf')` في الـ algorithms مش `sys.maxsize`
+
+---
+
+## Q24 — إيه edge cases الأرقام اللي بتبانوا في الإنترفيو؟
+
+### أصل الحكاية
+
+فيه سلوكيات في بايثون مع الأرقام بتفاجئ ناس كتير في الإنترفيو — خصوصاً مع الأرقام السالبة والـ infinity والـ NaN. دي من أشهر الأسئلة اللي بتكشف عمق الفهم.
+
+```python
+# floor division with negatives — always rounds toward NEGATIVE infinity
+print(7 // 2)      # 3
+print(-7 // 2)     # -4  (NOT -3!) — floor of -3.5 is -4
+print(7 // -2)     # -4  (NOT -3!)
+print(-7 // -2)    # 3
+
+# modulo — result takes the sign of the DIVISOR (second number)
+# formula: a % b = a - (a // b) * b
+print(7 % 2)       # 1
+print(-7 % 2)      # 1   (NOT -1!) — follows floor division
+print(7 % -2)      # -1  (NOT 1!)
+print(-7 % -2)     # -1
+
+print(divmod(-7, 2))    # (-4, 1)  — quotient and remainder
+print(divmod(7, -2))    # (-4, -1)
+```
+
+```python
+import math
+
+# float edge cases
+print(float('inf') + 1)         # inf
+print(float('inf') - float('inf'))   # nan — indeterminate!
+print(float('inf') * 0)         # nan — indeterminate!
+print(1 / float('inf'))         # 0.0
+print(-0.0 == 0.0)              # True — negative zero equals positive zero
+print(1 / -0.0)                 # -inf — but they behave differently!
+
+# NaN — not equal to ANYTHING including itself
+nan = float('nan')
+print(nan == nan)     # False — unique IEEE 754 property
+print(nan > 0)        # False
+print(nan < 0)        # False
+print(math.isnan(nan))   # True — correct way to check for NaN
+```
+
+```python
+# ** is right-associative — common interview question
+print(2 ** 3 ** 2)      # 512 — parsed as 2 ** (3**2) = 2**9
+print((2 ** 3) ** 2)    # 64  — explicitly left-to-right
+
+# unary minus precedence
+print(-2 ** 2)      # -4  — parsed as -(2**2), NOT (-2)**2!
+print((-2) ** 2)    # 4   — use parentheses to be explicit
+
+# readable large number literals
+population = 8_100_000_000    # underscores allowed in Python 3.6+
+print(population)             # 8100000000
+
+# complex numbers
+c = 3 + 4j
+print(abs(c))        # 5.0 — magnitude = sqrt(3^2 + 4^2)
+print(c.real)        # 3.0
+print(c.imag)        # 4.0
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What's the result of `-7 // 2` in Python?"* — المفاجأة: `-4` مش `-3`! `//` هو floor division (تقريب للـ negative infinity) مش truncation (قطع ناحية الصفر). ده فرق جوهري بيظهر في الأرقام السالبة.
+
+> [!tip] Checkpoint
+> - `//` floor division: يقرب لـ negative infinity دايماً
+> - `%` modulo: النتيجة بتاخد إشارة المقسوم عليه (divisor)
+> - `NaN != NaN` دايماً — استخدم `math.isnan()`
+> - `2 ** 3 ** 2` = 512 (right-associative!)
+> - `-2 ** 2` = -4 (unary minus لها precedence أقل من `**`)
+
+> [!danger] فخ إنترفيو
+> `-17 % 5` في بايثون = `3` مش `-2`! ناس كتير بتتوقع إن الـ modulo دايماً يطلع موجب أو بنفس إشارة المقسوم. الصح: النتيجة بتاخد إشارة **المقسوم عليه** (الـ divisor).
+
+---
+
+# 📌 الموضوع 3: Operators
+
+## Q25 — إيه الـ arithmetic operators وإيه الفرق بين `/` و`//`؟
+
+### أصل الحكاية
+
+الفرق بين `/` و`//` هو أكتر نقطة بتجي في الإنترفيو من الموضوع ده. في Python 3، `/` دايماً بيعمل **true division** ويرجع float حتى لو النتيجة عدد صحيح. `//` بيعمل **floor division** ويقرب للـ negative infinity.
+
+```python
+# arithmetic operators
+print(10 + 3)    # 13
+print(10 - 3)    # 7
+print(10 * 3)    # 30
+print(10 / 3)    # 3.3333333333333335 — true division, always float
+print(10 // 3)   # 3  — floor division
+print(10 % 3)    # 1  — modulo
+print(10 ** 3)   # 1000 — exponentiation
+
+# / ALWAYS returns float in Python 3
+print(type(10 / 2))    # <class 'float'> — even when result is whole!
+print(10 / 2)          # 5.0  — NOT 5
+
+# // with floats stays float
+print(10.0 // 3)       # 3.0  — float // stays float
+print(type(10.0 // 3)) # <class 'float'>
+```
+
+```python
+# practical applications
+# check even/odd
+def is_even(n): return n % 2 == 0
+
+# convert total seconds to HH:MM:SS
+def format_time(secs):
+    h = secs // 3600
+    m = (secs % 3600) // 60
+    s = secs % 60
+    return f"{h:02d}:{m:02d}:{s:02d}"
+
+print(format_time(3723))   # 01:02:03
+```
+
+```python
+# sequence repetition
+print("ha" * 3)           # "hahaha"
+print([0] * 5)            # [0, 0, 0, 0, 0]
+print("hello" + " " + "world")   # "hello world"
+print([1, 2] + [3, 4])   # [1, 2, 3, 4]
+
+# combining sequences — TypeError if types differ
+try:
+    [1, 2] + (3, 4)   # can't add list and tuple
+except TypeError as e:
+    print(e)
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What's the difference between `/` and `//` in Python 3?"* — `/` دايماً float (true division). `//` floor division وبيرجع int لو الاتنين integers، وبيرجع float لو أي منهم float.
+
+> [!tip] Checkpoint
+> - `/`: true division — دايماً float حتى لو النتيجة عدد صحيح
+> - `//`: floor division — يقرب للـ negative infinity
+> - `%`: modulo — النتيجة بتاخد إشارة الـ divisor
+> - `**`: exponentiation — right-associative
+
+---
+
+## Q26 — إيه الـ `**` operator وإيه precedence rules في بايثون؟
+
+### أصل الحكاية
+
+الـ operator precedence بيحدد الترتيب اللي بايثون بتحسب فيه العمليات في الـ expression. بايثون بتتبع الترتيب الرياضي المتعارف عليه، لكن فيه تفاصيل دقيقة بتفاجئ الناس — خصوصاً إن `**` هو **right-associative** (بيتحسب من اليمين لليسار) وإن الـ unary minus عندها precedence أقل من `**`.
+
+```python
+# ** is RIGHT-ASSOCIATIVE — this is the big surprise
+print(2 ** 3 ** 2)      # 512 — parsed as 2**(3**2) = 2**9 = 512
+print((2 ** 3) ** 2)    # 64  — explicitly left-to-right
+
+# unary minus has LOWER precedence than **
+print(-2 ** 2)      # -4  — parsed as -(2**2)
+print((-2) ** 2)    # 4   — explicit grouping
+
+# not vs comparison
+x = 5
+print(not x == 5)      # False — parsed as not (x == 5) = not True = False
+print((not x) == 5)    # False — (not x) = False = 0, then 0 == 5 = False
+print(not x == 4)      # True  — not (x == 4) = not False = True
+```
+
+```python
+# precedence order (simplified, highest to lowest):
+# 1. ()                — parentheses
+# 2. **               — exponentiation (right-associative!)
+# 3. +x, -x, ~x       — unary operators
+# 4. *, /, //, %      — multiplicative
+# 5. +, -             — additive
+# 6. <<, >>           — bitwise shift
+# 7. &                — bitwise AND
+# 8. ^                — bitwise XOR
+# 9. |                — bitwise OR
+# 10. comparisons      — ==, !=, <, >, <=, >=, is, is not, in, not in
+# 11. not             — boolean NOT
+# 12. and             — boolean AND
+# 13. or              — boolean OR
+
+# chained comparisons — Python allows this (no other language does!)
+x = 5
+print(1 < x < 10)         # True  — works as math!
+print(1 < x and x < 10)   # True  — equivalent
+print(1 < x < 3)          # False
+```
+
+```python
+# tricky precedence examples
+print(2 ** 2 ** 3)    # 256 — 2**(2**3) = 2**8 = 256, NOT (2**2)**3 = 64
+print(1 + 2 * 3)      # 7   — multiplication before addition
+print(True or False and False)   # True — 'and' before 'or'
+print((True or False) and False) # False — explicit grouping
+
+# augmented assignment
+lst = [1, 2, 3]
+lst += [4, 5]     # equivalent to lst.extend([4, 5]) for lists
+print(lst)        # [1, 2, 3, 4, 5]
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What's the precedence of `not` in Python? Is `not x == y` the same as `(not x) == y`?"* — لأ. `not` عندها precedence أقل من الـ comparison operators، فـ `not x == y` بتتحسب كـ `not (x == y)`.
+
+> [!tip] Checkpoint
+> - `**` right-associative: `2**3**2` = 2**(3**2) = 512
+> - unary minus أقل من `**`: `-2**2` = -4
+> - `not` أقل من الـ comparisons: `not x == y` = `not (x == y)`
+> - Python تسمح بـ chained comparisons: `1 < x < 10`
+
+> [!danger] فخ إنترفيو
+> `2 ** 3 ** 2` = **256** مش **64**! السبب إن `**` right-associative: بتتحسب كـ `2**(3**2)` = `2**9` = 512... لحظة، ده يساوي 512 مش 256! `2**(3**2)` = `2**9` = 512. أما `(2**3)**2` = `8**2` = 64. دايماً استخدم أقواس للوضوح.
+
+---
+
+## Q27 — إيه الـ comparison operators وإزاي بايثون بتسمح بـ chaining؟
+
+### أصل الحكاية
+
+بايثون عندها ميزة فريدة اسمها **comparison chaining** — تقدر تكتب `1 < x < 10` وبايثون بتفهمها كـ `1 < x and x < 10` بالظبط من غير ما تكتب `and` صراحةً. وفي الـ chaining، كل operand بيتقيّم **مرة واحدة بس** — مهم جداً لو كان الـ operand function call.
+
+```python
+# chained comparisons
+x = 5
+print(1 < x < 10)           # True
+print(1 < x < 3)            # False
+print(0 <= x <= 100)         # True
+print(1 < x > 0)            # True — works! each pair checked
+
+# chaining evaluates each operand ONCE
+def get_num():
+    print("called!")
+    return 5
+
+# operand called ONCE even in chained expression
+print(1 < get_num() < 10)
+# called!
+# True
+
+# comparison operators
+print(5 == 5)    # True  — equality
+print(5 != 4)    # True  — inequality
+print(5 > 4)     # True  — greater than
+print(5 < 6)     # True  — less than
+print(5 >= 5)    # True  — greater than or equal
+print(5 <= 5)    # True  — less than or equal
+```
+
+```python
+# comparing different types
+print(1 == 1.0)    # True  — int and float can be equal
+print(1 == True)   # True  — True is 1
+print(0 == False)  # True  — False is 0
+
+# but comparing incompatible types raises TypeError for ordering
+try:
+    print(5 < "hello")   # TypeError in Python 3
+except TypeError as e:
+    print(e)             # '<' not supported between 'int' and 'str'
+
+# in Python 2 this worked (but gave meaningless results) — Python 3 fixed it
+```
+
+```python
+# string comparison — lexicographic (character by character by Unicode code point)
+print("apple" < "banana")    # True  — 'a' < 'b'
+print("abc" < "abd")         # True  — 'c' < 'd' at index 2
+print("Z" < "a")             # True  — 'Z' (90) < 'a' (97) in Unicode
+print("apple" == "Apple")    # False — case matters!
+
+# to compare case-insensitively
+print("apple".lower() == "Apple".lower())  # True
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"How does Python's chained comparison work? Is `1 < x < 10` the same as `1 < x and x < 10`?"* — نعم بالظبط. وفي الـ chaining كل operand بيتقيّم مرة واحدة بس (مهم لو operand side effect).
+
+> [!tip] Checkpoint
+> - Python تسمح بـ chained comparisons: `1 < x < 10`
+> - كل operand بيتقيّم مرة واحدة بس في الـ chain
+> - الـ string comparison = lexicographic (Unicode code points)
+> - Python 3: مش بيقارن types مختلفة بالـ < > (بيـ raise TypeError)
+
+---
+
+## Q28 — إيه الـ logical operators وإزاي بيشتغلوا بـ short-circuit evaluation؟
+
+### أصل الحكاية
+
+الـ logical operators في بايثون (`and`، `or`، `not`) بيستخدموا **short-circuit evaluation** — يعني بيوقفوا الحساب أول ما يعرفوا النتيجة النهائية.
+
+- `and`: لو الطرف الأول falsy، بيرجعه فوراً ومش بيكمل للطرف التاني
+- `or`: لو الطرف الأول truthy، بيرجعه فوراً ومش بيكمل للطرف التاني
+
+وده مهم جداً لأنه معناه إن الـ `or` و`and` مش بيرجعوا `True`/`False` دايماً — بيرجعوا **القيمة نفسها** اللي وقف عندها.
+
+```python
+# and — returns first falsy, or last value if all truthy
+print(1 and 2)         # 2   — all truthy, returns last
+print(0 and 2)         # 0   — 0 is falsy, short-circuits
+print("a" and "b")     # "b" — all truthy, returns last
+print("" and "b")      # ""  — "" is falsy, short-circuits
+
+# or — returns first truthy, or last value if all falsy
+print(1 or 2)          # 1   — 1 is truthy, short-circuits
+print(0 or 2)          # 2   — 0 is falsy, continues; 2 is truthy
+print("" or "b")       # "b" — "" is falsy, continues
+print(0 or "" or [])   # []  — all falsy, returns last
+
+# not — always returns True or False
+print(not True)    # False
+print(not 0)       # True
+print(not "")      # True
+print(not [1, 2])  # False
+```
+
+```python
+# short-circuit prevents executing the second expression
+def risky():
+    raise ValueError("called!")
+
+# and — if first is False, second is never evaluated
+result = False and risky()   # risky() is NEVER called!
+print(result)   # False
+
+# or — if first is True, second is never evaluated
+result = True or risky()    # risky() is NEVER called!
+print(result)   # True
+```
+
+```python
+# practical patterns using short-circuit
+
+# safe division — don't divide if b is zero
+def safe_div(a, b):
+    return b != 0 and a / b    # a/b only evaluated if b != 0
+
+print(safe_div(10, 2))    # 5.0
+print(safe_div(10, 0))    # False — no ZeroDivisionError
+
+# safe attribute access
+user = None
+name = user and user.name   # user.name only if user is not None
+print(name)   # None
+
+# default value pattern
+config_value = None
+value = config_value or "default"
+print(value)   # "default"
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What does `x = 0 or 'default'` evaluate to in Python? How does short-circuit evaluation work?"* — يرجع `"default"` لأن `0` falsy فبيكمل لـ `"default"` اللي truthy. `and` و`or` بيرجعوا **القيمة نفسها** مش `True`/`False` دايماً.
+
+> [!tip] Checkpoint
+> - `and`: يرجع أول falsy أو القيمة الأخيرة (لو كل حاجة truthy)
+> - `or`: يرجع أول truthy أو القيمة الأخيرة (لو كل حاجة falsy)
+> - `not`: دايماً بيرجع `True` أو `False` فعلاً
+> - الـ short-circuit: الطرف التاني ممكن ميتقيّمش خالص
+
+> [!danger] فخ إنترفيو
+> `x = None or False or 0` بيرجع `0` مش `False`! لأن كلهم falsy، والـ `or` بيرجع **القيمة الأخيرة** لو كل حاجة falsy. يعني الـ return type مش دايماً `bool`.
+
+---
+
+## Q29 — إزاي `and` و`or` بترجع القيمة نفسها مش بس `True`/`False`؟
+
+### أصل الحكاية
+
+ده امتداد لـ Q28 لكن بنتعمق في الاستخدام العملي. لأن `and` و`or` بيرجعوا القيمة نفسها (مش True/False)، تقدر تعمل patterns رائعة وقصيرة بيهم. الـ pattern الأشهر هو الـ **default value pattern** والـ **conditional execution** اللي ناس كتير بتستخدمها بدون ما تدري ليه بيشتغلوا.
+
+```python
+# or as "default value" operator
+user_name = ""             # empty string — falsy
+display = user_name or "Anonymous"
+print(display)    # "Anonymous"
+
+# chained or — first truthy wins
+value = None or 0 or "" or "found!" or "ignored"
+print(value)      # "found!" — first truthy value
+
+# and as "guard" operator — execute only if condition is met
+user = {"name": "Ahmed", "active": True}
+result = user["active"] and user["name"].upper()
+print(result)    # "AHMED" — user is active, so get the name
+
+user2 = {"name": "Salma", "active": False}
+result2 = user2["active"] and user2["name"].upper()
+print(result2)   # False — not active, short-circuits
+```
+
+```python
+# configuring with or — common pattern in real code
+import os
+
+DEBUG = os.environ.get("DEBUG") or False
+PORT  = os.environ.get("PORT") or 8000
+HOST  = os.environ.get("HOST") or "localhost"
+
+print(f"Running on {HOST}:{PORT}, debug={DEBUG}")
+# Running on localhost:8000, debug=False
+
+# NOTE: be careful — 0 is falsy! PORT=0 would give you 8000, not 0
+# use explicit None check when the value itself could be 0 or ""
+PORT_STRICT = os.environ.get("PORT")
+if PORT_STRICT is None:
+    PORT_STRICT = 8000
+```
+
+```python
+# the walrus operator can replace some or patterns more explicitly (Python 3.8+)
+import re
+
+text = "Order #12345"
+if m := re.search(r'\d+', text):
+    print(f"Found order number: {m.group()}")   # Found order number: 12345
+# m is available here too
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What does `x = a or b` return in Python?"* — بيرجع `a` لو `a` truthy، وبيرجع `b` لو `a` falsy. مش دايماً `True` أو `False`. ده بيعمله مفيداً كـ default value operator.
+
+> [!tip] Checkpoint
+> - `value = config or "default"` — pattern شائع جداً
+> - `action = is_ready and execute()` — guard pattern
+> - انتبه: لو القيمة نفسها ممكن تبقى `0` أو `""` صحيحة، استخدم `is None` بدل `or`
+
+---
+
+## Q30 — إيه الـ bitwise operators وإمتى بتيجي فايدتهم؟
+
+### أصل الحكاية
+
+الـ bitwise operators بتتعامل مع الأرقام على مستوى الـ bits (الثنائي). بايثون بتدعمهم كاملاً على الـ integers. أهميتهم بتظهر في: الـ flags والـ masks، الـ low-level programming، الـ network programming، والـ bit manipulation في مسائل الـ algorithms.
+
+```python
+# bitwise operators
+a = 0b1010   # 10
+b = 0b1100   # 12
+
+print(bin(a & b))    # 0b1000  (8)  — AND: 1 only where both are 1
+print(bin(a | b))    # 0b1110  (14) — OR:  1 where either is 1
+print(bin(a ^ b))    # 0b0110  (6)  — XOR: 1 where exactly one is 1
+print(bin(~a))       # -0b1011 (-11) — NOT: flips all bits
+print(bin(a << 1))   # 0b10100 (20) — left shift: multiply by 2
+print(bin(a >> 1))   # 0b101   (5)  — right shift: divide by 2
+```
+
+```python
+# practical: permission flags — bitmask pattern
+READ    = 0b001   # 1
+WRITE   = 0b010   # 2
+EXECUTE = 0b100   # 4
+
+user_perms = READ | WRITE   # 0b011 = 3 — has read and write
+
+# check if user has a specific permission
+has_read    = bool(user_perms & READ)     # True
+has_execute = bool(user_perms & EXECUTE)  # False
+
+# add a permission
+user_perms |= EXECUTE   # now has read, write, execute
+# remove a permission
+user_perms &= ~WRITE    # clear the WRITE bit
+print(bin(user_perms))  # 0b101 — read and execute only
+```
+
+```python
+# algorithm tricks with bitwise
+# check if number is power of 2: n > 0 and (n & (n-1)) == 0
+def is_power_of_2(n):
+    return n > 0 and (n & (n - 1)) == 0
+
+print(is_power_of_2(8))     # True  — 1000 & 0111 = 0
+print(is_power_of_2(6))     # False — 0110 & 0101 = 0100 ≠ 0
+
+# swap two numbers without temp variable (XOR trick)
+x, y = 5, 10
+x ^= y
+y ^= x
+x ^= y
+print(x, y)   # 10 5 — swapped!
+
+# count set bits (Brian Kernighan's algorithm)
+def count_bits(n):
+    count = 0
+    while n:
+        n &= n - 1   # remove the lowest set bit
+        count += 1
+    return count
+
+print(count_bits(0b1011))   # 3 — three 1-bits
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"When would you use bitwise operators in Python?"* — في permission systems (flags)، الـ low-level data manipulation، network protocols، وأسئلة الـ algorithms اللي بتطلب bit manipulation زي "find the single non-duplicate" أو "check power of 2".
+
+> [!tip] Checkpoint
+> - `&` AND، `|` OR، `^` XOR، `~` NOT، `<<` left shift، `>>` right shift
+> - `n & (n-1) == 0` اختبار power of 2
+> - `x ^= y; y ^= x; x ^= y` swap بدون temp
+> - الـ bitmask pattern للـ flags والـ permissions
+
+---
+
+## Q31 — إيه الـ `@` operator وفين بتظهر فايدته؟
+
+### أصل الحكاية
+
+الـ `@` operator اتضاف في Python 3.5 للـ matrix multiplication. مش ليه تطبيق في الـ built-in types (مش بيشتغل على lists أو dicts عادية). بيشتغل على الـ classes اللي بتعرّف `__matmul__` — وأشهر مثال هو numpy arrays.
+
+```python
+import numpy as np
+
+A = np.array([[1, 2], [3, 4]])
+B = np.array([[5, 6], [7, 8]])
+
+# matrix multiplication using @ operator
+C = A @ B
+print(C)
+# [[19 22]
+#  [43 50]]
+
+# equivalent — but @ is cleaner
+C2 = np.matmul(A, B)
+print(np.array_equal(C, C2))   # True
+
+# NOT element-wise multiplication (that's *)
+D = A * B
+print(D)
+# [[ 5 12]
+#  [21 32]]
+```
+
+```python
+# custom class implementing @
+class Matrix:
+    def __init__(self, data):
+        self.data = data
+    
+    def __matmul__(self, other):
+        # simplified 2x2 matrix multiplication
+        a, b = self.data, other.data
+        return Matrix([
+            [a[0][0]*b[0][0] + a[0][1]*b[1][0],
+             a[0][0]*b[0][1] + a[0][1]*b[1][1]],
+            [a[1][0]*b[0][0] + a[1][1]*b[1][0],
+             a[1][0]*b[0][1] + a[1][1]*b[1][1]]
+        ])
+
+M1 = Matrix([[1, 2], [3, 4]])
+M2 = Matrix([[5, 6], [7, 8]])
+result = M1 @ M2
+print(result.data)   # [[19, 22], [43, 50]]
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What is the `@` operator in Python?"* — matrix multiplication operator (Python 3.5+). بيستدعي `__matmul__`. الأشهر استخدامه في numpy. لا تخلطه مع الـ decorator `@` اللي بيجي فوق الـ functions.
+
+> [!tip] Checkpoint
+> - `@` = matrix multiplication operator (Python 3.5+)
+> - بيستدعي `__matmul__` على الـ left operand
+> - الأشهر استخدام: `numpy` arrays
+> - مختلف عن `@` الـ decorator syntax (اللي بيجي فوق `def`)
+
+---
+
+## Q32 — إيه الـ Walrus Operator (`:=`) وإزاي بيحل مشاكل فعلية؟
+
+### أصل الحكاية
+
+الـ Walrus operator (`:=`) اتضاف في Python 3.8 واسمه الرسمي **assignment expression**. بيسمح إنك تعمل assignment جوا expression — يعني تخزن قيمة وتستخدمها في نفس الـ expression. اسمه "walrus" لأن `:=` بتشبه عيون الفظ.
+
+المشكلة اللي بيحلها: أحياناً بتحتاج تحسب قيمة، تتحقق منها، وبعدين تستخدمها — وبدون الـ walrus كنت هتحتاج سطرين.
+
+```python
+# BEFORE walrus operator — common pattern needed two lines
+import re
+
+text = "Order number: 12345"
+match = re.search(r'\d+', text)
+if match:
+    print(f"Found: {match.group()}")
+
+# WITH walrus operator — one line!
+if m := re.search(r'\d+', text):
+    print(f"Found: {m.group()}")   # Found: 12345
+# m is still available after the if block!
+```
+
+```python
+# walrus in while loops — eliminates the "read-check-use" pattern
+# BEFORE
+data = input("Enter data (empty to stop): ")
+while data:
+    print(f"Processing: {data}")
+    data = input("Enter data (empty to stop): ")
+
+# WITH walrus — cleaner
+while (data := input("Enter data (empty to stop): ")):
+    print(f"Processing: {data}")
+```
+
+```python
+import re
+
+lines = [
+    "Error: connection timeout",
+    "Info: request received",
+    "Error: disk full",
+    "Warning: low memory"
+]
+
+# filter and extract in one pass using walrus in comprehension
+errors = [m.group(1) for line in lines
+          if (m := re.match(r'Error: (.+)', line))]
+
+print(errors)   # ['connection timeout', 'disk full']
+
+# another practical example — avoid calling expensive function twice
+def get_user(user_id):
+    return {"id": user_id, "name": "Ahmed"}  # simulating DB call
+
+user_id = 42
+if user := get_user(user_id):
+    print(f"Found user: {user['name']}")   # Found user: Ahmed
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What is the walrus operator and when should you use it?"* — `:=` بيعمل assignment جوا expression. مفيد لما محتاج تحسب قيمة وتتحقق منها وتستخدمها في نفس الوقت — بيقلل الـ repetition. لكن مش لازم تـ overuse — لو بيعقد الكود استخدم سطرين عاديين.
+
+> [!tip] Checkpoint
+> - `:=` walrus/assignment expression (Python 3.8+)
+> - بيسمح بـ assignment جوا `if`، `while`، comprehensions
+> - الـ variable بيفضل accessible بعد الـ if/while block
+> - استخدمه للـ "compute-check-use" patterns — مش في كل حاجة
+
+---
+
+## Q33 — إيه الـ ternary expression في بايثون وإيه الفرق بينه وبين الـ if/else العادية؟
+
+### أصل الحكاية
+
+الـ ternary expression في بايثون ليه صيغة مختلفة عن اللغات التانية. بدل `condition ? value_if_true : value_if_false`، بايثون بتكتبها بالعربي: `value_if_true if condition else value_if_false`.
+
+الفرق الجوهري: الـ ternary هو **expression** (بيرجع قيمة)، بينما الـ if/else العادي **statement** (بيعمل حاجة). ده معناه إنك تقدر تستخدم الـ ternary جوا assignments، function arguments، comprehensions.
+
+```python
+# ternary expression syntax
+x = 10
+result = "even" if x % 2 == 0 else "odd"
+print(result)    # "even"
+
+# equivalent if/else statement
+if x % 2 == 0:
+    result = "even"
+else:
+    result = "odd"
+
+# ternary inside function call
+print("positive" if x > 0 else "non-positive")   # positive
+
+# ternary in comprehension
+numbers = [1, -2, 3, -4, 5]
+absolute = [n if n >= 0 else -n for n in numbers]
+print(absolute)   # [1, 2, 3, 4, 5]
+```
+
+```python
+# nested ternary — use with caution, can hurt readability
+score = 75
+grade = "A" if score >= 90 else "B" if score >= 80 else "C" if score >= 70 else "F"
+print(grade)   # "C"
+
+# the same thing with if/elif is more readable for complex cases
+if score >= 90:
+    grade = "A"
+elif score >= 80:
+    grade = "B"
+elif score >= 70:
+    grade = "C"
+else:
+    grade = "F"
+```
+
+```python
+# ternary with function calls
+def process_positive(n): return n * 2
+def process_negative(n): return abs(n)
+
+x = -5
+result = process_positive(x) if x > 0 else process_negative(x)
+print(result)   # 5
+
+# assignment with ternary
+max_val = a if a > b else b   # custom max — same as max(a, b)
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What's the ternary operator in Python? How does it differ from `if/else`?"* — الـ ternary (`value if condition else other`) هو expression بيرجع قيمة. الـ if/else العادي statement. الفرق مهم لأنه بيحدد فين ممكن تستخدمه.
+
+> [!tip] Checkpoint
+> - صيغة بايثون: `value_if_true if condition else value_if_false`
+> - هو **expression** (بيرجع قيمة) مش **statement**
+> - تقدر تستخدمه جوا assignments، function args، comprehensions
+> - تجنب التداخل الزيادة — خلّيه في سطر واحد بسيط
+
+---
+
+## Q34 — إيه الـ `in` وـ`not in` operators وإيه الفرق في الـ performance؟
+
+### أصل الحكاية
+
+`in` و`not in` بتستخدم للتحقق من وجود عنصر في collection. لكن الـ performance بتختلف جذرياً حسب نوع الـ collection. ده من أهم الـ optimization points اللي بتيجي في الإنترفيو.
+
+- **list**: بيبحث بـ linear search — O(n). كل عنصر بيتقارن واحد واحد.
+- **set** و**dict**: بيستخدموا hash table — O(1) في المتوسط. فوري.
+- **str**: بيبحث عن substring — O(n*m).
+
+```python
+# in with different collections
+lst = [1, 2, 3, 4, 5]
+s = {1, 2, 3, 4, 5}
+d = {1: "a", 2: "b", 3: "c"}
+
+print(3 in lst)     # True  — O(n) linear search
+print(3 in s)       # True  — O(1) hash lookup
+print(3 in d)       # True  — O(1) checks keys
+
+# not in
+print(6 not in lst)  # True
+print(6 not in s)    # True
+
+# string: checks for substring
+print("ell" in "hello")      # True  — substring check
+print("world" in "hello")    # False
+```
+
+```python
+import time
+
+# performance comparison: list vs set for membership testing
+large_list = list(range(1_000_000))
+large_set  = set(range(1_000_000))
+
+target = 999_999   # near the end
+
+start = time.time()
+for _ in range(100):
+    _ = target in large_list    # O(n) each time
+list_time = time.time() - start
+
+start = time.time()
+for _ in range(100):
+    _ = target in large_set     # O(1) each time
+set_time = time.time() - start
+
+print(f"List: {list_time:.3f}s")   # e.g. List: 2.341s
+print(f"Set:  {set_time:.4f}s")    # e.g. Set:  0.0001s — WAY faster
+```
+
+```python
+# practical optimization tip
+# if you're checking membership repeatedly, convert list to set ONCE
+def find_duplicates(items):
+    seen = set()        # O(1) lookup
+    duplicates = []
+    for item in items:
+        if item in seen:        # O(1) — not O(n)!
+            duplicates.append(item)
+        seen.add(item)
+    return duplicates
+
+data = [1, 2, 3, 2, 4, 5, 3, 6]
+print(find_duplicates(data))   # [2, 3]
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What's the time complexity of `in` for list vs set?"* — list: O(n). set/dict: O(1). ده من أهم الـ optimization decisions في Python: لو هتعمل membership tests كتير، استخدم set مش list.
+
+> [!tip] Checkpoint
+> - `in` مع list: O(n) — linear search
+> - `in` مع set/dict: O(1) — hash lookup
+> - `in` مع str: بيبحث عن substring (O(n*m))
+> - لو محتاج repeated membership tests → convert list to set أولاً
+
+> [!danger] فخ إنترفيو
+> لو حد سألك "إزاي تعمل duplicate detection بكفاءة؟" الإجابة المبتدئة هي nested loops بـ O(n²). الإجابة الصح هي set للـ O(n). وده بيستخدم `in` بتاع set مش list.
+
+---
+
+## Q35 — إزاي الـ augmented assignment (`+=`, `-=`) بتتصرف مختلف مع mutable وimmutable objects؟
+
+### أصل الحكاية
+
+الـ augmented assignment (`+=`، `-=`، `*=`، etc.) بتتصرف بشكل مختلف حسب الـ type:
+- مع **immutable** objects (int، str، tuple): بتنشئ object جديد وبتربط الاسم بيه — زي لو عملت `x = x + y`
+- مع **mutable** objects (list، dict، set): بتحاول تعدل الـ object **in-place** أولاً عبر `__iadd__` — ده **مش** نفس `x = x + y`
+
+الفرق ده مصدر لأشهر فخ في الإنترفيو.
+
+```python
+# with immutable (int) — creates new object
+x = 5
+id_before = id(x)
+x += 3
+print(id(x) == id_before)   # False — new int object created
+
+# with mutable (list) — modifies in-place
+lst = [1, 2, 3]
+id_before = id(lst)
+lst += [4, 5]                # calls lst.__iadd__([4, 5]) — in-place!
+print(id(lst) == id_before)  # True — SAME object, modified in-place
+print(lst)                   # [1, 2, 3, 4, 5]
+
+# contrast with +
+lst2 = [1, 2, 3]
+id_before = id(lst2)
+lst2 = lst2 + [4, 5]        # creates a NEW list object
+print(id(lst2) == id_before) # False — new object
+```
+
+```python
+# THE CLASSIC INTERVIEW TRAP — tuple with mutable element
+t = ([1, 2], [3, 4])
+
+try:
+    t[0] += [99]    # this raises TypeError (can't assign tuple item)
+except TypeError as e:
+    print(e)        # 'tuple' object does not support item assignment
+
+# BUT — the += still MODIFIED the list before failing!
+print(t)   # ([1, 2, 99], [3, 4]) — THE LIST WAS MODIFIED despite the error!
+
+# why? += on a list calls __iadd__ (modifies in-place) FIRST,
+# then tries to do t[0] = result (this fails for tuple),
+# but by then the list is already modified!
+```
+
+```python
+# += with strings — creates new object each time
+s = "hello"
+id_before = id(s)
+s += " world"
+print(id(s) == id_before)   # False — new string object
+
+# practical implication: don't use += in loops for string concatenation!
+# WRONG — creates new string object every iteration → O(n²)
+result = ""
+for word in ["hello", "world", "python"]:
+    result += word + " "   # new string created each time
+
+# CORRECT — join at the end → O(n)
+result = " ".join(["hello", "world", "python"])
+print(result)   # hello world python
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What happens with `+=` on a tuple element containing a list? Why does the list get modified even though a `TypeError` is raised?"* — ده من أصعب أسئلة بايثون. الـ `+=` بيستدعي `__iadd__` أولاً (اللي بيعدل الـ list in-place)، وبعدين بيحاول يعمل assignment على الـ tuple (اللي بيطير TypeError). اللي فات فات — الـ list اتعدلت.
+
+> [!tip] Checkpoint
+> - `+=` على immutable: ينشئ object جديد
+> - `+=` على mutable: يعدل in-place عبر `__iadd__`
+> - `lst += [1]` ≠ `lst = lst + [1]` — الأول in-place، التاني ينشئ object جديد
+> - String concatenation في loop → استخدم `"".join()` مش `+=`
+
+> [!danger] فخ إنترفيو
+> `t = ([1,2], [3,4]); t[0] += [99]` بيرمي **TypeError AND** بيعدل الـ list في نفس الوقت! الـ TypeError بيجي من محاولة assignment على الـ tuple، لكن الـ list اتعدلت in-place قبل كده. ناس كتير بتتوقع إما إن الحاجتين اشتغلوا، أو إن حاجة واحدة حصلت.
+
+
+---
+
+## Q36 — فخ الـ Dictionary Key Collisions — ليه `{1: "a", 1.0: "b", True: "c"}` بيطلع عنصر واحد؟
+
+### أصل الحكاية
+
+في بايثون، الـ dict key ليه قاعدتين: **hashability** و**equality**. لو اتنين objects ليهم نفس الـ hash ونفس الـ value بالـ `==`، بايثون بتعتبرهم **نفس الـ key** تماماً — حتى لو نوعهم مختلف.
+
+`True` و`1` و`1.0` في بايثون كلهم بيعطوا:
+- `hash(True) == hash(1) == hash(1.0)` → نفس الـ hash
+- `True == 1 == 1.0` → نفس القيمة
+
+النتيجة: لما بتحط `{1: "a", 1.0: "b", True: "c"}`، بايثون بتشوف إن الـ 3 keys دول كلهم "نفس الحاجة" — فبتحتفظ بأول key اتضاف وبتحدّث الـ value بآخر واحد.
+
+```python
+# الفخ الأشهر
+d = {1: "a", 1.0: "b", True: "c"}
+print(d)         # {1: 'c'} — key واحد بس! وهو 1 (أول key اتضاف)
+print(len(d))    # 1 — مش 3!
+
+# ليه الـ key اتحفظ كـ 1 مش True ولا 1.0؟
+# لأن أول key بيكسب — بايثون بتحتفظ بأول key وبس بتحدث الـ value
+```
+
+```python
+# نفس الظاهرة مع set
+s = {1, 1.0, True}
+print(s)       # {1} — عنصر واحد بس
+print(len(s))  # 1
+
+# تأكيد الـ hashes والـ equality
+print(hash(True))   # 1
+print(hash(1))      # 1
+print(hash(1.0))    # 1
+print(True == 1 == 1.0)   # True
+```
+
+```python
+# مقارنة عملية
+d = {}
+d[1]    = "integer one"
+d[True] = "boolean True"    # نفس الـ key → overwrite!
+d[1.0]  = "float one"       # نفس الـ key → overwrite!
+print(d)   # {1: 'float one'} — الـ key فضل 1 (أول حاجة) والـ value اتحدثت
+
+# الفرق لما الـ keys فعلاً مختلفة
+d2 = {0: "zero", False: "false", 0.0: "float zero"}
+print(d2)    # {0: 'float zero'} — كمان نفس الموضوع! 0 == False == 0.0
+```
+
+### الفايدة الانترفيوية
+
+سؤال كلاسيكي في الإنترفيو: *"What's the output of `{1: 'a', True: 'b', 1.0: 'c'}`?"* — الإجابة الصح: `{1: 'c'}`. لأن بايثون بتحدد تساوي الـ keys بالـ hash والـ equality معاً، مش بالـ type.
+
+> [!tip] Checkpoint
+> - الـ dict key equality = نفس `hash()` + نفس `==`
+> - `True == 1 == 1.0` وكلهم `hash` = 1
+> - `False == 0 == 0.0` وكلهم `hash` = 0
+> - أول key بيكسب — الـ value بتتحدث لآخر حاجة
+
+> [!danger] فخ إنترفيو
+> `{True: "a", 1: "b"}` بيطلع `{True: 'b'}` مش `{True: 'a', 1: 'b'}`! الـ key بيتحفظ كـ `True` (أول حاجة اتضافت) لكن الـ value بتتحدث لـ `'b'`. الناس كتير بتتوقع إما error أو dict بعنصرين.
+
+---
+
+## Q37 — Unpacking and Swapping under the hood — إزاي `a, b = b, a` بتشتغل من غير temp variable؟
+
+### أصل الحكاية
+
+السطر `a, b = b, a` هو من أجمل حاجات بايثون. بتبدو زي magic — بس في الحقيقة بتشتغل بخطوتين واضحتين: الأول بايثون بتحسب الـ **right-hand side كله** وبتعمل منه tuple في الميموري، وبعدين بتعمل **unpack** للـ tuple ده على الـ left-hand side. مفيش conflict لأن الـ right-hand side بيتحسب كله قبل أي assignment.
+
+```python
+# الـ swap الشهير
+a, b = 10, 20
+a, b = b, a
+print(a, b)   # 20 10 — اتعكسوا!
+
+# إيه اللي بيحصل تحت التراب؟
+# 1. Python تحسب الـ right side كله: بتعمل tuple (b, a) = (20, 10)
+# 2. بعدين بتعمل unpack: a = 20, b = 10
+# مفيش temp variable ومفيش race condition
+
+# إثبات: الـ bytecode
+import dis
+def swap(a, b):
+    a, b = b, a
+    return a, b
+
+dis.dis(swap)
+# LOAD_FAST 'b'
+# LOAD_FAST 'a'
+# STORE_FAST 'a'   ← بيتحسبوا الاتنين قبل الـ store
+# STORE_FAST 'b'
+```
+
+```python
+# unpacking أشكال متعددة
+first, *rest = [1, 2, 3, 4, 5]
+print(first)   # 1
+print(rest)    # [2, 3, 4, 5]
+
+*init, last = [1, 2, 3, 4, 5]
+print(init)    # [1, 2, 3, 4]
+print(last)    # 5
+
+first, *middle, last = [1, 2, 3, 4, 5]
+print(first)   # 1
+print(middle)  # [2, 3, 4]
+print(last)    # 5
+
+# الـ * بيجمع "الباقي" في list — بس واحدة بس في الـ expression
+```
+
+```python
+# nested unpacking
+matrix = [(1, 2), (3, 4), (5, 6)]
+for x, y in matrix:
+    print(f"x={x}, y={y}")
+# x=1, y=2
+# x=3, y=4
+# x=5, y=6
+
+# unpacking في function calls
+def add(a, b, c):
+    return a + b + c
+
+nums = [1, 2, 3]
+print(add(*nums))   # 6 — unpacking list as positional args
+
+config = {"a": 1, "b": 2, "c": 3}
+print(add(**config))   # 6 — unpacking dict as keyword args
+
+# merging dicts with ** (Python 3.5+)
+d1 = {"x": 1, "y": 2}
+d2 = {"y": 99, "z": 3}
+merged = {**d1, **d2}
+print(merged)   # {'x': 1, 'y': 99, 'z': 3} — d2 overwrites d1
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"How does `a, b = b, a` work without a temp variable? Is it safe if both sides reference the same list?"* — بايثون بتحسب الـ right side كاملاً أولاً وبتحطه في tuple مؤقت، وبعدين بتعمل unpack. ده guarantees إن الـ old values بتتحفظ قبل أي overwrite.
+
+> [!tip] Checkpoint
+> - `a, b = b, a` → Python تعمل tuple مؤقت من الـ right side الأول
+> - `*rest` في الـ unpacking بيجمع الباقي في list
+> - `*args` في function call = unpack sequence
+> - `**kwargs` في function call = unpack dict كـ keyword args
+> - `{**d1, **d2}` = merge dicts (آخر حاجة بتكسب في التعارض)
+
+> [!danger] فخ إنترفيو
+> `first, *middle, last = [1]` بيرمي **ValueError**! محتاج على الأقل 2 عناصر (أو بقدر عدد الـ fixed names). وكمان `*` بيعمل list دايماً حتى لو الباقي 0 عنصر: `first, *rest = [1]` → `rest = []` مش error.
+
+---
+
+## Q38 — The Late Binding Trap — ليه `[lambda: i for i in range(3)]` بيطبع 2, 2, 2؟
+
+### أصل الحكاية
+
+ده من أشهر وأصعب الأخطاء في بايثون — بيطلع في كل إنترفيو على مستوى intermediate وفوق. الـ closures في بايثون بتعمل **late binding** — يعني الـ lambda مش بتـ capture قيمة الـ variable وقت إنشاؤها، لكن بتـ capture **المتغير نفسه** (الاسم). لما بتنادي الـ function بعدين، بتروح تشوف قيمة المتغير **وقت الاستدعاء** مش وقت الإنشاء.
+
+```python
+# الفخ الأشهر
+funcs = [lambda: i for i in range(3)]
+
+print(funcs[0]())   # 2 — مش 0!
+print(funcs[1]())   # 2 — مش 1!
+print(funcs[2]())   # 2 — مش 2 بالصدفة!
+
+# ليه؟ لأن الـ 3 lambdas كلهم بيشاوروا على نفس المتغير i
+# لما الـ loop تخلص، i = 2
+# لما بتنادي أي lambda، بتروح تشوف i اللي بقى = 2
+```
+
+```python
+# الحل 1 — default argument (الأشهر والأوضح)
+funcs_fixed = [lambda i=i: i for i in range(3)]
+
+print(funcs_fixed[0]())   # 0 — صح!
+print(funcs_fixed[1]())   # 1 — صح!
+print(funcs_fixed[2]())   # 2 — صح!
+
+# ليه الحل ده شغال؟
+# لأن الـ default argument بيتحسب وقت تعريف الـ lambda
+# مش وقت استدعاؤها — فبيحفظ قيمة i الحالية
+```
+
+```python
+# الحل 2 — functools.partial
+from functools import partial
+
+def get_value(i):
+    return i
+
+funcs2 = [partial(get_value, i) for i in range(3)]
+print(funcs2[0]())   # 0
+print(funcs2[1]())   # 1
+
+# الحل 3 — closure صح بمتغير محلي
+def make_func(i):
+    def inner():
+        return i   # i هنا متغير محلي للـ make_func مش متغير الـ loop
+    return inner
+
+funcs3 = [make_func(i) for i in range(3)]
+print(funcs3[0]())   # 0
+print(funcs3[1]())   # 1
+print(funcs3[2]())   # 2
+```
+
+```python
+# نفس الفخ مع def بدل lambda
+def make_funcs():
+    result = []
+    for i in range(3):
+        def f():
+            return i   # late binding!
+        result.append(f)
+    return result
+
+fns = make_funcs()
+print([f() for f in fns])   # [2, 2, 2] — كلهم 2!
+
+# الحل
+def make_funcs_fixed():
+    result = []
+    for i in range(3):
+        def f(x=i):    # default arg captures current value
+            return x
+        result.append(f)
+    return result
+
+fns2 = make_funcs_fixed()
+print([f() for f in fns2])   # [0, 1, 2] — صح!
+```
+
+### الفايدة الانترفيوية
+
+سؤال كلاسيكي: *"What's the output of `[lambda: i for i in range(3)]` when called? Why? How do you fix it?"* — المطلوب تشرح الـ late binding وتذكر الحل بالـ default argument `lambda i=i: i`.
+
+> [!tip] Checkpoint
+> - الـ closures في بايثون = **late binding** — بتشوف قيمة المتغير وقت الاستدعاء مش الإنشاء
+> - الحل: `lambda i=i: i` — الـ default argument بيتحسب وقت تعريف الـ lambda
+> - بديل: `functools.partial` أو function factory بمتغير محلي
+> - نفس الفخ بيحصل مع `def` جوا loops
+
+> [!danger] فخ إنترفيو
+> لو حد قالك "أنا بستخدم `lambda: i` ومش شايل قيمة `i`" — الإجابة: بايثون بتـ capture اسم المتغير مش قيمته. وقت الاستدعاء بتروح تدور على الاسم في الـ scope اللي اتعرفت فيه — وبتلاقيه بقيمته الأخيرة.
+
+
+---
+
+## Q39 — String Interning in-depth — إمتى بايثون بتعمل cache للنصوص تلقائياً؟
+
+### أصل الحكاية
+
+**String Interning** هي عملية بايثون بتحفظ فيها نسخة واحدة فقط من بعض الـ strings في الميموري، وأي variable بيحتاجها بيشاور على نفس الـ object. ده بيوفر ميموري وبيخلي المقارنة بالـ `is` أسرع.
+
+بايثون بتعمل interning تلقائياً لـ strings اللي بتبدو زي identifiers (حروف وأرقام وـ underscore فقط). لكن الـ strings المعقدة (بفراغات أو رموز) مش مضمون يتعملوا intern تلقائياً.
+
+```python
+# automatic interning — simple identifier-like strings
+a = "hello"
+b = "hello"
+print(a is b)     # True (usually) — interned automatically
+
+# strings with spaces — NOT automatically interned
+c = "hello world"
+d = "hello world"
+print(c is d)     # False (usually) — not guaranteed to be interned
+
+# single-character strings are always interned
+x = "A"
+y = "A"
+print(x is y)    # True — always interned
+```
+
+```python
+import sys
+
+# sys.intern() — manually force interning
+s1 = sys.intern("hello world")
+s2 = sys.intern("hello world")
+print(s1 is s2)   # True — now they share the same object!
+
+# practical use: lots of repeated string keys (e.g., JSON parsing)
+# without interning: each key "name" is a separate string object
+# with interning: all "name" keys share ONE object → less memory
+data = [{"name": sys.intern("Ahmed"), "role": sys.intern("admin")}
+        for _ in range(10_000)]
+# now all "Ahmed" strings are the same object in memory
+```
+
+```python
+# what gets interned automatically?
+# rule of thumb: strings that look like Python identifiers
+print("hello" is "hello")         # True — simple, no spaces
+print("hello_world" is "hello_world")  # True — underscore OK
+# print("hello world" is "hello world") # False — has space
+# print("hello!" is "hello!")           # False — has special char
+
+# compile-time constants get interned
+a = "test"
+b = "test"
+print(a is b)    # True — same compile-time constant
+
+# runtime-built strings: NOT interned
+a = "te" + "st"     # built at runtime
+b = "test"
+print(a is b)        # True (CPython optimizes this!) — but not guaranteed
+                     # don't rely on this behavior
+
+a = "".join(["t", "e", "s", "t"])  # definitely runtime
+print(a is b)    # False — not interned
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What is string interning in Python? When does it happen automatically?"* — بايثون بتعمل intern تلقائياً للـ strings اللي تشبه الـ identifiers (بدون spaces أو رموز). لو محتاج interning مضمون استخدم `sys.intern()`. الـ `is` مع strings غير مضمون — دايماً استخدم `==`.
+
+> [!tip] Checkpoint
+> - String interning = نسخة واحدة من نفس الـ string في الميموري
+> - تلقائي لـ: identifier-like strings، compile-time constants
+> - مش مضمون لـ: strings بفراغات أو رموز أو built at runtime
+> - `sys.intern(s)` لـ forced interning — مفيد مع repeated string keys
+> - دايماً استخدم `==` لمقارنة strings — مش `is`
+
+> [!warning] فخ شائع
+> الاعتماد على `is` لمقارنة strings زي `if s is "admin":` خطأ — ممكن يشتغل أحياناً (بسبب interning) ويفشل أحياناً تانية. الـ linters بتحذر منه. دايماً استخدم `==`.
+
+---
+
+## Q40 — Fallback Magic Methods (`__radd__`) — إيه اللي بيحصل لما نعمل `1 + obj`؟
+
+### أصل الحكاية
+
+لما بتكتب `a + b`، بايثون بتحاول تستدعي `a.__add__(b)` أولاً. لو `a` مش عارف كيف يتعامل مع `b` (بيرجع `NotImplemented`)، بايثون بتلف على التاني وبتجرب `b.__radd__(a)`. ده بيديك القدرة إنك تعمل custom objects بتتكامل مع الـ built-in types حتى لو الـ built-in type على الشمال.
+
+الـ "r" في `__radd__` بتعني **reflected** — عكست الترتيب.
+
+```python
+class Money:
+    def __init__(self, amount):
+        self.amount = amount
+    
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            return Money(self.amount + other)
+        if isinstance(other, Money):
+            return Money(self.amount + other.amount)
+        return NotImplemented   # مش عارف — جرب التاني
+    
+    def __radd__(self, other):
+        # called when: other + self (e.g., 100 + money_obj)
+        return self.__add__(other)   # نفس المنطق
+    
+    def __repr__(self):
+        return f"Money({self.amount})"
+
+m = Money(50)
+print(m + 10)      # Money(60) — calls m.__add__(10)
+print(10 + m)      # Money(60) — int.__add__(m) returns NotImplemented
+                   #              then Python tries m.__radd__(10)
+```
+
+```python
+# بدون __radd__ — error
+class BadVector:
+    def __init__(self, x): self.x = x
+    def __add__(self, other):
+        return BadVector(self.x + other.x)
+
+class GoodVector:
+    def __init__(self, x): self.x = x
+    def __add__(self, other):
+        if isinstance(other, GoodVector):
+            return GoodVector(self.x + other.x)
+        return NotImplemented
+    def __radd__(self, other):
+        if isinstance(other, (int, float)):
+            return GoodVector(self.x + other)
+        return NotImplemented
+    def __repr__(self): return f"GoodVector({self.x})"
+
+v = GoodVector(5)
+print(v + 3)       # GoodVector(8)
+print(3 + v)       # GoodVector(8) — uses __radd__
+# print(3 + BadVector(5))   # TypeError!
+```
+
+```python
+# مثال عملي — sum() مع custom objects
+# sum() تبدأ بـ 0 (integer)، فهتعمل: 0 + obj → __radd__!
+class Celsius:
+    def __init__(self, temp): self.temp = temp
+    def __add__(self, other):
+        if isinstance(other, Celsius):
+            return Celsius(self.temp + other.temp)
+        return NotImplemented
+    def __radd__(self, other):
+        if other == 0:   # sum() يبدأ بـ 0
+            return self
+        return self.__add__(Celsius(other))
+    def __repr__(self): return f"{self.temp}°C"
+
+temps = [Celsius(20), Celsius(25), Celsius(30)]
+print(sum(temps))    # 75°C — يشتغل بسبب __radd__!
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What is `__radd__` and when does Python call it?"* — لما `a + b` يفشل (يرجع `NotImplemented`)، بايثون بتجرب `b.__radd__(a)`. ده بيسمح للـ custom class تتعامل مع `int + MyObj`. وبيخلي `sum()` يشتغل مع custom iterables.
+
+> [!tip] Checkpoint
+> - `a + b` → يجرب `a.__add__(b)` الأول
+> - لو بيرجع `NotImplemented` → يجرب `b.__radd__(a)`
+> - الـ "r" = reflected/reversed
+> - `sum()` يبدأ بـ `0 + first_item` → محتاج `__radd__` في custom classes
+> - نفس الفكرة لـ `__rsub__`، `__rmul__`، `__rtruediv__`، إلخ
+
+> [!warning] فخ شائع
+> لازم ترجع `NotImplemented` (مش ترمي `TypeError`) لما مش عارف تتعامل مع الـ operand. لو رميت `TypeError` من `__add__`، بايثون مش هتجرب `__radd__` على التاني — بتوقف فوراً.
+
+---
+
+## Q41 — `any()` and `all()` edge cases — فخ الـ empty iterables
+
+### أصل الحكاية
+
+`any()` و`all()` من أجمل الـ built-in functions في بايثون — لكن سلوكهم مع الـ empty iterable بيبهت الناس في الإنترفيو. القاعدة بتيجي من المنطق الرياضي:
+
+- `all([])` بترجع **True** — "vacuous truth" — لا يوجد عنصر يخالف الشرط
+- `any([])` بترجع **False** — لا يوجد عنصر يحقق الشرط
+
+وكمان الاتنين بيستخدموا **short-circuit evaluation** — بيوقفوا أول ما يعرفوا النتيجة.
+
+```python
+# edge case الأشهر: empty iterables
+print(all([]))     # True  — "vacuous truth"!
+print(any([]))     # False — no element is truthy
+
+# يبان غريب بس منطقياً:
+# all([]) = "كل عنصر في [] يحقق الشرط" = True (مفيش عنصر يخالف!)
+# any([]) = "في عنصر في [] يحقق الشرط" = False (مفيش عنصر خالص)
+```
+
+```python
+# short-circuit evaluation
+def check(x):
+    print(f"checking {x}")
+    return x > 0
+
+# all: stops at first False
+print(all(check(x) for x in [1, -1, 3]))
+# checking 1
+# checking -1   ← stops here (False found)
+# False
+
+# any: stops at first True
+print(any(check(x) for x in [-1, 2, 3]))
+# checking -1
+# checking 2    ← stops here (True found)
+# True
+```
+
+```python
+# practical patterns
+numbers = [2, 4, 6, 8]
+
+# check if ALL are even
+print(all(n % 2 == 0 for n in numbers))   # True
+
+# check if ANY is negative
+print(any(n < 0 for n in numbers))         # False
+
+# more readable than manual loops
+def is_valid_password(password):
+    checks = [
+        len(password) >= 8,
+        any(c.isupper() for c in password),
+        any(c.islower() for c in password),
+        any(c.isdigit() for c in password),
+    ]
+    return all(checks)
+
+print(is_valid_password("Hello123"))    # True
+print(is_valid_password("hello123"))    # False — no uppercase
+```
+
+```python
+# any/all with generators vs lists — generators are lazy!
+# با generator: short-circuits early (more efficient)
+result = any(x > 5 for x in range(10_000_000))   # stops at x=6!
+
+# with list: evaluates ALL first (wasteful)
+# result = any([x > 5 for x in range(10_000_000)])  # creates full list first
+
+# combined patterns
+data = [
+    {"name": "Ahmed", "age": 25, "active": True},
+    {"name": "Sara", "age": 17, "active": True},
+    {"name": "Omar", "age": 30, "active": False},
+]
+
+# are all active users adults?
+active_users = [u for u in data if u["active"]]
+print(all(u["age"] >= 18 for u in active_users))   # False — Sara is 17
+
+# is there any inactive user?
+print(any(not u["active"] for u in data))           # True — Omar
+```
+
+### الفايدة الانترفيوية
+
+سؤال: *"What does `all([])` return in Python? Why?"* — بترجع `True`. ده اسمه vacuous truth من المنطق الرياضي: "لا يوجد عنصر يخالف الشرط" → صح. ولازم تذكر إن `any([])` بترجع `False` لنفس السبب.
+
+> [!tip] Checkpoint
+> - `all([])` → **True** (vacuous truth — مفيش عنصر يكسر الشرط)
+> - `any([])` → **False** (مفيش عنصر يحقق الشرط)
+> - الاتنين بيستخدموا **short-circuit** — بيوقفوا بكر
+> - استخدم **generator expression** مع `any()`/`all()` مش list comprehension
+> - `all(iterable)` ≈ `reduce(and, iterable, True)`
+
+> [!danger] فخ إنترفيو
+> `all([0, 1, 2])` بترجع **False**! لأن `0` falsy. ناس كتير بتتوقع True لأن "كل العناصر موجودة". لكن `all()` بتتحقق من الـ **truthiness** مش من الوجود. وبشكل مشابه `any([0, 0, 0])` بترجع **False** رغم إن الـ list مش فارغة.
+

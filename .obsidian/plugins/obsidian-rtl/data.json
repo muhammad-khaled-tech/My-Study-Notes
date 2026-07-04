@@ -101,7 +101,8 @@
     "python/03-Lists-And-Tuples.md": "rtl",
     "python/04-Dictionaries-And-Sets.md": "rtl",
     "python/05-Functions-Deep-Dive.md": "rtl",
-    "python/Untitled.md": "rtl"
+    "python/Untitled.md": "rtl",
+    "python/python.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,

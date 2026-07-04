@@ -4,39 +4,24 @@
     "type": "split",
     "children": [
       {
-        "id": "7d432f62350acff4",
+        "id": "0b08dbc1006f0c68",
         "type": "tabs",
         "children": [
           {
-            "id": "f8ff720a4c7aaa47",
+            "id": "9e63328c1016971c",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "python/Untitled.md",
+                "file": "python/python.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled"
-            }
-          },
-          {
-            "id": "5a2aad6eb94f8713",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Untitled 6.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Untitled 6"
+              "title": "python"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -251,12 +236,13 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "5a2aad6eb94f8713",
+  "active": "9e63328c1016971c",
   "lastOpenFiles": [
+    "python/Untitled.md",
+    "Untitled 6.md",
+    "python/python.md",
     "python/python_prompt_part1_to_8.md",
     "python/Unconfirmed 122921.crdownload",
-    "Untitled 6.md",
-    "python/Untitled.md",
     "Untitled 5.md",
     "python/بايثون_من_الصفر_الجزء_التاني.md",
     "python/Unconfirmed 710516.crdownload",
@@ -287,7 +273,6 @@
     "python/ee21ca4106b8348f70525f504a370c51c22d53968933650a140d9c6f1f30633e.pdf",
     "python/Unconfirmed 103516.crdownload",
     "problem solving/HashMap_HashSet_Deep_Dive.md",
-    "problem solving/DSA_Pattern_Notes_Prompt.md",
     "problem solving/Unconfirmed 681712.crdownload",
     "Pasted image 20260604225010.png",
     "Pasted image 20260604224954.png",
