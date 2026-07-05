@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "python/بايثون_من_الصفر_الجزء_التاني.md",
+                "file": "interviews/Django & DRF من الصفر — إنترفيو الباك إند.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "بايثون_من_الصفر_الجزء_التاني"
+              "title": "Django & DRF من الصفر — إنترفيو الباك إند"
             }
           }
         ]
@@ -238,6 +238,7 @@
   },
   "active": "9e63328c1016971c",
   "lastOpenFiles": [
+    "python/بايثون_من_الصفر_الجزء_التاني.md",
     "interviews/append_q15_q20.py",
     "interviews/fix_script.py",
     "interviews/django- prompt.txt",
@@ -255,7 +256,6 @@
     "python/python_prompt_part1_to_8.md",
     "python/Unconfirmed 122921.crdownload",
     "Untitled 5.md",
-    "python/بايثون_من_الصفر_الجزء_التاني.md",
     "python/Unconfirmed 710516.crdownload",
     "python/05-Functions-Deep-Dive.md",
     "python/04-Dictionaries-And-Sets.md",
@@ -273,7 +273,6 @@
     "python/08-OOP-Advanced.md",
     "python/07-OOP-Basics.md",
     "python/Unconfirmed 937672.crdownload",
-    "python/Unconfirmed 662552.crdownload",
     "Pasted image 20260604225010.png",
     "Pasted image 20260604224954.png",
     "Pasted image 20260604224937.png",
