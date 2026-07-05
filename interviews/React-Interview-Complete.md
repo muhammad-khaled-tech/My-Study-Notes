@@ -23,7 +23,7 @@ function Welcome() {
 
 ### الفايدة الانترفيوية
 What is React and what problem does it solve?
-**الإجابة المثالية:** React is a component-based JavaScript library for building user interfaces. It solves the performance and complexity issues of direct DOM manipulation by using a Virtual DOM to efficiently update only the parts of the UI that have changed.
+**الإجابة المثالية:** ريأكت هي مكتبة جافاسكريبت مبنية على المكونات (Components) لعمل واجهات المستخدم. هي بتحل مشاكل الأداء والتعقيد اللي بتيجي من التعديل المباشر في الـ DOM عن طريق استخدام الـ Virtual DOM عشان تحدّث بس الأجزاء اللي اتغيرت في الشاشة بأكفأ طريقة.
 
 ---
 
@@ -40,7 +40,7 @@ const element = <div className="app">Hello</div>;
 
 ### الفايدة الانترفيوية
 What is the Virtual DOM and how does it differ from the Real DOM?
-**الإجابة المثالية:** The Virtual DOM is a lightweight in-memory representation of the Real DOM. Unlike the Real DOM which is slow and triggers layout recalculations upon updates, the Virtual DOM allows React to compute the minimal necessary changes in memory before applying them in batch to the Real DOM.
+**الإجابة المثالية:** الـ Virtual DOM هو مجرد تمثيل خفيف للـ Real DOM متخزن في الميموري. على عكس الـ Real DOM اللي بيبقى تقيل وأي تعديل فيه بيخلي البراوزر يعيد حسابات الشاشة كلها، الـ Virtual DOM بيسمح لريأكت تحسب أقل تغييرات مطلوبة في الميموري الأول وبعدين تطبقها مرة واحدة على الـ Real DOM.
 
 ---
 
@@ -57,7 +57,7 @@ What is the Virtual DOM and how does it differ from the Real DOM?
 
 ### الفايدة الانترفيوية
 How does React's Reconciliation and Diffing algorithm work?
-**الإجابة المثالية:** Reconciliation is the process where React compares the new Virtual DOM tree with the previous one. It uses a heuristic Diffing algorithm that replaces the entire subtree if the element types differ, or only updates the changed attributes if the element types remain the same, optimizing the update process.
+**الإجابة المثالية:** الـ Reconciliation هي العملية اللي ريأكت بتقارن فيها شجرة الـ Virtual DOM الجديدة بالقديمة. وبتستخدم خوارزمية الـ Diffing اللي بتهد الشجرة وتبنيها من جديد لو نوع العنصر اتغير، أو بتحدث الخصائص اللي اتغيرت بس لو نفس النوع، وده بيسرّع جداً عملية التحديث.
 
 ---
 
@@ -76,7 +76,7 @@ const compiled = React.createElement('h1', { className: 'title' }, 'Hello');
 
 ### الفايدة الانترفيوية
 What is JSX and how is it transformed?
-**الإجابة المثالية:** JSX is a syntax extension for JavaScript that allows us to write HTML-like markup inside JS files. Under the hood, bundlers and compilers like Babel transform JSX into `React.createElement()` calls that browsers can understand.
+**الإجابة المثالية:** الـ JSX هو طريقة بنكتب بيها كود شبه الـ HTML جوا ملفات الجافاسكريبت. ومن تحت الترابيزة، أدوات زي Babel بتحول الـ JSX ده لـ `React.createElement()` عشان البراوزر يقدر يفهمه.
 
 ---
 
@@ -97,7 +97,7 @@ function MyComponent() {
 
 ### الفايدة الانترفيوية
 What is the difference between an Element and a Component in React?
-**الإجابة المثالية:** An Element is a plain object describing what you want to see on the screen. A Component is a function or a class that accepts inputs (props) and returns a React Element tree.
+**الإجابة المثالية:** الـ Element هو مجرد Object بسيط بيوصف الشكل اللي عايزينه يظهر على الشاشة. أما الـ Component فهو دالة (Function) أو كلاس بياخد مدخلات (Props) وبيرجع شجرة من الـ React Elements.
 
 ---
 
@@ -122,7 +122,7 @@ function Counter() {
 
 ### الفايدة الانترفيوية
 What is the difference between Functional and Class Components?
-**الإجابة المثالية:** Class Components use ES6 classes and have built-in state and lifecycle methods, but they can be verbose and suffer from `this` binding issues. Functional Components are simpler functions that now support state and side-effects via Hooks, making them the modern standard.
+**الإجابة المثالية:** الـ Class Components بتستخدم الـ ES6 classes وكان فيها الـ state ودوال الـ lifecycle مدمجة، بس كودها أطول وممكن تعمل مشاكل مع الـ `this`. الـ Functional Components هي دوال أبسط وبقت تدعم الـ state والـ side-effects عن طريق الـ Hooks، وده خلاها المعيار الحديث.
 
 ---
 
@@ -149,7 +149,7 @@ function UserList({ users }) {
 
 ### الفايدة الانترفيوية
 Why are keys important in React lists, and why is using the array index a bad idea?
-**الإجابة المثالية:** Keys help React identify which items have changed, been added, or removed, making the reconciliation process efficient. Using the array index as a key is dangerous because if the list order changes, React might reuse components incorrectly, leading to UI bugs.
+**الإجابة المثالية:** الـ Keys بتساعد ريأكت تحدد أنهي عناصر اتغيرت أو اتضافت أو اتمسحت، وده بيخلي عملية الـ reconciliation سريعة. استخدام الـ index كـ key خطر لأن لو ترتيب القايمة اتغير، ريأكت ممكن يعيد استخدام الـ components بشكل غلط ويعمل مشاكل في الواجهة (UI bugs).
 
 ---
 
@@ -166,7 +166,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 ### الفايدة الانترفيوية
 Is React a library or a framework, and what is the difference?
-**الإجابة المثالية:** React is a library because it solely focuses on rendering UI components. Unlike a framework like Angular, which dictates an entire architecture, React requires developers to integrate third-party libraries for routing and state management.
+**الإجابة المثالية:** ريأكت بتعتبر Library لأنها بتركز بس على عرض الـ UI components. على عكس أي Framework زي Angular اللي بيفرض عليك هيكل كامل، ريأكت بتديك الحرية وتخليك تحتاج تستخدم مكتبات خارجية لحاجات زي الـ routing والـ state management.
 
 ---
 
@@ -188,7 +188,7 @@ function Child(props) {
 
 ### الفايدة الانترفيوية
 What are Props in React and how does data flow?
-**الإجابة المثالية:** Props are arguments passed into React components. They enable one-way data flow (top-down) from parent to child components, allowing components to be dynamic and reusable.
+**الإجابة المثالية:** الـ Props هي البيانات اللي بنمررها للـ Components. وبتسمح بمرور الداتا في اتجاه واحد (من الأب للابن)، وده بيخلي الـ Components ديناميكية وقابلة لإعادة الاستخدام.
 
 ---
 
@@ -207,7 +207,7 @@ function Child({ title }) {
 
 ### الفايدة الانترفيوية
 Why are Props considered read-only in React?
-**الإجابة المثالية:** Props are read-only to maintain the unidirectional data flow and predictability of the application. A component must never mutate its own props; instead, state updates should be managed by the parent component.
+**الإجابة المثالية:** الـ Props بتبقى read-only عشان نحافظ على سريان الداتا في اتجاه واحد ونخلي التطبيق سلوكه متوقع. الـ Component مستحيل يعدل في الـ Props بتاعته؛ بدلاً من كده، أي تعديل في الـ State المفروض يحصل من الـ parent component.
 
 ---
 
@@ -234,7 +234,7 @@ function App() {
 
 ### الفايدة الانترفيوية
 What is the `children` prop?
-**الإجابة المثالية:** The `children` prop is a special prop that allows you to pass nested elements directly inside the opening and closing tags of a component. It is highly useful for creating reusable container or wrapper components.
+**الإجابة المثالية:** الـ `children` prop هو prop مميز بيسمحلك تمرر عناصر متداخلة مباشرة بين الفتحة والقَفلة بتاعت الـ Component. وهو مفيد جداً لما تحب تعمل Components كحاوية (Wrapper) قابلة لإعادة الاستخدام.
 
 ---
 
@@ -250,7 +250,7 @@ What is the `children` prop?
 
 ### الفايدة الانترفيوية
 What is the difference between State and Props?
-**الإجابة المثالية:** Props are read-only parameters passed from a parent to a child to configure it. State is a local, mutable data structure managed entirely within the component itself, and updating it triggers a re-render.
+**الإجابة المثالية:** الـ Props هي بارامترات read-only بتتبعت من الأب للابن عشان تضبط إعداداته. أما الـ State فهي داتا لوكال جوه الـ Component نفسه وقابلة للتعديل، ولما بنحدثها بتعمل re-render للشاشة.
 
 ---
 
@@ -269,7 +269,7 @@ function App() {
 
 ### الفايدة الانترفيوية
 What is Prop Drilling and why is it a problem?
-**الإجابة المثالية:** Prop drilling refers to the process of passing data through multiple intermediate components that do not need the data, simply to reach a deeply nested child component. It makes the codebase harder to maintain.
+**الإجابة المثالية:** الـ Prop drilling هو إنك تمرر الداتا عن طريق الـ Props عبر Components كتير في النص مش محتاجاها أصلاً، لمجرد إنك عايز توصل الداتا دي لـ Component تحت خالص في الشجرة. ده بيخلي الكود صعب في قرايته وتعديله.
 
 ---
 
@@ -292,7 +292,7 @@ function SplitPane({ left, right }) {
 
 ### الفايدة الانترفيوية
 Why does React recommend Composition over Inheritance?
-**الإجابة المثالية:** React recommends composition because components are fundamentally meant to be isolated and reusable UI functions. Composition uses props and `children` to combine smaller components into larger ones without the tight coupling of class inheritance.
+**الإجابة المثالية:** ريأكت بتنصح بالـ Composition لأن الـ Components أساساً معمولة عشان تكون معزولة وقابلة لإعادة الاستخدام. الـ Composition بيستخدم الـ Props والـ `children` عشان يجمع Components صغيرة ويعمل بيها حاجة أكبر من غير التعقيد والارتباط القوي بتاع الـ class inheritance.
 
 ---
 
@@ -316,7 +316,7 @@ function ControlledInput() {
 
 ### الفايدة الانترفيوية
 What is the difference between Controlled and Uncontrolled Components?
-**الإجابة المثالية:** In a Controlled Component, form data is handled by React state, giving you real-time control over the inputs. In an Uncontrolled Component, form data is handled by the DOM itself, and you access values using refs when needed.
+**الإجابة المثالية:** في الـ Controlled Component، ريأكت هي اللي بتدير الداتا بتاعت الـ Form عن طريق الـ state، وده بيديك تحكم لحظي في الـ inputs. أما في الـ Uncontrolled Component، الـ DOM نفسه هو اللي بيحتفظ بالداتا وإنت بتجيب القيم وقت ما تعوزها باستخدام الـ refs.
 
 ---
 
@@ -337,7 +337,7 @@ function withLoading(WrappedComponent) {
 
 ### الفايدة الانترفيوية
 What is a Higher-Order Component (HOC)?
-**الإجابة المثالية:** A Higher-Order Component is a function that takes a component and returns a new enhanced component. It is an advanced pattern used for reusing component logic, such as adding authentication checks across multiple components.
+**الإجابة المثالية:** الـ Higher-Order Component هو دالة بتاخد Component وترجع Component جديد متزود عليه حاجات. ده Pattern متقدم بيستخدم عشان تعيد استخدام الـ logic بين الـ Components، زي مثلاً إنك تتأكد إن اليوزر عامل تسجيل دخول قبل ما تعرض كذا Component.
 
 ---
 
@@ -359,7 +359,7 @@ function MouseTracker({ render }) {
 
 ### الفايدة الانترفيوية
 What is the Render Props pattern?
-**الإجابة المثالية:** The Render Props pattern involves passing a function as a prop to a component, which that component uses to determine what to render. It solves the same code reusability problems as HOCs but offers a more explicit data flow.
+**الإجابة المثالية:** الـ Render Props هو Pattern بنمرر فيه دالة كـ Prop للـ Component، والـ Component بيستخدم الدالة دي عشان يقرر هيعرض إيه. هو بيحل نفس مشاكل إعادة الاستخدام بتاعت الـ HOCs بس بطريقة تدفق داتا (Data flow) أوضح بكتير.
 
 ---
 
@@ -378,7 +378,7 @@ function Counter() {
 
 ### الفايدة الانترفيوية
 What is State in React and how does it differ from Props?
-**الإجابة المثالية:** State is a built-in object that stores property values belonging to a component. While Props are passed from the outside and are read-only, State is managed internally by the component itself, and updating it triggers a UI re-render.
+**الإجابة المثالية:** الـ State هي أوبجكت مبني جوه الـ Component بيحفظ قيمه. على عكس الـ Props اللي بتيجي من بره وتعتبر read-only، الـ State بتتدار من جوه الـ Component نفسه ولما بنعدلها بتعمل re-render للـ UI.
 
 ---
 
@@ -397,7 +397,7 @@ const [name, setName] = useState('Ahmed');
 
 ### الفايدة الانترفيوية
 What is the `useState` Hook?
-**الإجابة المثالية:** The `useState` hook allows functional components to have state variables. It takes the initial state as an argument and returns an array containing the current state value and a function to update it.
+**الإجابة المثالية:** الـ `useState` hook بيسمح للـ Functional Components إن يبقى عندها State. هو بياخد القيمة المبدئية للـ State وبيرجع Array فيه القيمة الحالية للـ State ودالة (Function) عشان تحدث القيمة دي.
 
 ---
 
@@ -415,7 +415,7 @@ function increment() {
 
 ### الفايدة الانترفيوية
 Why use the functional update form in `setState` (`setCount(prev => prev + 1)`)?
-**الإجابة المثالية:** You should use the functional update form when the new state depends on the previous state. It guarantees that you are working with the most up-to-date state value, especially since React can batch state updates asynchronously.
+**الإجابة المثالية:** لازم تستخدم الـ functional update لما تكون الـ State الجديدة بتعتمد على الـ State القديمة. ده بيضمنلك إنك بتتعامل مع أحدث قيمة للـ State، خصوصاً إن ريأكت ممكن يجمع تحديثات الـ State كلها مع بعض (Batching) في الخلفية.
 
 ---
 
@@ -435,7 +435,7 @@ function BadComponent() {
 
 ### الفايدة الانترفيوية
 What are the Rules of Hooks?
-**الإجابة المثالية:** Hooks must only be called at the top level of a React functional component or custom hook. They cannot be called inside loops, conditions, or nested functions to ensure they are executed in the exact same order on every render.
+**الإجابة المثالية:** الـ Hooks لازم تتنادى دايماً في المستوى الأعلى (Top Level) بتاع الـ Functional Component أو الـ Custom Hook. مينفعش تتنادى جوه loops أو شروط أو دوال متداخلة، عشان نضمن إنهم يتنفذوا بنفس الترتيب بالظبط في كل render.
 
 ---
 
@@ -456,7 +456,7 @@ function Display() {
 
 ### الفايدة الانترفيوية
 What is `useContext` and how does it solve Prop Drilling?
-**الإجابة المثالية:** The `useContext` hook lets a component subscribe to React Context without introducing nesting. It solves Prop Drilling by allowing deep components to consume global data directly, bypassing the intermediate components that don't need it.
+**الإجابة المثالية:** الـ `useContext` hook بيخلي الـ Component يشترك في الـ Context بتاع ريأكت من غير ما يعقد الشجرة (Nesting). بيحل الـ Prop Drilling عن طريق إنه بيسمح للـ Components اللي تحت خالص تقرأ الداتا العامة مباشرة وتتجاهل الـ Components اللي في النص اللي مش محتاجاها.
 
 ---
 
@@ -478,7 +478,7 @@ const [state, dispatch] = useReducer(reducer, { count: 0 });
 
 ### الفايدة الانترفيوية
 When should you use `useReducer` instead of `useState`?
-**الإجابة المثالية:** You should use `useReducer` when you have complex state logic that involves multiple sub-values, or when the next state depends heavily on the previous one. It centralizes the state transition logic in a single reducer function.
+**الإجابة المثالية:** المفروض تستخدم `useReducer` لما يكون عندك State معقدة جواها قيم كتير بتعتمد على بعض، أو لما الـ State الجديدة تعتمد بشكل كبير على اللي قبلها. هو بيجمع كل اللوجيك بتاع تعديل الـ State في دالة واحدة (Reducer).
 
 ---
 
@@ -494,7 +494,7 @@ When should you use `useReducer` instead of `useState`?
 
 ### الفايدة الانترفيوية
 What is the difference between `useReducer` and Redux?
-**الإجابة المثالية:** Both share the same architecture of dispatching actions to a reducer. However, `useReducer` is a built-in React hook meant for complex local state within a component, while Redux is a standalone library used for managing application-wide global state.
+**الإجابة المثالية:** الاتنين بيعتمدوا على نفس البنية (actions بتتبعت لـ reducer). بس `useReducer` ده Hook مدمج جوه ريأكت مخصص للـ State اللوكال المعقدة في الـ Component، أما Redux فهي مكتبة خارجية بتستخدم عشان تدير الـ State العامة (Global) للتطبيق كله.
 
 ---
 
@@ -517,7 +517,7 @@ const data = useFetch('/api/users');
 
 ### الفايدة الانترفيوية
 What are Custom Hooks?
-**الإجابة المثالية:** Custom hooks are JavaScript functions whose names start with "use" and that may call other hooks. They allow developers to extract and share stateful logic and side effects across multiple components without duplicating code.
+**الإجابة المثالية:** الـ Custom hooks هي دوال جافاسكريبت عادية بتبدأ بكلمة "use" وتقدر تنادي Hooks تانية جواها. بتسمح للمطورين إنهم ياخدوا اللوجيك والـ side effects ويشاركوها بين كذا Component من غير ما يكرروا الكود.
 
 ---
 
@@ -536,7 +536,7 @@ useEffect(() => {
 
 ### الفايدة الانترفيوية
 How does `useRef` differ from `useState`?
-**الإجابة المثالية:** The `useRef` hook holds a mutable value in its `.current` property that persists across renders. Unlike `useState`, mutating a ref does not trigger a component re-render, making it perfect for storing mutable values that shouldn't affect the UI visually.
+**الإجابة المثالية:** الـ `useRef` بيحتفظ بقيمة قابلة للتعديل جوه خاصية `.current` وبتفضل موجودة بين الـ renders. على عكس `useState`، لما بتعدل في الـ ref مبيحصلش re-render للـ Component، وده بيخليه ممتاز لو عايز تخزن قيم مش مأثرة على الـ UI خالص.
 
 ---
 
@@ -555,7 +555,7 @@ const focusInput = () => inputRef.current.focus();
 
 ### الفايدة الانترفيوية
 What are the practical use cases for `useRef`?
-**الإجابة المثالية:** `useRef` is primarily used to directly access and manipulate DOM elements without using document.getElementById. It is also used to store mutable instance variables that persist across renders without causing unnecessary UI updates, such as timer IDs.
+**الإجابة المثالية:** الـ `useRef` بيستخدم أساساً عشان نوصل للـ DOM elements مباشرة ونتحكم فيها من غير `document.getElementById`. وكمان بيستخدم عشان نخزن متغيرات تفضل موجودة بين الـ renders من غير ما تسبب تحديث للـ UI ملوش لازمة، زي إننا نحتفظ بـ timer ID.
 
 ---
 
@@ -574,7 +574,7 @@ useEffect(() => {
 
 ### الفايدة الانترفيوية
 What are the main phases of a React component's lifecycle?
-**الإجابة المثالية:** The component lifecycle consists of three main phases: Mounting (when the component is first inserted into the DOM), Updating (when it re-renders due to prop or state changes), and Unmounting (when it is removed from the DOM).
+**الإجابة المثالية:** دورة حياة الـ Component بتتكون من 3 مراحل أساسية: Mounting (لما الـ Component يترسم لأول مرة في الـ DOM)، و Updating (لما يعيد الرسم بسبب تغيير في الـ Props أو الـ State)، و Unmounting (لما الـ Component يتشال من الـ DOM).
 
 ---
 
@@ -592,7 +592,7 @@ useEffect(() => {
 
 ### الفايدة الانترفيوية
 What is the `useEffect` hook?
-**الإجابة المثالية:** `useEffect` is a hook that lets you perform side effects in functional components. By controlling its dependency array and cleanup function, it can replicate the behavior of class lifecycle methods like `componentDidMount`, `componentDidUpdate`, and `componentWillUnmount`.
+**الإجابة المثالية:** `useEffect` ده Hook بيسمحلك تعمل تأثيرات جانبية (side effects) في الـ functional components. وعن طريق مصفوفة الاعتماديات ودالة التنضيف، يقدر يقلد بالظبط دورة حياة الـ Class زي `componentDidMount` و `componentDidUpdate` و `componentWillUnmount`.
 
 ---
 
@@ -611,7 +611,7 @@ useEffect(() => {
 
 ### الفايدة الانترفيوية
 What is the purpose of the dependency array in `useEffect`?
-**الإجابة المثالية:** The dependency array tells React when to re-run the effect. React will compare the current values in the array with their values from the previous render, and will only re-execute the effect if at least one dependency has changed.
+**الإجابة المثالية:** مصفوفة الاعتماديات بتعرف ريأكت إمتى تشغل الـ effect تاني. ريأكت بتقارن القيم الحالية في المصفوفة بالقيم اللي كانت في الـ render اللي قبله، وبتشغل الـ effect بس لو فيه قيمة واحدة على الأقل اتغيرت.
 
 ---
 
@@ -627,7 +627,7 @@ What is the purpose of the dependency array in `useEffect`?
 
 ### الفايدة الانترفيوية
 What happens if you omit the dependency array in `useEffect`?
-**الإجابة المثالية:** If you omit the dependency array completely, the effect will run after every single render of the component. Passing an empty array `[]` ensures the effect runs exactly once after the initial mount.
+**الإجابة المثالية:** لو محطيتش مصفوفة خالص، الـ effect هيتنفذ بعد كل render بيحصل للـ Component. إنما لو بعت مصفوفة فاضية `[]`، ده بيضمن إن الـ effect يتنفذ مرة واحدة بس بعد أول ما الـ Component يظهر.
 
 ---
 
@@ -647,7 +647,7 @@ useEffect(() => {
 
 ### الفايدة الانترفيوية
 What is the cleanup function in `useEffect`?
-**الإجابة المثالية:** The cleanup function is the function returned from an effect. React runs it before the component unmounts or before re-running the effect due to dependency changes, to clean up subscriptions, timers, or event listeners and prevent memory leaks.
+**الإجابة المثالية:** دالة التنضيف (cleanup function) هي الدالة اللي الـ effect بيرجعها. ريأكت بتشغل الدالة دي قبل ما الـ Component يتمسح أو قبل ما تشغل الـ effect المرة الجاية بسبب تغيير في الاعتماديات، عشان تنضف وراها زي ما تلغي timers أو event listeners وتمنع تسريب الميموري.
 
 ---
 
@@ -669,7 +669,7 @@ useEffect(() => {
 
 ### الفايدة الانترفيوية
 How do you cause and prevent an infinite loop in `useEffect`?
-**الإجابة المثالية:** An infinite loop occurs when you update a state variable inside an effect without properly configuring the dependency array. It is prevented by correctly specifying exact dependencies and ensuring object references are stable.
+**الإجابة المثالية:** الـ Infinite loop بتحصل لما تعمل update لـ state معينة جوة الـ effect من غير ما تظبط الـ dependency array صح. وعشان تمنع ده، لازم تحدد الـ dependencies بتاعتك بدقة وتتأكد إن الـ references بتاعة الـ objects ثابتة ومابتتغيرش مع كل render.
 
 ---
 
@@ -688,7 +688,7 @@ useLayoutEffect(() => {
 
 ### الفايدة الانترفيوية
 What is the difference between `useEffect` and `useLayoutEffect`?
-**الإجابة المثالية:** `useEffect` runs asynchronously after the browser has painted the screen, making it suitable for most side effects. `useLayoutEffect` runs synchronously immediately after DOM mutations but before the screen is painted, useful for measuring elements to prevent visual flickering.
+**الإجابة المثالية:** الـ `useEffect` بيشتغل بشكل asynchronous بعد ما البراوزر يرسم الشاشة، وده بيخليه مناسب لأغلب الـ side effects. لكن الـ `useLayoutEffect` بيشتغل بشكل synchronous فوراً بعد أي تعديلات في الـ DOM وقبل ما الشاشة تترسم، وده مفيد جداً لو عايز تقيس عناصر معينة عشان تمنع الـ visual flickering (الرعشة اللي بتحصل في الشاشة).
 
 ---
 
@@ -707,7 +707,7 @@ function Parent() {
 
 ### الفايدة الانترفيوية
 What causes a React component to re-render?
-**الإجابة المثالية:** A React component re-renders when its state changes, its props change, or when its parent component re-renders. A parent's re-render forces all of its descendants to re-render by default.
+**الإجابة المثالية:** الـ Component بيعمل re-render لما الـ state بتاعته تتغير، أو الـ props اللي جياله تتغير، أو لما الـ Parent component بتاعه يعمله re-render. وبشكل افتراضي، لما الـ Parent يعمل re-render، ده بيجبر كل الـ Child components التابعة ليه إنها تعمل re-render هي كمان.
 
 ---
 
@@ -725,7 +725,7 @@ const Child = React.memo(function Child(props) {
 
 ### الفايدة الانترفيوية
 What is `React.memo`?
-**الإجابة المثالية:** `React.memo` is a higher-order component that prevents a functional component from re-rendering if its props have not changed. It is a performance optimization tool for components that render frequently with the same props.
+**الإجابة المثالية:** `React.memo` هو Higher-Order Component بيمنع الـ Functional component من إنه يعمل re-render لو الـ props بتاعته ماتغيرتش. دي أداة ممتازة لتحسين الأداء (Performance optimization) للـ components اللي بتترسم كتير بنفس الـ props.
 
 ---
 
@@ -743,7 +743,7 @@ const expensiveResult = useMemo(() => {
 
 ### الفايدة الانترفيوية
 What is the `useMemo` hook used for?
-**الإجابة المثالية:** `useMemo` is used to memoize the result of an expensive calculation so it is only re-computed when its dependencies change, rather than on every single render.
+**الإجابة المثالية:** بنستخدم `useMemo` عشان نعمل memoize (كاش) لنتيجة عملية حسابية تقيلة (Expensive calculation)، بحيث إنها ماتتحسبش من تاني إلا لو الـ dependencies بتاعتها اتغيرت، بدل ما تضطر تتحسب مع كل render للـ component.
 
 ---
 
@@ -766,7 +766,7 @@ const handleClick = useCallback(() => {
 
 ### الفايدة الانترفيوية
 What is `useCallback` and how does it differ from `useMemo`?
-**الإجابة المثالية:** `useCallback` memoizes a function definition, preventing it from being recreated on every render, which is useful for passing stable callbacks to child components. `useMemo` memoizes the returned value of a function.
+**الإجابة المثالية:** الـ `useCallback` بيعمل memoize لتعريف الـ Function نفسها، وده بيمنع إنها تتكريت من جديد مع كل render، ومفيد جداً عشان نبعت stable callbacks للـ child components. أما الـ `useMemo` فبيعمل memoize للنتيجة (الـ returned value) اللي بترجعها الـ Function.
 
 ---
 
@@ -782,7 +782,7 @@ const simpleSum = useMemo(() => a + b, [a, b]); // Too simple, not worth memoizi
 
 ### الفايدة الانترفيوية
 Why shouldn't you use `useMemo` and `useCallback` everywhere?
-**الإجابة المثالية:** Memoization comes with its own performance overhead due to memory allocation and dependency comparison. Using them for trivial calculations or components can actually degrade performance rather than improve it.
+**الإجابة المثالية:** عملية الـ Memoization نفسها ليها تكلفة على الأداء (Performance overhead) بسبب استهلاك الميموري والمقارنة اللي بتحصل للـ dependencies. فاستخدامهم في حسابات أو components بسيطة ممكن يبطئ الأداء بدل ما يحسنه.
 
 ---
 
@@ -806,7 +806,7 @@ function App() {
 
 ### الفايدة الانترفيوية
 What is Code Splitting and how do `React.lazy` and `Suspense` work?
-**الإجابة المثالية:** Code Splitting breaks a large JavaScript bundle into smaller chunks. `React.lazy` allows you to load components asynchronously only when they are rendered, while `Suspense` provides a fallback UI during the loading phase, significantly speeding up initial load times.
+**الإجابة المثالية:** الـ Code Splitting بيقسم الـ JavaScript bundle الكبيرة لأجزاء (Chunks) أصغر. والـ `React.lazy` بيخليك تحمل الـ components دي بشكل asynchronous وقت ما تحتاج تعرضها بس، بينما `Suspense` بيعرض لك UI بديل (زي شاشة تحميل) أثناء فترة التحميل، وده بيسرع جداً من وقت التحميل الأولي (Initial load time).
 
 ---
 
@@ -830,7 +830,7 @@ const Row = ({ index, style }) => (
 
 ### الفايدة الانترفيوية
 What is list Virtualization (Windowing) in React?
-**الإجابة المثالية:** Virtualization is a performance optimization technique for rendering large lists. Instead of rendering all DOM nodes, it only renders the items currently visible in the user's viewport, drastically reducing memory usage and rendering time.
+**الإجابة المثالية:** الـ Virtualization هي تقنية لتحسين الأداء (Performance optimization) لما تيجي تعرض قوائم طويلة جداً. بدل ما ترسم كل الـ DOM nodes، هي بترسم بس العناصر اللي ظاهرة حالياً قدام اليوزر في الشاشة، وده بيقلل استهلاك الميموري ووقت الـ rendering بشكل ملحوظ.
 
 ---
 
@@ -857,7 +857,7 @@ function App() {
 
 ### الفايدة الانترفيوية
 What is React Router and its purpose?
-**الإجابة المثالية:** React Router is a standard library for routing in React. It enables navigation among views of various components in a Single Page Application (SPA), allowing the URL to change and keeping the UI in sync without a full page reload.
+**الإجابة المثالية:** React Router هي المكتبة الأساسية للـ routing في ريأكت. بتسمحلك تتنقل بين الـ views أو الـ components المختلفة في الـ Single Page Application (SPA)، وبتغير الـ URL وتخلي الـ UI متزامن معاه من غير ما تحتاج تعمل full page reload للصفحة.
 
 ---
 
@@ -875,7 +875,7 @@ import { Link } from 'react-router-dom';
 
 ### الفايدة الانترفيوية
 What is the difference between Client-Side and Server-Side Routing?
-**الإجابة المثالية:** Server-Side Routing fetches a completely new HTML page from the server for every URL change. Client-Side Routing uses JavaScript to intercept the URL change and dynamically swap UI components directly in the browser, eliminating full page reloads.
+**الإجابة المثالية:** في الـ Server-Side Routing، مع كل تغيير للـ URL السيرفر بيبعت صفحة HTML جديدة بالكامل. أما في الـ Client-Side Routing، الجافاسكريبت هو اللي بيتعامل مع تغيير الـ URL وبيبدل الـ UI components بشكل ديناميكي جوة البراوزر نفسه، وده بيمنع أي full page reloads.
 
 ---
 
@@ -897,7 +897,7 @@ What is the difference between Client-Side and Server-Side Routing?
 
 ### الفايدة الانترفيوية
 Why do we need State Management libraries in large React applications?
-**الإجابة المثالية:** As applications grow, sharing state across deeply nested or totally unrelated components via prop drilling becomes unmaintainable. State management libraries provide a centralized global store, allowing any component to access shared data directly.
+**الإجابة المثالية:** لما التطبيق بيكبر، مشاركة الـ state بين components متداخلة جداً (Deeply nested) أو مالهاش علاقة ببعض عن طريق الـ prop drilling بيبقى صعب جداً وصيانته مستحيلة. مكاتب الـ State management بتوفرلك مخزن مركزي (Global store)، بيسمح لأي component يوصل للداتا المشتركة دي بشكل مباشر.
 
 ---
 
@@ -917,7 +917,7 @@ const ThemeContext = createContext();
 
 ### الفايدة الانترفيوية
 When should you use the Context API instead of Redux?
-**الإجابة المثالية:** The Context API is built into React and is ideal for sharing global data that does not change frequently, such as user authentication state or UI themes. It avoids the extra boilerplate of Redux.
+**الإجابة المثالية:** الـ Context API مدمجة جوة ريأكت وممتازة عشان تشارك داتا عامة مابتتغيرش كتير، زي حالة تسجيل دخول اليوزر (Authentication) أو الـ UI themes. استخدامها بيوفر عليك الـ boilerplate (الكود المعقد والطويل) بتاع Redux.
 
 ---
 
@@ -940,7 +940,7 @@ function counterReducer(state = { value: 0 }, action) {
 
 ### الفايدة الانترفيوية
 What is Redux and what are its core concepts?
-**الإجابة المثالية:** Redux is a predictable state container. Its core concepts are the Store (holding the global state), Actions (plain objects describing what happened), and Reducers (pure functions that specify how the state changes in response to an action).
+**الإجابة المثالية:** Redux هي مكتبة لإدارة الـ state بشكل متوقع (Predictable state container). المفاهيم الأساسية بتاعتها هي الـ Store (المخزن اللي شايل الـ global state)، والـ Actions (وهي مجرد objects بتوصف إيه اللي حصل)، والـ Reducers (وهي pure functions بتحدد إزاي الـ state هتتغير بناءً على الـ action ده).
 
 ---
 
@@ -956,7 +956,7 @@ What is Redux and what are its core concepts?
 
 ### الفايدة الانترفيوية
 How does Context API compare to Redux in terms of performance with frequent updates?
-**الإجابة المثالية:** Context API triggers a re-render for all consumers whenever its value changes, making it inefficient for high-frequency state updates. Redux handles this better because components can subscribe to specific slices of the state, preventing unnecessary re-renders.
+**الإجابة المثالية:** الـ Context API بتجبر كل الـ components اللي بتستخدمها (Consumers) إنهم يعملوا re-render لما قيمتها تتغير، فده بيخليها مش كويسة لو الـ state بتتحدث بسرعة. لكن Redux بيتعامل مع ده أحسن كتير لأن الـ components تقدر تشترك (Subscribe) في أجزاء معينة بس من الـ state، وده بيمنع أي re-renders مالهاش لازمة.
 
 ---
 
@@ -975,7 +975,7 @@ if (error) return <span>Error fetching data</span>;
 
 ### الفايدة الانترفيوية
 What problem does React Query (or SWR) solve?
-**الإجابة المثالية:** React Query simplifies handling asynchronous server state. It out-of-the-box manages data fetching, caching, background synchronization, and loading/error states, effectively removing the need to store server data in global state libraries like Redux.
+**الإجابة المثالية:** React Query بتبسط التعامل مع الـ Server state اللي بتكون asynchronous. هي بتتكفل لوحدها بجلب الداتا، وعمل الكاشينج (Caching)، والمزامنة في الخلفية (Background synchronization)، وكمان بتوفرلك حالات الـ loading والـ error، وده بيغنيك تماماً عن إنك تخزن الداتا بتاعت السيرفر في global state زي Redux.
 
 ---
 
@@ -998,7 +998,7 @@ class ErrorBoundary extends React.Component {
 
 ### الفايدة الانترفيوية
 What are Error Boundaries in React?
-**الإجابة المثالية:** Error boundaries are React components that catch JavaScript errors anywhere in their child component tree, log those errors, and display a fallback UI instead of crashing the whole application tree.
+**الإجابة المثالية:** الـ Error Boundaries هي components في ريأكت بتمسك أي JavaScript errors في شجرة الـ child components التابعة ليها، وبتسجل الأخطاء دي، وبتعرض شاشة بديلة (Fallback UI) بدل ما توقع التطبيق كله وتخليه يكراش.
 
 ---
 
@@ -1019,7 +1019,7 @@ function Modal({ children }) {
 
 ### الفايدة الانترفيوية
 What are React Portals and when should you use them?
-**الإجابة المثالية:** Portals provide a first-class way to render children into a DOM node that exists outside the DOM hierarchy of the parent component. They are commonly used for Modals, Tooltips, and Dropdowns to avoid CSS constraints like `overflow: hidden` or `z-index` issues from parent containers.
+**الإجابة المثالية:** الـ Portals بتوفرلك طريقة ممتازة إنك ترسم elements في DOM node بره التسلسل الهرمي (Hierarchy) بتاع الـ Parent component. بنستخدمها غالباً مع الـ Modals، الـ Tooltips، والـ Dropdowns عشان نتجنب قيود الـ CSS زي مشكلة الـ `overflow: hidden` أو مشاكل الـ `z-index` اللي ممكن تحصل بسبب الـ Parent.
 
 ---
 
@@ -1042,7 +1042,7 @@ function Columns() {
 
 ### الفايدة الانترفيوية
 What are React Fragments?
-**الإجابة المثالية:** React Fragments (`<React.Fragment>` or `<>...</>`) let you group a list of children without adding an extra node to the DOM. This is useful for returning multiple elements while keeping the DOM clean and preserving CSS layout mechanics like Flexbox or Grid.
+**الإجابة المثالية:** الـ React Fragments (`<React.Fragment>` أو `<>...</>`) بتسمحلك تجمع مجموعة من الـ child elements مع بعض من غير ما تضيف node زيادة للـ DOM. دي حاجة ممتازة جداً لما تحب ترجع أكثر من element وتخلي الـ DOM نضيف في نفس الوقت، وده بيحافظ على ميكانيكية الـ CSS layouts زي الـ Flexbox والـ Grid إنها تشتغل صح.
 
 ---
 
@@ -1061,7 +1061,7 @@ What are React Fragments?
 
 ### الفايدة الانترفيوية
 What is the difference between Client-Side Rendering (CSR), Server-Side Rendering (SSR), and Static Site Generation (SSG)?
-**الإجابة المثالية:** In CSR, the browser downloads a minimal HTML page and uses JavaScript to render the UI. In SSR, the server generates the full HTML for every request, improving initial load and SEO. In SSG, the HTML is generated once at build time, offering the best performance for static content.
+**الإجابة المثالية:** في الـ CSR، البراوزر بينزل صفحة HTML فاضية تقريباً وبيستخدم الجافاسكريبت عشان يبني الـ UI. في الـ SSR، السيرفر هو اللي بيكريت الـ HTML بالكامل مع كل ريكويست، وده بيحسن الـ SEO ووقت التحميل الأولي. أما في الـ SSG، الـ HTML بيتكريت مرة واحدة بس وقت الـ build، وده بيدي أحسن أداء ممكن للمحتوى الثابت (Static content).
 
 ---
 
@@ -1079,7 +1079,7 @@ hydrateRoot(document.getElementById('root'), <App />);
 
 ### الفايدة الانترفيوية
 What is Hydration in React?
-**الإجابة المثالية:** Hydration is the process where React attaches event listeners and state to the static HTML markup generated by the server during Server-Side Rendering (SSR), effectively turning it into a fully interactive React application.
+**الإجابة المثالية:** الـ Hydration هي العملية اللي ريأكت من خلالها بيربط الـ event listeners والـ state بكود الـ HTML الثابت اللي السيرفر بعته خلال الـ SSR. يعني بالبلدي، هي عملية "بث الروح" في الصفحة عشان تتحول لـ application تفاعلي (Interactive) بالكامل.
 
 ---
 
@@ -1100,7 +1100,7 @@ root.render(
 
 ### الفايدة الانترفيوية
 What is React Strict Mode and why does it render components twice?
-**الإجابة المثالية:** React Strict Mode is a development-only tool that highlights potential problems in an application. It intentionally double-invokes components and effects to help developers spot impure functions, unexpected side effects, and legacy lifecycle usage.
+**الإجابة المثالية:** الـ React Strict Mode دي أداة بتشتغل في بيئة التطوير (Development) بس، ووظيفتها تنبهك لأي مشاكل محتملة في التطبيق. هي بتتعمد تشغل الـ components والـ effects مرتين ورا بعض عشان تساعد المطورين يكتشفوا أي دوال مش Pure (Impure functions)، أو أي side effects مش متوقعة، أو استخدام قديم للـ lifecycle.
 
 ---
 
@@ -1119,7 +1119,7 @@ function handleClick(e) {
 
 ### الفايدة الانترفيوية
 What are Synthetic Events in React?
-**الإجابة المثالية:** A Synthetic Event is a cross-browser wrapper around the browser's native event. React uses it to ensure that events have consistent behavior across different browsers and to optimize performance using a single event listener at the root of the document (Event Delegation).
+**الإجابة المثالية:** الـ Synthetic Event هو طبقة تغليف (Wrapper) بتشتغل على كل البراوزرات فوق الـ native events بتاعتهم. ريأكت بتستخدمه عشان تضمن إن الـ events هتتصرف بنفس الطريقة بالظبط على أي براوزر، وكمان عشان تحسن الأداء عن طريق إنها بتحط event listener واحد بس في الـ root بتاع الصفحة (وهي دي فكرة الـ Event Delegation).
 
 ---
 
@@ -1141,6 +1141,6 @@ function incrementTwice() {
 
 ### الفايدة الانترفيوية
 What happens exactly when you call `setState` in React?
-**الإجابة المثالية:** When `setState` is called, React batches the state updates and schedules a re-render. During the render phase, it creates a new Virtual DOM tree and diffs it against the old one. Finally, in the commit phase, it updates the actual DOM with only the necessary changes computed from the diffing process.
+**الإجابة المثالية:** لما بتنادي `setState`، ريأكت بتجمع تحديثات الـ state دي مع بعض (Batching) وتجدول عملية re-render. خلال الـ render phase، بتكريت شجرة Virtual DOM جديدة وتقارنها بالشجرة القديمة (العملية دي اسمها Diffing). وفي الآخر، في الـ commit phase، بتروح تحدث الـ Real DOM بالتغييرات الضرورية بس اللي طلعت من المقارنة دي.
 
 ---
