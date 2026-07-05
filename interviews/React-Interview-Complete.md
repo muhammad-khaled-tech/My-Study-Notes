@@ -362,3 +362,332 @@ What is the Render Props pattern?
 **الإجابة المثالية:** The Render Props pattern involves passing a function as a prop to a component, which that component uses to determine what to render. It solves the same code reusability problems as HOCs but offers a more explicit data flow.
 
 ---
+
+## Q18 — إيه الـ State وإزاي بيختلف عن الـ Props في التحكم فيه؟
+
+### أصل الحكاية
+الـ (State) هي ذاكرة الـ Component الخاصة بيه، وبيستخدمها عشان يحتفظ ببيانات بتتغير بمرور الوقت بناءً على تفاعل المستخدم. عكس الـ (Props) اللي بتيجي من بره، الـ State بتتدار من جوا الـ Component نفسه ولما تتغير بتعمل إعادة رسم (Re-render).
+
+```jsx
+// State is managed internally
+function Counter() {
+  const [count, setCount] = useState(0); // State
+  return <button onClick={() => setCount(count + 1)}>{count}</button>;
+}
+```
+
+### الفايدة الانترفيوية
+What is State in React and how does it differ from Props?
+**الإجابة المثالية:** State is a built-in object that stores property values belonging to a component. While Props are passed from the outside and are read-only, State is managed internally by the component itself, and updating it triggers a UI re-render.
+
+---
+
+## Q19 — إيه الـ `useState` Hook وإزاي بيشتغل؟
+
+### أصل الحكاية
+الـ `useState` هو دالة بتسمح للـ (Functional Components) إنها تحتفظ بـ State. بترجعلك Array فيه عنصرين: القيمة الحالية للـ State، ودالة عشان تحدث بيها القيمة دي.
+
+```jsx
+// useState returns the current state and a setter function
+const [name, setName] = useState('Ahmed');
+
+// Updating the state
+<button onClick={() => setName('Ali')}>Change Name</button>
+```
+
+### الفايدة الانترفيوية
+What is the `useState` Hook?
+**الإجابة المثالية:** The `useState` hook allows functional components to have state variables. It takes the initial state as an argument and returns an array containing the current state value and a function to update it.
+
+---
+
+## Q20 — ليه بنستخدم الـ Functional Update Form في `setState` بدل القيمة المباشرة أحياناً؟
+
+### أصل الحكاية
+لما تكون الـ State الجديدة بتعتمد على الـ State القديمة، يُفضل تمرر Function للـ Setter (زي `setCount(prev => prev + 1)`). لأن ريأكت ممكن يجمع كذا تحديث مع بعض (Batching)، فلو استخدمت القيمة المباشرة ممكن تعتمد على قيمة قديمة مش متحدثة.
+
+```jsx
+// Correct way to update state based on previous state
+function increment() {
+  setCount(prevCount => prevCount + 1);
+}
+```
+
+### الفايدة الانترفيوية
+Why use the functional update form in `setState` (`setCount(prev => prev + 1)`)?
+**الإجابة المثالية:** You should use the functional update form when the new state depends on the previous state. It guarantees that you are working with the most up-to-date state value, especially since React can batch state updates asynchronously.
+
+---
+
+## Q21 — إيه قواعد استخدام الـ Hooks الأساسية؟
+
+### أصل الحكاية
+الـ (Hooks) لازم تتنادى دايماً في الـ Top Level بتاع الـ Component، يعني مينفعش تحطها جوه (Loops) أو `if conditions` أو دوال متداخلة. ريأكت بتعتمد على ترتيب استدعاء الـ Hooks عشان تعرف تربط كل State بالـ Hook بتاعها.
+
+```jsx
+function BadComponent() {
+  // ERROR! Hooks cannot be inside conditions
+  if (condition) {
+    const [data, setData] = useState(null); 
+  }
+}
+```
+
+### الفايدة الانترفيوية
+What are the Rules of Hooks?
+**الإجابة المثالية:** Hooks must only be called at the top level of a React functional component or custom hook. They cannot be called inside loops, conditions, or nested functions to ensure they are executed in the exact same order on every render.
+
+---
+
+## Q22 — إيه الـ `useContext` Hook وإزاي بيحل مشكلة الـ Prop Drilling؟
+
+### أصل الحكاية
+الـ `useContext` بيسمحلك تقرأ داتا من (Context) موجود في مستوى أعلى في الشجرة، من غير ما تضطر تمرر الداتا دي عن طريق الـ Props في كل مستوى في النص. ده بيحل مشكلة الـ (Prop Drilling) للداتا العامة زي الـ Theme أو بيانات اليوزر.
+
+```jsx
+// Accessing Context directly without props
+const ThemeContext = React.createContext('light');
+
+function Display() {
+  const theme = useContext(ThemeContext);
+  return <div>Current theme: {theme}</div>;
+}
+```
+
+### الفايدة الانترفيوية
+What is `useContext` and how does it solve Prop Drilling?
+**الإجابة المثالية:** The `useContext` hook lets a component subscribe to React Context without introducing nesting. It solves Prop Drilling by allowing deep components to consume global data directly, bypassing the intermediate components that don't need it.
+
+---
+
+## Q23 — إيه الـ `useReducer` Hook وإمتى تستخدمه بدل `useState`؟
+
+### أصل الحكاية
+الـ `useReducer` هو بديل للـ `useState`، بس بيستخدم لما تكون الـ State معقدة وفيها أكتر من قيمة بيعتمدوا على بعض، أو لما يكون منطق التحديث (Logic) كبير. بتكتب دالة (Reducer) بتحدد إزاي الـ State تتغير بناءً على (Action).
+
+```jsx
+// Reducer function taking current state and action
+function reducer(state, action) {
+  if (action.type === 'increment') return { count: state.count + 1 };
+  return state;
+}
+
+const [state, dispatch] = useReducer(reducer, { count: 0 });
+// dispatch({ type: 'increment' })
+```
+
+### الفايدة الانترفيوية
+When should you use `useReducer` instead of `useState`?
+**الإجابة المثالية:** You should use `useReducer` when you have complex state logic that involves multiple sub-values, or when the next state depends heavily on the previous one. It centralizes the state transition logic in a single reducer function.
+
+---
+
+## Q24 — إيه الفرق بين `useReducer` وRedux؟
+
+### أصل الحكاية
+الاتنين بيستخدموا نفس الفكرة (Reducer و Actions)، بس `useReducer` هو Hook مدمج جوه ريأكت لإدارة (Local State) جوه Component واحد (أو عدد قليل مع Context)، أما (Redux) فهي مكتبة خارجية لإدارة الـ (Global State) للتطبيق كله.
+
+| وجه المقارنة | `useReducer` | Redux |
+|---|---|---|
+| النطاق | Local State (خاص بـ Component) | Global State (لكل التطبيق) |
+| الإعداد | جاهز ومدمج في React | محتاج تسطيب وإعدادات (Store, Middleware) |
+
+### الفايدة الانترفيوية
+What is the difference between `useReducer` and Redux?
+**الإجابة المثالية:** Both share the same architecture of dispatching actions to a reducer. However, `useReducer` is a built-in React hook meant for complex local state within a component, while Redux is a standalone library used for managing application-wide global state.
+
+---
+
+## Q25 — إيه الـ Custom Hooks وإزاي بتعمل واحد لإعادة استخدام منطق معين بين Components؟
+
+### أصل الحكاية
+الـ (Custom Hook) هو دالة جافاسكريبت عادية بتبدأ بكلمة `use`، وبتقدر تنادي جواها Hooks تانية. بنعمله عشان ناخد منطق متكرر (زي مثلاً جلب بيانات أو حالة الإنترنت) ونحطه في مكان واحد ونعيد استخدامه.
+
+```jsx
+// Custom Hook for fetching data
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  useEffect(() => { fetch(url).then(r => r.json()).then(setData); }, [url]);
+  return data;
+}
+
+// Reusing the logic
+const data = useFetch('/api/users');
+```
+
+### الفايدة الانترفيوية
+What are Custom Hooks?
+**الإجابة المثالية:** Custom hooks are JavaScript functions whose names start with "use" and that may call other hooks. They allow developers to extract and share stateful logic and side effects across multiple components without duplicating code.
+
+---
+
+## Q26 — إيه الـ `useRef` Hook وإزاي بيختلف عن الـ State في إنه مبيعملش Re-render؟
+
+### أصل الحكاية
+الـ `useRef` بيرجعلك Object فيه خاصية `current` تقدر تخزن فيها أي قيمة. الاختلاف الجوهري عن الـ State إن لما قيمة الـ `useRef` تتغير، **مابتعملش (Re-render)** للـ Component، والقيمة دي بتفضل محفوظة بين الـ Renders.
+
+```jsx
+// Changing ref value does NOT trigger re-render
+const renderCount = useRef(0);
+useEffect(() => {
+  renderCount.current += 1;
+});
+```
+
+### الفايدة الانترفيوية
+How does `useRef` differ from `useState`?
+**الإجابة المثالية:** The `useRef` hook holds a mutable value in its `.current` property that persists across renders. Unlike `useState`, mutating a ref does not trigger a component re-render, making it perfect for storing mutable values that shouldn't affect the UI visually.
+
+---
+
+## Q27 — إمتى تستخدم `useRef` عملياً؟
+
+### أصل الحكاية
+أشهر استخدامين ليه: أول حاجة إنك توصل لعنصر في الـ DOM مباشرة (زي إنك تعمل Focus على Input). وتاني حاجة إنك تخزن قيمة عايز تحتفظ بيها بين الـ Renders من غير ما تسبب إعادة رسم، زي إنك تخزن ID بتاع `setInterval`.
+
+```jsx
+// 1. Accessing DOM element directly
+const inputRef = useRef(null);
+const focusInput = () => inputRef.current.focus();
+
+<input ref={inputRef} />
+```
+
+### الفايدة الانترفيوية
+What are the practical use cases for `useRef`?
+**الإجابة المثالية:** `useRef` is primarily used to directly access and manipulate DOM elements without using document.getElementById. It is also used to store mutable instance variables that persist across renders without causing unnecessary UI updates, such as timer IDs.
+
+---
+
+## Q28 — إيه الـ Component Lifecycle الأساسي؟
+
+### أصل الحكاية
+أي Component بيمر بـ 3 مراحل أساسية: التركيب (Mounting) لما يظهر لأول مرة، التحديث (Updating) لما الـ Props أو الـ State تتغير، والإزالة (Unmounting) لما يتمسح من الشاشة.
+
+```jsx
+// Lifecycles handled by useEffect
+useEffect(() => {
+  console.log("Mounted!"); // Mounting phase
+  return () => console.log("Unmounted!"); // Unmounting phase
+}, []); 
+```
+
+### الفايدة الانترفيوية
+What are the main phases of a React component's lifecycle?
+**الإجابة المثالية:** The component lifecycle consists of three main phases: Mounting (when the component is first inserted into the DOM), Updating (when it re-renders due to prop or state changes), and Unmounting (when it is removed from the DOM).
+
+---
+
+## Q29 — إيه الـ `useEffect` Hook وإزاي بيحاكي الـ Lifecycle Methods؟
+
+### أصل الحكاية
+الـ `useEffect` بيسمح للـ Functional Components إنها تعمل تأثيرات جانبية (Side Effects) زي جلب البيانات من API أو تعديل الـ DOM. هو بيجمع مهام دوال الـ (Class Components) القديمة كلها في مكان واحد.
+
+```jsx
+// Simulating componentDidMount
+useEffect(() => {
+  fetchData();
+}, []); // Empty array ensures it runs only once
+```
+
+### الفايدة الانترفيوية
+What is the `useEffect` hook?
+**الإجابة المثالية:** `useEffect` is a hook that lets you perform side effects in functional components. By controlling its dependency array and cleanup function, it can replicate the behavior of class lifecycle methods like `componentDidMount`, `componentDidUpdate`, and `componentWillUnmount`.
+
+---
+
+## Q30 — إيه الـ Dependency Array في `useEffect` وإزاي بيتحكم في إمتى الـ Effect بيتنفذ تاني؟
+
+### أصل الحكاية
+مصفوفة الاعتماديات (Dependency Array) هي الباراميتر التاني في الـ `useEffect`. إنت بتحط فيها المتغيرات اللي الـ Effect بيعتمد عليها، وريأكت بتنفذ الـ Effect ده تاني **فقط** لو أي متغير جوا المصفوفة دي اتغير.
+
+```jsx
+const [userId, setUserId] = useState(1);
+// Runs again ONLY when userId changes
+useEffect(() => {
+  fetchUser(userId);
+}, [userId]); 
+```
+
+### الفايدة الانترفيوية
+What is the purpose of the dependency array in `useEffect`?
+**الإجابة المثالية:** The dependency array tells React when to re-run the effect. React will compare the current values in the array with their values from the previous render, and will only re-execute the effect if at least one dependency has changed.
+
+---
+
+## Q31 — إيه الفرق بين `useEffect` بـ Dependency Array فاضية `[]` وبدون Dependency Array خالص؟
+
+### أصل الحكاية
+لو حطيت مصفوفة فاضية `[]`، الـ Effect هيتنفذ مرة واحدة بس أول ما الـ Component يظهر. لو محطيتش مصفوفة خالص، الـ Effect هيتنفذ بعد **كل** تحديث (Render) يحصل للـ Component، وده ممكن يبطأ التطبيق جداً.
+
+| الـ Array | إمتى بيتنفذ؟ |
+|---|---|
+| `useEffect(fn, [])` | مرة واحدة بس في البداية (Mounting) |
+| `useEffect(fn)` | بعد كل Render (تحديث) |
+
+### الفايدة الانترفيوية
+What happens if you omit the dependency array in `useEffect`?
+**الإجابة المثالية:** If you omit the dependency array completely, the effect will run after every single render of the component. Passing an empty array `[]` ensures the effect runs exactly once after the initial mount.
+
+---
+
+## Q32 — إيه الـ Cleanup Function في `useEffect` وإمتى بتتنفذ؟
+
+### أصل الحكاية
+دالة التنضيف (Cleanup Function) هي الدالة اللي إنت بترجعها (Return) جوه الـ `useEffect`. دي بتتنفذ لما الـ Component يتمسح من الشاشة (Unmounting)، أو قبل ما الـ Effect يتنفذ المرة الجاية، عشان تنضف وراها زي إلغاء (Timer).
+
+```jsx
+useEffect(() => {
+  const timer = setInterval(() => console.log('Tick'), 1000);
+  
+  // Cleanup function to clear the interval
+  return () => clearInterval(timer);
+}, []);
+```
+
+### الفايدة الانترفيوية
+What is the cleanup function in `useEffect`?
+**الإجابة المثالية:** The cleanup function is the function returned from an effect. React runs it before the component unmounts or before re-running the effect due to dependency changes, to clean up subscriptions, timers, or event listeners and prevent memory leaks.
+
+---
+
+## Q33 — إيه أشهر فخ في `useEffect`؟ (الـ Infinite Loop)
+
+### أصل الحكاية
+أشهر فخ هو الدخول في حلقة مفرغة (Infinite Loop). ده بيحصل لما تحدث (State) جوه الـ Effect، ويكون الـ Effect مفيش فيه مصفوفة اعتماديات، أو تكون حاطط الـ State دي نفسها جوه المصفوفة. فالتحديث يعمل Render، والـ Render يشغل الـ Effect، وهكذا.
+
+```jsx
+// ❌ DANGER: Infinite Loop!
+const [count, setCount] = useState(0);
+useEffect(() => {
+  setCount(count + 1); // Triggers re-render, running effect again!
+}); 
+```
+
+> [!warning] فخ كمان
+> لو حطيت Object أو Array بتتعرّف جوه الـ Component في الـ Dependency Array، هتعمل Infinite Loop لأن عنوانها في الميموري (Reference) بيتغير كل Render.
+
+### الفايدة الانترفيوية
+How do you cause and prevent an infinite loop in `useEffect`?
+**الإجابة المثالية:** An infinite loop occurs when you update a state variable inside an effect without properly configuring the dependency array. It is prevented by correctly specifying exact dependencies and ensuring object references are stable.
+
+---
+
+## Q34 — إيه الفرق بين `useEffect` و`useLayoutEffect`؟
+
+### أصل الحكاية
+الـ `useEffect` بيشتغل في الخلفية **بعد** ما الشاشة تترسم، فمش بيعطل الرؤية. الـ `useLayoutEffect` بيشتغل **قبل** ما البراوزر يعرض التعديلات على الشاشة (Synchronous)، وبنستخدمه نادراً لو بنقيس أبعاد عنصر في الـ DOM عشان نمنع الشاشة ترمش (Flicker).
+
+```jsx
+// Block the browser from painting until this finishes
+useLayoutEffect(() => {
+  const height = ref.current.clientHeight;
+  // Make immediate DOM mutations based on height
+}, []);
+```
+
+### الفايدة الانترفيوية
+What is the difference between `useEffect` and `useLayoutEffect`?
+**الإجابة المثالية:** `useEffect` runs asynchronously after the browser has painted the screen, making it suitable for most side effects. `useLayoutEffect` runs synchronously immediately after DOM mutations but before the screen is painted, useful for measuring elements to prevent visual flickering.
+
+---
