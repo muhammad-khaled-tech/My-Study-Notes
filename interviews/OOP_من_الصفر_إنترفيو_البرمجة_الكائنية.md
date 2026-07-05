@@ -1537,5 +1537,190 @@ class Car {
 
 ---
 
+---
+
+## Q32 — إيه الفرق بين Association و Aggregation و Composition؟
+
+### أصل الحكاية
+الـ **Association** (الارتباط) هي العلاقة العامة بين كائنين، زي إن المدرس (Teacher) بيدرس للطالب (Student). الاتنين كائنات مستقلة وممكن يعيشوا من غير بعض.
+لما بنقرب العلاقة شوية، بتنقسم لنوعين من الـ "Has-A" relationship:
+- **Aggregation** (التجميع): دي علاقة "جزء من" بس ضعيفة (Weak Association). تخيل جامعة (University) ودكتور (Professor). الجامعة "عندها" دكاترة، بس لو الجامعة قفلت، الدكتور لسه عايش وممكن يروح جامعة تانية. (كلاهما له دورة حياة مستقلة).
+- **Composition** (التركيب): دي علاقة "جزء من" بس قوية جداً (Strong Association). تخيل بيت (House) وغرفة (Room). البيت "عنده" غرف، بس لو هديت البيت، الغرف كلها هتدمر معاه! الغرفة ملهاش وجود من غير البيت. (دورة حياة الجزء مرتبطة بالكل).
+
+#### مثال: Aggregation vs Composition
+```java
+// Aggregation (Weak): Professor can exist without Department
+class Department {
+    private List<Professor> professors; // Just holding a reference
+    public Department(List<Professor> profs) { this.professors = profs; }
+}
+
+// Composition (Strong): Room cannot exist without House
+class House {
+    private Room room;
+    public House() {
+        this.room = new Room(); // House creates the Room. If House dies, Room dies.
+    }
+}
+```
+
+### الفايدة الانترفيوية
+**Question:** "Differentiate between Association, Aggregation, and Composition."
+
+**الإجابة المثالية:**
+الـ **Association** هي علاقة عامة بين كائنين بيستخدموا بعض، وكل كائن ليه lifecycle مستقلة. 
+الـ **Aggregation** هي نوع متخصص من الـ Association بيمثل علاقة (Has-A) ضعيفة، بيكون فيها الـ Child مستقل عن الـ Parent وممكن يعيش بدونه (زى قسم ودكتور). 
+الـ **Composition** هي علاقة (Has-A) قوية جداً، بيكون فيها الـ Child معتمد كلياً على الـ Parent في الـ Lifecycle بتاعته، ولو الـ Parent اتدمر، الـ Child بيتدمر معاه (زي بيت وغرفة). بنحقق الـ Composition عن طريق خلق الـ Child object جوا الكلاس بتاع الـ Parent.
+
+---
+
+## Q33 — إيه الـ Destructors في C++ ومفهوم الـ Garbage Collection في Java؟
+
+### أصل الحكاية
+في C++، إنت كـ مبرمج مسؤول عن كل حاجة. زي ما خلقت Object بـ `new` (وحجزت ميموري)، لازم لما تخلص تدمره بـ `delete`. عشان كده، C++ بتوفرلك دالة اسمها **Destructor** (بتتكتب كدة `~ClassName()`). الدالة دي بتشتغل أوتوماتيك أول ما الـ Object يتدمر، ووظيفتها إنها تنضف وراه وتقفل أي ملفات أو تفضي الميموري اللي حجزها عشان نتجنب الـ Memory Leaks.
+
+في Java، المطورين قالوا "احنا مش عايزين المبرمجين يشغلوا بالهم بمسح الميموري". فعملوا الـ **Garbage Collector (GC)**. ده عامل زي عامل النضافة الأوتوماتيكي اللي بيلف في الميموري (Heap) يدور على الـ Objects اللي محدش بقى بيشاور عليها (Unreachable Objects) ويمسحها لوحده!
+عشان كده، Java معندهاش `Destructor` حقيقي زي C++. كان عندهم حاجة اسمها `finalize()` بس بقت Deprecated لأنك متعرفش امتى الـ GC هيقرر ينضف الميموري، فمتقدرش تعتمد عليها.
+
+#### مثال: الـ Destructor في C++
+```cpp
+class FileHandler {
+public:
+    FileHandler() { std::cout << "Opening file...\n"; }
+    
+    // Destructor: Cleans up automatically when object is destroyed
+    ~FileHandler() { std::cout << "Closing file and freeing memory...\n"; }
+};
+```
+
+### الفايدة الانترفيوية
+**Question:** "How does memory management differ between C++ (Destructors) and Java (Garbage Collection)?"
+
+**الإجابة المثالية:**
+في C++، الـ Memory Management بيتم بشكل يدوي (Manual). بنستخدم الـ **Destructor** كدالة بيتم استدعاؤها أوتوماتيك لما الـ object الـ scope بتاعه ينتهي أو لما نعمل `delete`، ووظيفتها الأساسية تحرير الميموري (Resource Deallocation) لمنع الـ Memory leaks.
+أما في Java، الـ Memory Management بيتم بشكل أوتوماتيكي من خلال الـ **Garbage Collector**. الـ GC بيشتغل في الـ background وبيراقب الـ heap عشان يمسح أي Unreachable objects، وده بيشيل عبء تحرير الميموري من المبرمج. وبالتالي، Java مفيهاش destructors صريحة لأننا منقدرش نضمن متى هيتم تدمير الـ object.
+
+---
+
+## Q34 — إيه الفرق بين Shallow Copy و Deep Copy؟
+
+### أصل الحكاية
+تخيل معاك ورقة (Object) فيها بياناتك، وفيها "لينك" (Pointer/Reference) لمستند تاني على درايف فيه صورتك.
+- **Shallow Copy (النسخ السطحي)**: إنت بتصور الورقة دي زي ما هي في مكنة التصوير وتديها لزميلك. زميلك بقى معاه نسخة من بياناتك، بس **نفس اللينك** بتاع صورتك! لو زميلك دخل على اللينك ومسح الصورة، الصورة هتتمسح من عندك إنت كمان لأنكم بتشاوروا على نفس المكان في الميموري!
+- **Deep Copy (النسخ العميق)**: إنت مش بتصور الورقة بس، إنت بتطبع الصورة بتاعتك من الدرايف وتحطها في فايل جديد، وتدي زميلك ورقة جديدة بلينك جديد بيشاور على "نسخة منفصلة" من الصورة. كده لو زميلك حرق صورته، صورتك إنت في أمان!
+
+في البرمجة، الـ Shallow copy بينسخ الـ primitive values، بس بينسخ الـ memory addresses للـ reference types. أما الـ Deep copy فبيخلق objects جديدة تماماً في الميموري وينسخ المحتوى جواها.
+
+#### مثال: Shallow vs Deep (Concept)
+```java
+class Address { String city; }
+class Person {
+    String name;
+    Address address;
+    
+    // Shallow Copy Constructor
+    public Person(Person other) {
+        this.name = other.name;
+        this.address = other.address; // Both persons share the SAME address object!
+    }
+    
+    // Deep Copy Constructor
+    public Person copyDeep(Person other) {
+        this.name = other.name;
+        Address newAddress = new Address();
+        newAddress.city = other.address.city;
+        this.address = newAddress; // Totally separate address object!
+    }
+}
+```
+
+### الفايدة الانترفيوية
+**Question:** "Explain the difference between Shallow Copy and Deep Copy."
+
+**الإجابة المثالية:**
+الـ **Shallow Copy** بيعمل نسخة جديدة من الـ object، بس بينسخ الـ reference memory addresses للـ internal objects (الـ non-primitive fields). ده معناه إن الـ original والـ copied object بيشاوروا على نفس الـ instances في الميموري، وأي تعديل في أحدهم هيأثر على التاني.
+الـ **Deep Copy** بيعمل نسخة جديدة تماماً، وبيعمل recursively نسخ لكل الـ internal objects. ده بيضمن إن الـ copied object بيكون منفصل تماماً (Independent) عن الـ original object، وأي تعديلات بتحصل في نسخة مش بتأثر على التانية.
+
+---
+
+## Q35 — إيه الفرق بين final في Java و const في C++؟
+
+### أصل الحكاية
+الكلمتين دول بيستخدموا عشان يمنعوا التغيير، بس ليهم استخدامات وتأثيرات مختلفة.
+- في **C++**، بنستخدم **`const`** (ثابت). بنقدر نستخدمها مع المتغيرات عشان نمنع تغيير قيمتها، وممكن نستخدمها مع الـ Pointers (بأشكال معقدة زي pointer to const أو const pointer)، والأهم إننا ممكن نكتبها في آخر تعريف الدالة (Methods) عشان نضمن إن الدالة دي "مستحيل" تغير أي حاجة في الـ State بتاعة الكلاس.
+- في **Java**، الكلمة السحرية هي **`final`** (نهائي). بتشتغل على 3 مستويات:
+  1. مع **المتغيرات (Variables)**: بتبقى ثابتة ومينفعش تتغير بعد أول مرة (زي `const` في المتغيرات).
+  2. مع **الدوال (Methods)**: معناها "دي النسخة النهائية من الدالة، ممنوع أي كلاس يورثني يعملها Override".
+  3. مع **الكلاسات (Classes)**: معناها "الكلاس ده مقفول، ممنوع أي كلاس تاني يورث منه (extends)!" زي كلاس `String` في Java.
+
+#### مثال: استخدام `final` في Java
+```java
+// Final class: Cannot be inherited!
+final class SecureSystem {
+    // Final variable: Constant value
+    final int MAX_USERS = 100; 
+    
+    // Final method: Cannot be overridden if the class was inheritable
+    final void authenticate() { System.out.println("Secure Auth"); }
+}
+```
+
+### الفايدة الانترفيوية
+**Question:** "Compare the usage of 'final' in Java with 'const' in C++."
+
+**الإجابة المثالية:**
+في C++، الـ `const` بتُستخدم أساساً لتعريف الـ Constants، وتحديد الـ pointers، وتأمين الـ class methods بحيث نضمن إن الـ method دي مش هتعدل في الـ internal state بتاعة الـ object.
+أما في Java، الـ `final` ليها استخدامات أوسع بتأثر على الـ Inheritance والـ Polymorphism:
+- **`final` variable**: بيمنع الـ reassignment بعد الـ initialization (بيعمل Constant).
+- **`final` method**: بيمنع الـ subclasses إنهم يعملوا Overriding للـ method دي.
+- **`final` class**: بيمنع الـ Inheritance تماماً، الكلاس ده ملوش subclasses.
+
+---
+
+## Q36 — إيه الفرق بين الـ Static Binding والـ Dynamic Binding؟
+
+### أصل الحكاية
+الـ Binding هو عملية ربط "استدعاء الدالة" بـ "الكود الفعلي" اللي هيتنفذ.
+- **Static Binding (الربط المبكر - Early Binding)**: ده بيحصل وقت الـ **Compile Time**. الكمبايلر وهو بيقرأ الكود بيكون متأكد 100% الدالة دي تبع مين. بيحصل ده مع الـ Method Overloading (لأن الدوال أساميها واحدة بس الـ parameters مختلفة، فالكمبايلر بيعرف يفرق بينهم). وفي Java، الدوال اللي من نوع `private`، `final`، أو `static` بيحصلها Static Binding لأن مستحيل يحصلها Override، فالكمبايلر بيعرف مكانها فوراً.
+- **Dynamic Binding (الربط المتأخر - Late Binding)**: ده بيحصل وقت الـ **Runtime** (التشغيل). ده بيحصل لما بنعمل Method Overriding. الكمبايلر بيبقى شايف ريفرنس من نوع الأب، بس ميعرفش وقت التشغيل الريفرنس ده هيشاور على أي كائن من الأبناء! عشان كده بيسيب القرار لغاية وقت التشغيل، عشان يشوف الـ Actual Object وينفذ الدالة بتاعته. (ده أساس الـ Polymorphism اللي اتكلمنا عنه في Q27).
+
+#### مثال: Static vs Dynamic Binding
+```java
+class Animal {
+    // Static Binding (Method Overloading)
+    void eat() { System.out.println("Eating..."); }
+    void eat(String food) { System.out.println("Eating " + food); }
+    
+    // Dynamic Binding candidate
+    void makeSound() { System.out.println("Animal sound"); }
+}
+
+class Dog extends Animal {
+    @Override
+    void makeSound() { System.out.println("Woof"); }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal a = new Dog();
+        
+        // Static Binding: Compiler knows exactly which 'eat' to call based on parameters.
+        a.eat("Meat"); 
+        
+        // Dynamic Binding: Compiler doesn't know. At runtime, JVM sees 'Dog' and calls Dog's method.
+        a.makeSound(); 
+    }
+}
+```
+
+### الفايدة الانترفيوية
+**Question:** "What is the difference between Static Binding and Dynamic Binding in object-oriented programming?"
+
+**الإجابة المثالية:**
+الـ **Static Binding** (أو Early Binding) بيحصل خلال الـ Compile-Time، والـ compiler بيقدر يربط الـ method call بالـ actual code بناءً على الـ Reference Type. بيُستخدم مع الـ Method Overloading، ومع الـ methods اللي مش مسموح بوراثتها زي الـ `private`, `final`, والـ `static` methods. ده بيكون أسرع في الأداء.
+الـ **Dynamic Binding** (أو Late Binding) بيحصل خلال الـ Runtime، وبيعتمد على الـ Actual Object Type الموجود في الـ memory، مش الـ Reference Type. ده بيُستخدم لتحقيق الـ Method Overriding (الـ Runtime Polymorphism)، وبيضمن إن الـ overridden method الصحيحة الخاصة بالـ subclass هي اللي هيتم استدعاؤها.
+
+---
+
 > [!info] 🎯 نهاية الملف
 > مبروك! إنت كده غطيت كل أساسيات الـ OOP والـ C++ vs Java Mechanics اللي ممكن تتسأل فيها في أي Technical Interview للـ Backend أو الـ Software Engineering.
