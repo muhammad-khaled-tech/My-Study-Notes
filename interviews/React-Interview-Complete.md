@@ -691,3 +691,456 @@ What is the difference between `useEffect` and `useLayoutEffect`?
 **الإجابة المثالية:** `useEffect` runs asynchronously after the browser has painted the screen, making it suitable for most side effects. `useLayoutEffect` runs synchronously immediately after DOM mutations but before the screen is painted, useful for measuring elements to prevent visual flickering.
 
 ---
+
+## Q35 — ليه Component بيعمل Re-render أصلاً؟
+
+### أصل الحكاية
+الـ Component بيعيد رسم نفسه (Re-render) في 3 حالات أساسية: أولاً لو الـ (State) بتاعته اتغيرت، ثانياً لو الـ (Props) اللي جياله من الأب اتغيرت، وثالثاً والأهم: لو الـ Parent Component بتاعه حصله Re-render (وقتها كل أبنائه هيحصلهم Re-render حتى لو مفيش حاجة اتغيرت فيهم).
+
+```jsx
+// A child component will re-render if the parent does, unless optimized
+function Parent() {
+  const [count, setCount] = useState(0);
+  return <Child />; // Child re-renders every time count changes!
+}
+```
+
+### الفايدة الانترفيوية
+What causes a React component to re-render?
+**الإجابة المثالية:** A React component re-renders when its state changes, its props change, or when its parent component re-renders. A parent's re-render forces all of its descendants to re-render by default.
+
+---
+
+## Q36 — إيه الـ `React.memo` وإزاي بيمنع Re-render غير ضروري؟
+
+### أصل الحكاية
+الـ `React.memo` بيغلف الـ Component ويقول لريأكت: "لو الـ (Props) ماتغيرتش، ماتعملش (Re-render) للـ Component ده حتى لو الأب حصله Re-render". ده بيحسن الأداء جداً في الـ Components اللي بتترسم كتير ومحتواها ثابت.
+
+```jsx
+// Child only re-renders if its props change
+const Child = React.memo(function Child(props) {
+  return <div>{props.text}</div>;
+});
+```
+
+### الفايدة الانترفيوية
+What is `React.memo`?
+**الإجابة المثالية:** `React.memo` is a higher-order component that prevents a functional component from re-rendering if its props have not changed. It is a performance optimization tool for components that render frequently with the same props.
+
+---
+
+## Q37 — إيه الـ `useMemo` Hook وإمتى تستخدمه؟
+
+### أصل الحكاية
+الـ `useMemo` بيحفظ (Caches) نتيجة عملية حسابية تقيلة، ومابيحسبهاش تاني إلا لو المتغيرات اللي بتعتمد عليها اتغيرت. ده بيوفر وقت الـ (CPU) بدل ما الحسبة الثقيلة تتنفذ من الصفر في كل Render.
+
+```jsx
+// Only re-calculate expensive result if 'data' changes
+const expensiveResult = useMemo(() => {
+  return performHeavyCalculation(data);
+}, [data]);
+```
+
+### الفايدة الانترفيوية
+What is the `useMemo` hook used for?
+**الإجابة المثالية:** `useMemo` is used to memoize the result of an expensive calculation so it is only re-computed when its dependencies change, rather than on every single render.
+
+---
+
+## Q38 — إيه الـ `useCallback` Hook وإزاي بيختلف عن `useMemo`؟ (جدول مقارنة)
+
+### أصل الحكاية
+الـ `useCallback` بيحفظ الـ (Function) نفسها مش نتيجتها، عشان ميخلقش دالة جديدة في الميموري كل Render. ده بيفيد جداً لو بتبعت الدالة دي كـ Prop لـ Component معموله `React.memo`، عشان عنوان الدالة (Reference) مايتغيرش ويكسر الـ Memoization.
+
+| وجه المقارنة | `useMemo` | `useCallback` |
+|---|---|---|
+| بيرجع إيه؟ | بيرجع **قيمة** (نتيجة حسابية) | بيرجع **الدالة** (Function) نفسها |
+| إمتى أستخدمه؟ | للحسابات التقيلة المعقدة | لتمرير دوال للـ Child Components بثبات |
+
+```jsx
+// Preserves the function reference across re-renders
+const handleClick = useCallback(() => {
+  doSomething(id);
+}, [id]);
+```
+
+### الفايدة الانترفيوية
+What is `useCallback` and how does it differ from `useMemo`?
+**الإجابة المثالية:** `useCallback` memoizes a function definition, preventing it from being recreated on every render, which is useful for passing stable callbacks to child components. `useMemo` memoizes the returned value of a function.
+
+---
+
+## Q39 — إيه فخ استخدام `useMemo`/`useCallback` في كل حتة بدون داعي؟
+
+### أصل الحكاية
+الـ (Memoization) نفسها ليها تكلفة في الميموري وسرعة التنفيذ لأنها بتحتاج تقارن المتغيرات (Dependencies) كل مرة. لو استخدمتهم مع دوال أو حسابات بسيطة جداً، التكلفة دي هتبقى أسوأ من إنك تسيب الـ Component يعمل Re-render طبيعي. 
+
+```jsx
+// ❌ DANGER: Overusing memoization for simple things degrades performance
+const simpleSum = useMemo(() => a + b, [a, b]); // Too simple, not worth memoizing!
+```
+
+### الفايدة الانترفيوية
+Why shouldn't you use `useMemo` and `useCallback` everywhere?
+**الإجابة المثالية:** Memoization comes with its own performance overhead due to memory allocation and dependency comparison. Using them for trivial calculations or components can actually degrade performance rather than improve it.
+
+---
+
+## Q40 — إيه الـ Code Splitting وإزاي `React.lazy` و`Suspense` بيقللوا حجم الـ Bundle الأولي؟
+
+### أصل الحكاية
+التطبيقات الكبيرة بيبقى حجم كود الجافاسكريبت بتاعها ضخم جداً لو اتحمل مرة واحدة (Bundle). الـ (Code Splitting) بيقسم الكود ده لأجزاء، و`React.lazy` بيخليك تحمل الـ Components بس وقت ما اليوزر يحتاجها (زي لما يفتح صفحة معينة)، و`Suspense` بيعرض شاشة تحميل (Loader) لحد ما الكود يوصل.
+
+```jsx
+// Dynamically import the component only when needed
+const HeavyComponent = React.lazy(() => import('./HeavyComponent'));
+
+function App() {
+  return (
+    <React.Suspense fallback={<LoadingSpinner />}>
+      <HeavyComponent />
+    </React.Suspense>
+  );
+}
+```
+
+### الفايدة الانترفيوية
+What is Code Splitting and how do `React.lazy` and `Suspense` work?
+**الإجابة المثالية:** Code Splitting breaks a large JavaScript bundle into smaller chunks. `React.lazy` allows you to load components asynchronously only when they are rendered, while `Suspense` provides a fallback UI during the loading phase, significantly speeding up initial load times.
+
+---
+
+## Q41 — إيه الـ Virtualization وإمتى تحتاجها مع الـ Lists الطويلة جداً؟
+
+### أصل الحكاية
+لو عندك قايمة فيها 10 آلاف عنصر، رسمهم كلهم في الـ DOM هيعلق البراوزر. الـ (Virtualization) أو (Windowing) باستخدام مكتبة زي `react-window` بترسم فقط العناصر اللي ظاهرة حالياً في شاشة اليوزر، ولما تعمل Scroll تبدلهم، وده بيخلي الأداء طلقة.
+
+```jsx
+// Using a library like react-window to render only visible items
+import { FixedSizeList as List } from 'react-window';
+
+const Row = ({ index, style }) => (
+  <div style={style}>Row {index}</div>
+);
+
+<List height={150} itemCount={1000} itemSize={35} width={300}>
+  {Row}
+</List>
+```
+
+### الفايدة الانترفيوية
+What is list Virtualization (Windowing) in React?
+**الإجابة المثالية:** Virtualization is a performance optimization technique for rendering large lists. Instead of rendering all DOM nodes, it only renders the items currently visible in the user's viewport, drastically reducing memory usage and rendering time.
+
+---
+
+## Q42 — إيه الـ React Router وإيه المشكلة اللي بيحلها في الـ Single Page Applications؟
+
+### أصل الحكاية
+تطبيقات (SPA) بتبقى صفحة (HTML) واحدة بس. الـ React Router بيخلينا نقدر نتنقل بين "صفحات" أو شاشات مختلفة جوه التطبيق بتاعنا، وبيلعب في مسار اللينك (URL) من غير ما يعمل Refresh كامل للصفحة، فبيخلي التجربة أسرع كتير.
+
+```jsx
+// Using React Router to navigate without page reloads
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
+### الفايدة الانترفيوية
+What is React Router and its purpose?
+**الإجابة المثالية:** React Router is a standard library for routing in React. It enables navigation among views of various components in a Single Page Application (SPA), allowing the URL to change and keeping the UI in sync without a full page reload.
+
+---
+
+## Q43 — إيه الفرق بين الـ Client-Side Routing والـ Server-Side Routing؟
+
+### أصل الحكاية
+في الـ (Server-Side)، كل ما تدوس على لينك، البراوزر بيبعت طلب للسيرفر ويرجع بصفحة HTML جديدة بالكامل. أما في الـ (Client-Side) زي ريأكت، إنت بتحمل التطبيق مرة واحدة، ولما تدوس على لينك، الجافاسكريبت هو اللي بيبدل الـ Components على الشاشة من غير ما يكلم السيرفر لطلب صفحة جديدة.
+
+```jsx
+// Client-side navigation intercepting standard link clicks
+import { Link } from 'react-router-dom';
+// Using <Link> instead of <a> prevents the browser default reload
+<Link to="/about">About Us</Link>
+```
+
+### الفايدة الانترفيوية
+What is the difference between Client-Side and Server-Side Routing?
+**الإجابة المثالية:** Server-Side Routing fetches a completely new HTML page from the server for every URL change. Client-Side Routing uses JavaScript to intercept the URL change and dynamically swap UI components directly in the browser, eliminating full page reloads.
+
+---
+
+## Q44 — إيه مشكلة الـ "Prop Drilling على مستوى التطبيق كله" اللي بتخلينا نحتاج State Management Library؟
+
+### أصل الحكاية
+لما التطبيق بيكبر، بتلاقي بيانات زي (بيانات اليوزر، الثيم، سلة المشتريات) محتاجينها في Components كتير بعيدة جداً عن بعض في الشجرة. لو فضلت تنقلها كـ Props، الكود هيبقى فوضى وصعب إدارته، وهنا بنحتاج مكان مركزي (Global Store) نخزن فيه الداتا دي.
+
+```jsx
+// Painful Prop Drilling for global state
+<App user={user}>
+  <Header user={user}>
+    <Nav user={user}>
+      <UserProfile user={user} /> // Finally using it!
+    </Nav>
+  </Header>
+</App>
+```
+
+### الفايدة الانترفيوية
+Why do we need State Management libraries in large React applications?
+**الإجابة المثالية:** As applications grow, sharing state across deeply nested or totally unrelated components via prop drilling becomes unmaintainable. State management libraries provide a centralized global store, allowing any component to access shared data directly.
+
+---
+
+## Q45 — إيه الـ Context API وإمتى بتبقى كفاية بدل مكتبة خارجية زي Redux؟
+
+### أصل الحكاية
+الـ (Context API) هي أداة مدمجة جوا ريأكت بتسمحلك تشارك داتا بين الـ Components بدون تمرير Props. بتبقى كفاية جداً وممتازة لو الداتا بتاعتك **مش بتتغير كتير** (زي الـ Theme، أو بيانات اليوزر بعد تسجيل الدخول).
+
+```jsx
+// Creating and providing Context
+const ThemeContext = createContext();
+
+<ThemeContext.Provider value="dark">
+  <MyApp />
+</ThemeContext.Provider>
+```
+
+### الفايدة الانترفيوية
+When should you use the Context API instead of Redux?
+**الإجابة المثالية:** The Context API is built into React and is ideal for sharing global data that does not change frequently, such as user authentication state or UI themes. It avoids the extra boilerplate of Redux.
+
+---
+
+## Q46 — إيه الـ Redux بشكل عام؟
+
+### أصل الحكاية
+الـ Redux هي مكتبة لإدارة الـ (Global State) بتعتمد على 3 حاجات: الـ (Store) هو المخزن الكبير، والـ (Action) هو طلب التعديل اللي بنبعته، والـ (Reducer) هو الموظف اللي بياخد الطلب ويحدث الـ Store. ده بيخلي تتبع الداتا دقيق جداً.
+
+```javascript
+// A simple Redux reducer logic
+function counterReducer(state = { value: 0 }, action) {
+  switch (action.type) {
+    case 'counter/incremented':
+      return { value: state.value + 1 };
+    default:
+      return state;
+  }
+}
+```
+
+### الفايدة الانترفيوية
+What is Redux and what are its core concepts?
+**الإجابة المثالية:** Redux is a predictable state container. Its core concepts are the Store (holding the global state), Actions (plain objects describing what happened), and Reducers (pure functions that specify how the state changes in response to an action).
+
+---
+
+## Q47 — إيه الفرق بين الـ Context API والـ Redux من ناحية الأداء مع تحديثات متكررة؟
+
+### أصل الحكاية
+الـ (Context API) بيعمل Re-render لكل الـ Components اللي بتستخدمه لو قيمته اتغيرت، فلو الداتا بتتغير بسرعة، هيعمل بطء. لكن (Redux) أذكى، بيسمح للـ Component يشترك في **جزء معين بس** من الـ State، فمش بيعمل Re-render إلا لو الجزء ده اتغير.
+
+| وجه المقارنة | Context API | Redux |
+|---|---|---|
+| تحديثات سريعة ومعقدة | ضعيف الأداء (بيعمل Re-render كتير) | ممتاز (بيعمل Re-render للمشتركين في الجزء المتغير بس) |
+| الإعداد | سهل جداً | معقد ومحتاج كود كتير (Boilerplate) |
+
+### الفايدة الانترفيوية
+How does Context API compare to Redux in terms of performance with frequent updates?
+**الإجابة المثالية:** Context API triggers a re-render for all consumers whenever its value changes, making it inefficient for high-frequency state updates. Redux handles this better because components can subscribe to specific slices of the state, preventing unnecessary re-renders.
+
+---
+
+## Q48 — إيه الـ React Query (أو SWR) وإيه المشكلة اللي بتحلها في التعامل مع الـ Server State تحديداً؟
+
+### أصل الحكاية
+زمان كنا بنستخدم Redux عشان نخزن الداتا اللي جاية من الـ API (الـ Server State). بس ده كان معقد جداً. الـ (React Query) جت حلت المشكلة دي بإنها بتتكفل بجلب الداتا، وتحفظها (Caching)، وتعيد جلبها، وتديلك حالات الـ (Loading) جاهزة من غير ما تكتب كود كتير.
+
+```jsx
+// React Query handles fetching, caching, loading, and error states elegantly
+const { data, isLoading, error } = useQuery('users', fetchUsers);
+
+if (isLoading) return <span>Loading...</span>;
+if (error) return <span>Error fetching data</span>;
+```
+
+### الفايدة الانترفيوية
+What problem does React Query (or SWR) solve?
+**الإجابة المثالية:** React Query simplifies handling asynchronous server state. It out-of-the-box manages data fetching, caching, background synchronization, and loading/error states, effectively removing the need to store server data in global state libraries like Redux.
+
+---
+
+## Q49 — إيه الـ Error Boundaries وإزاي بتمسك الأخطاء في شجرة الـ Components من غير ما التطبيق كله يقفل؟
+
+### أصل الحكاية
+لو حصل (Error) في الـ (Render) بتاع Component معين، التطبيق كله بيكراش والشاشة بتبقى بيضا. الـ (Error Boundaries) هي (Class Components) مخصصة بتمسك الأخطاء دي، وتمنع التطبيق من إنه يقفل، وتعرض شاشة بديلة (Fallback UI) بدل الـ Component اللي باظ.
+
+```jsx
+// Error Boundary requires Class Components (using componentDidCatch or getDerivedStateFromError)
+class ErrorBoundary extends React.Component {
+  state = { hasError: false };
+  static getDerivedStateFromError(error) { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) return <h1>Something went wrong.</h1>;
+    return this.props.children; 
+  }
+}
+```
+
+### الفايدة الانترفيوية
+What are Error Boundaries in React?
+**الإجابة المثالية:** Error boundaries are React components that catch JavaScript errors anywhere in their child component tree, log those errors, and display a fallback UI instead of crashing the whole application tree.
+
+---
+
+## Q50 — إيه الـ Portals في React وإمتى تستخدمها؟
+
+### أصل الحكاية
+الـ (Portals) بتسمحلك ترسم Component في مكان مختلف تماماً في الـ (DOM Tree) بره الـ (Parent) المباشر بتاعه. ده مفيد جداً لما تحب تعمل (Modal) أو (Tooltip) وماتعوزش الـ CSS بتاع الـ Parent (زي الـ `overflow: hidden`) يأثر عليه أو يخفيه.
+
+```jsx
+// Renders the Modal component inside a specific DOM node outside the 'root'
+function Modal({ children }) {
+  return ReactDOM.createPortal(
+    <div className="modal">{children}</div>,
+    document.getElementById('modal-root')
+  );
+}
+```
+
+### الفايدة الانترفيوية
+What are React Portals and when should you use them?
+**الإجابة المثالية:** Portals provide a first-class way to render children into a DOM node that exists outside the DOM hierarchy of the parent component. They are commonly used for Modals, Tooltips, and Dropdowns to avoid CSS constraints like `overflow: hidden` or `z-index` issues from parent containers.
+
+---
+
+## Q51 — إيه الـ Fragments (`<>...</>`) وليه بنستخدمها بدل ما نلف الـ JSX بـ `div` زيادة؟
+
+### أصل الحكاية
+في ريأكت لازم كل Component يرجع عنصر واحد بس (Parent Element). زمان كنا بنضطر نلف الكود كله بـ `<div>` زيادة، وده كان بيبوظ الـ (HTML Semantic) ويزحم الـ DOM. الـ (Fragments) بتحل ده بإنها تلف العناصر من غير ما تترسم في الـ DOM النهائي.
+
+```jsx
+// Using a Fragment to group multiple elements without adding an extra node to the DOM
+function Columns() {
+  return (
+    <>
+      <td>Hello</td>
+      <td>World</td>
+    </>
+  );
+}
+```
+
+### الفايدة الانترفيوية
+What are React Fragments?
+**الإجابة المثالية:** React Fragments (`<React.Fragment>` or `<>...</>`) let you group a list of children without adding an extra node to the DOM. This is useful for returning multiple elements while keeping the DOM clean and preserving CSS layout mechanics like Flexbox or Grid.
+
+---
+
+## Q52 — إيه الفرق بين الـ SSR والـ CSR والـ SSG؟
+
+### أصل الحكاية
+- الـ **CSR (Client-Side Rendering):** ريأكت بتبعت صفحة فاضية وجافاسكريبت، والبراوزر هو اللي بيبني الـ UI (أداء بطيء في الأول، ومضر لـ SEO).
+- الـ **SSR (Server-Side Rendering):** السيرفر بيبني الـ UI ويبعت صفحة HTML جاهزة مع كل طلب (ممتاز لـ SEO وأول تحميل سريع، بس السيرفر بيتعب).
+- الـ **SSG (Static Site Generation):** الـ HTML بيتبني مرة واحدة وقت الـ Build وبيتقدم لكل اليوزرز (أسرع حاجة، بس للصفحات اللي مابتتغيرش كتير).
+
+| التقنية | متى يتم بناء الـ HTML؟ | مميزات |
+|---|---|---|
+| CSR | في متصفح اليوزر | تفاعل أسرع بعد التحميل |
+| SSR | على السيرفر لكل طلب | SEO ممتاز، أول ظهور أسرع |
+| SSG | على السيرفر وقت الـ Build | أداء صاروخي، مثالي للمدونات |
+
+### الفايدة الانترفيوية
+What is the difference between Client-Side Rendering (CSR), Server-Side Rendering (SSR), and Static Site Generation (SSG)?
+**الإجابة المثالية:** In CSR, the browser downloads a minimal HTML page and uses JavaScript to render the UI. In SSR, the server generates the full HTML for every request, improving initial load and SEO. In SSG, the HTML is generated once at build time, offering the best performance for static content.
+
+---
+
+## Q53 — إيه الـ Hydration في سياق الـ SSR؟
+
+### أصل الحكاية
+لما بتستخدم SSR، السيرفر بيبعت صفحة (HTML) حية شكلاً بس ميتة فعلياً (مفيش زراير بتشتغل). البراوزر بيحمل الـ (JavaScript) بعدين ويربطه بالـ HTML اللي موجود عشان يخليه يتفاعل مع اليوزر. عملية الربط دي وبث الروح في الصفحة اسمها (Hydration).
+
+```jsx
+// In SSR (like Next.js), ReactDOM.hydrate is used instead of ReactDOM.render
+// It attaches event listeners to the existing server-rendered HTML markup.
+import { hydrateRoot } from 'react-dom/client';
+hydrateRoot(document.getElementById('root'), <App />);
+```
+
+### الفايدة الانترفيوية
+What is Hydration in React?
+**الإجابة المثالية:** Hydration is the process where React attaches event listeners and state to the static HTML markup generated by the server during Server-Side Rendering (SSR), effectively turning it into a fully interactive React application.
+
+---
+
+## Q54 — إيه الـ Strict Mode في React وليه بيعمل Renders مرتين في الـ Development؟
+
+### أصل الحكاية
+الـ (Strict Mode) هو أداة ريأكت بتشغلها وقت التطوير (Development) بس عشان تكتشف المشاكل في الكود بدري. بتعمل كدا عن طريق إنها بتشغل كل الـ Components والـ Effects مرتين ورا بعض عشان تتأكد إن الـ Functions بتاعتك (Pure) ومفيش أي (Side Effects) مستخبية بتأثر على الداتا.
+
+```jsx
+// Enabling Strict Mode for the entire app
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
+### الفايدة الانترفيوية
+What is React Strict Mode and why does it render components twice?
+**الإجابة المثالية:** React Strict Mode is a development-only tool that highlights potential problems in an application. It intentionally double-invokes components and effects to help developers spot impure functions, unexpected side effects, and legacy lifecycle usage.
+
+---
+
+## Q55 — إيه الفرق بين الـ Synthetic Events في React والـ Native DOM Events؟
+
+### أصل الحكاية
+ريأكت مابتستخدمش الـ Events بتاعت البراوزر مباشرة. هي بتعمل طبقة تغليف (Wrapper) اسمها (Synthetic Event) بتوحد شكل الـ Events وسلوكها عبر كل البراوزرات (يعني كودك هيشتغل على كروم وسفاري وفايرفوكس بنفس الطريقة بالظبط). ده كمان بيحسن الأداء عن طريق الـ Event Delegation.
+
+```jsx
+// React passes a SyntheticEvent (e), which has the same interface as native events
+function handleClick(e) {
+  e.preventDefault(); // Works consistently across all browsers
+  console.log(e.target.value);
+}
+```
+
+### الفايدة الانترفيوية
+What are Synthetic Events in React?
+**الإجابة المثالية:** A Synthetic Event is a cross-browser wrapper around the browser's native event. React uses it to ensure that events have consistent behavior across different browsers and to optimize performance using a single event listener at the root of the document (Event Delegation).
+
+---
+
+## Q56 — إيه اللي بيحصل بالظبط لما تعمل `setState`؟ (أشهر سؤال إنترفيو)
+
+### أصل الحكاية
+لما بتنادي `setState`، ريأكت مابتغيرش الشاشة في لحظتها. اللي بيحصل بالترتيب:
+1. ريأكت بتسجل إن الـ State دي هتتغير وبتجمع التحديثات مع بعض (Batching) لو فيه كذا تحديث.
+2. ريأكت بتنده الـ Component Function من أول وجديد (Render Phase) وتقارن شجرة الـ Virtual DOM الجديدة بالقديمة (Reconciliation).
+3. لو لقت تغيير فعلي، بتروح تحدث الـ Real DOM بالتغيير ده بس (Commit Phase).
+
+```jsx
+function incrementTwice() {
+  // Due to batching, React groups these updates and re-renders only ONCE.
+  setCount(c => c + 1);
+  setCount(c => c + 1);
+}
+```
+
+### الفايدة الانترفيوية
+What happens exactly when you call `setState` in React?
+**الإجابة المثالية:** When `setState` is called, React batches the state updates and schedules a re-render. During the render phase, it creates a new Virtual DOM tree and diffs it against the old one. Finally, in the commit phase, it updates the actual DOM with only the necessary changes computed from the diffing process.
+
+---
