@@ -106,7 +106,9 @@
     "python/بايثون_من_الصفر_الجزء_التاني.md": "rtl",
     "interviews/Django & DRF من الصفر — إنترفيو الباك إند.md": "rtl",
     "interviews/OOP_من_الصفر_إنترفيو_البرمجة_الكائنية.md": "rtl",
-    "interviews/React-Interview-Complete.md": "rtl"
+    "interviews/React-Interview-Complete.md": "rtl",
+    "interviews/Backend-Web-Interview-Complete.md": "rtl",
+    "interviews/Databases من الصفر — إنترفيو قواعد البيانات.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
