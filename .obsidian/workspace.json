@@ -35,8 +35,7 @@
               "title": "karim_interview_questions_answers"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -251,10 +250,10 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "c5ffdd5716ab6e51",
+  "active": "9e63328c1016971c",
   "lastOpenFiles": [
-    "interviews/react_django_mock_interview_answers.md",
     "interviews/karim_interview_questions_answers.md",
+    "interviews/react_django_mock_interview_answers.md",
     "interviews/Unconfirmed 117609.crdownload",
     "interviews/Databases من الصفر — إنترفيو قواعد البيانات.md",
     "interviews/Unconfirmed 105849.crdownload",
