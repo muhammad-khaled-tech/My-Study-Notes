@@ -5359,3 +5359,942 @@ sequenceDiagram
 > لو فاهم لحد هنا: إزاي Contract-First Design بيمنع الاختلاف بين الفرق، إزاي تصمم Webhooks آمنة وموثوقة، أهمية Idempotency Keys في العمليات الحساسة، إزاي تدير Breaking Changes بأمان، تصميم Bulk Operations وFile Uploads بكفاءة، دور الـ API Gateway الحقيقي، وأخيراً نمط Async Job للعمليات الطويلة — يبقى عندك فهم عملي كامل لتصميم APIs جاهزة للإنتاج الحقيقي، مش بس أساسيات REST.
 
 ---
+
+## 🧵 الموديول الحادي عشر — Process vs Threads & Concurrency
+
+> [!info] 📖 ليه الموديول ده مهم دلوقتي؟
+> من Q43 وإحنا بنتعامل مع Node.js كصندوق أسود بيدير آلاف الـ Requests بكفاءة، وقلنا "عمليات الـ I/O بتتفوض لطبقة تحتية". الموديول ده بيفتح الصندوق ده فعليًا: هنفهم الفرق بين Process وThread على مستوى نظام التشغيل نفسه، ونفصّل الـ Event Loop لمراحله الحقيقية، ونشرح إمتى الـ Concurrency (التعامل مع حاجات كتير في نفس الفترة) بتفرق عن الـ Parallelism (تنفيذ حاجات كتير في نفس اللحظة فعليًا). الفهم ده ضروري لأي قرار Architecture حقيقي، وهيبان أثره واضح في مشروعك لما تقرر مثلاً إن الـ AI microservice بتاعك (Python/FastAPI) يشتغل كـ Processes منفصلة، بينما الـ Extension بتاعتك بتتعامل مع Event Loop واحد في المتصفح.
+
+---
+
+## Q86 — إيه الفرق الحقيقي بين الـ Process والـ Thread على مستوى الـ OS؟
+
+### أصل الحكاية
+
+في Q43 قلنا إن Node.js "Single-Threaded"، لكن السؤال اللي بيتقفز عادةً في الإنترفيو: Single-Threaded جوه إيه بالظبط؟ جوه Process. وعشان تفهم الفرق الحقيقي بين "تشغيل حاجتين في Threads مختلفة" و"تشغيل حاجتين في Processes مختلفة"، لازم تفهم إزاي نظام التشغيل بيشوف كل واحد فيهم. الفرق الجوهري مش في "الأداء" بشكل مباشر، هو في **Memory Isolation**: كل Process عنده مساحة ذاكرة (Address Space) خاصة بيه بالكامل، معزولة تمامًا عن أي Process تاني، بينما كل الـ Threads اللي جوه نفس الـ Process بتشارك نفس مساحة الذاكرة دي.
+
+```mermaid
+flowchart TB
+    subgraph P1["Process 1 (مثلاً: Node.js API Server)"]
+        M1[Memory Space خاص بيه]
+        T1[Thread 1 - Main]
+        T2[Thread 2 - Worker]
+        T1 -.يشارك.-> M1
+        T2 -.يشارك.-> M1
+    end
+    subgraph P2["Process 2 (مثلاً: Python AI Microservice)"]
+        M2[Memory Space خاص بيه تمامًا]
+        T3[Thread 1 - Main]
+        T3 -.يشارك.-> M2
+    end
+    M1 -.معزول تمامًا عن.-> M2
+```
+
+```javascript
+// Node.js: فتح Process جديد بالكامل (منفصل تمامًا في الذاكرة)
+const { spawn } = require('child_process');
+const aiService = spawn('python3', ['classifier_service.py']);
+// aiService دي Process مستقلة، لو وقعت مش هتأثر على الـ Node process أصلاً
+
+// مقابل: Thread جديد جوه نفس الـ Process (هنفصّلها في Q89)
+const { Worker } = require('worker_threads');
+const worker = new Worker('./heavy-task.js');
+// الـ Worker ده بيشارك نفس الـ Process، وممكن يشارك ذاكرة عن طريق SharedArrayBuffer
+```
+
+#### مثال 1: التطبيق العملي في Inbox Sales Copilot
+
+الـ AI microservice (Classifier/Extractor/Composer) بتاعك شغال كـ Process منفصل تمامًا عن الـ NestJS Backend، مش Thread جواه. ده قرار معماري مقصود: لو الـ AI service وقع أو استهلك ذاكرة زيادة عن اللزوم (زي عند معالجة مرفق كبير)، الـ Backend الأساسي (تسجيل الدخول، الـ CRM، الـ Auth) هيفضل شغال عادي تمامًا لأن مافيش مشاركة ذاكرة بينهم أصلاً، والتواصل بينهم بيتم عن طريق HTTP/Message Queue مش عن طريق Memory مشتركة.
+
+#### مثال 2: فخ شائع — الاعتقاد إن فتح Threads كتير دايمًا أرخص من فتح Processes كتير
+
+صحيح إن إنشاء Thread أخف من إنشاء Process (مفيش نسخ كامل لمساحة الذاكرة)، لكن ده مش معناه إن Threads "مجانية". كل Thread لسه محتاج Stack خاص بيه، ولسه بيكلّف الـ OS وقت في الـ Context Switching (يعني نقل المعالج من تنفيذ Thread لـ Thread تاني، بحفظ واسترجاع حالة الـ Registers والـ Stack). لو فتحت آلاف الـ Threads جوه Process واحد، هتلاقي الأداء بيتدهور بسبب كثرة الـ Context Switching، مش بيتحسن.
+
+#### مثال 3: حالة إنتاجية — Docker Containers هي عزل على مستوى Process
+
+في Q61 اتكلمنا عن Docker وإزاي كل Container معزول. تقنيًا، الـ Container مش "جهاز افتراضي" منفصل، هو Process (أو مجموعة Processes) بيستخدم ميزات الـ Linux Kernel اسمها Namespaces وCgroups عشان يبان وكأنه معزول تمامًا عن باقي الـ Processes على نفس الجهاز، لكنه بيشارك نفس الـ Kernel. ده سبب مباشر ليه Docker Container بيبدأ في أجزاء من الثانية بينما Virtual Machine كاملة بتاخد دقايق — لأن مافيش نظام تشغيل جديد بيتشغل، بس Process معزول بحدود واضحة.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "What's the fundamental difference between a process and a thread, and why does it matter for system design?"**
+
+**الإجابة المثالية:** الفرق الجوهري إن كل Process عنده مساحة ذاكرة خاصة به بالكامل ومعزولة تمامًا عن أي Process تاني، بينما كل الـ Threads اللي جوه نفس الـ Process بيشاركوا نفس مساحة الذاكرة دي. ده معناه إن التواصل بين Processes مختلفة محتاج آليات صريحة زي IPC أو HTTP أو Message Queues، بينما الـ Threads جوه نفس الـ Process ممكن توصل لنفس المتغيرات مباشرة، وده أسرع لكنه أخطر (محتاج مزامنة عشان تتجنب Race Conditions، وده هنتكلم عنه في Q90). من ناحية الموارد، إنشاء Process جديد أغلى من إنشاء Thread جديد لأنه بيتطلب نسخ كامل لبيئة التنفيذ، والـ Context Switching بين Processes أغلى من الـ Context Switching بين Threads. في التصميم المعماري، بستخدم Processes منفصلة لما محتاج عزل حقيقي (زي فشل جزء من النظام من غير ما يأثر على باقيه، مثال AI microservice منفصل عن الـ Backend الأساسي)، وبستخدم Threads لما محتاج مشاركة حالة (State) بسرعة جوه نفس الوحدة المنطقية.
+
+> [!tip]
+> لو الإنترفيور سألك "إيه اللي بيحصل فعليًا وقت Context Switching؟"، الإجابة القصيرة: الـ CPU بيوقف تنفيذ الـ Thread الحالي، بيحفظ حالته الكاملة (Registers، Program Counter، Stack Pointer) في الذاكرة، وبعدين بيسترجع حالة الـ Thread التاني اللي هيشغّله. العملية دي بتاخد وقت حقيقي (Overhead)، وده سبب ليه كثرة الـ Threads/Processes مش دايمًا معناها أداء أفضل.
+
+> [!example] 🎯 مستوى السؤال
+> Mid-Level
+
+---
+
+## Q87 — إمتى تستخدم Multi-threading وإمتى تستخدم Multi-processing؟
+
+### أصل الحكاية
+
+بعد ما فهمنا في Q86 الفرق البنيوي بين Process وThread، السؤال العملي اللي بيتسأل في أي إنترفيو Senior: طيب أنا أختار إيه فعليًا؟ الإجابة مبنية على نوع الـ Workload اللي عندك. لو المشكلة إن عندك عمليات كتير بتستنى (I/O-bound، زي انتظار رد من Database أو API خارجي)، الـ Threads (أو حتى Event Loop زي Node.js) كفاية لأن الانتظار مش بيستهلك المعالج فعليًا. لكن لو المشكلة إن عندك حسابات ثقيلة فعليًا محتاجة معالج (CPU-bound، زي معالجة صورة أو تدريب موديل)، محتاج Parallelism حقيقي، وهنا Multi-processing بيبقى الاختيار الأصح في لغات زي Python.
+
+```mermaid
+flowchart LR
+    A[نوع الـ Workload؟] --> B[I/O-Bound
+انتظار Database/API/File]
+    A --> C[CPU-Bound
+حسابات ثقيلة فعلية]
+    B --> D[Threads / Async Event Loop
+كفاية تمامًا]
+    C --> E[Multi-Processing
+عشان تستغل أكتر من CPU Core فعليًا]
+```
+
+```python
+# Python: مثال على أثر الـ GIL (Global Interpreter Lock)
+import threading, multiprocessing
+
+def cpu_heavy_task():
+    result = sum(i * i for i in range(10_000_000))  # CPU-bound فعليًا
+
+# Threading: مش هيسرّع العملية دي، لأن الـ GIL بيمنع تنفيذ Python bytecode
+# من Threads مختلفة في نفس اللحظة بالظبط
+threads = [threading.Thread(target=cpu_heavy_task) for _ in range(4)]
+
+# Multiprocessing: كل Process عنده Interpreter خاص به، فعلاً بيشتغلوا Parallel
+processes = [multiprocessing.Process(target=cpu_heavy_task) for _ in range(4)]
+```
+
+#### مثال 1: التطبيق العملي — الـ AI Classifier Service في Inbox Sales Copilot
+
+الـ Classifier agent (Python/FastAPI) بيحلل نص الإيميلات ويصنفها. لو شغّلته بـ uvicorn worker واحد بس، أي عملية تصنيف ثقيلة (تحليل نص طويل، استدعاء Embedding Model محلي) هتوقف باقي الطلبات. الحل المعياري هو تشغيل uvicorn بعدة Workers (كل واحد Process منفصل تمامًا)، فلو Request واحد بيستهلك المعالج بالكامل، باقي الـ Workers لسه شغالين على طلبات تانية بالتوازي الحقيقي.
+
+#### مثال 2: فخ شائع — استخدام Threading في Python للحسابات الثقيلة والتفاجؤ إن الأداء ما تحسنش
+
+كتير من المطورين الجداد بيستخدموا `threading` في بايثون عشان "يسرّعوا" عملية حسابية ثقيلة، ويتفاجؤوا إن الوقت ما اتحسنش خالص أو حتى زاد شوية. السبب هو الـ **GIL (Global Interpreter Lock)**: بايثون بتضمن إن Thread واحد بس ينفذ Python Bytecode في أي لحظة، حتى لو عندك Threads كتير. الـ GIL بيفيد في حالات الـ I/O-bound (لأن الـ Thread بيسيب الـ Lock وهو مستني)، لكنه بيلغي أي فايدة من الـ Threading في حالات الـ CPU-bound. الحل هنا Multiprocessing، لأن كل Process عنده Interpreter خاص بيه، ومعاه GIL خاص بيه، فمفيش قفل مشترك يمنع التوازي الحقيقي.
+
+#### مثال 3: حالة إنتاجية — Node.js Cluster Module بيستخدم Multi-Processing مش Multi-threading
+
+هنفصّل ده أكتر في Q89، لكن الفكرة الأساسية إن Node.js نفسه لما احتاج يستغل أكتر من CPU Core على نفس السيرفر، الحل المعياري بتاعه (Cluster Module) بيشغّل عدة Processes منفصلة تمامًا (مش Threads)، كل واحدة فيها الـ V8 Engine الخاص بيها وEvent Loop الخاص بيها، وبيوزّع الـ Requests عليهم عن طريق Load Balancing داخلي. القرار ده مش عشوائي: بما إن JavaScript في Node أصلاً Single-Threaded، أسهل وأأمن تعمل Isolation كامل بين الـ Workers (زي ما شفنا في Q86) بدل ما تتعامل مع تعقيد الـ Shared Memory بين Threads.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "How do you decide between multi-threading and multi-processing for a given workload?"**
+
+**الإجابة المثالية:** القرار بيتحدد بنوع الـ Workload. لو العملية I/O-bound (بتستنى رد من Database أو API خارجي أو File System)، الانتظار نفسه مش بيستهلك المعالج، فـ Threads أو حتى Async Event Loop (زي Node.js) كفاية تمامًا وأخف بكتير من فتح Processes منفصلة. لو العملية CPU-bound فعليًا (حسابات ثقيلة، معالجة صور، تدريب موديلات)، محتاج Parallelism حقيقي يستغل أكتر من نواة معالج في نفس اللحظة. في لغات زي بايثون، الموضوع ده حرج بسبب الـ GIL اللي بيمنع أكتر من Thread ينفذ Python Bytecode في نفس اللحظة، فالـ Threading في بايثون مفيد بس للـ I/O-bound، والـ Multiprocessing هو الحل للـ CPU-bound لأن كل Process عنده Interpreter وGIL خاص بيه. في Node.js، بما إن الـ Event Loop أصلاً كفاية للـ I/O-bound، بستخدم Worker Threads للمهام الحسابية الثقيلة المتوسطة، وCluster Module (Multi-Processing) لما محتاج أستغل كل أنوية المعالج على مستوى السيرفر بالكامل.
+
+> [!tip]
+> جملة مختصرة تفتكرها في الإنترفيو: "Threads بيفيدوا في الانتظار، Processes بيفيدوا في الشغل الحقيقي على المعالج". لو حسيت إن السؤال بيدور حوالين GIL في بايثون تحديدًا، اذكرها بالاسم — دي نقطة بتفرّق بين مين فاهم الموضوع فعليًا ومين حافظ تعريف عام.
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q88 — إيه المراحل (Phases) الدقيقة اللي بيمر بيها Node.js Event Loop؟
+
+### أصل الحكاية
+
+في Q43 شرحنا الفكرة العامة إن Node.js بيفوض عمليات الـ I/O لطبقة تحتية (libuv) والـ Event Loop بيفضل حر. لكن "الـ Event Loop" مش خطوة واحدة بسيطة، هو **دورة كاملة من المراحل (Phases) المرتبة**، وكل مرحلة ليها نوع كولباك مختلف بتشتغل عليه. فهم المراحل دي بالظبط هو اللي بيخليك تفهم ليه `setTimeout(fn, 0)` و`setImmediate(fn)` ممكن ينفذوا بترتيب مختلف حسب السياق، وده سؤال كلاسيكي بيتسأل في إنترفيوهات Node.js الـ Senior.
+
+```mermaid
+flowchart LR
+    A[Timers
+setTimeout / setInterval] --> B[Pending Callbacks
+كولباكات I/O مؤجلة من الدورة اللي فاتت]
+    B --> C[Poll
+استقبال I/O events جديدة + تنفيذ كولباكاتها]
+    C --> D[Check
+setImmediate]
+    D --> E[Close Callbacks
+socket.on 'close']
+    E --> A
+```
+
+```javascript
+// ترتيب التنفيذ ده بيوضح الفرق بين المراحل
+console.log('1: Synchronous code');
+
+setTimeout(() => console.log('2: Timers phase'), 0);
+
+setImmediate(() => console.log('3: Check phase'));
+
+process.nextTick(() => console.log('4: nextTick (قبل أي phase)'));
+
+Promise.resolve().then(() => console.log('5: Microtask Queue (بعد nextTick)'));
+
+// الترتيب الفعلي: 1, 4, 5, 2 أو 3 (حسب الظروف، هنفصّلها في مثال 2)
+```
+
+#### مثال 1: التطبيق العملي — ترتيب معالجة إيميل جديد وصل
+
+لما إيميل جديد يوصل في Inbox Sales Copilot، عملية معالجته بتمر فعليًا بمراحل مختلفة من الـ Event Loop: قراءة الـ Payload من الـ Webhook (Poll Phase لأنها I/O)، بعدين لو فيه Timeout معين محدد (مثلاً "لو الـ AI مردش خلال 5 ثواني ابعت تنبيه" باستخدام `setTimeout`) ده بيتسجل في الـ Timers Phase، وأي عملية `setImmediate` تانية (زي "بعد ما تخلص المعالجة الحالية، شغّل تنظيف بسيط") بتتنفذ في الـ Check Phase بعد الـ Poll مباشرة.
+
+#### مثال 2: فخ شائع — الاعتقاد إن setTimeout(fn, 0) بينفذ فورًا زي كود Synchronous
+
+`setTimeout(fn, 0)` **مش** معناها "نفذ الكود ده فورًا"، معناها "سجّل الكولباك ده في Timers Phase، وشغّله أول ما يوصل دورك في الدورة الجاية على الأقل". حتى لو الوقت المحدد صفر، الكولباك لازم يستنى لحد ما الكود الـ Synchronous الحالي يخلص بالكامل، وبعدين يستنى دوره في الـ Event Loop. الفخ الأخطر هو الخلط بين `setTimeout`/`setImmediate` (اللي بتتنفذ في Phases محددة من الدورة) وبين `process.nextTick`/`Promise.then` (اللي بتتنفذ في **Microtask Queue**، واللي بتتفرّغ بالكامل بعد كل خطوة Synchronous وقبل ما الـ Event Loop ينتقل لأي Phase تانية أصلاً — يعني قبل حتى Timers).
+
+#### مثال 3: حالة إنتاجية — استخدام setImmediate بدل setTimeout(fn, 0) عمدًا
+
+في كود Production حقيقي، لو محتاج تأجل تنفيذ حاجة "بعد ما الـ I/O الحالي يخلص" (مش بعد وقت محدد)، `setImmediate` أدق من `setTimeout(fn, 0)` لأنه مصمم خصيصًا يتنفذ في نهاية الـ Poll Phase الحالي، بينما `setTimeout` بيعتمد على مقارنة وقت وممكن سلوكه يختلف شوية حسب لو النداء حصل جوه I/O callback أو لأ. الفرق ده دقيق لكنه بيفرق في أنظمة عندها حساسية لترتيب التنفيذ زي معالجة طوابير الرسائل.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "Walk me through the exact phases of the Node.js Event Loop."**
+
+**الإجابة المثالية:** الـ Event Loop بيدور على دورة ثابتة من المراحل: Timers (بينفذ كولباكات `setTimeout`/`setInterval` اللي وقتها استحق)، بعدين Pending Callbacks (كولباكات I/O معينة اتأجلت من الدورة اللي فاتت)، بعدين Poll (المرحلة الأهم، بتستقبل أحداث I/O جديدة وتنفذ كولباكاتها، ولو مفيش حاجة تانية معلقة ممكن تستنى هنا)، بعدين Check (بينفذ كولباكات `setImmediate`)، وأخيرًا Close Callbacks (زي `socket.on('close')`)، وبعدها الدورة بترجع تاني للـ Timers. المهم إن مفيش علاقة مباشرة بين المراحل دي وبين `process.nextTick` و`Promise.then`؛ دول بيتنفذوا في طابور منفصل اسمه Microtask Queue، وده بيتفرّغ بالكامل بين كل خطوة Synchronous وقبل ما الـ Event Loop ينتقل لأي Phase من الست دول، يعني عنده أولوية أعلى من أي حاجة تانية.
+
+> [!warning]
+> لو استخدمت `process.nextTick` بشكل Recursive بلا نهاية جوه نفسه، الـ Microtask Queue مش بتفضى أبدًا، والـ Event Loop عمره ما هيوصل لأي Phase تانية — ده اسمه "I/O Starvation"، وهو باج إنتاجي حقيقي حصل في أنظمة كتير.
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q89 — إيه الفرق العملي بين Worker Threads وCluster Module في Node.js؟
+
+### أصل الحكاية
+
+في Q43 قلنا إن الحل المعياري للعمليات الـ CPU-Intensive هو تفويضها لـ "Worker Threads منفصلة أو خدمة خارجية"، وفي Q87 فرّقنا نظريًا بين Multi-threading وMulti-processing. دلوقتي جينا للتفاصيل العملية في Node.js تحديدًا: عندك أداتين مختلفتين تمامًا لحل مشكلتين مختلفتين. **Worker Threads** بتحل مشكلة "عندي عملية حسابية ثقيلة واحدة، عايز أنفذها من غير ما أوقف الـ Event Loop الرئيسي". **Cluster Module** بيحل مشكلة مختلفة تمامًا: "عندي سيرفر واحد بمعالج بأربع أنوية، وعايز أستغلهم الأربعة عشان أستقبل أكبر عدد Requests بالتوازي".
+
+```mermaid
+flowchart TB
+    subgraph WT["Worker Threads"]
+        M1[Main Thread - Event Loop واحد]
+        W1[Worker 1]
+        W2[Worker 2]
+        M1 -->|بيبعت مهمة ثقيلة| W1
+        M1 -->|بيبعت مهمة ثانية| W2
+    end
+    subgraph CL["Cluster Module"]
+        Master[Master Process]
+        P1[Worker Process 1 - Event Loop خاص]
+        P2[Worker Process 2 - Event Loop خاص]
+        Master -->|بيوزع Requests| P1
+        Master -->|بيوزع Requests| P2
+    end
+```
+
+```javascript
+// Worker Threads: لعملية حسابية ثقيلة واحدة (مثال: معالجة مرفق كبير)
+const { Worker } = require('worker_threads');
+function processAttachment(fileBuffer) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker('./attachment-processor.js', { workerData: fileBuffer });
+    worker.on('message', resolve);
+    worker.on('error', reject);
+  });
+}
+
+// Cluster: لاستغلال كل أنوية المعالج على مستوى السيرفر كله
+const cluster = require('cluster');
+const os = require('os');
+if (cluster.isPrimary) {
+  os.cpus().forEach(() => cluster.fork()); // process منفصل لكل core
+} else {
+  require('./app'); // كل worker process بيشغل نسخة كاملة من الـ Express/NestJS app
+}
+```
+
+#### مثال 1: التطبيق العملي — معالجة مرفقات الإيميل في Inbox Sales Copilot
+
+معالجة مرفق كبير (PDF/Excel ضخم، زي ما ذكرنا في US-008) هي مثال كلاسيكي لـ Worker Thread: عملية واحدة، محتاجة حسابات ثقيلة (Parsing، استخراج نص)، ومحتاجة تتنفذ من غير ما توقف باقي الطلبات اللي بتوصل للسيرفر في نفس اللحظة. لو استخدمت Cluster هنا، المشكلة مش هتتحل فعليًا، لأن الـ Request اللي بيعالج المرفق نفسه لسه هيوقف الـ Event Loop بتاع الـ Worker Process اللي وقع عليه.
+
+#### مثال 2: فخ شائع — استخدام Cluster عشان تحل مشكلة عملية CPU-Intensive واحدة
+
+كتير من المطورين بيفتكروا إن تشغيل Cluster كفاية عشان يحل مشكلة "عملية واحدة بتوقف السيرفر"، والحقيقة إن Cluster بيوزّع **Requests** على عدة Processes، مش بيقسّم **عملية واحدة** لأجزاء أصغر. لو عملية واحدة ثقيلة جدًا واتنفذت جوه Worker Process معين من الـ Cluster، هي هتوقف الـ Event Loop بتاع الـ Process ده تحديدًا، وأي Request تاني اتوجه لنفس الـ Process ده هيحس بالتجمد، حتى لو باقي الـ Processes في الـ Cluster شغالين عادي. الحل الصح للمشكلة دي هو Worker Threads، مش Cluster.
+
+#### مثال 3: حالة إنتاجية — Cluster نادرًا ما يُستخدم في بيئات Kubernetes الحديثة
+
+في Q66 اتكلمنا عن Kubernetes وHorizontal Scaling. في البيئات دي، بدل ما تشغّل Cluster جوه نفس الـ Container عشان تستغل كل الأنوية، الممارسة الأكثر شيوعًا إنك تشغّل Container واحد فيه Process واحد بس (Single-Threaded Node app)، وتخلي Kubernetes نفسه يشغّل عدة Replicas (Pods) من نفس الـ Container ويوزّع الحمل بينهم على مستوى الـ Cluster الحقيقي (بمعنى Kubernetes Cluster مش Node.js Cluster). ده بيبسّط الـ Monitoring والـ Scaling ويسيب مسؤولية توزيع الحمل لطبقة الـ Infrastructure المتخصصة فيها بدل ما تكررها جوه الكود نفسه.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "When would you use Worker Threads versus the Cluster module in Node.js?"**
+
+**الإجابة المثالية:** الاتنين بيحلوا مشكلتين مختلفتين تمامًا. Worker Threads بتستخدم لما عندك عملية حسابية ثقيلة واحدة (زي معالجة صورة أو ملف كبير) محتاجة تتنفذ من غير ما توقف الـ Event Loop الرئيسي، وكل الـ Workers دول بيشتغلوا جوه نفس الـ Process، وممكن حتى يشاركوا ذاكرة عن طريق SharedArrayBuffer. Cluster Module بيستخدم لسبب مختلف تمامًا: استغلال أكتر من نواة معالج على مستوى السيرفر كله، عن طريق تشغيل عدة Processes منفصلة بالكامل (كل واحد Event Loop خاص بيه)، وتوزيع الـ Requests الواردة بينهم عن طريق Master Process. الفخ الشائع هو استخدام Cluster كحل لمشكلة عملية واحدة ثقيلة، وده غلط لأن Cluster بيوزّع Requests مش بيقسّم عملية واحدة لأجزاء. في بيئات containerized حديثة زي Kubernetes، الممارسة الشائعة إنك تسيب توزيع الحمل على مستوى الـ Infrastructure (Horizontal Pod Scaling) وتشغّل Process واحد بسيط جوه كل Container، بدل ما تكرر نفس منطق التوزيع جوه الكود بـ Cluster.
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q90 — إيه هي الـ Race Conditions، وإزاي بتحصل حتى في JavaScript الـ Single-Threaded؟
+
+### أصل الحكاية
+
+نقطة مهمة كتير من المطورين بيفوتوها: "Single-Threaded" (زي Node.js) **مش** معناها "آمن من Race Conditions". الـ Race Condition بتحصل لما نتيجة العملية بتعتمد على **ترتيب** تنفيذ عمليات متزامنة (Timing)، وده ممكن يحصل حتى من غير Threads حقيقية شغالة بالتوازي، بس لازم يكون عندك أكتر من عملية Async بتتنافس على نفس المورد (زي صف في الـ Database) وبيتقاطعوا في التنفيذ بسبب الـ Event Loop اللي شرحناه في Q88.
+
+```mermaid
+sequenceDiagram
+    participant R1 as Request 1 (تحديث Lead Status)
+    participant DB as Database
+    participant R2 as Request 2 (تحديث Lead Status)
+
+    R1->>DB: يقرا الـ status الحالي = "New"
+    R2->>DB: يقرا الـ status الحالي = "New" (قبل ما R1 يكتب)
+    R1->>DB: يكتب status = "Contacted"
+    R2->>DB: يكتب status = "Qualified" (بيمسح تحديث R1!)
+    Note over DB: النتيجة النهائية "Qualified" بس تحديث R1 اتفقد تمامًا (Lost Update)
+```
+
+```javascript
+// مثال على Race Condition حقيقي (حتى في Node.js Single-Threaded)
+async function updateLeadStatus(leadId, newStatus) {
+  const lead = await db.lead.findUnique({ where: { id: leadId } }); // نقطة await = فرصة للـ Event Loop يبدّل
+  // لو Request تاني كتب على نفس الصف هنا بالظبط، إحنا لسه شغالين بنسخة قديمة من lead
+  await db.lead.update({ where: { id: leadId }, data: { status: newStatus } });
+}
+
+// الحل: Atomic Update بدل Read-then-Write
+await db.lead.update({
+  where: { id: leadId, version: currentVersion }, // Optimistic Locking (Q59 CAP بيرجع هنا)
+  data: { status: newStatus, version: { increment: 1 } },
+});
+```
+
+#### مثال 1: التطبيق العملي — تحديث حالة Lead في Inbox Sales Copilot
+
+لو اتنين Sales Engineers فتحوا نفس الـ Lead في نفس اللحظة وحاولوا يحدّثوا الحالة بتاعته (واحد بيقول "Contacted" والتاني بيقول "Qualified")، وكل واحد فيهم بيقرا الحالة الحالية من الـ Database الأول وبعدين يكتب فوقها، ممكن آخر واحد يكتب يمسح تحديث التاني تمامًا من غير ما حد يلاحظ — ودي مشكلة **Lost Update**، أشهر أشكال الـ Race Condition في أنظمة الـ CRUD.
+
+#### مثال 2: فخ شائع — الخلط بين Race Condition وDeadlock
+
+كتير من المطورين بيستخدموا المصطلحين وكأنهم نفس الحاجة، وهما مختلفين تمامًا. **Race Condition** هي إن النتيجة النهائية بتختلف حسب ترتيب التنفيذ (زي المثال فوق). **Deadlock** حاجة مختلفة كليًا: بتحصل لما عمليتين (أو أكتر) كل واحدة فيهم مستنية Resource قافله العملية التانية، وكل واحدة رافضة تسيب اللي عندها لحد ما تاخد اللي عايزاه — فبيقفوا الاتنين لحظة واحدة، للأبد. مثال: Transaction A قفلت الصف X ومستنية تقفل الصف Y، وفي نفس اللحظة Transaction B قفلت الصف Y ومستنية تقفل الصف X — مفيش حد فيهم هيكمل أبدًا من غير تدخل خارجي (زي الـ Database نفسها بتكتشف الـ Deadlock وبتلغي واحدة من الـ Transactions تلقائيًا).
+
+#### مثال 3: حالة إنتاجية — الحل عن طريق Optimistic Locking أو Database-Level Locking
+
+الحل المعياري لمشكلة الـ Lost Update هو واحد من اتنين: **Optimistic Locking** (زي المثال في الكود فوق) بتضيف عمود `version`، وأي تحديث لازم يتأكد إن الـ version لسه زي ما كانت وقت القراءة، لو اتغيرت معناها حد كتب قبلك فيرجع Error وتقرا تاني وتحاول. أو **Pessimistic Locking** زي `SELECT ... FOR UPDATE` في SQL، اللي بيقفل الصف فعليًا لحد ما الـ Transaction الحالية تخلص، فأي Transaction تانية محتاجة نفس الصف لازم تستنى. الأول أفضل لما الـ Conflicts نادرة (زي حالتنا)، والتاني أفضل لما الـ Conflicts متوقعة كتير.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "How can race conditions happen in a single-threaded language like JavaScript?"**
+
+**الإجابة المثالية:** Race Condition مش شرط تيجي من Threads حقيقية شغالة بالتوازي، هي بتحصل لما نتيجة العملية بتعتمد على ترتيب تنفيذ عمليات متزامنة. في JavaScript، أي `await` هو نقطة ممكن الـ Event Loop يبدّل فيها لعملية تانية قبل ما يكمل العملية الحالية، فلو عندك نمط Read-then-Write (بتقرا قيمة، وبعدين تكتب فوقها بناءً على اللي قريته)، وفي نفس اللحظة Request تاني عمل نفس الحاجة بين القراءة والكتابة بتاعتك، ممكن يحصل Lost Update — يعني تحديث واحد يمسح التاني من غير أي Error ظاهر. الحل المعياري هو تجنب نمط Read-then-Write في الأصل، واستخدام Atomic Operations زي `UPDATE ... SET counter = counter + 1` مباشرة في الـ Database، أو استخدام Optimistic Locking بعمود version بيتأكد إن حد ماغيّرش البيانات من وقت ما قريتها. مهم أفرّق هنا بين Race Condition وDeadlock: الأولى مشكلة في صحة النتيجة بسبب الترتيب، والتانية توقف كامل بسبب انتظار متبادل دائري على موارد بين أكتر من عملية.
+
+> [!tip]
+> جملة تلخّص الفرق: "Race Condition = النتيجة غلط بسبب مين سبق مين. Deadlock = محدش بيتحرك خالص لأن الكل مستني التاني."
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q91 — إيه الفرق بين Blocking وNon-Blocking I/O؟
+
+### أصل الحكاية
+
+اتلمّحنا للفكرة دي أكتر من مرة (Q43، Q69، Q90)، لكن هي تستاهل سؤال مستقل لأنها **السبب الجذري** وراء كل تصميم Node.js. الفرق بسيط في التعريف لكنه عميق في الأثر: عملية I/O **Blocking** بتوقف تنفيذ الـ Thread بالكامل لحد ما العملية تخلص (مفيش حاجة تانية بتتنفذ في الأثناء دي)، بينما عملية I/O **Non-Blocking** بترجع فورًا (أو بتاخد Callback/Promise) وتسيب الـ Thread حر يعالج حاجات تانية لحد ما نتيجة الـ I/O تكون جاهزة.
+
+```mermaid
+flowchart TB
+    subgraph Blocking["Blocking I/O"]
+        direction TB
+        B1[Request 1 بيقرا ملف] --> B2[Thread واقف بالكامل يستنى]
+        B2 --> B3[Request 2, 3, 4 واقفين في الطابور]
+    end
+    subgraph NonBlocking["Non-Blocking I/O"]
+        direction TB
+        N1[Request 1 بيبدأ قراءة ملف] --> N2[الـ Thread بيكمل فورًا لـ Request 2]
+        N2 --> N3[لما القراءة تخلص، Callback بيتنفذ من غير ما حد استنى]
+    end
+```
+
+```javascript
+// Blocking: بيوقف الـ Event Loop بالكامل لحد ما القراءة تخلص
+const fs = require('fs');
+app.get('/report', (req, res) => {
+  const data = fs.readFileSync('./huge-report.csv'); // BLOCKING - خطر حقيقي في request handler
+  res.send(data);
+});
+
+// Non-Blocking: بيسيب الـ Event Loop حر يعالج طلبات تانية
+app.get('/report', async (req, res) => {
+  const data = await fs.promises.readFile('./huge-report.csv'); // NON-BLOCKING
+  res.send(data);
+});
+```
+
+#### مثال 1: التطبيق العملي — قراءة مرفقات كبيرة في Inbox Sales Copilot
+
+لو الكود اللي بيقرا مرفق إيميل كبير مكتوب بـ `fs.readFileSync` (Blocking)، كل Request تاني بيوصل للسيرفر في اللحظة دي هيستنى، حتى لو مالوش أي علاقة بالمرفق. لو استخدمت `fs.promises.readFile` أو `fs.createReadStream` (Non-Blocking)، الـ Event Loop بيفضل حر يعالج بقية الطلبات في الأثناء دي، والقراءة بتخلص في الخلفية وترجع نتيجتها لما تجهز.
+
+#### مثال 2: فخ شائع — استخدام Synchronous Functions في Request Handler من غير قصد
+
+مكتبات كتير في Node.js بتقدم نسخة Sync وBlocking جنب نسختها الأصلية الـ Async (زي `fs.readFileSync` جنب `fs.readFile`). الغلطة الشائعة إن مطور بيستخدم النسخة الـ Sync عن غير قصد (لأنها أسهل في الكتابة، مفيش `await` أو Callback) جوه Request Handler، وده بيوقف السيرفر بالكامل لكل المستخدمين لمدة تنفيذ العملية دي، حتى لو العملية نفسها بسيطة نسبيًا زي Hashing باسورد واحد.
+
+#### مثال 3: حالة إنتاجية — أثر عملية Blocking واحدة على النظام بالكامل
+
+لأن Node.js Single-Threaded (Q43، Q86)، عملية Blocking واحدة بس في أي مكان في الكود بتوقف **كل** السيرفر، مش بس الـ Request اللي طلبها. ده فرق جوهري عن أنظمة Multi-threaded تقليدية (زي Java Servlets قديمًا) اللي فيها كل Request بياخد Thread منفصل، فلو Thread واحد اتحجز، الباقي لسه بيشتغل عادي. عشان كده فحص الكود عن أي استخدام لدوال `*Sync` في مسارات الـ Production جزء أساسي من الـ Code Review في مشاريع Node.js.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "What's the difference between blocking and non-blocking I/O, and why does it matter more in Node.js than other environments?"**
+
+**الإجابة المثالية:** الفرق الجوهري إن عملية Blocking I/O بتوقف تنفيذ الـ Thread بالكامل لحد ما العملية تخلص، فمفيش حاجة تانية بتتنفذ في الأثناء دي، بينما عملية Non-Blocking I/O بترجع فورًا أو بتاخد Callback/Promise، وتسيب الـ Thread حر يعالج حاجات تانية لحد ما النتيجة تجهز. الفرق ده حرج بشكل خاص في Node.js لأنه Single-Threaded؛ في بيئة Multi-threaded تقليدية زي Java، عملية Blocking بتوقف Thread واحد بس وباقي الطلبات بتتعالج على Threads تانية، لكن في Node.js عملية Blocking واحدة بتوقف السيرفر بالكامل لكل المستخدمين. الفخ العملي الشائع هو استخدام دوال Sync (زي `readFileSync`) عن غير قصد جوه Request Handler، وده بيسبب تجمد كامل للنظام مؤقتًا مع كل استدعاء ليها. الممارسة الصحيحة إنك تستخدم النسخة الـ Async من أي عملية I/O دايمًا في مسارات الـ Production، وتحجز استخدام الـ Sync versions بس لكود الإعداد الأولي (زي قراءة ملف Config وقت تشغيل السيرفر) اللي بيحصل مرة واحدة قبل ما السيرفر يبدأ يستقبل Requests.
+
+> [!example] 🎯 مستوى السؤال
+> Mid-Level
+
+---
+
+## Q92 — إيه اللي بيحصل فعليًا تحت الغطاء لما تكتب Async/Await؟
+
+### أصل الحكاية
+
+وصلنا للسؤال اللي بيربط كل حاجة اتقالت في الموديول ده مع بعض. شفنا مراحل الـ Event Loop (Q88)، وإزاي الـ Race Conditions بتحصل بسبب نقط الـ `await` (Q90)، وإزاي Non-Blocking I/O بيشتغل (Q91). دلوقتي السؤال المحوري: `async/await` نفسه إيه بالظبط؟ الإجابة المختصرة: هو **Syntactic Sugar** فوق الـ Promises، ومفهوش أي "سحر" أو Threads جديدة بتتفتح — لسه كله شغال على نفس الـ Thread الواحد، وبيعتمد على طابورين مختلفين: **Microtask Queue** (اللي بتتنفذ فيه الـ Promises) و**Macrotask Queue** (اللي هي أساسًا Phases الـ Event Loop اللي شرحناها في Q88).
+
+```mermaid
+flowchart TB
+    A[Call Stack - بينفذ الكود الـ Synchronous] --> B{Await بيقابل Promise}
+    B --> C[الدالة بتوقف هنا وترجع تحكم للـ Call Stack]
+    C --> D[Call Stack يكمل باقي الكود الـ Sync]
+    D --> E[Microtask Queue - بتتفرغ بالكامل: Promise.then/await]
+    E --> F[بعد ما Microtask Queue تفضى بالكامل]
+    F --> G[Macrotask Queue - Phases الـ Event Loop: Timers/Poll/Check]
+```
+
+```javascript
+console.log('A: Sync code');
+
+setTimeout(() => console.log('D: Macrotask (Timers phase)'), 0);
+
+async function fetchEmails() {
+  console.log('B: جوه async function - لسه Sync لحد أول await');
+  await Promise.resolve();
+  console.log('C: بعد await - ده بقى Microtask'); // بيتنفذ في Microtask Queue
+}
+fetchEmails();
+
+console.log('A2: باقي الكود الـ Sync');
+
+// الترتيب الفعلي: A, B, A2, C, D
+// (كل الـ Sync الأول، بعدين Microtask Queue بالكامل، بعدين Macrotask)
+```
+
+#### مثال 1: التطبيق العملي — ترتيب تنفيذ خطوات معالجة إيميل متعددة
+
+لما بتكتب دالة زي `async function processEmail(email) { const summary = await extractSummary(email); await notifyUser(summary); }`، كل سطر فيها بعد `await` بيتحول فعليًا لـ `.then()` جوه Promise Chain، وبيتنفذ في الـ Microtask Queue. ده معناه إن لو عندك كذا عملية `processEmail` شغالة في نفس اللحظة على إيميلات مختلفة، الترتيب الدقيق اللي هيتنفذوا بيه بيعتمد على ترتيب الـ `await` points بتاعتهم، مش على "مين وصل الأول" بالمعنى البديهي.
+
+#### مثال 2: فخ شائع — الاعتقاد إن async/await بيحوّل الكود لـ Multi-threaded
+
+الاسم "Async" بيخلي كتير من المطورين الجداد يفتكروا إن فيه Thread جديد بيتفتح لكل `await`. الحقيقة العكس تمامًا: `async/await` هو **Syntactic Sugar** فوق Promises، وكله لسه بيشتغل على نفس الـ Thread الواحد بالظبط زي ما شرحنا في Q43 وQ86. اللي بيحصل إن الدالة بتوقف عند نقطة الـ `await` وترجع التحكم للـ Call Stack عشان يكمل شغل تاني، وبمجرد ما الـ Promise يترزولف (Resolve)، الكولباك بتاعها بيتحط في Microtask Queue عشان يتنفذ في أقرب فرصة — لكن ده كله لسه Single-Threaded تمامًا.
+
+#### مثال 3: حالة إنتاجية — Microtask Queue ممكن "تجوّع" الـ Macrotask Queue
+
+نقطة دقيقة بتظهر في الإنتاج: الـ Microtask Queue **لازم تتفرغ بالكامل** قبل ما الـ Event Loop ينتقل لأي Macrotask (زي Timer أو I/O event). لو عندك كود بيولّد Promises جديدة من جوه `.then()` بشكل متكرر (Chain طويل جدًا أو حتى Recursive)، ممكن الـ Microtask Queue متفضلش تفضى أبدًا عمليًا، وده معناه إن أي `setTimeout` أو حتى أي I/O event جديد (زي طلب وصل للسيرفر) هيفضل مستني لحد ما الـ Microtask Queue تخلص، وده باج أداء حقيقي وصعب تكتشفه لو معرفش الترتيب ده بالظبط.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "What actually happens under the hood when you use async/await in JavaScript?"**
+
+**الإجابة المثالية:** `async/await` مجرد Syntactic Sugar فوق Promises، ومفيهوش أي Threads إضافية بتتفتح — كل حاجة لسه بتشتغل على نفس الـ Thread الواحد. أي `async function` بترجع Promise تلقائيًا، وأي `await` جواها بيوقف تنفيذ الدالة دي بالذات (مش السيرفر كله) لحد ما الـ Promise اللي قدامها يترزولف، وبيرجّع التحكم فورًا للـ Call Stack عشان يكمل أي كود Synchronous تاني موجود. بمجرد ما الـ Promise يترزولف، الكولباك بتاعه بيتحط في طابور اسمه **Microtask Queue**، ومهم إن الطابور ده بيتفرّغ بالكامل بعد كل خطوة Synchronous، وقبل ما الـ Event Loop ينتقل لأي مرحلة تانية من مراحله المعروفة (Timers، Poll، Check... اللي شرحناها كـ Macrotask Queue). ده معناه إن الـ Promises والـ async/await ليها أولوية أعلى دايمًا من setTimeout أو I/O events. المخاطر العملية هنا اتنين: الأولى إن كتابة كود Async بشكل خاطئ (زي عمل Await على عمليات مش لازم تكون متتابعة) بتضيع فايدة الـ Non-Blocking I/O، والتانية إن Microtask Chain طويل جدًا أو Recursive ممكن "يجوّع" باقي النظام لأنه بيمنع الـ Event Loop من الوصول لأي Macrotask تاني لحد ما يخلص بالكامل.
+
+> [!tip]
+> جملة مفتاحية للإنترفيو: "Microtasks (Promises) ليها أولوية دايمًا على Macrotasks (Timers/I/O)، والطابورين مختلفين تمامًا عن بعض، بس الاتنين لسه بيشتغلوا على نفس الـ Thread الواحد."
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+> [!tip] Checkpoint نهائي للموديول الحادي عشر
+> لو فاهم لحد هنا: الفرق البنيوي بين Process وThread على مستوى الـ Memory Isolation، إمتى تختار Multi-threading وإمتى Multi-processing حسب نوع الـ Workload (وأثر الـ GIL في بايثون)، مراحل الـ Event Loop الدقيقة في Node.js وترتيبها، الفرق العملي بين Worker Threads وCluster Module، إزاي الـ Race Conditions بتحصل حتى من غير Threads حقيقية (والفرق بينها وبين الـ Deadlock)، الفرق بين Blocking وNon-Blocking I/O وأثره المضاعف في بيئة Single-Threaded، وأخيرًا إزاي async/await شغالة فعليًا فوق Microtask وMacrotask Queues — يبقى عندك فهم عميق لمفاهيم الـ Concurrency اللي بتتسأل في أي إنترفيو Senior حقيقي، مش بس "Node.js Single-Threaded" كجملة محفوظة.
+
+---
+
+## 🌐 الموديول الثاني عشر — Distributed Systems Essentials
+
+> [!info] 📖 ليه الموديول ده مهم دلوقتي؟
+> في Q39 اتكلمنا عن Microservices كقرار معماري، وفي Q59 فتحنا باب CAP Theorem. لكن لسه مفيش موديول اتكلم بعمق عن المشاكل اللي بتظهر **بس** لما يبقى عندك أكتر من خدمة بتتكلم مع بعض عبر الشبكة، وكل خدمة عندها الـ Database بتاعتها. الموديول ده بيقفل الفجوة دي: هنتكلم عن ليه الـ Transactions بتبقى صعبة لما تتوزع، وإزاي الخدمات بتلاقي بعض، وإزاي تحمي النظام من إن فشل خدمة واحدة يهد النظام كله. المفاهيم دي هي اللي بتفرق بين مهندس بيبني Monolith كبير وبين مهندس جاهز فعلاً يشتغل في بيئة Microservices حقيقية.
+
+---
+
+## Q93 — ليه الـ Distributed Transactions صعبة، وإيه هو الـ Saga Pattern كمقدمة للحل؟
+
+### أصل الحكاية
+
+في أي Database واحدة، الـ Transaction (مجموعة عمليات لازم تنجح كلها مع بعض أو تفشل كلها مع بعض) سهلة نسبياً: الـ Database نفسها بتضمن الـ ACID properties. لكن في Microservices (Q39)، كل خدمة عندها Database منفصلة تمامًا. تخيل عملية "إنشاء صفقة جديدة" في Inbox Sales Copilot بتحتاج: تحديث حالة الـ Lead في خدمة الـ CRM، وحجز Seat في خدمة الـ Billing، وإرسال إشعار في خدمة الـ Notifications. لو الخطوة التالتة فشلت، مفيش Transaction واحدة تقدر "تعمل Rollback" للخطوتين اللي قبلها لأنهم في Databases مختلفة تمامًا مالهاش علاقة ببعض على مستوى الـ Engine.
+
+```mermaid
+flowchart LR
+    A[Service A: CRM
+تحديث Lead] --> B[Service B: Billing
+حجز Seat]
+    B --> C[Service C: Notifications
+إرسال إشعار]
+    C -->|فشلت!| D[مفيش ROLLBACK واحد
+يلغي التحديثات في A وB تلقائياً]
+```
+
+```javascript
+// المشكلة: لو الخطوة التالتة فشلت، الاتنين اللي قبلها اتنفذوا فعلاً وباقيين
+async function createDeal(dealData) {
+  await crmService.updateLeadStatus(dealData.leadId, 'won'); // نجحت
+  await billingService.reserveSeat(dealData.tenantId);        // نجحت
+  await notificationService.notify(dealData.seId);            // فشلت! مفيش رجوع تلقائي للاتنين اللي فاتوا
+}
+```
+
+#### مثال 1: التطبيق العملي — لو حصل في Inbox Sales Copilot
+
+لو خدمة الـ Billing حجزت Seat بنجاح، لكن خدمة الـ Notifications وقعت بعدها، النظام دلوقتي في حالة غير متسقة: فيه Seat محجوز بس محدش اتبلّغ إن الصفقة اتقفلت. لو مافيش استراتيجية واضحة للتعامل مع الحالة دي، هتلاقي نفسك بتصلح البيانات يدوياً في الـ Production، وده مكلف وخطير.
+
+#### مثال 2: فخ شائع — محاولة استخدام Two-Phase Commit (2PC) كحل عام
+
+بعض المطورين بيحاولوا يطبّقوا Two-Phase Commit (بروتوكول قديم بيخلي كل الخدمات "توافق" قبل ما أي واحدة تلتزم فعليًا) عشان يحلوا المشكلة دي زي ما بتتحل في Database واحدة. المشكلة إن 2PC بيحتاج كل الخدمات تفضل "Locked" لحد ما القرار النهائي ييجي، وده بيقلل الـ Availability بشكل كبير (رجوع لـ Q59 CAP Theorem)، وبيبقى غير عملي في أنظمة موزعة حقيقية فيها Latency عالي أو خدمات ممكن تقع مؤقتًا. عشان كده الحل الشائع في الصناعة الحديثة هو **Saga Pattern** بدل 2PC.
+
+#### مثال 3: حالة إنتاجية — الفكرة الأساسية للـ Saga
+
+الـ Saga Pattern بيقسم العملية الكبيرة لسلسلة من الـ Transactions المحلية الصغيرة، كل واحدة في خدمة واحدة، ومعاها **Compensating Transaction** (عملية عكسية) لو محتاج تلغي أثرها بعدين. يعني بدل ما تمنع الفشل من الأساس، النظام بيقبل إن الفشل ممكن يحصل، وبيبقى جاهز "يرجّع الوضع" عن طريق عمليات تعويضية صريحة. هنفصّل شكلها العملي في Q94.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "Why can't you just use a traditional ACID transaction across multiple microservices?"**
+
+**الإجابة المثالية:** كل Microservice بيمتلك الـ Database بتاعته بشكل مستقل، وده مبدأ أساسي في Q39. لما عملية بيزنس واحدة (زي إنشاء صفقة) محتاجة تعديلات في أكتر من خدمة، مفيش Transaction Engine واحد يقدر يضمن Atomicity عبر Databases مختلفة تمامًا، لأن كل Database بتشتغل بمعزل عن التانية. الحل التقليدي Two-Phase Commit بيحاول يحل المشكلة دي عن طريق تنسيق مركزي، لكنه بيقلل الـ Availability بشكل كبير لأنه بيتطلب كل الخدمات تفضل قافلة الموارد لحد ما القرار النهائي ييجي، وده مش عملي في أنظمة فيها خدمات كتير أو Latency عالي. الحل الأكثر عملية في الصناعة الحديثة هو Saga Pattern: تقسيم العملية لسلسلة Transactions محلية صغيرة، كل واحدة بتلتزم فورًا في خدمتها، ومعاها Compensating Transaction بترجّع الأثر لو خطوة لاحقة فشلت، بدل ما نحاول نمنع الفشل بالكامل من الأساس.
+
+> [!tip]
+> جملة تفتكرها: "في الأنظمة الموزعة، بنقبل إن الفشل الجزئي هيحصل، وبنصمم النظام يتعافى منه، بدل ما نحاول نمنعه بالكامل زي ما بنعمل في Database واحدة."
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q94 — إيه الفرق بين Saga Pattern: Choreography وOrchestration؟
+
+### أصل الحكاية
+
+في Q93 عرفنا إن الـ Saga Pattern بيقسم العملية لخطوات محلية معاها Compensating Transactions. لكن السؤال العملي: مين المسؤول عن "تنسيق" ترتيب الخطوات دي وقرار متى نعمل Rollback؟ فيه إجابتين مختلفتين تمامًا، وده بيرجّعنا لمفهوم Pub/Sub من Q75 والـ Message Queue من Q44.
+
+```mermaid
+flowchart TB
+    subgraph Choreography["Choreography — كل خدمة تسمع وترد"]
+        C1[CRM: Lead Won] -->|ينشر Event| C2[Billing يسمع
+ويحجز Seat]
+        C2 -->|ينشر Event| C3[Notification يسمع
+ويبعت إشعار]
+    end
+    subgraph Orchestration["Orchestration — قائد مركزي"]
+        O0[Saga Orchestrator]
+        O0 -->|1. نفّذ| O1[CRM Service]
+        O0 -->|2. نفّذ| O2[Billing Service]
+        O0 -->|3. نفّذ| O3[Notification Service]
+        O1 -.رد.-> O0
+        O2 -.رد.-> O0
+    end
+```
+
+```javascript
+// Choreography: كل خدمة مستقلة، بتسمع Events وترد بنفسها (زي Pub/Sub في Q75)
+// في CRM Service
+await dealRepository.markWon(dealId);
+await eventBus.publish('deal.won', { dealId, tenantId });
+
+// في Billing Service (مشترك في نفس الـ Event)
+eventBus.subscribe('deal.won', async (event) => {
+  try {
+    await billingService.reserveSeat(event.tenantId);
+    await eventBus.publish('seat.reserved', { dealId: event.dealId });
+  } catch (err) {
+    await eventBus.publish('seat.reservation.failed', { dealId: event.dealId }); // Compensating trigger
+  }
+});
+
+// Orchestration: مدير مركزي بيتحكم في الترتيب صراحةً
+class DealSagaOrchestrator {
+  async execute(dealData) {
+    await this.crmService.markWon(dealData.dealId);
+    try {
+      await this.billingService.reserveSeat(dealData.tenantId);
+    } catch (err) {
+      await this.crmService.revertWon(dealData.dealId); // Compensating transaction صريحة
+      throw err;
+    }
+    await this.notificationService.notify(dealData.seId);
+  }
+}
+```
+
+#### مثال 1: التطبيق العملي — أنهي طريقة أنسب لـ Inbox Sales Copilot؟
+
+لعملية بسيطة نسبيًا زي "إنشاء صفقة" بثلاث خطوات، Orchestration أوضح وأسهل تتبع (خطوة واحدة في مكان واحد بتحدد الترتيب والـ Rollback). لكن لو عندك عملية زي "استقبال إيميل جديد" اللي بتحتاج رد فعل من عدة أطراف مستقلة (Classifier يصنف، Extractor يستخرج بيانات، Analytics يسجل)، Choreography أنسب لأن الأطراف دي مش لازم تكون متسلسلة أو معتمدة على بعض بشكل صارم.
+
+#### مثال 2: فخ شائع — استخدام Choreography لعمليات معقدة كتير الخطوات
+
+Choreography سهل البداية بيه، لكنه بيبقى صعب المتابعة لما عدد الخطوات يكبر، لأن مفيش مكان واحد تقرا فيه "تسلسل العملية بالكامل" — المنطق موزّع بين كل الخدمات، وكل خدمة عارفة بس الجزء بتاعها. في عملية فيها أكتر من 4-5 خطوات متسلسلة مع منطق Rollback معقد، تتبع الأخطاء بيبقى صعب جدًا (Debugging Nightmare)، وده وقت التحول لـ Orchestration اللي فيه منطق العملية كله واضح في مكان واحد.
+
+#### مثال 3: حالة إنتاجية — أدوات الـ Orchestration الجاهزة
+
+في الصناعة، مش كل حد بيكتب Orchestrator يدوي زي المثال فوق. أدوات زي Temporal أو AWS Step Functions بتوفر Orchestration جاهزة بتدير حالة الـ Saga، بتتعامل مع الـ Retries والـ Timeouts تلقائيًا، وبتحتفظ بسجل واضح لكل خطوة اتنفذت، وده بيوفر وقت تطوير كبير مقارنة بكتابة منطق التنسيق ده يدوي من الصفر.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "What's the difference between choreography-based and orchestration-based sagas?"**
+
+**الإجابة المثالية:** في Choreography، مفيش قائد مركزي؛ كل خدمة بتنشر Events (زي مفهوم Pub/Sub) لما تخلص شغلها، وأي خدمة تانية مهتمة بالحدث ده بتسمعه وترد بنفسها، وده بيخلي الخدمات مستقلة تمامًا عن بعض. في Orchestration، فيه مكوّن مركزي (Orchestrator) بيتحكم صراحةً في ترتيب تنفيذ كل خطوة، وبيقرر متى ينفّذ الخطوة الجاية أو متى يشغّل Compensating Transaction لو خطوة فشلت. Choreography أنسب للعمليات البسيطة أو اللي فيها أطراف مستقلة مش لازم تتنسق بشكل صارم، لأنه بيقلل الاعتماد المباشر بين الخدمات. Orchestration أنسب للعمليات الطويلة أو المعقدة اللي فيها منطق Rollback واضح، لأنه بيوفر مكان واحد تقدر تقرا وتتابع فيه تسلسل العملية بالكامل، وده بيسهّل الـ Debugging بشكل كبير كل ما عدد الخطوات يزيد.
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q95 — إيه هي الـ Eventual Consistency في الممارسة العملية، مش بس كتعريف نظري؟
+
+### أصل الحكاية
+
+في Q59 اتكلمنا عن CAP Theorem وذكرنا Eventual Consistency كمفهوم عام: النظام هيوصل "بعد شوية" لحالة متسقة، حتى لو مش متسق لحظيًا. لكن السؤال العملي الأهم اللي بيتسأل في الإنترفيو الـ Senior: "بعد شوية" دي قد إيه بالظبط، وإزاي بتتعامل مع الفترة دي في الكود الحقيقي؟ الإجابة النظرية سهلة، لكن التطبيق العملي محتاج قرارات واضحة عن الـ UI والـ UX في الفترة دي.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant API as API (Write)
+    participant Q as Message Queue
+    participant W as Worker
+    participant R as Read Replica
+
+    U->>API: يحدّث بيانات Lead
+    API->>API: يكتب في Primary DB فورًا
+    API-->>U: 200 OK (Consistency مضمونة هنا)
+    API->>Q: ينشر Event للمزامنة
+    Note over U: المستخدم شايف البيانات الجديدة فورًا (قرا من Primary)
+    Q->>W: Worker يعالج الـ Event
+    W->>R: يحدّث الـ Read Replica (بعد فترة صغيرة)
+    Note over R: أي مستخدم تاني بيقرا من الـ Replica ده<br>ممكن يشوف بيانات قديمة لفترة قصيرة (Replication Lag)
+```
+
+```javascript
+// نمط شائع للتعامل مع Eventual Consistency: Read-Your-Own-Writes
+async function updateLeadAndReturn(leadId, data) {
+  await primaryDb.lead.update({ where: { id: leadId }, data }); // كتابة على Primary
+  return primaryDb.lead.findUnique({ where: { id: leadId } });  // قراءة من نفس Primary فورًا
+  // مش من Read Replica اللي ممكن لسه ماتزامنتش (Replication Lag)
+}
+```
+
+#### مثال 1: التطبيق العملي — Search Index في Inbox Sales Copilot
+
+لو عندك Full-Text Search على الإيميلات مبني على Index منفصل (زي Elasticsearch) بيتزامن من الـ Database الأساسية بشكل غير متزامن، لما مستخدم يبعت إيميل جديد، هو هيشوفه فورًا في الـ Inbox بتاعه (لأن ده قراءة من Primary DB)، لكن لو دور عليه بالـ Search في نفس اللحظة بالظبط، ممكن ملقهوش لثواني قليلة لحد ما الـ Index يتزامن. القرار العملي هنا إنك تتقبل الفجوة دي، أو تعرض للمستخدم مؤشر بسيط ("جاري الفهرسة") لو الفجوة محتاجة توضيح.
+
+#### مثال 2: فخ شائع — الافتراض إن Eventual Consistency معناها "أي وقت بعدين"
+
+كتير من المطورين بيتعاملوا مع Eventual Consistency كأنها بدون حدود زمنية، وده بيخلي تصميمهم يتجاهل المشكلة تمامًا. عمليًا، لازم تحدد **SLA واضح** لمدة الفجوة دي (زي "الـ Replica هتتزامن خلال أقل من ثانيتين في 99% من الحالات")، وتصمم الـ UX بناءً عليه. لو الفجوة غير محدودة أو غير متوقعة، المستخدم هيشوف تضاربات غريبة في البيانات من غير أي تفسير منطقي.
+
+#### مثال 3: حالة إنتاجية — نمط Read-Your-Own-Writes
+
+المشكلة الأكتر شيوعًا اللي بتقابل المستخدمين هي إنهم يعدّلوا حاجة، وبعدين يرفريشوا الصفحة، ويلاقوا التعديل "اختفى" مؤقتًا لأن القراءة راحت لـ Read Replica لسه ماتزامنش. الحل الشائع (زي المثال في الكود فوق) هو نمط اسمه **Read-Your-Own-Writes**: أي قراءة بتيجي مباشرة بعد كتابة لنفس المستخدم بتتوجه للـ Primary DB نفسها بدل الـ Replica، لضمان إن المستخدم شايف تعديله بالظبط، حتى لو مستخدمين تانيين لسه بيشوفوا نسخة قديمة شوية لحد ما الـ Replica يتزامن.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "How do you handle eventual consistency in practice, beyond just accepting it as a theoretical trade-off?"**
+
+**الإجابة المثالية:** أول خطوة عملية إنك تحدد SLA واضح لمدة الفجوة دي (زي ثانية أو اتنين)، مش تسيبها "بعدين" غير محدودة، لأن ده اللي بيسمح لك تصمم الـ UX بشكل معقول حوالين المشكلة. ثانيًا، بستخدم نمط Read-Your-Own-Writes: أي قراءة بتيجي فورًا بعد كتابة لنفس المستخدم بتتوجه مباشرة للمصدر الأساسي (Primary DB) بدل أي Replica أو Cache ممكن يكون لسه مش متزامن، عشان المستخدم يشوف تعديله بالظبط. ثالثًا، لو الفجوة الزمنية محتاجة توضيح فعلي للمستخدم (زي Search Index بياخد وقت يتحدث)، بفضّل أعرض مؤشر بسيط في الواجهة بدل ما أسيب المستخدم يفتكر إن فيه خطأ. الفكرة الأساسية إن Eventual Consistency مش قرار "نتجاهله ونتمنى الأفضل"، هو Trade-off واعي بينضبط بحدود زمنية واضحة وبتصميم UX يتعامل معاه بشفافية.
+
+> [!tip]
+> ارجع لمثال Q59 (تحديث حالة إرسال الإيميل في Inbox Sales Copilot) — نفس المبدأ هنا: الكتابة على الـ Primary مضمونة فورًا، لكن أي نظام تانٍ بيعتمد على مزامنة لاحقة (Search Index، Analytics، Cache) لازم يتقبل فترة انتظار محددة ومفهومة.
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q96 — إزاي تصمم Idempotent Retries في أنظمة موزّعة عند حدوث Network Failures؟
+
+### أصل الحكاية
+
+في Q80 شرحنا فكرة الـ Idempotency Key للتعامل مع تكرار طلب من الـ Client. السؤال ده بياخد نفس المبدأ خطوة أعمق: مش بس لما الـ Client بيعيد المحاولة، لكن لما **الخدمات نفسها** بتتواصل مع بعض عبر الشبكة، والشبكة ممكن تفشل في أي لحظة. لو Service A بعتت Request لـ Service B، ونفذت العملية بنجاح، لكن الرد ضاع في الطريق (مش الـ Request، الرد بس)، Service A هتفتكر إن العملية فشلت وهتعيد المحاولة — فبتنفّذ العملية مرتين من غير ما تقصد.
+
+```mermaid
+sequenceDiagram
+    participant A as Service A
+    participant B as Service B
+
+    A->>B: POST /reserve-seat (Idempotency-Key: xyz)
+    B->>B: ينفذ الحجز بنجاح
+    B--xA: الرد ضاع في الشبكة (Timeout عند A)
+    Note over A: A مش عارفة هل B نفذت ولا لأ
+    A->>B: يعيد المحاولة تلقائيًا (نفس xyz)
+    B->>B: يلاقي xyz منفذة قبل كده
+    B-->>A: يرجّع نفس النتيجة القديمة (مفيش حجز مضاعف)
+```
+
+```javascript
+// مبدأ At-Least-Once Delivery + Idempotent Processing = Effectively-Once
+async function handleReserveSeatRequest(req, res) {
+  const key = req.headers['idempotency-key'];
+  const existing = await idempotencyStore.get(key);
+  if (existing) {
+    return res.status(existing.statusCode).json(existing.body); // نفس النتيجة القديمة، من غير تنفيذ تاني
+  }
+  const result = await billingService.reserveSeat(req.body.tenantId);
+  await idempotencyStore.set(key, { statusCode: 200, body: result }, { ttl: '24h' });
+  res.json(result);
+}
+```
+
+#### مثال 1: التطبيق العملي — التواصل بين الـ Backend وخدمة الـ AI
+
+لما الـ Backend بيبعت Request لخدمة الـ Classifier عشان تصنف إيميل، ولو الشبكة اتقطعت بعد ما الـ Classifier خلصت شغلها لكن قبل ما الرد يوصل، الـ Backend هيعيد المحاولة (Retry) زي أي نظام موزع سليم. لو الـ Classifier مش مصمم يتعامل مع الـ Idempotency Key ده، هيعالج نفس الإيميل مرتين، وممكن ده يسبب Side Effects غير مقصودة (زي إرسال إشعار مضاعف).
+
+#### مثال 2: فخ شائع — الاعتقاد إن Retry بس (من غير Idempotency) حل كافي
+
+Retry التلقائي (زي في Message Queue من Q44) ضروري في أي نظام موزع عشان يتعامل مع فشل الشبكة المؤقت، لكنه لوحده **خطر** لو العملية اللي بتتكرر مش Idempotent. القاعدة الأساسية: أي عملية ممكن يتكرر تنفيذها بسبب Retry، لازم تكون Idempotent من تصميمها من الأساس (زي `UPDATE status = 'sent'` بدل `INSERT` جديد كل مرة)، وإلا هتحتاج طبقة تتبع صريحة زي Idempotency Key.
+
+#### مثال 3: حالة إنتاجية — At-Least-Once مقابل Exactly-Once Delivery
+
+في الأنظمة الموزعة، الضمان العملي المتاح غالبًا هو **At-Least-Once Delivery** (الرسالة هتوصل مرة على الأقل، وممكن أكتر من مرة بسبب Retries)، لأن ضمان **Exactly-Once** الحقيقي على مستوى الشبكة نفسها صعب جدًا وغالي. الحل العملي في الصناعة هو الجمع بين At-Least-Once Delivery وIdempotent Processing، وده بيدّي نتيجة عملية اسمها **Effectively-Once**: الرسالة ممكن توصل أكتر من مرة، لكن أثرها على النظام بيبقى زي لو اتنفذت مرة واحدة بالظبط.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "How do you safely retry a request between two services when a network failure occurs after the operation succeeded but before the response was received?"**
+
+**الإجابة المثالية:** المشكلة الجوهرية إن الطرف اللي بيبعت الـ Request مش عارف يفرّق بين "العملية فشلت فعلاً" و"العملية نجحت بس الرد ضاع". الحل العملي مبني على مبدأين مع بعض. الأول: تصميم كل عملية ممكن يتكرر تنفيذها لتكون Idempotent، إما بطبيعتها (زي عملية UPDATE بتحدد حالة نهائية بدل ما تزيد قيمة) أو صراحةً عن طريق Idempotency Key بيتتبعه السيرفر المستقبل ويرجّع نفس النتيجة القديمة لو اتكرر. التاني: تقبّل إن الضمان العملي المتاح في الأنظمة الموزعة غالبًا هو At-Least-Once Delivery مش Exactly-Once، لأن الضمان الأخير صعب وغالي على مستوى الشبكة. الجمع بين At-Least-Once Delivery وIdempotent Processing بيدّي نتيجة عملية مكافئة لـ Exactly-Once من منظور تأثير النظام، حتى لو الرسالة اتبعتت أو اتنفذت أكتر من مرة تقنيًا.
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q97 — إزاي الخدمات بتلاقي بعض في نظام Microservices (Service Discovery)؟
+
+### أصل الحكاية
+
+في Q39 قسّمنا النظام لخدمات مستقلة، وفي Q66 اتكلمنا عن Kubernetes كطريقة تشغيل الخدمات دي. لكن سؤال عملي أساسي فات علينا: لو عندك عشرات الـ Instances من خدمة الـ Billing شغالة، وعناوين الـ IP بتاعتها بتتغير باستمرار (Instances بتقع وتتشغل تاني، أو الـ Scaling بيزود عددها)، إزاي خدمة الـ CRM تعرف "تكلم" خدمة الـ Billing من غير ما تحفظ IP ثابت مش موجود أصلاً؟
+
+```mermaid
+flowchart TB
+    A[CRM Service] -->|"فين خدمة Billing؟"| B[Service Registry
+مثلاً: Consul / Kubernetes DNS]
+    B -->|"دول الـ Instances المتاحة دلوقتي"| A
+    A -->|Request فعلي| C[Billing Instance 1]
+    A -->|Request فعلي| D[Billing Instance 2]
+    C -.Health Check.-> B
+    D -.Health Check.-> B
+    E[Billing Instance 3 - وقعت] -.اتشالت تلقائيًا.-> B
+```
+
+```javascript
+// بدون Service Discovery: IP ثابت (هش، بيوقع لو الـ Instance اتغيرت)
+const billingUrl = 'http://10.0.4.22:3000'; // خطر: IP ده ممكن يتغير في أي لحظة
+
+// مع Service Discovery: اسم منطقي بيتحل ديناميكيًا
+const billingUrl = 'http://billing-service.internal'; // DNS بيحل الاسم ده لأي Instance متاح دلوقتي
+```
+
+#### مثال 1: التطبيق العملي — Kubernetes DNS كـ Service Discovery جاهز
+
+في بيئة Kubernetes (Q66)، الـ Service Discovery موجود جاهز بدون ما تبني حاجة بنفسك: أي Kubernetes Service بياخد اسم DNS ثابت (زي `billing-service`)، وKubernetes بيدير داخليًا قائمة الـ Pods (Instances) المتاحة، وبيوجّه أي طلب لاسم الخدمة ده لأي Pod صحي متاح، حتى لو الـ Pods نفسها بتتغير باستمرار بسبب الـ Scaling أو الأعطال.
+
+#### مثال 2: فخ شائع — الخلط بين Service Discovery وLoad Balancer
+
+كتير من المطورين بيفتكروا إن Service Discovery وLoad Balancer نفس الحاجة، وهما مرتبطين لكن مش نفس المفهوم. الـ Load Balancer (Q40) بيوزّع الحمل بين مجموعة معروفة من الـ Servers. الـ Service Discovery بيحل مشكلة سابقة له: "إيه أصلاً قائمة الـ Servers المتاحة دلوقتي؟". في أنظمة كتير، الـ Service Discovery بيغذّي الـ Load Balancer بقائمة محدّثة باستمرار من الـ Instances الصحية، والاتنين بيشتغلوا مع بعض مش بدل بعض.
+
+#### مثال 3: حالة إنتاجية — Client-Side مقابل Server-Side Discovery
+
+فيه نمطين رئيسيين: **Server-Side Discovery** (زي Kubernetes Service أو AWS ELB) اللي فيه الـ Client بيبعت لعنوان واحد ثابت، والطبقة التحتية هي اللي بتحل مين الـ Instance الفعلي. **Client-Side Discovery** (زي Netflix Eureka قديمًا) اللي فيه الـ Client نفسه بيسأل الـ Registry مين الـ Instances المتاحة، وبيختار واحد منهم بنفسه. النمط الأول أبسط وأشيع في الأنظمة الحديثة المبنية على Kubernetes، لأنه بيسيب تعقيد الاختيار للطبقة التحتية بدل ما يكرره كل Client.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "How do services find each other in a microservices architecture where instances are constantly changing?"**
+
+**الإجابة المثالية:** الحل هو Service Discovery: طبقة (زي Service Registry) بتحتفظ بقائمة محدّثة باستمرار من الـ Instances الصحية والمتاحة لكل خدمة، بدل ما أي خدمة تحفظ IP ثابت لخدمة تانية. أي Instance جديدة بتسجل نفسها في الـ Registry ده وقت ما تبدأ الشغل (أو بتتسجل تلقائيًا زي في Kubernetes)، وبتعمل Health Checks دورية عشان لو وقعت تتشال من القائمة تلقائيًا. لما خدمة محتاجة تتواصل مع خدمة تانية، هي بتستخدم اسم منطقي ثابت (زي DNS Name)، والطبقة التحتية هي اللي بتحل الاسم ده لـ IP فعلي متاح دلوقتي — ده النمط الشائع (Server-Side Discovery) في Kubernetes، وبيغني عن أي منطق يدوي للتعامل مع تغيّر الـ IPs المستمر. مهم أوضح إن Service Discovery مش بديل عن Load Balancer، هو اللي بيغذّي الـ Load Balancer بمعلومات دقيقة عن الـ Instances المتاحة فعليًا.
+
+> [!example] 🎯 مستوى السؤال
+> Mid-Level
+
+---
+
+## Q98 — إيه هو الـ Circuit Breaker Pattern، وإزاي بيحمي النظام من الـ Cascading Failures؟
+
+### أصل الحكاية
+
+تخيل خدمة الـ Billing وقعت أو بقت بطيئة جدًا (بترد بعد 30 ثانية بدل جزء من الثانية). لو خدمة الـ CRM لسه بتحاول تكلمها عادي على كل Request، كل Request جوه الـ CRM هيفضل مستني الـ 30 ثانية دي، وده هيستهلك كل الـ Threads/Connections المتاحة في الـ CRM نفسها بسرعة، وهي كمان هتقع، حتى لو مشكلتها الأصلية مالهاش علاقة بيها. الفشل بيبقى **Cascading**: بيمشي من خدمة لخدمة زي الدومينو. الـ Circuit Breaker هو نمط بيوقف السلسلة دي بدري.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Open: عدد الأخطاء تعدى الحد المسموح
+    Open --> HalfOpen: بعد فترة انتظار محددة
+    HalfOpen --> Closed: طلب تجريبي نجح
+    HalfOpen --> Open: طلب تجريبي فشل تاني
+    note right of Closed
+        الحالة العادية: كل الطلبات بتعدي عادي
+    end note
+    note right of Open
+        كل الطلبات بترفض فورًا
+        من غير ما تلمس الخدمة الواقعة أصلاً
+    end note
+```
+
+```javascript
+// مبدأ Circuit Breaker (باستخدام مكتبة زي opossum في Node.js)
+const CircuitBreaker = require('opossum');
+
+const breaker = new CircuitBreaker(callBillingService, {
+  timeout: 3000,            // لو الرد اتأخر أكتر من 3 ثواني، اعتبره فشل
+  errorThresholdPercentage: 50, // لو 50% من الطلبات فشلت
+  resetTimeout: 10000,      // استنى 10 ثواني قبل ما تجرب تاني (Half-Open)
+});
+
+breaker.fallback(() => ({ status: 'billing_unavailable', queued: true })); // رد بديل فوري
+```
+
+#### مثال 1: التطبيق العملي — حماية CRM من وقوع Billing
+
+لو حطّينا Circuit Breaker حوالين النداء من CRM لـ Billing، أول ما نسبة الأخطاء أو الـ Timeouts تعدي حد معين، الـ Circuit Breaker بيتحول لحالة **Open**: أي Request جديد لـ Billing بيترفض فورًا من غير ما يلمس الشبكة أصلاً (بيرجّع Fallback زي "الخدمة مش متاحة دلوقتي، هنعالجها بعدين"). ده بيحمي الـ CRM من إنها تستهلك مواردها في انتظار خدمة واقعة، وبيدّي فرصة لخدمة الـ Billing تتعافى من غير ضغط إضافي عليها.
+
+#### مثال 2: فخ شائع — الخلط بين Circuit Breaker وRetry
+
+الاتنين بيتعاملوا مع الفشل، لكن بطريقة معاكسة. Retry (Q44/Q96) بيحاول تاني على أمل إن الفشل مؤقت. Circuit Breaker بيوقف المحاولات تمامًا لفترة لما يلاحظ إن الفشل مستمر ومش مؤقت. لو استخدمت Retry من غير Circuit Breaker على خدمة واقعة فعليًا، أنت عمليًا بتزود الضغط عليها أكتر (كل Request بيتكرر عدة مرات)، وده بيأخر تعافيها بدل ما يساعد. الممارسة الصحيحة إنك تجمع الاتنين: Retry لعدد محدود من المحاولات، وCircuit Breaker حوالينهم عشان يوقف المحاولات كلها لو الفشل استمر.
+
+#### مثال 3: حالة إنتاجية — الحالة الوسيطة Half-Open
+
+بعد فترة الانتظار في حالة Open، الـ Circuit Breaker مبيرجعش فورًا لحالة "كل حاجة تمام" (Closed)، هو بيدخل حالة **Half-Open**: بيسمح بطلب تجريبي واحد بس (أو عدد محدود) يعدي، ولو نجح يرجّع لحالة Closed عادي، ولو فشل يرجّع تاني لحالة Open وينتظر فترة تانية. الحالة الوسيطة دي مهمة عشان النظام ما يرجعش فجأة لإغراق خدمة لسه بتتعافى بكل الطلبات المتراكمة دفعة واحدة.
+
+### الفايدة الانترفيوية
+
+**Question (EN): "What is the circuit breaker pattern and how does it prevent cascading failures?"**
+
+**الإجابة المثالية:** Circuit Breaker هو نمط بيراقب نسبة فشل النداءات لخدمة معينة، ولما النسبة دي تعدي حد معين، بيتحول لحالة Open ويبدأ يرفض كل الطلبات الجديدة لنفس الخدمة فورًا، من غير ما يحاول يتصل بيها أصلاً. ده بيحمي من الـ Cascading Failures: من غير Circuit Breaker، أي خدمة بتنادي خدمة واقعة أو بطيئة هتفضل تستهلك مواردها (Threads، Connections) في انتظار رد لن يأتي، وده ممكن يخليها هي نفسها تقع، وينتقل الفشل زي الدومينو لخدمات تانية معتمدة عليها. بعد فترة انتظار محددة، الـ Circuit Breaker بيدخل حالة Half-Open، بيسمح بطلب تجريبي واحد عشان يتأكد هل الخدمة اتعافت ولا لأ، ولو نجح يرجع لحالة Closed العادية، ولو فشل يرجع لحالة Open تاني. الفرق الجوهري عن Retry إن Retry بيحاول تاني بافتراض إن الفشل مؤقت، بينما Circuit Breaker بيوقف المحاولات تمامًا لما يلاحظ إن الفشل مستمر، وعادةً الاتنين بيتستخدموا مع بعض.
+
+> [!tip]
+> رجوع لـ Q67 (Monitoring): الـ Circuit Breaker نفسه مصدر معلومات مهم جدًا للـ Monitoring — لو لاحظت Circuit بيفتح باستمرار على خدمة معينة، ده مؤشر واضح إن فيه مشكلة حقيقية محتاجة تتصلح، مش مجرد Blip عابر.
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q99 — إيه الفرق بين Event-Driven Architecture والـ Request-Response التقليدي؟
+
+### أصل الحكاية
+
+في Q68 بدأنا الموديول التاسع بشرح إن Request-Response هو النمط الأساسي، لكن قيده الجوهري إن الـ Client هو دايمًا اللي بيبدأ الكلام. وفي Q75 شرحنا Pub/Sub كنمط تواصل. السؤال ده بياخد الفكرة لمستوى معماري أشمل: مش بس "إزاي رسالة واحدة بتتوصل"، لكن "إزاي بتصمم نظام كامل حوالين فكرة الأحداث بدل الطلبات". في Event-Driven Architecture، الخدمات مش بتنادي بعض مباشرة أصلاً، هي بتنشر أحداث ("حصل كذا") وأي خدمة مهتمة بتتصرف بناءً عليه، من غير ما الناشر يعرف مين هيسمع أو هيعمل إيه.
+
+```mermaid
+flowchart TB
+    subgraph RR["Request-Response التقليدي"]
+        A1[CRM] -->|"استدعاء مباشر: احجز Seat"| A2[Billing]
+        A2 -->|"استدعاء مباشر: ابعت إشعار"| A3[Notification]
+        Note1[كل خدمة عارفة اسم وعنوان
+الخدمة اللي بعدها - Coupling عالي]
+    end
+    subgraph EDA["Event-Driven Architecture"]
+        B1[CRM] -->|"ينشر: DealWon"| B0[Event Bus]
+        B0 --> B2[Billing يسمع ويتصرف]
+        B0 --> B3[Notification يسمع ويتصرف]
+        B0 --> B4[Analytics يسمع ويتصرف]
+        Note2[CRM مش عارف أصلاً
+مين اللي هيسمع أو هيعمل إيه]
+    end
+```
+
+```javascript
+// Request-Response: CRM عارف ومعتمد مباشرة على Billing وNotification
+async function markDealWon(dealId) {
+  await billingService.reserveSeat(dealId);       // Coupling مباشر
+  await notificationService.notify(dealId);        // Coupling مباشر
+  // لو خدمة جديدة عايزة تتصرف عند الحدث ده، لازم تعدّل الكود هنا
+}
+
+// Event-Driven: CRM بينشر الحدث بس، مش عارف ولا مهتم مين هيسمعه
+async function markDealWon(dealId) {
+  await dealRepository.markWon(dealId);
+  await eventBus.publish('deal.won', { dealId }); // خلاص، مسؤوليته انتهت
+  // خدمة جديدة عايزة تتصرف؟ تشترك في الحدث، من غير ما تلمس كود CRM خالص
+}
+```
+
+#### مثال 1: التطبيق العملي — إضافة خدمة جديدة بدون تعديل الموجود
+
+لو بعد شهرين قررتوا تضيفوا خدمة "CRM Sync" جديدة تزامن كل صفقة مقفولة مع Zoho CRM (زي ما اتناقش في الاستراتيجية بتاعتكم)، في Event-Driven Architecture الخدمة الجديدة دي بس تشترك في حدث `deal.won` الموجود بالفعل، من غير ما تلمس كود خدمة الـ CRM الأساسية خالص. في Request-Response التقليدي، كنت هتحتاج تعدّل دالة `markDealWon` نفسها عشان تضيف نداء جديد للخدمة الجديدة دي.
+
+#### مثال 2: فخ شائع — الاعتقاد إن Event-Driven دايمًا أفضل من Request-Response
+
+Event-Driven بيقلل الـ Coupling لكنه بيزود التعقيد في اتجاه تاني: صعوبة تتبع "إيه اللي بيحصل بالظبط لما حدث معين ينشر" (لأن الرد فعليًا موزّع بين خدمات كتير مش شايفهم في مكان واحد)، وصعوبة ضمان الترتيب أو التزامن اللحظي. لعملية بسيطة محتاجة رد فوري ومباشر ومضمون (زي "هل الدفع نجح؟ عايز أعرف فورًا")، Request-Response التقليدي أوضح وأبسط. القرار مش "أيهما أفضل مطلقًا"، هو حسب طبيعة العملية.
+
+#### مثال 3: حالة إنتاجية — الجمع بين النمطين في نفس النظام
+
+الأنظمة الحقيقية غالبًا بتخلط النمطين: عمليات محتاجة رد فوري ومباشر (زي تسجيل الدخول أو الدفع) بتستخدم Request-Response، بينما ردود الفعل الجانبية والغير حرجة زمنيًا (زي تحديث Analytics، مزامنة CRM خارجي، إرسال إشعارات) بتستخدم Event-Driven عن طريق نفس البنية التحتية اللي شرحناها في Q44 (Message Queue) وQ75 (Pub/Sub).
+
+### الفايدة الانترفيوية
+
+**Question (EN): "How does event-driven architecture differ from a traditional request-response design, and when would you choose one over the other?"**
+
+**الإجابة المثالية:** في Request-Response التقليدي، الخدمات بتنادي بعض مباشرة وبتعرف بعض بالاسم، وده Coupling صريح: أي تغيير في مين محتاج يستجيب لحدث معين بيتطلب تعديل الكود في الخدمة المصدر نفسها. في Event-Driven Architecture، الخدمة المصدر بتنشر حدث ("حصل كذا") من غير ما تعرف أو تهتم مين هيسمعه أو هيعمل إيه بيه، وأي خدمة جديدة عايزة تتصرف عند الحدث ده تقدر تشترك فيه من غير ما تلمس كود الخدمة المصدر خالص، وده بيقلل الـ Coupling بشكل كبير. الفايدة الأساسية هي المرونة في إضافة سلوكيات جديدة بمرور الوقت، والتكلفة هي صعوبة أكبر في تتبع "إيه اللي بيحصل بالظبط" لأن الاستجابة موزّعة على خدمات كتير مش مجمّعة في مكان واحد. عمليًا، بختار Request-Response للعمليات اللي محتاجة رد فوري ومباشر ومضمون (زي عمليات الدفع)، وبختار Event-Driven للعمليات اللي فيها ردود فعل جانبية متعددة ومستقلة عن بعض، وأغلب الأنظمة الحقيقية بتستخدم مزيج من الاتنين حسب طبيعة كل عملية.
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+## Q100 — مراجعة شاملة: إزاي كل الموديولز الـ 12 بترتبط ببعض في نظام Backend حقيقي واحد؟
+
+### أصل الحكاية
+
+وصلنا للسؤال المية، والسؤال ده مختلف عن باقي الملف بالكامل: مفيش مفهوم جديد هنا، الهدف إنك تقدر تحكي "قصة" واحدة متماسكة تربط بين الموديولز الـ 12 كلهم، بالظبط زي ما هتتسأل في إنترفيو System Design شامل من ساعة لساعتين. تخيل معايا: طلب واحد بسيط — "مستخدم بيبعت إيميل جديد لعميل من جوه Inbox Sales Copilot" — بيمر فعليًا عبر كل حاجة اتعلمناها من Q1 لحد Q99.
+
+```mermaid
+flowchart TD
+    A["Q1-Q9: DNS + TCP + HTTPS
+المتصفح بيوصل للسيرفر"] --> B["Q10-Q23: HTTP Request/Response
+Extension بتبعت POST /emails/send"]
+    B --> C["Q39-Q43: Node.js Backend
+Single-Threaded, Event Loop (Q86-Q92) بيستقبل الطلب"]
+    C --> D["Q47-Q54: Auth + Security
+JWT Token اتفحص، Input اتنضف من SQL Injection/XSS"]
+    D --> E["Q44 + Q68-Q77: Async Processing
+الرد بيرجع 202 فورًا، والمعالجة الفعلية في Message Queue"]
+    E --> F["Q93-Q99: Distributed Coordination
+Saga بين CRM/Billing/Notification، Event-Driven لباقي الأطراف"]
+    F --> G["Q45-Q46, Q56-Q60: Data Layer
+Connection Pool, Caching, Indexes, Eventual Consistency"]
+    G --> H["Q61-Q67: Infrastructure
+Docker Container, CI/CD, Load Balancer, Monitoring"]
+    H --> I["Q98: Circuit Breaker
+لو أي خدمة فرعية وقعت، النظام بيحمي نفسه"]
+```
+
+```javascript
+// تتبع الطلب الواحد ده عبر الموديولز المختلفة (توضيح مركّز، مش كود كامل)
+app.post('/emails/send', authenticate, async (req, res) => {           // Q47-Q50: Auth
+  const sanitizedBody = validateAndSanitize(req.body);                  // Q52-Q53: Security
+  const jobId = await emailQueue.publish('send-email', sanitizedBody);  // Q44, Q80: Async + Idempotency
+  res.status(202).json({ jobId });                                      // Q85: Long-Running Operation Pattern
+});
+
+// Background Worker (منفصل، ممكن حتى Worker Thread أو Process مستقل - Q86-Q89)
+emailQueue.consume('send-email', async (job) => {
+  const breaker = getCircuitBreaker('gmail-api');                       // Q98: Circuit Breaker
+  await breaker.fire(() => gmailApiClient.send(job.data));              // استدعاء خارجي محمي
+  await eventBus.publish('email.sent', { emailId: job.data.id });       // Q99: Event-Driven للأطراف المهتمة
+});
+```
+
+#### مثال 1: الترابط الكامل في مشروعك — Inbox Sales Copilot
+
+لو حابب تحكي القصة دي في إنترفيو، ابدأ من الـ Extension (Client) اللي بيبعت HTTP Request (Q1-Q23) لسيرفر NestJS شغال Single-Threaded (Q43، Q86-Q92)، عدّي بطبقة الـ Auth والحماية (Q47-Q54)، اشرح إزاي العملية الطويلة (إرسال إيميل، تصنيف AI) بترجع رد فوري وتتنفذ في الخلفية عبر Message Queue (Q44، Q85)، وإزاي التنسيق بين الخدمات المختلفة (Billing، CRM، AI Microservices) بيتم عبر Saga Pattern أو Event-Driven Architecture (Q93-Q99) بدل استدعاءات مباشرة هشة، وإزاي كل ده شغال جوه Containers على Kubernetes (Q61، Q66) محمي بـ Circuit Breakers (Q98) ومراقب بـ Monitoring حقيقي (Q67).
+
+#### مثال 2: فخ شائع — حفظ المفاهيم منفصلة عن بعض من غير رؤية شاملة
+
+أخطر حاجة في إنترفيو System Design إنك تجاوب كل سؤال فرعي صح بس من غير ما تقدر تربطهم في قصة واحدة متماسكة. مثلاً تعرف Circuit Breaker وتعرف Event-Driven Architecture منفصلين، لكن ما تلاحظش إن استخدامهم مع بعض ضروري (لو خدمة بتسمع لحدث معين ووقعت، الـ Circuit Breaker حوالين أي استدعاء خارجي بتعمله وقت معالجة الحدث ده هو اللي بيمنعها تسحب باقي النظام معاها).
+
+#### مثال 3: حالة إنتاجية — القرار المعماري بيتغير مع نمو النظام
+
+مشروع صغير في يومه الأول ممكن يشتغل كويس بـ Monolith بسيط (Q39) وRequest-Response مباشر (Q68) من غير أي حاجة من الموديول الثاني عشر. لكن مع نمو النظام (أكتر مستخدمين، أكتر خدمات، أكتر فرق بتشتغل بالتوازي)، المشاكل اللي اتغطت في الموديولز 11 و12 (Race Conditions، Distributed Transactions، Cascading Failures) بتظهر تدريجيًا، مش كلها مرة واحدة. المهندس الجيد هو اللي بيعرف يقرا الإشارات دي بدري ويقرر يطبّق الحل المناسب في التوقيت الصح، مش يطبّق كل حاجة من الأول بتعقيد زيادة عن اللزوم (Over-Engineering).
+
+### الفايدة الانترفيوية
+
+**Question (EN): "Walk me through how a single user action flows through a modern distributed backend system, end to end."**
+
+**الإجابة المثالية:** هبدأ من لحظة ما الـ Client بيبعت HTTP Request عبر اتصال TCP آمن (HTTPS)، السيرفر بيستقبله على Event Loop واحد (في حالة Node.js) بيتعامل مع آلاف الطلبات بكفاءة عن طريق Non-Blocking I/O. الطلب بيعدي أولاً على طبقة الـ Authentication والـ Authorization والتحقق من المدخلات ضد هجمات زي SQL Injection. لو العملية طويلة أو بتحتاج تنسيق مع خدمات تانية، السيرفر بيرجّع رد فوري (202 Accepted) ويحط الشغل الفعلي في Message Queue، عشان المستخدم ما يستنيش. المعالجة الفعلية بتحصل في Background، وممكن تشمل تنسيق بين عدة خدمات مستقلة عن طريق Saga Pattern (لو العملية محتاجة ترتيب واضح ومعاها Rollback) أو Event-Driven Architecture (لو الأطراف المهتمة مستقلة عن بعض). أي استدعاء لخدمة خارجية أو تانية بيكون محمي بـ Circuit Breaker عشان لو حصل فيها مشكلة، الفشل ما ينتقلش زي الدومينو لباقي النظام. كل ده شغال جوه Containers معزولة بيتم توزيعها ومراقبتها عن طريق أدوات Infrastructure حديثة، ومبني على قاعدة بيانات بتستخدم Connection Pooling وCaching وIndexes للأداء، مع تقبّل واعٍ إن أجزاء من النظام هتكون Eventually Consistent بدل Strongly Consistent، لأن ده الـ Trade-off المناسب لطبيعة البيانات دي.
+
+> [!tip]
+> في أي إنترفيو System Design، لو قدرت تحكي القصة دي بترتيب منطقي واحد (من الطلب لحد الاستجابة، مرورًا بكل طبقة) بدل ما تسرد مفاهيم منفصلة، هتبان إنك فاهم النظام ككل مش بس حافظ تعريفات — وده بالظبط الفرق بين Mid-Level وSenior في تقييم الإنترفيوهات دي.
+
+> [!example] 🎯 مستوى السؤال
+> Senior
+
+---
+
+> [!tip] 🏁 Checkpoint نهائي للملف كله — 100 سؤال
+> وصلت لآخر سؤال في المرجع، ومعاك دلوقتي خريطة كاملة من 12 موديول: أساسيات الشبكات وHTTP (Q1-Q23)، تصميم REST وGraphQL APIs (Q24-Q38)، معمارية السيرفرات والـ Scaling (Q39-Q46)، الأمان والـ Authentication (Q47-Q54)، الأداء والـ Distributed Data (Q55-Q60)، الـ DevOps وInfrastructure (Q61-Q67)، أنماط التواصل بين Backend وClient (Q68-Q77)، تصميم APIs متقدم وواقعي (Q78-Q85)، Concurrency وProcess/Thread Management (Q86-Q92)، وأخيرًا أساسيات الأنظمة الموزعة (Q93-Q100). الفكرة الأهم اللي المفروض تطلع بيها مش حفظ الـ 100 سؤال دول لوحدهم، لكن القدرة على ربطهم في قصة هندسية واحدة متماسكة زي Q100 — لأن ده بالظبط اللي بيفرّق مهندس Senior حقيقي عن حد حافظ تعريفات منفصلة. بالتوفيق في كل إنترفيو جاي! 🚀
+
+---
