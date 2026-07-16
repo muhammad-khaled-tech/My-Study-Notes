@@ -21,6 +21,166 @@
 
 ---
 
+## 0.5 — قف هنا الأول. الأساس اللي لازم يترسخ قبل أي سطر كود
+
+لو حسيت وإنت بتقرا الملف ده إن كل سطر كود شكله "لغة تانية" — مش لأنك ضعيف، ده لأني قفزت مباشرة للكود الحقيقي من غير ما أشرحلك المكتبات والأدوات اللي الكود ده مبني عليها أصلاً. القسم ده تعويض عن الغلطة دي. هناخده بالراحة، وكل مفهوم هربطه بحاجة إنت شغال بيها فعلاً (NestJS، Prisma، TypeScript العادي) عشان تبقى نقطة انطلاقك مألوفة مش غريبة.
+
+هنمشي بالترتيب ده بالظبط، وكل نقطة بانية على اللي قبلها:
+
+```mermaid
+flowchart TD
+    A["1. ليه أصلاً فيه مكتبة اسمها LangChain؟"] --> B["2. Zod: إيه هو،<br/>وليه شبه class-validator اللي عارفه"]
+    B --> C["3. Generics &lt;T&gt;:<br/>معنى الأقواس المربعة الغريبة دي"]
+    C --> D["4. State: اللوحة المشتركة<br/>(زي middleware بيمرر request)"]
+    D --> E["5. نقرا composer.node.ts<br/>سطر سطر مع بعض"]
+    E --> F["6. جدول 'لو شفت الرمز ده...'<br/>(cheat sheet ترجعله وقت الحاجة)"]
+```
+
+### 1) ليه أصلاً فيه مكتبة اسمها LangChain/LangGraph؟
+
+إنت عارف Prisma كويس — بدل ما تكتب SQL خام كل مرة (`SELECT * FROM users WHERE...`)، Prisma بيدّيك طريقة موحدة (`prisma.user.findMany(...)`) وهو اللي بيترجمها لـ SQL تحت، وبيشتغل مع PostgreSQL أو MySQL أو أي قاعدة بيانات من غير ما تغيّر شكل الكود بتاعك.
+
+**LangChain بيعمل بالظبط نفس الحاجة، بس مع موديلات الـ AI بدل قواعد البيانات.** من غير LangChain، كل موديل (OpenAI، Groq، Gemini، Claude) عنده شكل API مختلف شوية. LangChain بيدّيك طبقة موحدة: تكتب كودك مرة واحدة، وتقدر تغيّر الموديل اللي تحته (Groq دلوقتي، حاجة تانية بكرة) من غير ما تعيد كتابة كل حاجة. و**LangGraph** (مكتبة شقيقة لـ LangChain) بتحل مشكلة تانية: لما يبقى عندك **خطوات متتالية** لازم تتنفذ بالترتيب وكل خطوة محتاجة نتيجة اللي قبلها (زي Extractor → Matcher → Composer)، بدل ما تكتب `if/else` معقدة يدوي، LangGraph بيدّيك أداة اسمها `StateGraph` بتنظملك الترتيب ده.
+
+> **الخلاصة اللي تفتكرها:** LangChain = "Prisma بتاع الموديلات". LangGraph = "أداة لترتيب خطوات AI متتالية بتتشارك بيانات".
+
+### 2) Zod — إيه هو، وليه هو شبه حاجة إنت عارفها بالفعل
+
+في NestJS، لما تعمل DTO زي كده:
+
+```typescript
+// This is something you likely already wrote in NestJS before — class-validator DTO
+import { IsString, IsInt, Min } from 'class-validator';
+
+export class CreateClientDto {
+  @IsString()
+  name: string;
+
+  @IsInt()
+  @Min(0)
+  employeeCount: number;
+}
+```
+
+إنت عملت حاجتين في نفس الوقت من غير ما تحس: (1) عرّفت **شكل البيانات** (name نص، employeeCount رقم)، و(2) عرّفت **قواعد التحقق** (employeeCount لازم يكون رقم صحيح وموجب). NestJS بيستخدم الكلاس ده عشان يتحقق من أي request جاي من العميل.
+
+**Zod بيعمل نفس الفكرة بالظبط، بس بطريقة كتابة مختلفة (function-based مش class-based):**
+
+```typescript
+import { z } from 'zod';
+
+// Same idea as the DTO above, just written as a Zod schema instead of a class
+const CreateClientSchema = z.object({
+  name: z.string(),
+  employeeCount: z.number().int().min(0),
+});
+```
+
+`z.object({...})` = "عرّف شكل بيانات فيه الحقول دي". `z.string()` = "الحقل ده لازم يكون نص". `z.number().int().min(0)` = "رقم، صحيح، أكبر من أو يساوي صفر". **نفس فلسفة الـ DTO تماماً، بس Zod بيتكتب كـ متغيّر (object) مش كـ كلاس.**
+
+ليه المشروع مستخدم Zod هنا بدل class-validator؟ لأن Zod عنده ميزة إضافية مهمة جداً لشغلنا: تقدر "تحوّل" الـ schema نفسه لـ **JSON Schema** (شكل تقني معين) وتبعته مباشرة للموديل يقوله "لازم ترجعلي البيانات بالشكل ده بالظبط" — ده بالظبط الـ Structured Output اللي هنشرحه بعدين. الـ class-validator DTO متعملش كده مباشرة.
+
+### 3) الأقواس المربعة الغريبة `<T>` — إيه معناها (Generics)
+
+هتشوف كتير في الكود حاجات زي `Annotation<string>()` أو `Promise<ExtractorOutput>`. الـ `<...>` دي اسمها **Generic** — وهي مفهوم TypeScript عادي، مش حاجة خاصة بـ LangChain.
+
+**تشبيه بسيط:** فكّر في صندوق (box) عام تقدر تحطله أي حاجة جواه، بس لازم تقوله الأول "هحط جواك إيه بالظبط":
+
+```typescript
+// A GENERIC box — you tell it what type it will hold, using <T>
+class Box<T> {
+  constructor(public content: T) {}
+}
+
+const numberBox = new Box<number>(42);       // a box that holds a number
+const textBox = new Box<string>('hello');    // a box that holds a string
+```
+
+`Box<T>` معناها "الكلاس ده صندوق عام، والـ T ده placeholder هتحدده وقت الاستخدام". لما تكتب `Box<number>` إنت بتقول "T = number في الحالة دي".
+
+في مشروعك، `Promise<ExtractorOutput>` معناها **"وعد (Promise) هيرجع في النهاية بقيمة من نوع ExtractorOutput"** — يعني الدالة async بترجّع نتيجة *لسه مش جاهزة دلوقتي*، وشكل النتيجة لما تجهز هيكون `ExtractorOutput`. وده بالظبط نفس شكل أي دالة `async` كتبتها في NestJS قبل كده (كل service method عندك بترجع `Promise<SomeType>`، حتى لو معملتش لها generic صريح).
+
+**نقطة مهمة تفتكرها:** `z.infer<typeof ExtractorSchema>` اللي شفتها فوق معناها حرفياً: **"خد الـ Zod schema ده، واستنتجلي (`infer`) شكل الـ TypeScript type بتاعه تلقائي"**. يعني بدل ما تكتب الـ interface يدوي مرتين (مرة كـ Zod schema، ومرة كـ TypeScript type)، بتكتبه مرة واحدة كـ Zod schema، و`z.infer<>` بيولّدلك الـ type منه أوتوماتيك. ده نفس فكرة إن Prisma بيولّدلك الـ TypeScript types من الـ schema.prisma تلقائي — بلاش تكرار.
+
+### 4) الـ "State" — اللوحة المشتركة اللي كل خطوة بتقرا وتكتب فيها
+
+دي أهم نقطة في الفصل ده. تخيّل عندك NestJS Interceptor أو Middleware بيستقبل `request` object، يقدر يقرا منه حاجة، يضيفله حاجة، وبعدين يبعته للـ handler اللي بعده:
+
+```typescript
+// A pattern you already know from NestJS middleware
+function loggerMiddleware(req: Request, res: Response, next: NextFunction) {
+  req.startTime = Date.now(); // add something to the shared request object
+  next(); // pass it to whatever comes next in the chain
+}
+```
+
+الـ `req` هنا هو "لوحة مشتركة" — كل middleware بعده يقدر يقرا `req.startTime` اللي انت ضفتها. **LangGraph's `State` هو بالظبط نفس الفكرة**، بس بدل middleware chain، عندنا AI nodes متتالية:
+
+```mermaid
+flowchart LR
+    S0["State (البداية):<br/>emailBody, intent"] --> N1["extract node<br/>يقرا emailBody<br/>يكتب extractorResult"]
+    N1 --> S1["State (بعد extract):<br/>emailBody, intent, extractorResult"]
+    S1 --> N2["compose node<br/>يقرا extractorResult<br/>يكتب composerResult"]
+    N2 --> S2["State (بعد compose):<br/>...كل حاجة + composerResult"]
+```
+
+كل node (زي middleware بالظبط) بياخد الـ state الحالي، يقرا منه اللي محتاجه، ويرجّع بس الحاجة الجديدة اللي عايز يضيفها — والـ graph نفسه (زي `next()`) بيدمجها ويبعتها للـ node اللي بعده. ده كل حاجة محتاج تفهمها عن `StateGraph` من ناحية المفهوم — الباقي تفاصيل syntax.
+
+### 5) نقرا `composer.node.ts` سطر سطر مع بعض (الكود الموجود فعلاً في الريبو بتاع عبدالرحمن)
+
+خلينا ناخد كود موجود فعلاً وحقيقي (مش مثال مصطنع) ونعلّق على كل سطر فيه:
+
+```typescript
+// composer.node.ts — line-by-line breakdown
+
+export async function composerNode(
+  state: ReplyGraphStateType,     // ← "the shared board" from part 4 above, as an input
+  aiModelService: AiModelService, // ← a plain object passed in manually (NOT NestJS DI here!
+                                  //   LangGraph nodes are plain functions, not @Injectable
+                                  //   classes, so dependencies are passed as function params)
+): Promise<Partial<ReplyGraphStateType>> {
+  // ↑ "Partial<...>" is ANOTHER generic (see part 3): it means "an object with
+  //   SOME of ReplyGraphStateType's fields, not necessarily all of them" —
+  //   because this node only writes composerResult, not the whole board.
+
+  const composerResult = await aiModelService.generateStructured({
+    schema: ComposerSchema,        // ← the Zod schema from part 2: "reply in this shape"
+    runName: 'ComposerNode',       // ← a label used later for Langfuse tracing (Epic 11)
+    messages: [
+      { role: 'system', content: COMPOSER_SYSTEM_PROMPT }, // ← the "job description"
+      { role: 'user', content: userMessage },               // ← "today's specific task"
+    ],
+  });
+
+  return { composerResult }; // ← same as: return { composerResult: composerResult }
+                              //   this is what gets MERGED into the shared state
+}
+```
+
+النقطة الأهم في الكود ده اللي ممكن تكون لخبطتك: **الدالة مش كلاس، مش `@Injectable()`، مش حاجة NestJS خالص**. هي دالة عادية (plain function) بتاخد `state` و`aiModelService` كـ **parameters عاديين**، مش كـ dependency injection. ده لأن LangGraph مش عارف حاجة عن NestJS ولا بيتعامل معاه — هو مكتبة منفصلة تماماً، وطريقة ربطها بـ NestJS هي إنك تبني الـ `AiModelService` مرة واحدة (هو ده اللي فعلاً `@Injectable()` جوه NestJS)، وبعدين "تمرره يدوي" لكل node function وقت بناء الـ graph.
+
+### 6) جدول "لو شفت الرمز ده... يبقى معناه..." — ارجعله وقت ما تتلخبط
+
+| الرمز | معناه بالعربي |
+|---|---|
+| `z.object({...})` | "عرّف شكل بيانات، بالظبط زي ما بتعمل DTO بـ class-validator" |
+| `z.string()`, `z.number()`, `z.boolean()` | نوع الحقل — نفس فكرة `@IsString()`, `@IsInt()` |
+| `.nullable()` | "الحقل ده ممكن يكون `null` — ده مقصود، مش خطأ" |
+| `.optional()` | "الحقل ده ممكن ميتبعتش خالص" (مختلف عن nullable) |
+| `.describe('...')` | "شرح للموديل عن معنى الحقل ده — بيتحول لجزء من التعليمات الفعلية" |
+| `z.infer<typeof X>` | "استنتج لي TypeScript type من الـ Zod schema ده تلقائي" |
+| `Promise<T>` | "دالة async هترجع في المستقبل قيمة من نوع T" — زي أي service method عندك |
+| `Partial<T>` | "object فيه بعض حقول T بس، مش شرط كلهم" |
+| `Annotation<T>()` | "عرّف خانة في الـ State المشترك، من نوع T" |
+| `state: ReplyGraphStateType` | "اللوحة المشتركة اللي كل node بيقرا منها ويكتب فيها" |
+| `aiModelService.generateStructured({...})` | "نادي الموديل، واضمن إن الرد يرجع بشكل الـ schema بالظبط" |
+| `runName: '...'` | "اسم تسجيله للـ tracing بعدين (Langfuse) — مش بيأثر على النتيجة نفسها" |
+| function عادية بتاخد params (مش `@Injectable()`) | "دي LangGraph node — مش NestJS service، بتتربط بالـ DI يدوي مش تلقائي" |
+
+**نصيحة عملية:** خد نسخة من الجدول ده وحطه فاتح في تبويب لوحده وانت بتقرا باقي الملف. أي مرة تتلخبط في سطر كود، ارجع للجدول الأول قبل ما تكمل قراءة.
+
+---
+
 ## 1. البداية — ليه أصلاً محتاجين "طبقة" بين الإيميل والـ Matcher؟
 
 تخيّل معايا: عميل بعت الإيميل ده —
@@ -217,37 +377,85 @@ flowchart TD
 
 ### توسيع الـ State
 
-دلوقتي `reply-graph.state.ts` بسيط جداً (فيه بس `composerResult`). هتوسّعه عشان يستوعب مخرجات الـ Extractor، وبيانات الدخول اللي محتاجها:
+**قبل أي كود — الرابط الرسمي اللي تقرا منه بنفسك:** `Annotation` هي جزء من مكتبة `@langchain/langgraph` (نفس المكتبة اللي شرحناها في القسم 0.5). التوثيق الرسمي بتاعها هنا: [`Annotation` — LangGraph.js API Reference](https://reference.langchain.com/javascript/modules/_langchain_langgraph.index.Annotation.html)، وتوثيق `StateGraph` نفسه هنا: [`StateGraph` — LangGraph.js API Reference](https://langchain-ai.github.io/langgraphjs/reference/classes/langgraph.StateGraph.html). لو أي وقت حسيت إني اختصرت حاجة، ارجع للرابطين دول مباشرة — كل مثال في القسم ده مبني على الأمثلة الرسمية الموجودة فيهم.
+
+#### إيه هو `Annotation` بالظبط — قبل ما نشوف السطر الحقيقي
+
+فاكر تشبيه "اللوحة المشتركة" في القسم 0.5؟ `Annotation` هي الأداة اللي بتعرّف **خانة واحدة** في اللوحة دي. المشكلة اللي `Annotation` بتحلها: تخيّل عندك **قايمة مشتريات (shopping list) في البيت** — إنت كتبت 3 حاجات الصبح، مراتك ضافت حاجتين بعد الضهر. السؤال: لما الاتنين "يكتبوا" في نفس القايمة، النتيجة تبقى إيه؟ **تدمج الاتنين مع بعض؟** ولا **آخر واحد كتب يمسح اللي قبله؟** القرار ده اسمه **reducer**.
+
+كل خانة (field) جوه `Annotation.Root({...})` ليها احتمالين:
+
+1. **من غير reducer** (زي `emailBody: Annotation<string>()`) → القاعدة الافتراضية في LangGraph هي **"آخر واحد كتب يكسب" (last-write-wins)**: أي node يرجّع قيمة جديدة للخانة دي، بتستبدل القديمة بالكامل.
+2. **مع reducer صريح** (زي `attachmentsText` تحت) → إنت بتحدد يدوي إزاي القيمة القديمة والجديدة يتدمجوا.
 
 ```typescript
-// src/modules/ai/graphs/reply/reply-graph.state.ts — EXTENDED
-import { Annotation } from '@langchain/langgraph';
-import { ComposerOutput } from './nodes/composer/composer.schema';
-import { ExtractorOutput } from './nodes/extractor/extractor.schema';
+// This is the GENERIC shape from LangGraph's own docs — not your project's code yet
+const MyState = Annotation.Root({
+  // No reducer -> simplest case: whatever a node returns REPLACES the old value
+  currentOutput: Annotation<string>(),
+
+  // WITH a reducer -> you control the merge yourself
+  messages: Annotation<string[]>({
+    reducer: (existing, incoming) => existing.concat(incoming), // "append, don't replace"
+    default: () => [], // the value BEFORE any node has written to it yet
+  }),
+});
+```
+
+`reducer: (existing, incoming) => ...` معناها حرفياً: **"لما القيمة القديمة تكون `existing` والجديدة الجاية من الـ node تكون `incoming`، ارجع لي النتيجة النهائية بالشكل ده"**. و`default: () => [...]` معناها **"لو حد قرا الخانة دي قبل ما أي node يكتب فيها، خليها تبدأ بالقيمة دي (مصفوفة فاضية هنا)"**.
+
+#### دلوقتي — الكود الحقيقي، سطر سطر
+
+`reply-graph.state.ts` بسيط جداً دلوقتي (فيه بس `composerResult`). هنوسّعه عشان يستوعب مخرجات الـ Extractor:
+
+```typescript
+// src/modules/ai/graphs/reply/reply-graph.state.ts — EXTENDED, line by line
+
+import { Annotation } from '@langchain/langgraph'; // ← the tool itself, from part 0.5
+import { ComposerOutput } from './nodes/composer/composer.schema'; // ← Abdulrahman's Zod-inferred type
+import { ExtractorOutput } from './nodes/extractor/extractor.schema'; // ← your Zod-inferred type (section 5)
 
 export const ReplyGraphState = Annotation.Root({
+  // Plain fields, no reducer -> "last write wins" is fine because only
+  // ONE thing ever sets them (they're inputs, set once before graph.invoke()).
   emailId: Annotation<string>(),
   tenantId: Annotation<string>(),
   emailBody: Annotation<string>(),
-  // ↓ New inputs the Extractor needs. They come from OUTSIDE the graph
-  // (ReplyService fetches them before calling graph.invoke()), so they
-  // are plain inputs here, not something a node computes.
   intent: Annotation<string | undefined>(),
+
+  // These TWO need a reducer because ReplyService may call graph.invoke()
+  // with a FRESH array each run, and we always want the LATEST array, not
+  // an accumulation across retries. So the reducer explicitly says
+  // "ignore what was there before (_), just take the new one (next)".
   attachmentsText: Annotation<string[]>({ reducer: (_, next) => next, default: () => [] }),
   externalContentText: Annotation<string[]>({ reducer: (_, next) => next, default: () => [] }),
-  // ↓ New output slot for the Extractor node
-  extractorResult: Annotation<ExtractorOutput | undefined>(),
+
+  // Output slots -> each AI node writes to exactly one of these, once,
+  // so plain "last write wins" (no reducer) is the correct choice here too.
+  extractorResult: Annotation<ExtractorOutput | undefined>(), // ← YOUR new slot
   composerResult: Annotation<ComposerOutput | undefined>(),
   finalDraft: Annotation<string | undefined>(),
   excludedByUser: Annotation<string[]>(),
 });
 
+// "Give me the plain TypeScript type of this whole state object" —
+// same z.infer idea from part 0.5, but LangGraph's own version of it.
 export type ReplyGraphStateType = typeof ReplyGraphState.State;
 ```
 
-كل field جوه `Annotation.Root` ده "خانة" في اللوحة المشتركة. أي node بيرجع `Partial<ReplyGraphStateType>` — يعني بيرجّع بس الخانات اللي عدّلها، مش اللوحة كلها، والـ graph بيدمجها تلقائي [[2]](#المصادر).
+النقطة الوحيدة الجديدة هنا عن قسم 0.5: **مش كل خانة محتاجة reducer**. لو الخانة بيكتب فيها حد واحد بس (زي `extractorResult` — بس node واحد بيكتبها)، سيبها من غير reducer، الافتراضي (استبدال كامل) كافي. الـ reducer بتحطه بس لما يكون فيه احتمال إن قيمة قديمة وجديدة لازم "يتدمجوا" مش يتستبدلوا (زي المصفوفات هنا).
 
-**✅ Commit checkpoint 2:**
+---
+
+### ✅ الخطوات العملية بالترتيب — نفّذها بالظبط كده وبعدين اعمل الكوميت
+
+1. افتح الملف `src/modules/ai/graphs/reply/reply-graph.state.ts` في محرر الأكواد بتاعك
+2. ضيف الـ import بتاع `ExtractorOutput` فوق مع باقي الـ imports (السطر اللي فيه `import { ExtractorOutput } from './nodes/extractor/extractor.schema';`)
+3. جوه `Annotation.Root({...})`، ضيف السطرين الجداد دول بعد `intent`: `attachmentsText` و`externalContentText` بالظبط زي ما هما مكتوبين فوق (مع الـ reducer)
+4. ضيف سطر واحد جديد `extractorResult: Annotation<ExtractorOutput | undefined>(),` قبل سطر `composerResult` الموجود بالفعل
+5. احفظ الملف، وشغّل `npx tsc --noEmit` في الترمينال — لازم يطلع من غير أي error (لو فيه error، غالباً ناسي تقفل قوس أو نسيت الـ import)
+6. دلوقتي، وبس دلوقتي، اعمل الكوميت:
+
 ```bash
 git add src/modules/ai/graphs/reply/reply-graph.state.ts
 git commit -m "feat(extractor): extend ReplyGraphState with extractor inputs/output slots"
@@ -291,6 +499,8 @@ const InferenceExampleSchema = z.object({
 
 ### الـ Schema الحقيقي بتاع الـ Extractor
 
+**رابط رسمي:** `z.object`, `.describe()`, `.nullable()`, و`z.infer` كلهم موثقين هنا: [Zod — Official Documentation](https://zod.dev). أي method Zod تشوفها في الكود ومش عارف تعملها إيه بالظبط، ابحث عن اسمها في الصفحة دي.
+
 دلوقتي نبني `extractor.schema.ts` بنفس أسلوب `composer.schema.ts` اللي شفناه (Zod + `.describe()`):
 
 ```typescript
@@ -326,7 +536,14 @@ export type ExtractorOutput = z.infer<typeof ExtractorSchema>;
 
 نفس الحيلة اللي شفناها في `classifier.prompts.ts` (سلمى استخدمتها): **`reasoning` أول field في الـ schema — مش صدفة**. الموديل بيملى الحقول بالترتيب اللي مكتوبة بيه في الـ schema، فلو خليت `reasoning` أول حاجة، الموديل بيتبرّر لنفسه الأول قبل ما يقرر، وده بيقلل التخمين العشوائي (chain-of-thought جوه الـ schema نفسه، من غير ما تحتاج prompt منفصل للـ reasoning).
 
-**✅ Commit checkpoint 3:**
+#### ✅ الخطوات بالترتيب
+
+1. اعمل ملف جديد فاضي في المسار: `src/modules/ai/graphs/reply/nodes/extractor/extractor.schema.ts`
+2. انسخ الكود اللي فوق كامل (من `import { z } from 'zod';` لحد آخر سطر `export type ExtractorOutput = ...`) والصقه في الملف
+3. احفظ، وشغّل `npx tsc --noEmit` للتأكد إن مفيش أخطاء نحو (syntax) أو أنواع (types)
+4. افتح ملف تجريبي مؤقت وجرّب `console.log(ExtractorSchema.shape)` عشان تتأكد بعينك إن كل الحقول ظاهرة صح (اختياري، بس مفيد أول مرة تتعامل مع Zod)
+5. اعمل الكوميت:
+
 ```bash
 git add src/modules/ai/graphs/reply/nodes/extractor/extractor.schema.ts
 git commit -m "feat(extractor): add ExtractorSchema with paired Inferred/InferenceSource fields"
@@ -421,11 +638,7 @@ async read(key: string): Promise<Buffer | undefined> {
 
 **متبنيش الدالة دي جوه ملف مش ملكك من غير تنسيق.** ده جزء من موديول سلمى (`external-content`)، والـ CONTRACTS.md بيقول صراحة إنه ملكها. اللي عليك إنك: (1) تبني الـ Extractor بحيث ياخد `externalContentText: string[]` كمدخل **جاهز كنص**، من غير ما يعرف حاجة عن S3 أصلاً (فصل مسؤوليات نضيف)، و(2) تفتح كونفرزيشن مع سلمى/الفريق عشان تتقفل الدالة دي في PR منفصل بتاعتها. كده الـ Extractor بتاعك مش متعطّل، وأنت مش بتلمس كود مش ملكك.
 
-**✅ Commit checkpoint 4:**
-```bash
-git add src/modules/ai/graphs/reply/nodes/extractor/extractor.prompt.ts
-git commit -m "feat(extractor): wrap the 3 untrusted input sources with source-tagged wrappers + truncation"
-```
+> **ملحوظة قبل ما تكمل:** الكود اللي شفته في القسم ده (الـ `wrapUntrustedContent` calls والـ `truncateExternalContent`) هو **جزء من** `extractor.node.ts`، مش ملف منفصل — لسه معندناش الملف ده كامل عشان نعمله commit. هنبنيه كامل في القسم اللي جاي (7)، وهناخد الكوميت هناك. متعملش `git commit` دلوقتي، مفيش حاجة جاهزة للـ commit لسه في القسم ده.
 
 ---
 
@@ -553,9 +766,18 @@ export function buildReplyGraph(deps: ReplyGraphDependencies) {
 
 لاحظ الكومنت: مكان Matcher (كريم) لسه فاضي بينهم — دي بالظبط طريقة تنفيذ الـ soft dependency (DEP-4) بدون ما حد يستنى حد. لما كريم يخلص، الـ edge هتتغيّر لـ `extract → match → compose` بسطر واحد.
 
-**✅ Commit checkpoint 5:**
+#### ✅ الخطوات بالترتيب — القسم ده فيه 3 ملفات، امشي عليهم بالترتيب ده بالظبط
+
+1. اعمل ملف `src/modules/ai/graphs/reply/nodes/extractor/extractor.prompt.ts` والصق فيه كود الـ Prompt اللي فوق كامل (`EXTRACTOR_TEMPERATURE`, `EXTRACTOR_SYSTEM_PROMPT`, `EXTRACTOR_USER_PROMPT_TEMPLATE`)
+2. اعمل ملف `src/modules/ai/graphs/reply/nodes/extractor/extractor.node.ts` والصق فيه كود "الـ Node نفسه" اللي فوق كامل
+3. شغّل `npx tsc --noEmit` — لازم الاتنين يشتغلوا مع بعض من غير أخطاء imports
+4. افتح `src/modules/ai/graphs/reply/reply-graph.factory.ts` الموجود بالفعل، وعدّل بس السطرين دول: (أ) ضيف `import { extractorNode } from '.../nodes/extractor/extractor.node';` فوق، (ب) ضيف `.addNode('extract', (state) => extractorNode(state, deps.aiModelService))` و`.addEdge(START, 'extract')` و`.addEdge('extract', 'compose')` بدل الـ edge القديمة اللي كانت واصلة `START` مباشرة بـ `compose`
+5. احفظ الكل، وشغّل `npx tsc --noEmit` تاني للتأكد إن التوصيلة بين الملفين الجداد والملف القديم سليمة
+6. اعمل الكوميت:
+
 ```bash
-git add src/modules/ai/graphs/reply/nodes/extractor/extractor.node.ts \
+git add src/modules/ai/graphs/reply/nodes/extractor/extractor.prompt.ts \
+        src/modules/ai/graphs/reply/nodes/extractor/extractor.node.ts \
         src/modules/ai/graphs/reply/reply-graph.factory.ts
 git commit -m "feat(extractor): implement extractorNode and wire it as the graph's entry node"
 ```
@@ -654,9 +876,15 @@ describe('extractorNode', () => {
 });
 ```
 
-**نقطة تعلّم مهمة:** لاحظ إني معملتش mock لـ `AiModelService` بالكامل كـ class — عملت `as unknown as AiModelService` على object بسيط فيه `generateStructured` بس. ده كافي، لأن الـ node function مش بتستخدم أي method تاني من الـ service. النمط ده (partial mock) موجود بالفعل في `classifier.service.spec.ts` عندك — استخدمته زيه بالظبط.
+**نقطة تعلّم مهمة:** لاحظ إني معملتش mock لـ `AiModelService` بالكامل كـ class — عملت `as unknown as AiModelService` على object بسيط فيه `generateStructured` بس. ده كافي، لأن الـ node function مش بتستخدم أي method تاني من الـ service. النمط ده (partial mock) موجود بالفعل في `classifier.service.spec.ts` عندك — استخدمته زيه بالظبط. توثيق `jest.fn()` و`.mockResolvedValue()` الرسمي هنا لو حبيت تراجع التفاصيل: [Jest Mock Functions](https://jestjs.io/docs/mock-function-api).
 
-**✅ Commit checkpoint 6:**
+#### ✅ الخطوات بالترتيب
+
+1. اعمل ملف `src/modules/ai/graphs/reply/nodes/extractor/extractor.node.spec.ts` والصق فيه الكود كامل اللي فوق
+2. شغّل `npm test -- extractor.node.spec.ts` (أو `npx jest extractor.node.spec.ts` حسب إعداد المشروع) في الترمينال
+3. لازم تشوف 3 اختبارات ✅ خضرا (pass) — لو فيه فشل، ابص على رسالة الخطأ، غالباً هتكون في اسم حقل مكتوب غلط أو الـ mock ناقص حقل
+4. لما الثلاثة يعدّوا، اعمل الكوميت:
+
 ```bash
 git add src/modules/ai/graphs/reply/nodes/extractor/extractor.node.spec.ts
 git commit -m "test(extractor): cover infer-vs-literal, no-budget-guessing, and untrusted wrapping"
@@ -723,7 +951,14 @@ extract(state): Promise<{ extractorResult: ExtractorOutput }>
 // truncated to 3500 chars each.
 ```
 
-**✅ Commit checkpoint 7 (آخر واحد في الـ PR ده):**
+#### ✅ الخطوات بالترتيب (آخر واحدة في الـ PR ده)
+
+1. افتح `CONTRACTS.md` في جذر الريبو
+2. دوّر (Ctrl+F) على قسم `## Classifier Module` (موجود بالفعل، بتاع سلمى) عشان تلاقي مكانه بالظبط
+3. الصق قسم `## Extractor Module` اللي فوق **بعد** قسم الكلاسيفاير مباشرة (نفس الترتيب المنطقي للـ pipeline)
+4. احفظ الملف
+5. اعمل الكوميت والـ push (ده آخر كوميت في الـ PR كله):
+
 ```bash
 git add CONTRACTS.md
 git commit -m "docs(extractor): document the Extractor contract for downstream consumers"
@@ -738,5 +973,6 @@ git push origin feat/extractor-agent
 
 1. Groq — Structured Outputs documentation: <https://console.groq.com/docs/structured-outputs>
 2. LangChain — `StateGraph` API reference (nodes, edges, Annotation reducers): <https://reference.langchain.com/javascript/langchain-langgraph/index/StateGraph>
+2b. LangChain — `Annotation` API reference (reducers, defaults, worked examples): <https://reference.langchain.com/javascript/modules/_langchain_langgraph.index.Annotation.html>
 3. OWASP Gen AI Security Project — Top 10 for LLM Applications 2025, LLM01 Prompt Injection: <https://genai.owasp.org/llm-top-10/>
 4. NestJS official docs — Providers & Custom Providers (Dependency Injection fundamentals used across the module): <https://docs.nestjs.com/providers>

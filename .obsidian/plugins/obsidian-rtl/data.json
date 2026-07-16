@@ -110,7 +110,8 @@
     "interviews/Backend-Web-Interview-Complete.md": "rtl",
     "interviews/Databases من الصفر — إنترفيو قواعد البيانات.md": "rtl",
     "interviews/react_django_mock_interview_answers.md": "rtl",
-    "interviews/karim_interview_questions_answers.md": "rtl"
+    "interviews/karim_interview_questions_answers.md": "rtl",
+    "PR1_Extractor_Agent.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
