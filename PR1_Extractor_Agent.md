@@ -11,13 +11,14 @@
 
 قبل أي سطر كود، لازم تعرف حدود الـ PR ده بالظبط:
 
-| هتبنيه في PR1 | مش هتبنيه هنا (PRs تانية / أشخاص تانيين) |
-|---|---|
-| `extractor.schema.ts` — الـ JSON schema اللي بيوصف شكل المتطلبات المستخرجة | Matcher (كريم) — هياخد الـ output بتاعك كمدخل |
-| `extractor.prompt.ts` — الـ system/user prompts | Supervisor (PR2 — إنت كمان، بس ملف تاني) |
-| `extractor.node.ts` — الدالة اللي فعلياً بتنادي الموديل | `/ai/process` endpoint (PR3 — إنت كمان) |
-| تعديل `reply-graph.state.ts` و`reply-graph.factory.ts` عشان يستوعبوا الـ Extractor | تعديل جوهري في `composer.node.ts` نفسه (ده ملك عبدالرحمن — إنت بس هتوصله بمدخل حقيقي بدل الـ mock) |
-| `extractor.node.spec.ts` | حل مشكلة قراءة الـ Google Drive content من S3 بشكل كامل (هنعلّمها كـ "نقطة تنسيق" بس، مش هنبنيها بالكامل هنا لأنها مش ملكك) |
+| هتبنيه في PR1                                                                                                                                                                               | مش هتبنيه هنا (PRs تانية / أشخاص تانيين)                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `extractor.schema.ts` — الـ JSON schema اللي بيوصف شكل المتطلبات المستخرجة                                                                                                                  | Matcher (كريم) — هياخد الـ output بتاعك كمدخل                                                                               |
+| `extractor.prompt.ts` — الـ system/user prompts                                                                                                                                             | Supervisor (PR2 — إنت كمان، بس ملف تاني)                                                                                    |
+| `extractor.node.ts` — الدالة اللي فعلياً بتنادي الموديل                                                                                                                                     | `/ai/process` endpoint (PR3 — إنت كمان)                                                                                     |
+| تعديل `reply-graph.state.ts` و`reply-graph.factory.ts` عشان يستوعبوا الـ Extractor                                                                                                          | تعديل جوهري في `composer.node.ts` نفسه (ده ملك عبدالرحمن — إنت بس هتوصله بمدخل حقيقي بدل الـ mock)                          |
+| تعديل `reply.service.ts` — `draftReply()` **لازم** يتوسّع عشان يجيب attachments/external content/intent الحقيقيين قبل ما ينادي `graph.invoke()` (دلوقتي بياخد `emailBody` بس — شوف قسم 7.5) | حل مشكلة قراءة الـ Google Drive content من S3 بشكل كامل (هنعلّمها كـ "نقطة تنسيق" بس، مش هنبنيها بالكامل هنا لأنها مش ملكك) |
+| `extractor.node.spec.ts`                                                                                                                                                                    | تعديل جوهري في `AttachmentsService` أو `AiModelService` (دول موجودين بالفعل وملك ناجي/رنا — إنت بس مستهلكهم)                |
 
 ---
 
@@ -266,7 +267,7 @@ const chain = this.chatModel.withStructuredOutput(schema, {
 return await chain.invoke(messages);
 ```
 
-الاتنين بيوصلوا لنفس Groq API تحت، لكن الفرق مش شكلي — الفرق **معماري**، وده أهم قرار هتاخده في الـ PR ده. هنرجعله في القسم 4.
+الاتنين بيوصلوا لنفس Groq API تحت، لكن الفرق مش شكلي — الفرق **معماري**، وده أهم قرار هتاخده في الـ PR ده. هنرجعله في القسم 5.
 
 **✅ Commit checkpoint 0:**
 ```bash
@@ -334,136 +335,7 @@ git commit -m "feat(extractor): scaffold extractor node folder"
 
 ---
 
-## 4. القرار المعماري الأهم في الـ PR ده — فين مكان الـ Extractor؟
-
-ده مش تفصيلة تقنية — ده القرار اللي لو غلطت فيه هتضطر تعيد بناء نص الشغل. خليني أوريك اللي لقيته في الريبو بالظبط (grep حرفي، مش تخمين):
-
-```bash
-grep -rn "buildReplyGraph\|ClassifierModule\|reply-graph" src/modules/ai
-```
-
-هتلاقي إن في الريبو عندك **نمطين مختلفين تماماً** للـ agents، مش نمط واحد:
-
-```mermaid
-flowchart TD
-    subgraph Background["المسار الخلفي — Classifier (سلمى)"]
-        W["Gmail Webhook"] --> Q["BullMQ Queue"]
-        Q --> CP["ClassifierProcessor"]
-        CP --> CS["ClassifierService"]
-        CS -->|"Port/Adapter pattern"| LLM1["LlmClientService<br/>(Nagy's plain OpenAI SDK)"]
-        CS --> DB[("GeneralAnalysis table<br/>— stored ONCE, forever")]
-    end
-
-    subgraph OnDemand["المسار الفوري — Reply Graph (عبدالرحمن بدأه، إنت هتكمله)"]
-        Open["SE opens the email"] --> RS["ReplyService.draftReply()"]
-        RS --> Graph["buildReplyGraph()<br/>a LangGraph StateGraph"]
-        Graph --> Node1["extract node<br/>(YOU are building this)"]
-        Node1 --> Node2["match node<br/>(Karim, later)"]
-        Node2 --> Node3["compose node<br/>(Abdulrahman, exists)"]
-        Node3 -->|"AiModelService"| LLM2["AiModelService<br/>(LangGraph + Zod)"]
-    end
-
-    DB -.->|"read once, never re-run"| RS
-```
-
-**ليه فيه نمطين؟** لأن الاتنين بيحلّوا مشكلة مختلفة تماماً:
-
-- الـ **Classifier** بيشتغل **مرة واحدة بس، في الخلفية**، من غير ما حد يستنى نتيجته فوراً (BullMQ job). مفيش "state" مشترك بينه وبين حاجة تانية — هو مستقل تماماً، فمنطقي إنه يبقى NestJS service عادي بيتنادى من جوه processor.
-- الـ **Extractor → Matcher → Composer** التلاتة دول بيشتغلوا **مع بعض، فورياً، في نفس الطلب** (لما الـ SE يفتح الإيميل) وبيتشاركوا بيانات ببعض (Matcher محتاج output الـ Extractor، Composer محتاج output الـ Matcher). ده بالظبط اللي LangGraph اتعمل عشانه — **StateGraph بيدّيك "لوحة مشتركة" (state) كل node بيقرا منها ويكتب فيها، والـ graph بيضمن الترتيب** [[2]](#المصادر).
-
-يعني لو بنيت الـ Extractor كـ NestJS service منفصل زي الـ Classifier (بنفس نمط Port/Adapter)، هتكون بنيت حاجة تشتغل، بس **متكررة (duplicate) مع اللي عبدالرحمن عمله بالفعل**، ومحتاج بعدين "توصلها" يدوي بالـ Composer بدل ما الـ graph يعمل ده تلقائي. القرار الصح: **الـ Extractor بيبقى node جديد جوه نفس الـ `reply-graph`، مش موديول منفصل.**
-
-> **قاعدة عملية تفتكرها:** لو الـ agent بيشتغل *خلفي ومستقل* (زي Classifier) → NestJS service + BullMQ. لو الـ agent بيشتغل *جوه سلسلة فورية بتتشارك بيانات مع اللي قبلها وبعدها* (زي Extractor/Matcher/Composer) → LangGraph node جوه نفس الـ graph.
-
-### توسيع الـ State
-
-**قبل أي كود — الرابط الرسمي اللي تقرا منه بنفسك:** `Annotation` هي جزء من مكتبة `@langchain/langgraph` (نفس المكتبة اللي شرحناها في القسم 0.5). التوثيق الرسمي بتاعها هنا: [`Annotation` — LangGraph.js API Reference](https://reference.langchain.com/javascript/modules/_langchain_langgraph.index.Annotation.html)، وتوثيق `StateGraph` نفسه هنا: [`StateGraph` — LangGraph.js API Reference](https://langchain-ai.github.io/langgraphjs/reference/classes/langgraph.StateGraph.html). لو أي وقت حسيت إني اختصرت حاجة، ارجع للرابطين دول مباشرة — كل مثال في القسم ده مبني على الأمثلة الرسمية الموجودة فيهم.
-
-#### إيه هو `Annotation` بالظبط — قبل ما نشوف السطر الحقيقي
-
-فاكر تشبيه "اللوحة المشتركة" في القسم 0.5؟ `Annotation` هي الأداة اللي بتعرّف **خانة واحدة** في اللوحة دي. المشكلة اللي `Annotation` بتحلها: تخيّل عندك **قايمة مشتريات (shopping list) في البيت** — إنت كتبت 3 حاجات الصبح، مراتك ضافت حاجتين بعد الضهر. السؤال: لما الاتنين "يكتبوا" في نفس القايمة، النتيجة تبقى إيه؟ **تدمج الاتنين مع بعض؟** ولا **آخر واحد كتب يمسح اللي قبله؟** القرار ده اسمه **reducer**.
-
-كل خانة (field) جوه `Annotation.Root({...})` ليها احتمالين:
-
-1. **من غير reducer** (زي `emailBody: Annotation<string>()`) → القاعدة الافتراضية في LangGraph هي **"آخر واحد كتب يكسب" (last-write-wins)**: أي node يرجّع قيمة جديدة للخانة دي، بتستبدل القديمة بالكامل.
-2. **مع reducer صريح** (زي `attachmentsText` تحت) → إنت بتحدد يدوي إزاي القيمة القديمة والجديدة يتدمجوا.
-
-```typescript
-// This is the GENERIC shape from LangGraph's own docs — not your project's code yet
-const MyState = Annotation.Root({
-  // No reducer -> simplest case: whatever a node returns REPLACES the old value
-  currentOutput: Annotation<string>(),
-
-  // WITH a reducer -> you control the merge yourself
-  messages: Annotation<string[]>({
-    reducer: (existing, incoming) => existing.concat(incoming), // "append, don't replace"
-    default: () => [], // the value BEFORE any node has written to it yet
-  }),
-});
-```
-
-`reducer: (existing, incoming) => ...` معناها حرفياً: **"لما القيمة القديمة تكون `existing` والجديدة الجاية من الـ node تكون `incoming`، ارجع لي النتيجة النهائية بالشكل ده"**. و`default: () => [...]` معناها **"لو حد قرا الخانة دي قبل ما أي node يكتب فيها، خليها تبدأ بالقيمة دي (مصفوفة فاضية هنا)"**.
-
-#### دلوقتي — الكود الحقيقي، سطر سطر
-
-`reply-graph.state.ts` بسيط جداً دلوقتي (فيه بس `composerResult`). هنوسّعه عشان يستوعب مخرجات الـ Extractor:
-
-```typescript
-// src/modules/ai/graphs/reply/reply-graph.state.ts — EXTENDED, line by line
-
-import { Annotation } from '@langchain/langgraph'; // ← the tool itself, from part 0.5
-import { ComposerOutput } from './nodes/composer/composer.schema'; // ← Abdulrahman's Zod-inferred type
-import { ExtractorOutput } from './nodes/extractor/extractor.schema'; // ← your Zod-inferred type (section 5)
-
-export const ReplyGraphState = Annotation.Root({
-  // Plain fields, no reducer -> "last write wins" is fine because only
-  // ONE thing ever sets them (they're inputs, set once before graph.invoke()).
-  emailId: Annotation<string>(),
-  tenantId: Annotation<string>(),
-  emailBody: Annotation<string>(),
-  intent: Annotation<string | undefined>(),
-
-  // These TWO need a reducer because ReplyService may call graph.invoke()
-  // with a FRESH array each run, and we always want the LATEST array, not
-  // an accumulation across retries. So the reducer explicitly says
-  // "ignore what was there before (_), just take the new one (next)".
-  attachmentsText: Annotation<string[]>({ reducer: (_, next) => next, default: () => [] }),
-  externalContentText: Annotation<string[]>({ reducer: (_, next) => next, default: () => [] }),
-
-  // Output slots -> each AI node writes to exactly one of these, once,
-  // so plain "last write wins" (no reducer) is the correct choice here too.
-  extractorResult: Annotation<ExtractorOutput | undefined>(), // ← YOUR new slot
-  composerResult: Annotation<ComposerOutput | undefined>(),
-  finalDraft: Annotation<string | undefined>(),
-  excludedByUser: Annotation<string[]>(),
-});
-
-// "Give me the plain TypeScript type of this whole state object" —
-// same z.infer idea from part 0.5, but LangGraph's own version of it.
-export type ReplyGraphStateType = typeof ReplyGraphState.State;
-```
-
-النقطة الوحيدة الجديدة هنا عن قسم 0.5: **مش كل خانة محتاجة reducer**. لو الخانة بيكتب فيها حد واحد بس (زي `extractorResult` — بس node واحد بيكتبها)، سيبها من غير reducer، الافتراضي (استبدال كامل) كافي. الـ reducer بتحطه بس لما يكون فيه احتمال إن قيمة قديمة وجديدة لازم "يتدمجوا" مش يتستبدلوا (زي المصفوفات هنا).
-
----
-
-### ✅ الخطوات العملية بالترتيب — نفّذها بالظبط كده وبعدين اعمل الكوميت
-
-1. افتح الملف `src/modules/ai/graphs/reply/reply-graph.state.ts` في محرر الأكواد بتاعك
-2. ضيف الـ import بتاع `ExtractorOutput` فوق مع باقي الـ imports (السطر اللي فيه `import { ExtractorOutput } from './nodes/extractor/extractor.schema';`)
-3. جوه `Annotation.Root({...})`، ضيف السطرين الجداد دول بعد `intent`: `attachmentsText` و`externalContentText` بالظبط زي ما هما مكتوبين فوق (مع الـ reducer)
-4. ضيف سطر واحد جديد `extractorResult: Annotation<ExtractorOutput | undefined>(),` قبل سطر `composerResult` الموجود بالفعل
-5. احفظ الملف، وشغّل `npx tsc --noEmit` في الترمينال — لازم يطلع من غير أي error (لو فيه error، غالباً ناسي تقفل قوس أو نسيت الـ import)
-6. دلوقتي، وبس دلوقتي، اعمل الكوميت:
-
-```bash
-git add src/modules/ai/graphs/reply/reply-graph.state.ts
-git commit -m "feat(extractor): extend ReplyGraphState with extractor inputs/output slots"
-```
-
----
-
-## 5. مفهوم أساسي 3 — نمط "Infer but Flag"
+## 4. مفهوم أساسي 3 — نمط "Infer but Flag"
 
 ### تشبيه بسيط
 
@@ -547,6 +419,136 @@ export type ExtractorOutput = z.infer<typeof ExtractorSchema>;
 ```bash
 git add src/modules/ai/graphs/reply/nodes/extractor/extractor.schema.ts
 git commit -m "feat(extractor): add ExtractorSchema with paired Inferred/InferenceSource fields"
+```
+
+---
+
+## 5. القرار المعماري الأهم في الـ PR ده — فين مكان الـ Extractor؟
+
+ده مش تفصيلة تقنية — ده القرار اللي لو غلطت فيه هتضطر تعيد بناء نص الشغل. خليني أوريك اللي لقيته في الريبو بالظبط (grep حرفي، مش تخمين):
+
+```bash
+grep -rn "buildReplyGraph\|ClassifierModule\|reply-graph" src/modules/ai
+```
+
+هتلاقي إن في الريبو عندك **نمطين مختلفين تماماً** للـ agents، مش نمط واحد:
+
+```mermaid
+flowchart TD
+    subgraph Background["المسار الخلفي — Classifier (سلمى)"]
+        W["Gmail Webhook"] --> Q["BullMQ Queue"]
+        Q --> CP["ClassifierProcessor"]
+        CP --> CS["ClassifierService"]
+        CS -->|"Port/Adapter pattern"| LLM1["LlmClientService<br/>(Nagy's plain OpenAI SDK)"]
+        CS --> DB[("GeneralAnalysis table<br/>— stored ONCE, forever")]
+    end
+
+    subgraph OnDemand["المسار الفوري — Reply Graph (عبدالرحمن بدأه، إنت هتكمله)"]
+        Open["SE opens the email"] --> RS["ReplyService.draftReply()"]
+        RS --> Graph["buildReplyGraph()<br/>a LangGraph StateGraph"]
+        Graph --> Node1["extract node<br/>(YOU are building this)"]
+        Node1 --> Node2["match node<br/>(Karim, later)"]
+        Node2 --> Node3["compose node<br/>(Abdulrahman, exists)"]
+        Node3 -->|"AiModelService"| LLM2["AiModelService<br/>(LangGraph + Zod)"]
+    end
+
+    DB -.->|"read once, never re-run"| RS
+```
+
+**ليه فيه نمطين؟** لأن الاتنين بيحلّوا مشكلة مختلفة تماماً:
+
+- الـ **Classifier** بيشتغل **مرة واحدة بس، في الخلفية**، من غير ما حد يستنى نتيجته فوراً (BullMQ job). مفيش "state" مشترك بينه وبين حاجة تانية — هو مستقل تماماً، فمنطقي إنه يبقى NestJS service عادي بيتنادى من جوه processor.
+- الـ **Extractor → Matcher → Composer** التلاتة دول بيشتغلوا **مع بعض، فورياً، في نفس الطلب** (لما الـ SE يفتح الإيميل) وبيتشاركوا بيانات ببعض (Matcher محتاج output الـ Extractor، Composer محتاج output الـ Matcher). ده بالظبط اللي LangGraph اتعمل عشانه — **StateGraph بيدّيك "لوحة مشتركة" (state) كل node بيقرا منها ويكتب فيها، والـ graph بيضمن الترتيب** [[2]](#المصادر).
+
+يعني لو بنيت الـ Extractor كـ NestJS service منفصل زي الـ Classifier (بنفس نمط Port/Adapter)، هتكون بنيت حاجة تشتغل، بس **متكررة (duplicate) مع اللي عبدالرحمن عمله بالفعل**، ومحتاج بعدين "توصلها" يدوي بالـ Composer بدل ما الـ graph يعمل ده تلقائي. القرار الصح: **الـ Extractor بيبقى node جديد جوه نفس الـ `reply-graph`، مش موديول منفصل.**
+
+> **قاعدة عملية تفتكرها:** لو الـ agent بيشتغل *خلفي ومستقل* (زي Classifier) → NestJS service + BullMQ. لو الـ agent بيشتغل *جوه سلسلة فورية بتتشارك بيانات مع اللي قبلها وبعدها* (زي Extractor/Matcher/Composer) → LangGraph node جوه نفس الـ graph.
+
+### توسيع الـ State
+
+**قبل أي كود — الرابط الرسمي اللي تقرا منه بنفسك:** `Annotation` هي جزء من مكتبة `@langchain/langgraph` (نفس المكتبة اللي شرحناها في القسم 0.5). التوثيق الرسمي بتاعها هنا: [`Annotation` — LangGraph.js API Reference](https://reference.langchain.com/javascript/modules/_langchain_langgraph.index.Annotation.html)، وتوثيق `StateGraph` نفسه هنا: [`StateGraph` — LangGraph.js API Reference](https://langchain-ai.github.io/langgraphjs/reference/classes/langgraph.StateGraph.html). لو أي وقت حسيت إني اختصرت حاجة، ارجع للرابطين دول مباشرة — كل مثال في القسم ده مبني على الأمثلة الرسمية الموجودة فيهم.
+
+#### إيه هو `Annotation` بالظبط — قبل ما نشوف السطر الحقيقي
+
+فاكر تشبيه "اللوحة المشتركة" في القسم 0.5؟ `Annotation` هي الأداة اللي بتعرّف **خانة واحدة** في اللوحة دي. المشكلة اللي `Annotation` بتحلها: تخيّل عندك **قايمة مشتريات (shopping list) في البيت** — إنت كتبت 3 حاجات الصبح، مراتك ضافت حاجتين بعد الضهر. السؤال: لما الاتنين "يكتبوا" في نفس القايمة، النتيجة تبقى إيه؟ **تدمج الاتنين مع بعض؟** ولا **آخر واحد كتب يمسح اللي قبله؟** القرار ده اسمه **reducer**.
+
+كل خانة (field) جوه `Annotation.Root({...})` ليها احتمالين:
+
+1. **من غير reducer** (زي `emailBody: Annotation<string>()`) → القاعدة الافتراضية في LangGraph هي **"آخر واحد كتب يكسب" (last-write-wins)**: أي node يرجّع قيمة جديدة للخانة دي، بتستبدل القديمة بالكامل.
+2. **مع reducer صريح** (زي `attachmentsText` تحت) → إنت بتحدد يدوي إزاي القيمة القديمة والجديدة يتدمجوا.
+
+```typescript
+// This is the GENERIC shape from LangGraph's own docs — not your project's code yet
+const MyState = Annotation.Root({
+  // No reducer -> simplest case: whatever a node returns REPLACES the old value
+  currentOutput: Annotation<string>(),
+
+  // WITH a reducer -> you control the merge yourself
+  messages: Annotation<string[]>({
+    reducer: (existing, incoming) => existing.concat(incoming), // "append, don't replace"
+    default: () => [], // the value BEFORE any node has written to it yet
+  }),
+});
+```
+
+`reducer: (existing, incoming) => ...` معناها حرفياً: **"لما القيمة القديمة تكون `existing` والجديدة الجاية من الـ node تكون `incoming`، ارجع لي النتيجة النهائية بالشكل ده"**. و`default: () => [...]` معناها **"لو حد قرا الخانة دي قبل ما أي node يكتب فيها، خليها تبدأ بالقيمة دي (مصفوفة فاضية هنا)"**.
+
+#### دلوقتي — الكود الحقيقي، سطر سطر
+
+`reply-graph.state.ts` بسيط جداً دلوقتي (فيه بس `composerResult`). هنوسّعه عشان يستوعب مخرجات الـ Extractor:
+
+```typescript
+// src/modules/ai/graphs/reply/reply-graph.state.ts — EXTENDED, line by line
+
+import { Annotation } from '@langchain/langgraph'; // ← the tool itself, from part 0.5
+import { ComposerOutput } from './nodes/composer/composer.schema'; // ← Abdulrahman's Zod-inferred type
+import { ExtractorOutput } from './nodes/extractor/extractor.schema'; // ← your Zod-inferred type (section 4)
+import { Intent } from '@/modules/ai/classifier/classifier.types'; // ← Salma's real union type, not a loose string
+
+export const ReplyGraphState = Annotation.Root({
+  // Plain fields, no reducer -> "last write wins" is fine because only
+  // ONE thing ever sets them (they're inputs, set once before graph.invoke()).
+  emailId: Annotation<string>(),
+  tenantId: Annotation<string>(),
+  emailBody: Annotation<string>(),
+  intent: Annotation<Intent | undefined>(), // was `string` — classifier.types.ts already exports the real union, use it
+
+  // These TWO need a reducer because ReplyService may call graph.invoke()
+  // with a FRESH array each run, and we always want the LATEST array, not
+  // an accumulation across retries. So the reducer explicitly says
+  // "ignore what was there before (_), just take the new one (next)".
+  attachmentsText: Annotation<string[]>({ reducer: (_, next) => next, default: () => [] }),
+  externalContentText: Annotation<string[]>({ reducer: (_, next) => next, default: () => [] }),
+
+  // Output slots -> each AI node writes to exactly one of these, once,
+  // so plain "last write wins" (no reducer) is the correct choice here too.
+  extractorResult: Annotation<ExtractorOutput | undefined>(), // ← YOUR new slot
+  composerResult: Annotation<ComposerOutput | undefined>(),
+  finalDraft: Annotation<string | undefined>(),
+  excludedByUser: Annotation<string[]>(),
+});
+
+// "Give me the plain TypeScript type of this whole state object" —
+// same z.infer idea from part 0.5, but LangGraph's own version of it.
+export type ReplyGraphStateType = typeof ReplyGraphState.State;
+```
+
+النقطة الوحيدة الجديدة هنا عن قسم 0.5: **مش كل خانة محتاجة reducer**. لو الخانة بيكتب فيها حد واحد بس (زي `extractorResult` — بس node واحد بيكتبها)، سيبها من غير reducer، الافتراضي (استبدال كامل) كافي. الـ reducer بتحطه بس لما يكون فيه احتمال إن قيمة قديمة وجديدة لازم "يتدمجوا" مش يتستبدلوا (زي المصفوفات هنا).
+
+---
+
+### ✅ الخطوات العملية بالترتيب — نفّذها بالظبط كده وبعدين اعمل الكوميت
+
+1. افتح الملف `src/modules/ai/graphs/reply/reply-graph.state.ts` في محرر الأكواد بتاعك
+2. ضيف الـ import بتاع `ExtractorOutput` فوق مع باقي الـ imports (السطر اللي فيه `import { ExtractorOutput } from './nodes/extractor/extractor.schema';`)
+3. جوه `Annotation.Root({...})`، ضيف السطرين الجداد دول بعد `intent`: `attachmentsText` و`externalContentText` بالظبط زي ما هما مكتوبين فوق (مع الـ reducer)
+4. ضيف سطر واحد جديد `extractorResult: Annotation<ExtractorOutput | undefined>(),` قبل سطر `composerResult` الموجود بالفعل
+5. احفظ الملف، وشغّل `npx tsc --noEmit` في الترمينال — لازم يطلع من غير أي error (لو فيه error، غالباً ناسي تقفل قوس أو نسيت الـ import)
+6. دلوقتي، وبس دلوقتي، اعمل الكوميت:
+
+```bash
+git add src/modules/ai/graphs/reply/reply-graph.state.ts
+git commit -m "feat(extractor): extend ReplyGraphState with extractor inputs/output slots"
 ```
 
 ---
@@ -638,6 +640,31 @@ async read(key: string): Promise<Buffer | undefined> {
 
 **متبنيش الدالة دي جوه ملف مش ملكك من غير تنسيق.** ده جزء من موديول سلمى (`external-content`)، والـ CONTRACTS.md بيقول صراحة إنه ملكها. اللي عليك إنك: (1) تبني الـ Extractor بحيث ياخد `externalContentText: string[]` كمدخل **جاهز كنص**، من غير ما يعرف حاجة عن S3 أصلاً (فصل مسؤوليات نضيف)، و(2) تفتح كونفرزيشن مع سلمى/الفريق عشان تتقفل الدالة دي في PR منفصل بتاعتها. كده الـ Extractor بتاعك مش متعطّل، وأنت مش بتلمس كود مش ملكك.
 
+### ⚠️ نقطة تنسيق تانية — مع رنا، والخبر الكويس: موديولها خلص خالص
+
+بعد ما فتحت `attachments.service.ts` الحقيقي في الريبو، لقيت حاجة مختلفة عن اللي متوقّع في `AI_Sprint1_Plan.md` (DEP-3): مفيش حاجة لسه اسمها "mock" — رنا **خلّصت `AttachmentsService` بالكامل بالفعل**. بس شكل الـ output بتاعها **مش `string[]`** زي ما إحنا مفترضين في الـ state:
+
+```typescript
+// This is Rana's REAL return type — attachments.service.ts, already merged
+export type ParsedAttachment = {
+  filename: string;
+  type: 'pdf' | 'image' | 'docx' | 'xlsx' | 'pptx' | 'unsupported';
+  text?: string;        // pdf / docx / pptx
+  structured?: string;  // xlsx (JSON string of sheets)
+  base64?: string;      // image — NOT text, needs a vision call
+  skipped?: boolean;    // true = exceeded 10MB, unsupported type, or failed to parse
+  reason?: string;
+};
+
+// parseAttachments(accountEmail, email): Promise<ParsedAttachment[]>
+```
+
+يعني `attachmentsText: string[]` في الـ state **مش هي شكل المخرج الحقيقي من رنا** — هي شكل *وسيط* لازم إنت تعمله (flatten)، مش حاجة بتوصلك جاهزة. لو سبت الـ node بياخد الـ array ده زي ما هو وحاول يعمله `wrapUntrustedContent` عليه مباشرة، هتحاول تلف objects كـ `${object}` جوه string وهتطلعلك `[object Object]` — أو أسوأ، صور base64 ضخمة تفجّر الـ context window.
+
+**نقطة تانية أهم:** عنصر من نوع `image` (`base64`) **مينفعش يتبعت لـ `generateStructured` أصلاً** — لو فتحت `ai.model.service.ts` هتلاقي `MessageInput.content` نوعه `string` بس، مفيش دعم لـ multimodal/image content جوه الميثود دي دلوقتي. يعني الصور المرفقة **خارج نطاق PR1 فعليًا**، ولازم تتسجّل كـ "متعالجاش، مش اتجاهلت" مش تختفي بصمت.
+
+الحل العملي — دالة `flattenParsedAttachments` هتشوفها في قسم 7، هتتضاف جوه `extractor.node.ts` وهي اللي بتحوّل `ParsedAttachment[]` لـ `string[]` نضيف قبل ما نلفها.
+
 > **ملحوظة قبل ما تكمل:** الكود اللي شفته في القسم ده (الـ `wrapUntrustedContent` calls والـ `truncateExternalContent`) هو **جزء من** `extractor.node.ts`، مش ملف منفصل — لسه معندناش الملف ده كامل عشان نعمله commit. هنبنيه كامل في القسم اللي جاي (7)، وهناخد الكوميت هناك. متعملش `git commit` دلوقتي، مفيش حاجة جاهزة للـ commit لسه في القسم ده.
 
 ---
@@ -649,8 +676,15 @@ async read(key: string): Promise<Buffer | undefined> {
 ```typescript
 // src/modules/ai/graphs/reply/nodes/extractor/extractor.prompt.ts
 
-/** Extraction wants grounded consistency, same spirit as the Classifier's temperature 0. */
-export const EXTRACTOR_TEMPERATURE = 0.1;
+// NOTE: no EXTRACTOR_TEMPERATURE here. Checked ai.model.service.ts — the
+// LangGraph path (AiModelService.generateStructured) has NO temperature
+// param at all; the ChatOpenAI instance is built ONCE with a hardcoded
+// `temperature: 0` for every call, shared across Extractor/Composer/anyone
+// else on this path. Unlike the Classifier (which uses the OTHER path —
+// LlmClientPort.generateStructured — and DOES accept a per-call temperature),
+// you can't override it here. If you genuinely need a different temperature
+// for extraction later, that's a change to AiModelService itself — flag it
+// with Nagy, don't invent a local constant that silently does nothing.
 
 export const EXTRACTOR_SYSTEM_PROMPT = `You are the requirements extractor for a B2B sales copilot. You read a client's email (plus any attachments and linked documents) and produce a structured requirements object for a product-matching search.
 
@@ -659,6 +693,9 @@ A field may only be filled when it is grounded in something the client actually 
 
 ## Inferred fields
 When you fill a field from an implication rather than a literal statement, set its matching "...Inferred" flag to true and explain the grounding signal in "...InferenceSource". A literal statement ("we have 500 employees") is NOT inferred. A deduction ("we operate across multiple branches" -> "large enterprise") IS inferred.
+
+## Language
+The client email may be written in Arabic, English, or a mix of both (common in Egyptian B2B correspondence). Extract with the same accuracy regardless of input language. Always write "reasoning" and every other field in English, so downstream agents (Matcher, Composer) receive a consistent, machine-searchable shape no matter what language the client wrote in.
 
 ## Output
 Fill "reasoning" FIRST (1-3 short sentences), then the rest of the schema.
@@ -697,7 +734,6 @@ import { ExtractorSchema } from './extractor.schema';
 import {
   EXTRACTOR_SYSTEM_PROMPT,
   EXTRACTOR_USER_PROMPT_TEMPLATE,
-  EXTRACTOR_TEMPERATURE,
 } from './extractor.prompt';
 
 const MAX_EXTERNAL_CONTENT_CHARS = 3500;
@@ -768,7 +804,7 @@ export function buildReplyGraph(deps: ReplyGraphDependencies) {
 
 #### ✅ الخطوات بالترتيب — القسم ده فيه 3 ملفات، امشي عليهم بالترتيب ده بالظبط
 
-1. اعمل ملف `src/modules/ai/graphs/reply/nodes/extractor/extractor.prompt.ts` والصق فيه كود الـ Prompt اللي فوق كامل (`EXTRACTOR_TEMPERATURE`, `EXTRACTOR_SYSTEM_PROMPT`, `EXTRACTOR_USER_PROMPT_TEMPLATE`)
+1. اعمل ملف `src/modules/ai/graphs/reply/nodes/extractor/extractor.prompt.ts` والصق فيه كود الـ Prompt اللي فوق كامل (`EXTRACTOR_SYSTEM_PROMPT`, `EXTRACTOR_USER_PROMPT_TEMPLATE`)
 2. اعمل ملف `src/modules/ai/graphs/reply/nodes/extractor/extractor.node.ts` والصق فيه كود "الـ Node نفسه" اللي فوق كامل
 3. شغّل `npx tsc --noEmit` — لازم الاتنين يشتغلوا مع بعض من غير أخطاء imports
 4. افتح `src/modules/ai/graphs/reply/reply-graph.factory.ts` الموجود بالفعل، وعدّل بس السطرين دول: (أ) ضيف `import { extractorNode } from '.../nodes/extractor/extractor.node';` فوق، (ب) ضيف `.addNode('extract', (state) => extractorNode(state, deps.aiModelService))` و`.addEdge(START, 'extract')` و`.addEdge('extract', 'compose')` بدل الـ edge القديمة اللي كانت واصلة `START` مباشرة بـ `compose`
@@ -780,6 +816,112 @@ git add src/modules/ai/graphs/reply/nodes/extractor/extractor.prompt.ts \
         src/modules/ai/graphs/reply/nodes/extractor/extractor.node.ts \
         src/modules/ai/graphs/reply/reply-graph.factory.ts
 git commit -m "feat(extractor): implement extractorNode and wire it as the graph's entry node"
+```
+
+---
+
+## 7.5 — الحلقة الناقصة: `attachmentsText` مبيوصلش لوحده، لازم توصّله إنت
+
+### ليه القسم ده موجود أصلاً
+
+كل اللي بنيناه لحد دلوقتي (schema, prompt, node, graph) شغال **نظريًا** — بس لو شغّلت الـ pipeline كامل دلوقتي من `ReplyService.draftReply()` الحقيقي، `state.attachmentsText` هيوصل **مصفوفة فاضية `[]`** كل مرة، مش لأن مفيش مرفقات، لكن لأن حد لسه معملش الخطوة اللي بتجيب المرفقات وتحوّلها وتحطها في الـ state قبل ما ينادي `graph.invoke()`. ارجع شوف `reply.service.ts` الحقيقي — `draftReply()` بياخد `emailId, tenantId, emailBody` بس، مفيش `attachments` ولا `intent` ولا `externalContent` بيتمرروا خالص.
+
+### الخطوة الأولى — `flattenParsedAttachments`
+
+زي ما شرحنا في قسم 6، رنا بترجع `ParsedAttachment[]` مش `string[]`. الدالة دي بتحوّل واحدة للتانية، وبتسجّل الصور بدل ما تتجاهلها بصمت:
+
+```typescript
+// src/modules/ai/graphs/reply/nodes/extractor/attachment-flattener.ts
+import { ParsedAttachment } from '@/modules/attachments/attachments.service';
+
+/**
+ * Turns Rana's ParsedAttachment[] into plain text the Extractor can wrap
+ * and send to the model. Images are DEFERRED, not silently dropped — there's
+ * no vision-capable call in AiModelService yet (generateStructured's
+ * MessageInput.content is string-only), so we log a visible placeholder
+ * instead of pretending the image was read.
+ */
+export function flattenParsedAttachments(attachments: ParsedAttachment[]): string[] {
+  return attachments
+    .filter((a) => !a.skipped)
+    .map((a) => {
+      if (a.type === 'pdf' || a.type === 'docx' || a.type === 'pptx') {
+        return a.text ? `[${a.filename}]\n${a.text}` : null;
+      }
+      if (a.type === 'xlsx') {
+        return a.structured ? `[${a.filename}]\n${a.structured}` : null;
+      }
+      if (a.type === 'image') {
+        // Known gap, tracked not hidden — see §6 coordination note with Rana/Nagy.
+        return `[${a.filename}] image attachment — not processed (no vision path in AiModelService yet)`;
+      }
+      return null;
+    })
+    .filter((text): text is string => text !== null);
+}
+```
+
+### الخطوة التانية — توصيل `reply.service.ts` بمدخلات حقيقية
+
+ده التعديل اللي كان ناقص عشان الـ Extractor "يشتغل صح" فعليًا مش بس يـ compile:
+
+```typescript
+// src/modules/ai/graphs/reply/reply.service.ts — UPDATED
+import { AttachmentsService } from '@/modules/attachments/attachments.service';
+import { flattenParsedAttachments } from '@/modules/ai/graphs/reply/nodes/extractor/attachment-flattener';
+// ... existing imports (AiModelService, buildReplyGraph, etc.)
+
+@Injectable()
+export class ReplyService {
+  private readonly graph: CompiledStateGraph<ReplyGraphStateType, Partial<ReplyGraphStateType>, string>;
+
+  constructor(
+    private readonly aiModelService: AiModelService,
+    private readonly attachmentsService: AttachmentsService, // ← NEW dependency
+  ) {
+    this.graph = buildReplyGraph({ aiModelService: this.aiModelService });
+  }
+
+  async draftReply(
+    emailId: string,
+    tenantId: string,
+    emailBody: string,
+    accountEmail: string,           // ← NEW: needed by AttachmentsService
+    emailRef: { id: string; attachments: AttachmentRef[] }, // ← NEW: Gmail attachment refs
+    intent?: string,                 // ← NEW: from Classifier's cached GeneralAnalysis row
+  ): Promise<ReplyGraphStateType> {
+    const parsedAttachments = await this.attachmentsService.parseAttachments(accountEmail, emailRef);
+    const attachmentsText = flattenParsedAttachments(parsedAttachments);
+
+    const finalState = await this.graph.invoke({
+      emailId,
+      tenantId,
+      emailBody,
+      intent,
+      attachmentsText,
+      externalContentText: [], // still string[] — Salma's coordination point from §6 applies here
+      excludedByUser: [],
+    });
+
+    return finalState as ReplyGraphStateType;
+  }
+}
+```
+
+> **ملحوظة:** الـ `intent` و`externalContentText` الحقيقيين (مش placeholder فاضي) دول برضه محتاجين نفس المعاملة — جيب `intent` من الـ `GeneralAnalysis` cached row بتاعة سلمى، وجيب `externalContentText` من `resolveExternalContent()` بعد ما مشكلة الـ S3 `read()` (قسم 6) تتحل. القسم ده بس بيثبت الشكل العام؛ الأسلاك التلاتة (attachments/intent/external) لازم تتقفل قبل الـ deadline بتاع 15 يوليو ("Extractor working end-to-end, wired to the real Classifier + Attachments" في `AI_Sprint1_Plan.md`).
+
+#### ✅ الخطوات بالترتيب
+
+1. اعمل ملف `src/modules/ai/graphs/reply/nodes/extractor/attachment-flattener.ts` والصق فيه كود `flattenParsedAttachments` اللي فوق
+2. افتح `reply.service.ts` الموجود وعدّله زي الكود فوق (الـ constructor + `draftReply()`)
+3. عدّل أي caller لـ `draftReply()` (غالبًا في `ai.controller.ts` أو مكان استدعاء PR3) عشان يبعت الباراميترز الجداد — لو مش لاقيها دلوقتي، سيبها كـ TODO واضح مش تكسر الـ signature بصمت
+4. شغّل `npx tsc --noEmit`
+5. اعمل الكوميت:
+
+```bash
+git add src/modules/ai/graphs/reply/nodes/extractor/attachment-flattener.ts \
+        src/modules/ai/graphs/reply/reply.service.ts
+git commit -m "feat(extractor): wire real attachments into the reply graph via flattenParsedAttachments"
 ```
 
 ---
@@ -873,6 +1015,27 @@ describe('extractorNode', () => {
     const call = (aiModelService.generateStructured as jest.Mock).mock.calls[0][0];
     expect(call.messages[1].content).toContain('<untrusted_content source="email_body">');
   });
+
+  it('extracts with the same accuracy from an Arabic email (US-019 acceptance criteria)', async () => {
+    const mockResult = {
+      reasoning: 'client states company size directly, in Arabic',
+      features: [], featuresInferred: false,
+      constraints: null, constraintsInferred: false,
+      scale: '500 employees', scaleInferred: false, scaleInferenceSource: null,
+      budgetHint: null, budgetInferred: false,
+      timeline: 'end of week', timelineInferred: false,
+    };
+    const aiModelService = {
+      generateStructured: jest.fn().mockResolvedValue(mockResult),
+    } as unknown as AiModelService;
+
+    const arabicEmail = 'احنا شركة متوسطة، حوالي 500 موظف، ولازم الحل يكون جاهز قبل نهاية الأسبوع ده.';
+    const result = await extractorNode(makeState({ emailBody: arabicEmail }), aiModelService);
+
+    // Fields stay in English regardless of input language, per the system prompt's Language section.
+    expect(result.extractorResult?.scale).toBe('500 employees');
+    expect(result.extractorResult?.timeline).toBe('end of week');
+  });
 });
 ```
 
@@ -882,12 +1045,12 @@ describe('extractorNode', () => {
 
 1. اعمل ملف `src/modules/ai/graphs/reply/nodes/extractor/extractor.node.spec.ts` والصق فيه الكود كامل اللي فوق
 2. شغّل `npm test -- extractor.node.spec.ts` (أو `npx jest extractor.node.spec.ts` حسب إعداد المشروع) في الترمينال
-3. لازم تشوف 3 اختبارات ✅ خضرا (pass) — لو فيه فشل، ابص على رسالة الخطأ، غالباً هتكون في اسم حقل مكتوب غلط أو الـ mock ناقص حقل
-4. لما الثلاثة يعدّوا، اعمل الكوميت:
+3. لازم تشوف 4 اختبارات ✅ خضرا (pass) — لو فيه فشل، ابص على رسالة الخطأ، غالباً هتكون في اسم حقل مكتوب غلط أو الـ mock ناقص حقل
+4. لما الأربعة يعدّوا، اعمل الكوميت:
 
 ```bash
 git add src/modules/ai/graphs/reply/nodes/extractor/extractor.node.spec.ts
-git commit -m "test(extractor): cover infer-vs-literal, no-budget-guessing, and untrusted wrapping"
+git commit -m "test(extractor): cover infer-vs-literal, no-budget-guessing, untrusted wrapping, and Arabic input"
 ```
 
 ---
@@ -898,11 +1061,15 @@ git commit -m "test(extractor): cover infer-vs-literal, no-budget-guessing, and 
 sequenceDiagram
     participant SE as Sales Engineer opens email
     participant Reply as ReplyService.draftReply()
+    participant Att as AttachmentsService (Rana, real)
     participant Graph as reply-graph (LangGraph)
     participant Node as extractorNode
     participant Model as AiModelService (Groq)
 
     SE->>Reply: trigger on-demand pipeline
+    Reply->>Att: parseAttachments(accountEmail, emailRef)
+    Att-->>Reply: ParsedAttachment[]
+    Reply->>Reply: flattenParsedAttachments() → attachmentsText: string[]
     Reply->>Graph: graph.invoke({emailBody, intent, attachmentsText, externalContentText})
     Graph->>Node: run 'extract' (first node, right after START)
     Node->>Node: wrapUntrustedContent() x3 sources + truncate externalContent
@@ -924,6 +1091,9 @@ sequenceDiagram
 - [ ] `externalContentText` بيتقطع عند 3500 حرف قبل ما يتلف
 - [ ] الاختبارات بتتعامل مع `AiModelService` كـ mock — صفر نداء حقيقي لـ Groq في CI
 - [ ] الـ graph لسه شغال end-to-end (`extract → compose`) حتى من غير Matcher حقيقي
+- [ ] `reply.service.ts` بينادي `AttachmentsService.parseAttachments()` فعليًا ويعمله `flattenParsedAttachments()` قبل `graph.invoke()` — مش `attachmentsText: []` ثابتة
+- [ ] صورة مرفقة (`type: 'image'`) بتتسجّل كـ "مش متعالجة" في الـ text مش بتتجاهل بصمت وبتتبعتش خام لـ `generateStructured`
+- [ ] Email بالعربي → نفس جودة الاستخراج زي الإنجليزي (US-019 acceptance criteria)
 
 ---
 
