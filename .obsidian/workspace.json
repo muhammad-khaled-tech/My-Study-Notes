@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "interviews/Backend-Web-Interview-Complete-Lean.md",
+                "file": "interviews/Backend-Web-Interview-Complete-FINAL.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Backend-Web-Interview-Complete-Lean"
+              "title": "Backend-Web-Interview-Complete-FINAL"
             }
           }
         ]
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 283.5,
+    "width": 200,
     "collapsed": true
   },
   "right": {
@@ -238,11 +238,13 @@
   },
   "active": "9e63328c1016971c",
   "lastOpenFiles": [
+    "interviews/SQL-NoSQL-Complete.md",
     "interviews/Backend-Web-Interview-Complete-FINAL.md",
-    "interviews/Unconfirmed 458154.crdownload",
+    "interviews/Backend-Web-Interview-Complete.md",
     "interviews/Backend-Web-Interview-Complete-Lean-Final.md",
     "interviews/Backend-Web-Interview-Complete-Lean.md",
-    "interviews/Backend-Web-Interview-Complete.md",
+    "interviews/Java-OOP-SOLID-Patterns.md",
+    "interviews/Unconfirmed 458154.crdownload",
     "interviews/Unconfirmed 307502.crdownload",
     "interviews/Databases من الصفر — إنترفيو قواعد البيانات.md",
     "PR1_Extractor_Agent.md",
@@ -272,8 +274,6 @@
     "python/05-Functions-Deep-Dive.md",
     "python/04-Dictionaries-And-Sets.md",
     "python/03-Lists-And-Tuples.md",
-    "python/02-Loops-And-Iterations.md",
-    "python/Python_Advanced_Interview_Notes (1).md",
     "Pasted image 20260604225010.png",
     "Pasted image 20260604224954.png",
     "Pasted image 20260604224937.png",
