@@ -1518,342 +1518,531 @@ type Mutation {
 
 #### مثال 3: حالة عملية — إزاي الـ Client بيتعامل مع الـ Errors
 
-في الـ Frontend (مثلاً باستخدام Apollo Client)، الـ Error Policy بتحدد إزاي الكود بيتصرف: `errorPolicy: 'all'` بتخلي المكون يقدر يقرا البيانات الجزئية الناجحة في `data` وفي نفس الوقت يعرض رسالة تنبيه بالأخطاء الموجودة في `errors`.
-
----
-
-## Q37 — إزاي GraphQL Subscriptions بتشتغل، وإيه علاقتها بالـ WebSockets اللي اتلمّحنا ليها في Q4؟
+في الـ Frontend (مثلاً باستخدام Apollo Client)، ا## Q51 — إزاي بتصمم نظام صلاحيات (RBAC) بدل ما تكتب `if` statements منتشرة في كل حتة؟
 
 ### أصل الحكاية
 
-حد دلوقتي اتكلمنا عن `Query` (للـ Read) و`Mutation` (للـ Write). المكون التالت الرئيسي في GraphQL هو **Subscription**. الـ Subscriptions اتعملت عشان تدي قدرات الـ Real-time Updates: الـ Client مبيطلبش البيانات مرة واحدة ويمشي، هو بيطلب "الاشتراك" في حدث معين، وكل ما الحدث ده يحصل على السيرفر، السيرفر بيبعت التحديث فوراً للـ Client.
-
-عشان العملية دي تفضل شغال، الـ Subscriptions مبنيّة عادة فوق بروتوكول **WebSockets** (المرتبط بالـ Long-lived Connections) بدل HTTP التقليدي، لأن HTTP عاجز عن تلبية الـ Server-Push المستمر ده بكفاءة.
-
-```mermaid
-sequenceDiagram
-    participant C as Client (Frontend)
-    participant S as Server (GraphQL Engine)
-
-    C->>S: WebSocket Connection Upgrade
-    C->>S: Subscription Request (subscription { orderUpdated { id status } })
-    Note over S: السيرفر يحفظ اشتراك الـ Client
-    Note over S: بعد فترة: تم تغيير حالة الطلب في قاعدة البيانات
-    S-->>C: Data Push (orderUpdated: { id: 123, status: "SHIPPED" })
-```
-
-#### مثال 1: سيناريو حي في مشروعك
-
-في منصة التجارة الإلكترونية، لما التاجر يفتح لوحة التحكم، هو محتاج يشوف أي طلب شراء جديد فور وصوله من غير ما يدوس Refresh. الـ Frontend بيبعت Subscription:
-
-```graphql
-subscription OnOrderCreated {
-  orderCreated {
-    id
-    totalAmount
-    customer {
-      name
-    }
-  }
-}
-```
-
-أول ما عميل ينشئ طلب جديد عبر Mutation، السيرفر بينشر الحدث ده فوراً عبر الـ WebSocket لكل التُجّار المشتركين.
-
-#### مثال 2: فخ شائع — استخدام Subscriptions لكل حاجة Real-time
-
-الـ Subscriptions مكلفة من ناحية الموارد (كل اتصال شغال بيحجز الذاكرة وTCP Connection على السيرفر). لو الـ App بتاعك مش محتاج اللحظية الصارمة دي (مثلاً تحديث بيحصل مرة كل ساعة)، استخدام Polling عالي (Q27) أو Long-Polling أسهل وأخف بكتير على السيرفر من فتح مئات الـ WebSocket Connections الدائمة.
-
-#### مثال 3: حالة عملية — الربط بين Subscriptions والـ Pub/Sub System (تمهيد لـ Q75)
-
-في الأنظمة الحقيقية اللي فيها أكتر من Server Instance، سيرفر GraphQL محتاج أداة في الخلفية تتشارك الأحداث دي بين السيرفرات (زي Redis Pub/Sub). لما سيرفر A ينفذ Mutation، هو بينشر الحدث في Redis، وسيرفر B (اللي معاه الـ WebSocket Connection بتاعة المستخدم) بيستقبل الحدث من Redis ويبعته للمستخدم على طول.
-
----
-
-## Q38 — إمتى تختار REST، وإمتى تختار GraphQL، وإيه هي البدائل التانية زي gRPC وtRPC؟
-
-### أصل الحكاية
-
-بعد ما شرحنا REST من Q24 لـ Q31 وشرحنا GraphQL من Q32 لـ Q37، السؤال الأهم في أي إنترفيو معمارية (Architectural Interview) هو: **إزاي تختار بينهم؟** مفيش تقنية منهم "أحسن المطلق"، الاختيار دايماً بيمشي بناءً على نوع المشروع، طبيعة الفريق، وتحديات الأداء.
-
-```mermaid
-flowchart TD
-    A[محتاج تصميم API؟] --> B{مين المستهلك الرئيسي؟}
-    B -- Clients متعددو الأنواع احتياجات مختلفة ومتداخلة --> C[GraphQL]
-    B -- Public API عام ومستقر وسهل الـ Caching --> D[REST API]
-    B -- تواصل داخلي سريع بين Microservices --> E[gRPC]
-    B -- Full-stack TypeScript بنفس الفريق --> F[tRPC]
-```
-
-| التقنية | نقاط القوة | نقاط الضعف | أفضل استخدام |
-|---|---|---|---|
-| **REST** | بسيط، Caching معيار على مستوى HTTP، متوفر في كل مكان | Over-fetching / Under-fetching | Public APIs, CRUD Simple Apps |
-| **GraphQL** | أخذ البيانات المحددة فقط، Single Endpoint, Strong Typing | صعوبة الـ HTTP Caching, تعقيد الـ N+1 Problem | Dashboards, Mobile Apps مع شبكات ضعيفة |
-| **gRPC** | أداء خيالي بـ Protobuf فوق HTTP/2، كود مولد | مش مدعوم مباشرة بالمتصفحات القديمة بسهولة | Microservices Internal Communication |
-| **tRPC** | End-to-End Type Safety من غير Code Generation في TS | محصور ببيئة TypeScript حصراً في الطرفين | Full-stack Next.js / Monorepo TS Apps |
-
-#### مثال 1: اختيار متكامل في نفس المشروع
-
-في أنظمة الشركات الكبيرة، مش لازم تختار واحدة وتلغي الباقي! الأسلوب المعماري الشائع: استخدام **REST أو GraphQL** كواجهة خارجية (Edge API) تتكلم مع المتصفح والموبايل، بينما التواصل الداخلي بين الـ Microservices في الخلفية بيمشي بـ **gRPC** عشان السرعة العالية جداً وقلة استهلاك الـ Bandwidth.
-
-#### مثال 2: فخ شائع — الانبهار بـ GraphQL في مشروع بسيط
-
-لو بنيت مشروع CRUD بسيط جداً بـ GraphQL، هتكتشف إنك بتكتب كمية Boilerplate code (Schemas، Resolvers، DataLoaders) أكتر بكثير من اللي كنت هتكتبه في REST API بسيط مع DTOs. اختيار التقنية المعقدة لمشكلة بسيطة هو أول علامة على Over-Engineering.
-
-#### مثال 3: حالة عملية — tRPC كبديل عصري للمشاريع بـ TypeScript
-
-لو إنت بتكتب مشروعك بالكامل بـ TypeScript (Frontend React/Next.js مع Backend Node.js في Monorepo)، الـ **tRPC** بيديك تجربة تطوير خيالية: الـ Frontend بينادي دالة الباك اند مباشرة مع Complete Type Safety وAutocompletion تلقائي من غير ما تحتاج تفرّغ وقت لكتابة Schemas أو توليد كود.
-
----
-
-## Q39 — إيه الفرق الحقيقي بين Monolith وMicroservices، ومتى تختار كل واحد؟
-
-### أصل الحكاية
-
-الموضوع الخامس بيدخل في تصميم المعماري للباك اند ككل. أول وأشهر قرار معماري بيواجه أي فريق: **Monolith أم Microservices؟**
-
-- **Monolith (المبنى الواحد)**: كل كود التطبيق (Auth، الطلبات، المنتجات، الإشعارات) مكتوب ومربوط ومبني في مشروع واحد وبيتنشر كـ Single Process واحدة على السيرفر.
-- **Microservices (الحي المكتمل)**: التطبيق مقسّم لخدمات صغيرة مستقلة، كل خدمة مسؤولة عن جزء محدد من الـ Business Domain، وبتمتلك قاعدة البيانات الخاصة بيها، وبتتواصل مع باقي الخدمات عبر الشبكة (HTTP/gRPC/Message Queues).
-
-```mermaid
-flowchart TD
-    subgraph Monolith Architecture
-    A[Single Codebase & Single Process] --> B[Auth Module]
-    A --> C[Orders Module]
-    A --> D[Products Module]
-    A --> E[Single Shared Database]
-    end
-    subgraph Microservices Architecture
-    F[API Gateway] --> G[Auth Service -> Auth DB]
-    F --> H[Orders Service -> Orders DB]
-    F --> I[Products Service -> Products DB]
-    end
-```
-
-#### مثال 1: ميزات وعيوب كل نمط
-
-| المعيار | Monolith | Microservices |
-|---|---|---|
-| **سهولة التطوير والـ Debugging** | أسهل بكتير في البداية | أصعب (محتاج تتبع للطلبات عبر الشبكة) |
-| **الـ Deployment** | بسيط (ملف واحد بيتنشر) | معقد (محتاج CI/CD وKubernetes) |
-| **الـ Scalability** | تعمل Scale للنظام كله مع بعضه | تعمل Scale للخدمة اللي عليها ضغط بس |
-| **الـ Isolation** | لو Bug عمل Crash، السيستم كله يقع | لو خدمة وقعت، باقي الخدمات تفضل شغالة |
-
-#### مثال 2: فخ شائع — البدء بـ Microservices مسبقاً (Premature Microservices)
-
-لو فريقك 3 مطورين وقررتوا من الأول تعملوا 10 Microservices منفصلة، هتلاقوا نفسكم بتقضوا وقت أكتر في التنسيق بين الخدمات (Network Latency، Debugging عبر خدمات متعددة، إدارة Deployment Pipelines منفصلة) بدل التركيز على بناء المنتج نفسه. القاعدة العملية الشائعة إنك متقسمش لحد ما تحس بألم حقيقي في الـ Monolith (فريق كبير بيتصادم في نفس الكود، جزء معين محتاج يتوسّع بمعدل مختلف تماماً عن باقي النظام).
-
-#### مثال 3: حالة عملية — سبب واقعي للانتقال لـ Microservices
-
-لو خدمة الـ Payment Gateway بتاعتك بقت محتاجة موارد ضخمة (لأنها بتعالج آلاف المعاملات في نفس الوقت) بينما باقي النظام (زي واجهة المنتجات) خفيف نسبياً، فصل خدمة الـ Payment لوحدها كـ Microservice بيدّيك القدرة تعمل لها Scale مستقل (تشغّل نسخ أكتر منها بس) من غير ما تحتاج تعمل Scale لكل النظام كله معاها، وده توفير حقيقي في الموارد والتكلفة.
-
-> [!tip]
-> فيه حل وسط شايع اسمه "Modular Monolith": تطبيق واحد بيتنشر كـ Process واحد، لكن الكود جواه منظّم في Modules منفصلة بحدود واضحة بينها، بحيث لو احتجت تقسمها لـ Microservices بعدين، العملية تبقى أسهل بكتير من تقسيم Codebase غير منظم من الأساس.
-
----
-
-## Q40 — إزاي الـ Load Balancer بيوزّع الطلبات، وإيه الـ Algorithms المختلفة؟
-
-### أصل الحكاية
-
-لما مشروعك يكبر وتحتاج تشغّل اكتر من نسخة من الـ Backend على سيرفرات مختلفة (Horizontal Scaling)، بييجي السؤال: مين اللي هيبص على الـ Requests القادمة من الإنترنت ويوزعها على السيرفرات دي بالتساوي عشان مفيش سيرفر يشيل الحمل لوحده ويروح واقع؟ الأداة دي هي **Load Balancer** (موزع الأحمال).
-
-الـ Load Balancer بيقف في الوش بياخد كل حركة المرور (Traffic)، وبيستخدم الخوارزمية (Algorithm) المحددة لتوزيع الطلبات:
-
-```mermaid
-flowchart TD
-    A[Clients Traffic] --> LB[Load Balancer]
-    LB -->|Round Robin / Least Connections| S1[Server Instance 1]
-    LB -->|Round Robin / Least Connections| S2[Server Instance 2]
-    LB -->|Round Robin / Least Connections| S3[Server Instance 3]
-```
-
-الـ Algorithms الرئيسية:
-1. **Round Robin**: بيوزع بالدور (الطلب 1 لسيرفر 1، الطلب 2 لسيرفر 2، الطلب 3 لسيرفر 3...). أبسط أسلوب وممتاز لو السيرفرات متطابقة في القوة.
-2. **Least Connections**: بيبعت الطلب للسيرفر اللي عنده أقل عدد طلبات نشطة في اللحظة دي. ممتاز لو بعض الطلبات بتاخد وقت طويل في المعالجة.
-3. **IP Hash**: بياخد IP العميل ويحسب منه رقم ثابت يوجهه دايماً لنفس السيرفر (مفيد لو محتاج Sticky Sessions).
-4. **Weighted Round Robin**: بيدي أولوية لسيرفرات أقوى (مثلاً سيرفر 1 ياخد ضعف عدد طلبات سيرفر 2).
-
-#### مثال 1: Health Checks — دور الـ Load Balancer في الـ High Availability
-
-الـ Load Balancer مش بس بيوزع، هو بيعمل **Health Checks** دورية (مثلاً بيبعت طلب GET لـ `/health` على كل سيرفر كل 5 ثواني). لو سيرفر 2 فشل في الـ Health Check، الـ Load Balancer بيطلعه فوراً من الخدمة ويحول كل حركة المرور لسيرفر 1 و3، لحد ما سيرفر 2 يرجع يشتغل تاني ويبقى Healthy.
-
-#### مثال 2: فخ شائع — الـ Session State مع الـ Load Balancer
-
-لو بتستخدم Session-Based Auth والـ Session مخزنة في ذاكرة السيرفر المحلية (In-Memory)، وجِه المستخدم بعت الطلب الأول لسيرفر 1 وتسجل دخوله هناك، والطلب التاني الـ Load Balancer وجهه لسيرفر 2... سيرفر 2 هيقوله "مين إنت؟" ويرفض الطلب! الحل: يا تستخدم Redis كمخزن موحد للـ Sessions (Q20)، يا تستخدم Stateless Auth زي JWT (Q48).
-
-#### مثال 3: حالة عملية — Layer 4 مقابل Layer 7 Load Balancing
-
-- **Layer 4 Load Balancer**: بيوزع بناءً على أرقام الـ IP والـ Ports بس (سريع جداً وخفيف).
-- **Layer 7 Load Balancer**: بيقرأ الـ HTTP Request نفسه (بيشوف الـ Header، الـ URL Path، أو الـ Cookie) ويقرر التوجيه بناءً عليها (مثلاً الطلبات اللي بتبدأ بـ `/api/v1/orders` تروح لسيرفرات معينة).
-
----
-
-## Q41 — إيه الفرق بين Vertical Scaling وHorizontal Scaling؟
-
-### أصل الحكاية
-
-من أهم حاجات تصميم السيرفرات: لما منصة التجارة الإلكترونية بتاعتك تبدأ بـ1,000 مستخدم في اليوم، سيرفر صغير بيكفي براحته. لكن لما حركة المرور تزيد لـ500,000 مستخدم وقت موسم التخفيضات (Flash Sales)، السيرفر ده بيقف تماماً عن الرد من كتر الضغط عليه!
-
-قدامك طريقتين تتوسع بيهم (Scaling):
-- **Vertical Scaling (Scale-Up - التوسع الرأسي)**: تزوّد السيرفر الموجود بموارد أكتر (ترقية الـ RAM من 16GB لـ128GB، وزيادة CPU Cores من 4 لـ64 Core).
-- **Horizontal Scaling (Scale-Out - التوسع الأفقي)**: تضيف سيرفرات جديدة مطابقة (من 2 سيرفر لـ50 سيرفر) وتوزع حركة المرور بينهم عن طريق **Load Balancer (Q40)**.
-
-```mermaid
-flowchart TD
-    subgraph Vertical Scaling Scale Up
-        Server1[Single Server: 16GB RAM / 4 CPU] -->|Hardware Upgrade| BigServer[Single Massive Server: 256GB RAM / 64 CPU]
-    end
-
-    subgraph Horizontal Scaling Scale Out
-        LB[Load Balancer] --> S1[App Server 1]
-        LB --> S2[App Server 2]
-        LB --> S3[App Server 3]
-        LB --> S4[App Server N...]
-    end
-```
-
-```javascript
-// Horizontal Scaling Architecture Requires Stateless Servers!
-// BAD In-memory session store (Fails on Horizontal Scaling!)
-const activeSessions = {}; // Session lost if user hits Server 2!
-
-// GOOD Centralized Redis Session Store (Scales Horizontally!)
-const RedisStore = require('connect-redis')(session);
-app.use(session({
-  store: new RedisStore({ client: redisClient }),
-  secret: 'cat-secret',
-  resave: false,
-}));
-```
-
-#### مثال 1: التطبيق العملي — اختيار التوسع الرأسي لقاعدة البيانات والأفقي للسيرفرات
-
-في منصة التجارة الإلكترونية، الـ Backend Node.js API سهل جداً يتعمله Horizontal Scaling لأن الـ HTTP Requests هي Stateless (Q10)، بينما الـ Primary SQL Database أصعب يتعملها Horizontal Scaling وبتاخد عادةً Vertical Scaling الأول كحل أسرع قبل التفكير في الـ Sharding (Q57).
-
-#### مثال 2: فخ شائع — الـ Statefulness يكسر الـ Horizontal Scaling
-
-من أشهر الأخطاء المعمارية تخزين ملفات رفع الزبائن أو جلسات تسجيل الدخول (In-memory Sessions) داخل ذاكرة السيرفر المحلي! لما نضيف 5 سيرفرات جديدة ورا Load Balancer، الزبون اللي سجل دخول على سيرفر 1 هيجيب `401 Unauthorized` لما طلبه يروح لسيرفر 2! الحل هو جعل السيرفرات **Stateless** ونقل الـ State لـ Redis (Q46) أو S3.
-
-#### مثال 3: حالة إنتاجية — الـ Auto-Scaling Groups والتأقلم مع المواسم
-
-في بيئة AWS/GCP، بنظبط **Auto-Scaling Group (ASG)**. في الأيام العادية، المتجر بيشتغل بـ 3 سيرفرات. أول ما الـ CPU Usage يتعدى 70% في الذروة، الـ ASG يضيف 10 سيرفرات جديدة أوتوماتيكياً ويوزع الحمل عليهم، ويرجع يقللهم لما الزحمة تنتهي لتوفير التكاليف.
-
----
-
-## Q42 — إيه هو الـ Middleware Pattern وكيف بيشتغل في السيرفرات؟
-
-### أصل الحكاية
-
-لما سيرفر Express أو NestJS بيستقبل HTTP Request، بيبقى محتاج ينفذ شغل متكرر ومشترك قبل ما يوصل لمنطق المعاملة الأساسي (Route Controller): زي فحص الـ JWT Token، تسجيل الـ Audit Logs، عمل Rate Limiting، وفك الـ JSON Body.
-
-نمط **Middleware Pattern (Chain of Responsibility)** بيخلي الـ Request يعدي عبر سلسلة متتالية من الدوال البرمجية (Middlewares). كل دالة بتستقبل `req`, `res`, ودالة `next()`. يا إما الدالة تعالج الطلب وتمرره للدالة اللي بعدها بـ `next()`, يا إما تقطع السلسلة وترجع Error فوري!
+في منصة التجارة الإلكترونية، عندك أنواع كتير من المستخدمين: **زبون عادي (Customer)**، **تاجر (Merchant)**، **موظف دعم (Support)**، و **مدير منصة (Admin)**.
+لو كتبت فحص الصلاحيات يدوياً جوه كل دالة برمجية بكتابة شروط `if (user.role === 'ADMIN' || (user.role === 'MERCHANT' && product.merchantId === user.id))`... الكود هينسحام ويتحول لفوضى عارمة، وتطلعلك ثغرات أمنية خطيرة مع كل ميزة جديدة تنزل!
+
+الحل المعماري الصح هو تصميم **Role-Based Access Control (RBAC)** أو **Attribute-Based Access Control (ABAC)**.
+بنسهل الدنيا وبنفصل الصلاحيات في 3 جداول أساسية في قاعدة البيانات:
+1. **Users**: جدول المستخدمين.
+2. **Roles**: جدول الأدوار (زي `ADMIN`, `MERCHANT`, `CUSTOMER`).
+3. **Permissions**: جدول الصلاحيات الدقيقة (زي `products:create`, `orders:refund`, `users:delete`).
+بنربط الأدوار بالصلاحيات، ونفحص الصلاحية عبر **Authorize Guard / Middleware** موحد يقرأ اسم الصلاحية المطلوبة بس قبل ما الكود يشتغل.
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> تخيل إنك عامل ملهى ألعاب:
+> - بدل ما تقف جنب كل لعبة وتسأل كل عيل "إنت ابن مين؟ وهل مسموحلك تركب هنا؟" (شروط الـ if المجهدة!).
+> - إنت بتديه **أسورة على إيده** (Role): الأسورة الخضراء فيها خرمين للعبتين (Permissions)، والأسورة الذهبية فيها 10 أخرام لكل الألعاب.
+> - موظف اللعبة (Guard) بيبص على خرم اللعبة في الأسورة بس، لو موجود يدخله فوراً!
 
 ```mermaid
 flowchart LR
-    Req[HTTP Request] --> M1[1. Logger Middleware]
-    M1 --> M2[2. Rate Limiting Middleware]
-    M2 --> M3[3. Auth Middleware]
-    M3 --> Controller[4. Product Controller]
-    Controller --> Res[HTTP Response]
-    
-    M2 -- Exceeded Limit --> Block[429 Too Many Requests]
+    User[User: Ahmed] -->|Assigned Role| Role[Role: MERCHANT]
+    Role -->|Contains Permissions| P1[Permission: products:create]
+    Role -->|Contains Permissions| P2[Permission: products:update]
+    Role -->|Contains Permissions| P3[Permission: orders:read]
+
+    Request[POST /api/v1/products] --> Guard{Check Guard: products:create}
+    Guard -- User Has Permission --> Allow[200 OK Controller Executed]
+    Guard -- Permission Missing --> Deny[403 Forbidden]
 ```
 
 ```javascript
-// Production-grade Authentication Middleware in Express
-const jwt = require('jsonwebtoken');
+// Production RBAC Middleware in Node.js / Express
+function requirePermission(permissionRequired) {
+  return async (req, res, next) => {
+    const userPermissions = req.user.permissions; // Loaded during AuthN e.g. ['products:create', 'orders:read']
 
-function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'مطلوب رمز التوثيق' });
-  }
+    if (!userPermissions || !userPermissions.includes(permissionRequired)) {
+      return res.status(403).json({
+        error: `ليس لديك الصلاحية الكافية لتنفيذ هذا الإجراء: (${permissionRequired})`
+      });
+    }
 
-  const token = authHeader.split(' ')[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Attach user payload to request object!
-    next(); // Pass control to the next middleware in chain
-  } catch (err) {
-    return res.status(403).json({ error: 'رمز التوثيق غير صالح أو منتهي الصلاحية' });
-  }
+    next(); // Permission granted!
+  };
 }
+
+// Clean Declaration in Product Routes
+app.post('/api/v1/products', authenticate, requirePermission('products:create'), createProductController);
 ```
 
-#### مثال 1: التطبيق العملي — تسجيل الـ Audit Logs وتحديد زمن استجابة الطلبات
+#### مثال 1: التطبيق العملي — النظافة البرمجية وسهولة صيانة شروط الصلاحيات
 
-في المتجر، بنكتب Logger Middleware يحسب زاد سرعة الرد: يسجل وقت بدء الطلب `Date.now()` وعند انتهاء الاستجابة `res.on('finish')` يطبع زمن الاستجابة والـ Status Code في السجلات لتحليل الأداء.
+في المتجر، بفضل RBAC، إضافة ميزة جديدة مبيتطلبش تعديل شروط الـ `if` في 50 مكان في المشروع! بنعرف اسم الصلاحية الجديدة `orders:refund` ونحطها على الـ Route بس. ولو اتغيرت صلاحيات التاجر مستقبلاً، بنعدل الجدول في قاعدة البيانات من غير ما نلمس سطر كود واحد في الـ Backend.
 
-#### مثال 2: فخ شائع — نسيان استدعاء `next()` وتجمد الـ Request
+#### مثال 2: فخ شائع — اعتماد Hardcoded Roles بدل الـ Fine-Grained Permissions
 
-من الأخطاء الكارثية نسيان كتابة `next()` أو عدم إرجاع `res.json()` داخل دالة الـ Middleware! الطلب سيفضل معلقاً (Hanging Request) في المتصفح حتى يقطع بـ `Gateway Timeout`.
+من الفخاخ المعمارية فحص اسم الدور صراحة في الكود: `if (user.role === 'SUPER_ADMIN')`! بعد سنة، لما تطلب الشركة إنشاء دور جديد اسمه `REGIONAL_MANAGER` له 80% من صلاحيات السوبر أدمن، هتضطر تدخل الكود وتعديل آلاف شروط الـ `if` في المشروع كله! الصواب هو فحص **الصلاحية (Permission)** مش اسم الـ Role.
 
-#### مثال 3: حالة إنتاجية — الـ Global Error Handling Middleware الموحد
+#### مثال 3: حالة إنتاجية — الترقية لـ ABAC (CASL / Policy Engine) للتحقق من الملكية
 
-في تطبيقات Node.js، نضع في نهاية السلسلة **Global Error Handler Middleware** (دالة تستقبل 4 عناصر `(err, req, res, next)`). أي دالة في السيرفر ترمي Error يتم التقاطه مركزياً هنا، لتسجيل الـ Stack Trace وإرجاع رد موحد بـ `500 Internal Server Error` دون تسريب تفاصيل الكود الأمنية للعميل.
+في بعض الحالات، RBAC لوحده مبيكونش كافي! مثلاً: التاجر مسموح له يتعدل في منتجاته هو بس (`product.merchantId === user.id`). هنا بنستخدم مكتبة زي **CASL.js** لتطبيقات **ABAC (Attribute-Based Access Control)** اللي بتفحص الأدوار والـ Attributes ديناميكياً بأمان تام: `ability.can('update', subject('Product', product))`.
 
 ---
 
-## Q43 — إزاي الـ Node.js Event Loop بيعالج آلاف الطلبات المتزامنة برغم إنه Single-Threaded؟
+## Q52 — إيه هو SQL Injection فعلياً، وإزاي Parameterized Queries بتحل المشكلة جذرياً؟
 
 ### أصل الحكاية
 
-من أشهر أسئلة إنترفيو الـ Node.js: إزاي سيرفر شغال على خيط معالجة واحد بس (**Single-Threaded**) يقدر يخدم 50,000 زبون في نفس اللحظة من غير ما يتجمد؟
+بتعتبر ثغرة **SQL Injection (حقن أوامر SQL)** واحدة من أقدم وأخطر الكوارث الأمنية في تاريخ الويب. بتحصل لما الباك اند يدمج مدخلات الزبون (User Inputs) صراحة كـ String Concatenation جوه استعلام الـ SQL المرسل لقاعدة البيانات!
 
-السر في تقنية **Non-Blocking I/O** بالتكامل مع مكتبة **libuv** والـ **Event Loop**.
-لما Node.js يقرا بيانات من الداتابيز أو ملف من القرص، هو مش بيقف وينتظر البيانات توصل (Blocking)! هو بيكلّف نظام التشغيل إنه يبدأ القراءة في الخلفية (Asynchronous I/O)، ويفضى الـ Event Loop فوراً عشان يستقبل طلبات زبائن جداد. أول ما الداتابيز ترجع البيانات، نظام التشغيل بيدفع الـ Callback لطابور الأحداث (Event Queue)، والـ Event Loop بينفذه أول ما يفضى.
+تخيل كود تسجيل الدخول الخاطئ ده:
+`SELECT * FROM users WHERE email = '` + req.body.email + `' AND password = '` + req.body.password + `'`
+لو المهاجم كتب في خانة الإيميل النص الخبيث ده: `' OR '1'='1`
+الاستعلام بيتحول جوه قاعدة البيانات لـ:
+`SELECT * FROM users WHERE email = '' OR '1'='1' AND password = ''`
+ولأن الشرط `'1'='1'` صحيح دايماً، قاعدة البيانات بتلغي فحص الباسورد وترجع أول حساب في الداتابيز (اللي هو حساب المدير Admin)! وتتم عملية الاختراق بنجاح!
+
+الحل النهائي والمطلق للمشكلة دي هو **Parameterized Queries (Prepared Statements)**:
+فصل كود استعلام الـ SQL تماماً عن البيانات! السيرفر بيبعت هيكل الاستعلام الأول لمحرك PostgreSQL عشان يجهزه (Compile)، وبعدين بيبعت المدخلات كـ **Parameters معزولة ومستقلة**. قاعدة البيانات بتعامل المدخلات كـ Plain Text نصي صامت فقط، حتى لو كان النص جواه أوامر SQL خبيثة!
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> تخيل إنك بتكتب رسالة لواحد صاحبك وبتقوله: "افتح الباب لأحمد":
+> - **طريقة الحقن الخاطئة (Vulnerable)**: لو أحمد كتب اسمه كـ "أحمد واضرب الراجل اللي واقف بره". صاحبك يقرأ الكلام على بعضه وينفذ الأمرين!
+> - **طريقة المعاملات المعزولة (Parameterized)**: إنت بتديه فورماً رسمياً: الخانة الأولى (البيانات) محفوفة في مظروف مقفول، والخلفية (الأمر) "افتح الباب لـ [المظروف]". صاحبك بيتعامل مع المظروف كـ نص صامت ومبينفذش الأوامر اللي جواه!
 
 ```mermaid
 flowchart TD
-    ClientReq[Incoming HTTP Request] --> EventLoop[Node.js Single Thread Event Loop]
-    EventLoop -->|Async Non-Blocking I/O| OS[OS Kernel / libuv Thread Pool]
-    EventLoop -->|Ready to accept next request| ClientReq2[Next Incoming Request]
-    OS -- DB Query Complete Event --> EventQueue[Event Task Queue]
-    EventQueue -->|Executes Callback when loop free| EventLoop
+    subgraph Vulnerable String Concatenation Bad
+        Input1["' OR '1'='1"] --> Merge[Text Merged into Query String]
+        Merge --> Exec1[SQL Engine Compiles injected code -> HACKED!]
+    end
+
+    subgraph Parameterized Query Good
+        Input2["' OR '1'='1"] --> Param[Passed as isolated $1 Parameter]
+        Param --> Exec2[SQL Engine treats input strictly as Literal String text -> SAFE!]
+    end
 ```
 
 ```javascript
-// Non-Blocking vs CPU Blocking Code
-const fs = require('fs');
+// SAFE Parameterized Query with node-postgres
+const email = req.body.email; // Hacker inputs: ' OR '1'='1
+const password = req.body.password;
 
-// 1. GOOD: Non-Blocking Asynchronous Read (Frees Event Loop!)
-app.get('/api/products', (req, res) => {
-  fs.readFile('/data/products.json', (err, data) => {
-    res.json(JSON.parse(data));
-  });
-});
-
-// 2. BAD: Heavy Synchronous CPU Computation (Blocks Event Loop!)
-app.get('/api/heavy-calc', (req, res) => {
-  let total = 0;
-  for (let i = 0; i < 10_000_000_000; i++) { total += i; } // BLOCKS EVERYTHING!
-  res.json({ total });
-});
+// PostgreSQL Engine treats $1 and $2 strictly as string values!
+const result = await db.query(
+  'SELECT id, email, role FROM users WHERE email = $1 AND password = $2',
+  [email, password] // Parameters array isolated!
+);
 ```
 
-#### مثال 1: التطبيق العملي — تصفح منتجات المتجر دون خنق السيرفر
+#### مثال 1: التطبيق العملي — الحماية التلقائية باستخدام الـ ORMs (Prisma / TypeORM / Knex)
 
-في منصة التجارة، 10,000 زبون بيطلبوا صفحة المنتجات في نفس اللحظة. Node.js يرسل 10,000 استعلام للداتابيز بدون إيقاف خيط المعالجة، ويدير الردود فور ورودها من الشبكة بسلاسة.
+في منصة المتجر، الـ ORMs الحديثة زي Prisma أو TypeORM بتستخدم Parameterized Queries أوتوماتيكياً تحت البلاطة لكل الاستعلامات: `db.user.findUnique({ where: { email } })` وده بيحميك بنسبة 100% من ثغرات SQL Injection من غير ما تعمل جهد يدوي.
 
-#### مثال 2: فخ شائع — سد الـ Event Loop بـ Heavy CPU Operations
+#### مثال 2: فخ شائع — استخدام الـ Raw SQL Queries مع التجميع النصي داخل الـ ORM
 
-أكثـر خطأ قاتل في Node.js هو تنفيذ عمليات حسابية معقدة (مثل تشفير الصور، ضغط الملفات، أو لوبات رياضية ضخمة) داخل الـ Main Thread! العملية دي هتعطل الـ Event Loop بالكامل، وتخلي كل زبائن المتجر واقفين مستنيين لحد ما الحسبة تخلص! الحل هو ترحيل العمليات دي لـ **Worker Threads (Q87)**.
+من الأخطاء الكارثية ظن إن استخدام الـ ORM بيحميك حتى لو كتبت Raw SQL بنفسك! زي:
+`db.sequelize.query(`SELECT * FROM products WHERE name LIKE '%${req.query.search}%'`)`
+الكود ده مصاب بثغرة SQL Injection صريحة! الصواب عند استخدام Raw Queries هو التمرير الصريح للـ Replacement Parameters: `SELECT * FROM products WHERE name LIKE $1`.
 
-#### مثال 3: حالة إنتاجية — مراقبة الـ Event Loop Lag بـ Prometheus
+#### مثال 3: حالة إنتاجية — فحص الكود الآلي بـ SAST Tools (SonarQube / Snyk) في الـ CI/CD
 
-في بيئة Production، بنقيس مؤشر **Event Loop Lag** (كم ميكروثانية يتأخر الـ Event Loop عن تنفيذ التايمرز). لو المؤشر ارتفع عن 100ms، بيتبعت Alert فوري للمهندسين لوجود كود بيعمل Blocking يجب إصلاحه.
+في شركات الإنتاج، بنضيف أدوات فحص الأمن الآلي (SAST) في الـ CI/CD Pipeline (Q62). الأدوات دي بتكتشف أي محاولة تجميع نصي جوه استعلامات SQL وتمنع دمج الـ PR حتى يتم تصحيحه كـ Parameterized Query.
 
 ---
 
-## Q44 — إيه هي الـ Message Queues ومتى تحتاج تستخدم RabbitMQ أو Kafka؟
+## Q53 — إيه الفرق بين XSS وCSRF، وليه الحماية من الاتنين مختلفة تماماً؟
 
 ### أصل الحكاية
 
-لما زبون المتجر يأكد عملية الشراء، النظام بيبقى محتاج ينفذ كذا مهمة: خصم المبلغ، تعديل المخزون، توليد فاتورة PDF، إرسال إيميل، وإرسال إشعار لمستودع الشحن. لو نفذنا العمليات دي كلها متزامنة جوا نفس طلب الـ HTTP، الرد هياخد 8 ثواني وهيبقى عرضة للفشل لو خدمة الإيميلات وقعت!
+من أكثـر الكوارث الأمنية اللي بيحصل فيها خلط بين المهندسين هي الثغرتين الشهيرتين **XSS (Cross-Site Scripting)** و **CSRF (Cross-Site Request Forgery)**.
 
-الحل إنك تستخدم **Message Queue (طابور الرسائل)** زي **RabbitMQ** أو **BullMQ (Redis)** أو **Apache Kafka**.
-سيرفر الـ API بيتأكد إن رصيد الطلب اتخصم، وبعدين يدفع **Job Event** للطابور ويرجع رد فوري بـ `200 OK` للزبون في 50ms! وسيرفرات خلفية مستقلة (**Workers**) بتستلم الرسائل من الطابور وتنفذ المهام التقيلة (إرسال الإيميل، الشحن) في الخلفية بأمان.
+- **XSS (حقن السكريبتات الخبيثة)**: المهاجم بيحقن كود JavaScript خبيث جوه متجر التجارة (مثلاً في تقييمات المنتجات). لما أي زبون يفتح صفحة المنتج، بيتنفذ كود الـ JS الخبيث جوه متصفح الزبون، وبيقدر يسرق الـ Cookies والـ Access Tokens ويبعتها لسيرفر الهكر!
+- **CSRF (تزوير الطلبات عبر المواقع)**: المهاجم بيستغل إن متصفح الزبون شايل Cookie الدخول المشفرة الخاصة بالمتجر. المهاجم بيغري الزبون يفتح موقع خبيث خارجي، والموقع الخبيث بيبعت طلب خفي `POST https://store.com/api/v1/cart/checkout`! ولأن الطلب رايح للمتجر، المتصفح بيرفق Cookie الدخول أوتوماتيكياً، فيظن سيرفر المتجر إن الزبون هو اللي طلب الشراء بنفسه!
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> - **XSS**: زي ما واحد خبيث يدخل جوه كراستك ويكتب كلمة سرك بالرصاص، وكل ما تفتح الكراسة السحر ده يشتغل ويسرق الباسورد!
+> - **CSRF**: زي ما واحد يستغلك وإنت نائم ويأخد صباعك يبصم بيه على ورقة بيع من غير ما تاخد بالك!
+
+```mermaid
+flowchart TD
+    subgraph XSS Attack Client-Side Execution
+        Attacker1[Hacker] -->|"Injects malicious script that fetches attacker.com with stolen cookie"| DB[(Store DB)]
+        DB -->|Displays comment| Victim1[Victim Browser]
+        Victim1 -->|JS Executes & Steals Data| Attacker1
+    end
+
+    subgraph CSRF Attack Cross-Origin Request Forgery
+        Victim2[Logged-in User] -->|Visits evil.com| Evil[Evil Website]
+        Evil -->|Hidden POST to store.com/checkout| StoreAPI[Store Backend]
+        StoreAPI -.->|"Browser automatically attached Auth Cookies -> Executed!"| NoteStoreAPI(("📝"))
+    end
+```
+
+```javascript
+// Protection Against XSS & CSRF in Express
+
+// 1. Protection Against XSS: Sanitize HTML & Set Content-Security-Policy (Helmet)
+const helmet = require('helmet');
+app.use(helmet()); // Sets Security Headers including CSP, X-XSS-Protection
+
+// 2. Protection Against CSRF: Set SameSite=Strict & HttpOnly on Auth Cookies
+res.cookie('refreshToken', token, {
+  httpOnly: true, // Prevents XSS JS script from reading cookie!
+  secure: true,   // Transmitted over HTTPS only
+  sameSite: 'strict' // Prevents CSRF cross-origin automatic transmission!
+});
+```
+
+#### مثال 1: التطبيق العملي — الحماية من XSS بتطهير المدخلات (Output Sanitization)
+
+في المتجر، عند تعليق الزبون على منتج، بنستخدم مكتبة زي **DOMPurify** أو **sanitize-html** لتطهير النص ومسح أي وسم `<script>` أو `onerror=` قبل حفظه في قاعدة البيانات وعرضه للزبائن.
+
+#### مثال 2: فخ شائع — ظن أن الحماية من XSS تحميك من CSRF تلقائياً
+
+من الفخاخ ظن إن وسيلة واحدة بتحميك من الثغرتين! الحماية من XSS بتتطلب **Sanitization** و **CSP Headers** وتخزين التوكينز في `HttpOnly Cookies`. بينما الحماية من CSRF بتتطلب ضبط **`SameSite=Strict` Cookie Attribute** أو استخدام **Anti-CSRF Tokens (Double Submit Cookie)**.
+
+#### مثال 3: حالة إنتاجية — إطار العمل الحديث (React / Next.js) والوقاية التلقائية من XSS
+
+في الفرونت اند الحديث (React / Vue)، أطر العمل بتعمل **Automatic String Escaping** لكل النصوص المعروضة بين `{userComment}`، وده بيمنع تنفيذ سكريبتات الـ XSS تلقائياً إلا لو استخدم المطور بشكل خاطئ `dangerouslySetInnerHTML`.
+
+---
+
+## Q54 — إزاي بتخزن الباسوردات بأمان في الـ Database، ولإيه Hashing مش Encryption؟
+
+### أصل الحكاية
+
+من أكبر الأخطاء الكارثية في تاريخ أمان الباك اند هي تخزين كلمات سر المستخدمين بصيغة النص الصريح (Plaintext Passwords)، أو استخدام التشفير العادي ثنائي الاتجاه (Symmetric Encryption)! لو تعرضت قاعدة البيانات للتسريب أو الاختراق، سيسرق المهاجم كلمات السر الخاصة بملايين الزبائن واستخدامها في اختراق إيميلاتهم وحساباتهم البنكية!
+
+القواعد الأمنية الصارمة لتخزين كلمات السر:
+1. **استخدام Hashing مش Encryption**: التشفير (Encryption) هو عملية ثنائية الاتجاه (Two-Way) ليها مفتاح فك تشفير (Decryption Key) بيتكشف لو اخترق السيرفر. بينما الـ **Hashing** هو عملية أحادية الاتجاه (One-Way Cryptographic Function) مستحيل رياضياً عودتها لنصها الأصلي!
+2. **إضافة Salt عشوائي فريد لكل كلمة سر**: الـ **Salt** هو نص عشوائي يضاف لكلمة السر قبل الـ Hash لمنع هجمات الجدول المجهز مسبقاً (**Rainbow Tables Attack**).
+3. **استخدام Slow Adaptive Hashing Algorithms**: استخدام خوارزميات بطيئة مصممة خصيصاً للتشفير زي **Bcrypt**, **Argon2id**, أو **PBKDF2**. البطء المتعمد ده (Work Factor / Salt Rounds) بيمنع الهكر من تجربة مليارات كلمات السر في الثانية بكروت الشاشة (GPU Bruteforce Attacks).
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> - **التشفير (Encryption)**: زي ما تحط لعبتك جوه صندوق وتدير المفتاح. لو الهكر سرق المفتاح بيقدر يفتح الصندوق وياخد اللعبة!
+> - **الـ Hashing**: زي ما تحط بيضة جوه خلاط وتفرمها! مستحيل باي طريقة في العالم ترجع المفروم ده لبيضة سليمة تاني! ولما تحب تتأكد إن البيضة كانت صحيحة، تفرم بيضة تانية وتقارن شكل المفرومين ببعض!
+
+```mermaid
+flowchart LR
+    Password[Plaintext Password: secret123] --> SaltGen[Generate Unique Salt: x8f9...]
+    SaltGen --> HashAlgo[Bcrypt Algorithm Work Factor = 12]
+    HashAlgo --> StoredHash[Stored Hash in DB: $2b$12$x8f9...g7H9zK]
+    
+    StoredHash -.->|"Cannot be decrypted back to secret123!"| NoteHash(("📝"))
+```
+
+```javascript
+// Secure Password Hashing & Verification with Bcrypt in Node.js
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 12; // Adaptive Work Factor (Takes ~250ms to compute)
+
+// 1. During User Registration:
+async function hashPassword(plainPassword) {
+  const hash = await bcrypt.hash(plainPassword, SALT_ROUNDS);
+  return hash; // Save this string in Database users.password column!
+}
+
+// 2. During User Login:
+async function verifyPassword(plainPassword, storedHash) {
+  // Bcrypt extracts salt from storedHash and verifies cryptographically
+  const isMatch = await bcrypt.compare(plainPassword, storedHash);
+  return isMatch; // Returns true or false
+}
+```
+
+#### مثال 1: التطبيق العملي — اختيار Argon2id كأحدث معيار تشفير عالمي
+
+في المنصات المالية والتجارية الحديثة، نفضل **Argon2id** (الفائز بمسابقة Password Hashing Competition) لأنه مقاوم لهجمات الـ GPU والـ ASIC Hardware Attacks عبر استهلاك ذاكرة RAM محددة لكل عملية Hash.
+
+#### مثال 2: فخ شائع — استخدام خوارزميات التشفير السريعة مثل MD5 أو SHA-256
+
+من الفخاخ الأمنية القاتلة استخدام `crypto.createHash('sha256')` لتشفير كلمات السر! خوارزميات SHA-256 و MD5 صممت لتكون فائقة السرعة للملفات. كروت الشاشة الحديثة (GPUs) تستطيع حساب **100 مليار SHA256 Hash في الثانية الواحدة**، مما يجعل اختراق كلمة سر الزبون مسألة ثوانٍ معدودة!
+
+#### مثال 3: حالة إنتاجية — ترقية الـ Work Factor تلقائياً (Re-hashing on Login)
+
+مع تطور سرعة المعالجات، الـ Work Factor القديم (مثلاً Bcrypt rounds = 8) يصبح ضعيفاً. في الباك اند الاحترافي، عند تسجيل الزبون لدخوله بنجاح، نفحص هل الـ Hash قديم؟ لو قديم، نعيد حساب الـ Hash بـ Work Factor جديد (rounds = 12) ونحدث قاعدة البيانات أوتوماتيكياً.
+
+---
+
+> [!tip] Checkpoint نهائي للموضوع (الأمان والـ Authentication)
+> **مراجعة محورية للأمان والتوثيق:**
+> 1. **AuthN vs AuthZ (Q47)**: فرق بين إثبات الهوية (401) وفحص الصلاحيات (403) واحمِ النظام من ثغرات BOLA/IDOR.
+> 2. **JWT & Refresh Tokens (Q48 & Q49)**: اعتمد Access Tokens قصيرة العمر مع Refresh Tokens محفوفة في HttpOnly Cookies لمنع التجسس.
+> 3. **OAuth 2.0 (Q50)**: نفذ Authorization Code Flow مع PKCE وحماية `state` للتكامل الآمن مع خوادم التوثيق الخارجية.
+> 4. **RBAC & Parameterized Queries (Q51 & Q52)**: اعزل الصلاحيات في Guards مركزية واقضِ على SQL Injection بـ Parameterized Queries.
+> 5. **XSS, CSRF & Password Hashing (Q53 & Q54)**: طهر مخرجات الكود ضد XSS، واضبط `SameSite=Strict` ضد CSRF، وشفّر كلمات السر بـ Bcrypt/Argon2id مع Salt.
+
+---
+
+## Q55 — إيه هي الـ Database Indexes، وإزاي B-Tree Index بيسرّع البحث من O(N) لـ O(log N)؟
+
+### أصل الحكاية
+
+تخيل جدول المنتجات في منصة التجارة الإلكترونية يحتوي على 5,000,000 منتج. عند البحث عن منتج برقم معرفه الخاص `SELECT * FROM products WHERE sku = 'IPHONE-15-PRO'`... لو الجدول لا يحتوي على **Index (فهرس)**، محرك قاعدة البيانات سيضطر لقراءة الـ 5 مليون صف من القرص الصلب صفاً صفاً (**Full Table Scan**) بأداء زمني $O(N)$ يستغرق 5 ثوانٍ!
+
+الـ **Database Index** هو هيكل بيانات جانبي (عادةً **B-Tree Index**) يحتفظ بعامود معين منسقاً ومترتباً في شجرة بحث متوازنة.
+البحث في شجرة الـ B-Tree يقلل عدد عمليات القراءة من القرص بشكل خرافي: بدلاً من فحص 5,000,000 صف، المحرك يقطع الشجرة في 4 خطوات فقط ($O(\log N)$) ويعثر على المكان الدقيق للصف في أقل من **1 millisecond!**
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> تخيل إنك بتدور على كلمة في كتاب من 1000 صفحة:
+> - **من غير Index**: بتفتح الكتاب من أول صفحة وتقرأ صفحة صفحة لحد ما تلاقي الكلمة في الصفحة رقم 800 (مجهود وتعب كبير!).
+> - **مع الـ Index**: بتفتح **الفهرس** في أول الكتاب، تلاقي الكلمة مكتوب جنبها "صفحة 800"، تفتح صفحة 800 فوراً في ثانية واحدة!
+
+```mermaid
+flowchart TD
+    Root[B-Tree Root Node: SKU Range A - Z] --> Branch1[Branch: A - M]
+    Root --> Branch2[Branch: N - Z]
+    
+    Branch2 --> Leaf1[Leaf Node: IPHONE-15-PRO -> Pointer to Disk Block #9821]
+    
+    Leaf1 -.->|"Search completed in 3 steps O(log N) instead of 5,000,000 rows!"| NoteLeaf(("📝"))
+```
+
+```sql
+-- Creating B-Tree & Composite Indexes in PostgreSQL
+CREATE INDEX idx_products_sku ON products(sku);
+
+-- Composite Index for Multi-Column Queries (Category + Price)
+CREATE INDEX idx_products_category_price ON products(category_id, price DESC);
+```
+
+#### مثال 1: التطبيق العملي — الـ Composite Indexes للاستعلامات المركبة
+
+في متجر المنتجات، الزبون يطلب: "هواتف قسم الإليكترونيات مرتبة من الأعلى سعراً" (`WHERE category_id = 5 ORDER BY price DESC`). بننشئ **Composite Index (فهرس مركب)** على العامودين معاً `(category_id, price DESC)`، مما يجعل الداتابيز تقرأ النتيجة المرتبة مباشرة من الفهرس في 2ms بدون الحاجة لعملية Sorting مكلفة في الـ RAM.
+
+#### مثال 2: فخ شائع — الإفراط في إنشاء الـ Indexes وتبطيء عمليات الـ Write
+
+من الفخاخ المعمارية ظن أن إضافة Index على كل عامود في الجدول فكرة ممتازة! كل Index هو هيكل بيانات مستقل يجب تحديثه وتعديله مع كل عملية `INSERT`, `UPDATE`, أو `DELETE`. الإفراط في الـ Indexes يسرع القراءة قليلاً ولكنه يضاعف زمن عمليات الشراء والكتابة 5 أضعاف ويستهلك المساحة!
+
+#### مثال 3: حالة إنتاجية — الـ Cover Indexes وتقليل القراءة من الـ Heap
+
+في الاستعلامات عالية التكرار، بنستخدم **Covering Index (`INCLUDE`)**. الفهرس يحتفظ بالقيم المطلوبة صراحة (مثلا `sku` و `price`). محرك الداتابيز يقدم الرد من الفهرس مباشرة (Index-Only Scan) بدون الرجوع للقرص الصلب الأصلي (Heap Lookup)، مما يضاعف الأداء بـ 10 أضعاف.
+
+---
+
+## Q56 — إزاي بتقرأ الـ EXPLAIN ANALYZE عشان تكتشف الاستعلامات البطيئة؟
+
+### أصل الحكاية
+
+عندما تلاحظ أن صفحة الشراء أصبحت بطيئة وتأخذ ثانيتين للرد، كيف تكتشف أين المشكلة بدقة داخل استعلام الـ SQL المشتبه فيه؟
+
+الأداة التحليلية القياسية في قواعد البيانات هي **`EXPLAIN ANALYZE`**:
+أمر يسبق استعلام الـ SQL ويجبر قاعدة البيانات على تنفيذ الاستعلام طبقا لخطة المحرك (**Query Execution Plan**) وطباعة تقرير تفصيلي يوضح:
+- **Scan Type**: هل استخدم المحرك Index Scan أم Seq Scan (Full Table Scan)؟
+- **Execution Cost & Time**: الزمن المستغرق والمجهود في كل خطوة بالملي ثانية.
+- **Rows Filtered**: عدد الصفوف المرفوضة والمقروءة.
+
+```sql
+-- Analyzing Query Performance in PostgreSQL
+EXPLAIN ANALYZE 
+SELECT * FROM orders 
+WHERE customer_id = 42 AND status = 'PENDING';
+
+/* Execution Plan Output:
+Seq Scan on orders (cost=0.00..18250.00 rows=15 width=120) (actual time=45.210..180.450 ms)
+  Filter: (customer_id = 42 AND status = 'PENDING')
+  Rows Removed by Filter: 499985
+Execution Time: 180.520 ms
+WARNING: Seq Scan detected! Needs Index on (customer_id, status)!
+*/
+```
+
+```mermaid
+flowchart TD
+    Query[Run EXPLAIN ANALYZE] --> CheckScan{Check Execution Plan}
+    CheckScan -- Seq Scan / Full Scan --> Warning[Slow! Missing Index -> Add Index]
+    CheckScan -- Index Scan / Index Only --> Good[Fast! Optimal Execution < 2ms]
+```
+
+#### مثال 1: التطبيق العملي — تحويل Seq Scan إلى Index Scan وتخفيض الزمن من 200ms إلى 1ms
+
+عند تشغيل `EXPLAIN ANALYZE` على استعلام الطلبات المعلقة، لاحظنا وجود `Seq Scan` واستغراق 180ms. بعد إضافة `CREATE INDEX idx_orders_customer_status ON orders(customer_id, status)`، أعدنا التشغيل ليتحول إلى `Index Scan` وتنخفض فترة التنفيذ إلى 0.8ms!
+
+#### مثال 2: فخ شائع — الـ Implicit Type Casting يفسد استخدام الـ Index
+
+من الفخاخ الشائعة عندما يكون عامود `phone` نوعه `VARCHAR` في قاعدة البيانات، ولكن الكود يمرر الرقم كـ Number: `WHERE phone = 01012345678`! محرك PostgreSQL سيضطر لتحويل كل الأرقام في الجدول لـ Number يدوياً (Implicit Cast)، مما يلغي استخدام الـ Index كلياً ويتحول إلى Seq Scan بطيء جداً!
+
+#### مثال 3: حالة إنتاجية — كشف الـ Slow Queries التلقائي بـ `pg_stat_statements`
+
+في بيئة Production، بنفعل إضافة **`pg_stat_statements`** في PostgreSQL. الإضافة تراقب وتجمع كل الاستعلامات المنفذة في السيرفر وتصنف بطئها، لتعرض للمهندسين قائمة بأبطأ 10 استعلامات تستهلك الـ CPU لإصلاحها فوراً.
+
+---
+
+## Q57 — إيه الفرق بين Database Partitioning وSharding؟
+
+### أصل الحكاية
+
+عندما ينمو حجم قاعدة البيانات لمنصة التجارة الإلكترونية ويتجاوز 1 Terabyte وتحتوي جدول الطلبات على 500 مليون صف... يقل أداء الـ Indexes وتصبح الصيانة والـ Backups معقدة جداً على سيرفر واحد!
+
+أمامك تقنيتان لتقسيم البيانات الضخمة:
+- **Vertical / Horizontal Partitioning (التقسيم الداخلي - بنفس السيرفر)**: تقسيم جدول ضخم واحد إلى جداول فرعية أصفر (Partitions) تعيش داخل **نفس سيرفر قاعدة البيانات الواحد** (مثال: تقسيم جدول `orders` بحسب السنة: `orders_2024`, `orders_2025`).
+- **Sharding (التقسيم الموزع - على سيرفرات متعددة)**: تقسيم وتوزيع بيانات الجدول على **أجهزة وسيرفرات قواعد بيانات مستقلة تماماً (Multiple Database Nodes / Shards)** عبر الـ **Shard Key** (مثال: الزبائن من ID 1-1M على Shard 1، والزبائن من ID 1M-2M على Shard 2).
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> - **Partitioning**: عندك دولاب ملابس ضخم في أوضتك، قمت قسمته لأرفف (رف الصيف، ورف الشتا). الملابس كلها جوه نفس الدولاب ونفس الأوضة!
+> - **Sharding**: الدولاب اتخنق، فاشتريت 3 دولابات حطيت واحد في أوضتك، وواحد في أوضة أخوك، وواحد في الصالة! كل دولاب في مكان مستقل تماماً.
+
+```mermaid
+flowchart TD
+    subgraph Partitioning Single Server
+        Server[(Single Postgres Server)] --> P1[Partition 2024 Table]
+        Server --> P2[Partition 2025 Table]
+    end
+
+    subgraph Sharding Multiple Servers
+        Router[Shard Router / Proxy] --> Shard1[(Shard Node 1 Users 1-1M)]
+        Router --> Shard2[(Shard Node 2 Users 1M-2M)]
+        Router --> Shard3[(Shard Node 3 Users 2M-3M)]
+    end
+```
+
+```javascript
+// Application-Level Sharding Logic Example
+function getShardClient(userId) {
+  // Shard Key: Hash of userId modulo number of shards
+  const shardIndex = userId % 3; 
+  const shardClients = [dbShard0, dbShard1, dbShard2];
+  return shardClients[shardIndex];
+}
+
+// Query is routed directly to target Shard Node!
+const userShard = getShardClient(user.id);
+const userOrders = await userShard.query('SELECT * FROM orders WHERE user_id = $1', [user.id]);
+```
+
+#### مثال 1: التطبيق العملي — تسريع الاستعلامات بـ Partition Pruning
+
+في جدول الفواتير التاريخية، عند تقسيم الجدول بحسب الأشهر (Range Partitioning)، عندما يطلب الزبون فواتير شهر يناير `WHERE created_at >= '2025-01-01'`، محرك PostgreSQL ينفذ **Partition Pruning**: يتجاهل 99% من الجداول ويقرأ فقط Partition شهر يناير في ميكروثانية.
+
+#### مثال 2: فخ شائع — اختيار Shard Key سيئ يسبب Hotspotting
+
+من أكبر الأخطاء المعمارية اختيار `country` كـ Shard Key! لو 90% من زبائن المتجر من دولة واحدة (مثلاً مصر)، فـ Shard مصر سيتحمل 90% من الضغط (Hotspot Node) ويفشل، بينما باقي الـ Shards فارغة! الاختيار المثالي لـ Shard Key هو قيمة متوزعة بعشوائية منتظمة مثل `UUID` أو `userId`.
+
+#### مثال 3: حالة إنتاجية — تعقيد الـ Cross-Shard Joins وحلها بـ Denormalization
+
+في بيئة الـ Sharding، تنفيذ استعلام `JOIN` بين Shard 1 و Shard 2 عبر الشبكة أمر معقد جداً وبطيء! الحل الإنتاجي هو تجنب الـ Cross-Shard Joins كلياً باتباع **Denormalization (Q60)** وتكرار البيانات المشتركة أو استخدام قواعد بيانات نو-سيكويل موجهة لـ Distributed Scale.
+
+---
+
+## Q58 — إزاي تصمم Rate Limiting لحماية الـ Endpoints من الـ Abuse؟
+
+### أصل الحكاية
+
+تخيل لو قادم مهاجم أو Bot وحاول إرسال 10,000 طلب في الثانية لصفحة تسجيل الدخول لطلب تجربة كلمات سر مسروقة (Brute Force Attack)، أو طلب مفاتيح البحث لإغراق السيرفر! بدون حماية، سيتوقف سيرفر API المتجر عن العمل كلياً تحت وطأة هجوم الـ Denial of Service (DoS).
+
+الحل هو **Rate Limiting (تحجيم معدل الطلبات)**:
+تحديد حد أقصى لعدد الطلبات المسموح بها للمستخدم أو الـ IP خلال نافذة زمنية محددة (مثال: مسموح بـ 100 طلب فقط كل دقيقة لكل IP). لو تجاوز العميل الحد، يرفض السيرفر الطلب فوراً ويرجع **`429 Too Many Requests`**.
+
+أشهر الخوارزميات:
+1. **Fixed Window**: عداد بسيط يصفر كل دقيقة.
+2. **Sliding Window Log / Counter (الأعدل والأشهر)**: حساب معدل الطلبات المتدفقة بسلاسة في الـ Redis.
+3. **Token Bucket / Leaky Bucket**: السماح بـ Traffic Spikes محدودة مع تنظيم التدفق.
+
+```mermaid
+flowchart TD
+    ClientReq[Client HTTP Request] --> RateLimiter{Check Redis Rate Limit}
+    RateLimiter -- Count <= 100 req/min --> Pass[Allow Request -> Execute Controller]
+    RateLimiter -- Count > 100 req/min --> Block[Return 429 Too Many Requests + Retry-After Header]
+```
+
+```javascript
+// Production Rate Limiter with express-rate-limit & Redis
+const rateLimit = require('express-rate-limit');
+const RedisStore = require('rate-limit-redis');
+
+const apiLimiter = rateLimit({
+  store: new RedisStore({ sendCommand: (...args) => redisClient.call(...args) }),
+  windowMs: 15 * 60 * 1000, // 15 minutes window
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return RateLimit-* headers
+  legacyHeaders: false,
+  message: { error: 'تجاوزت الحد المسموح من الطلبات، يرجى المحاولة بعد 15 دقيقة (429)' }
+});
+
+// Apply to sensitive routes
+app.use('/api/v1/auth/login', apiLimiter);
+```
+
+#### مثال 1: التطبيق العملي — إرجاع الـ Standard RateLimit Headers للعميل
+
+في المتجر، الـ Rate Limiter يرفق Headers مع كل رد لتوضيح الحالة للفرونت اند:
+`RateLimit-Limit: 100`
+`RateLimit-Remaining: 85`
+`RateLimit-Reset: 1740000000`
+الفرونت اند يستعرض الرقم المتبقي ويعرف موعد تجديد الصلاحية بسلاسة.
+
+#### مثال 2: فخ شائع — استخدام In-Memory Store للـ Rate Limiting مع Horizontal Scaling
+
+من الأخطاء الكارثية حفظ عداد الـ Rate Limit في ذاكرة السيرفر المحلي (`MemoryStore`)! لو عندك 5 سيرفرات ورا Load Balancer، الزبون يقدر يبعت 100 طلب لكل سيرفر (إجمالي 500 طلب) ويتخطى الحماية! الصواب هو حفظ العدادات مركزياً في **Redis Cache**.
+
+#### مثال 3: حالة إنتاجية — الـ Dynamic Rate Limiting بحسب فئة الزبون (Tiered Limits)
+
+في الـ APIs الاحترافية، بنطبق **Tiered Rate Limiting**: الزبون المجاني مسموح له بـ 60 طلب/دقيقة، بينما الزبون المشترك (Premium Merchant) مسموح له بـ 5,000 طلب/دقيقة بواسطة فحص الـ JWT Token وم مفتاح الـ API.
+
+---
+
+## Q59 — إيه هو CAP Theorem، وإيه معناه لمهندس الـ Backend؟
+
+### أصل الحكاية
+
+عند تصميم أي نظام بيانات موزع (Distributed Data System) يتكون من عدة أجهزة موصولة بشبكة... ينص مبرهنة **CAP Theorem (مبدأ بروور)** على أنه **من المستحيل علمياً وهندسياً لـ أي نظام بيانات موزع توفير الخصائص الثلاث التالية معاً في نفس اللحظة**:
+
+1. **Consistency (C - الاتساق المطلق)**: كل القراءات ترجع أحدث كتابة تمت في النظام فوراً في كل الأجهزة بنفس الميكروثانية.
+2. **Availability (A - التوفرية الدائمة)**: كل طلب قراءة أو كتابة يستقبل رداً ناجحاً (غير خطأ) في كل الأوقات من أي جهاز يعمل.
+3. **Partition Tolerance (P - تحمل انقطاع الشبكة)**: يستمر النظام في العمل حتى لو انقطعت خطوط اتصالات الشبكة بين أجهزة السيرفرات.
+
+في العالم الحقيقي، انقطاع الشبكة (Network Partition - P) أمر حتمي وقوعه! بالتالي، عند حدوث انقطاع في الشبكة، يتوجب على المهندس الاختيار الحاسم بين نظامين:
+- **CP System (Consistency + Partition Tolerance)**: يفضل الاتساق والدقة؛ يرفض أو يوقف استقبال الطلبات لو لم يضمن مزامنتها مع باقي الأجهزة (مثال: MongoDB, HBase).
+- **AP System (Availability + Partition Tolerance)**: يفضل الاستمرارية والتوفر؛ يرجع البيانات المتاحة فوراً حتى لو كانت قديمة ولم تنقل لباقي الأجهزة بعد (مثال: Cassandra, DynamoDB).
+
+```mermaid
+flowchart TD
+    CAP[CAP Theorem Trilemma] --> C[Consistency: All nodes see same data at same time]
+    CAP --> A[Availability: Every request gets a non-error response]
+    CAP --> P[Partition Tolerance: System works despite network drops]
+
+    P -.->|"Network Partitions ARE Inevitable in Cloud!"| NoteP(("📝"))
+    P --> CP[CP Choice: Trade Availability for Absolute Consistency e.g. Banking]
+    P --> AP[AP Choice: Trade Consistency for High Availability e.g. Social Feed]
+```
+
+#### مثال 1: التطبيق العملي — اختيار CP للنظام المالي والمخزون في متجر التجارة
+
+في منصة المتجر، عند خصم الرصيد البنكي وحجز قطع المخزون، نختار **CP System**: يفضل النظام رفض العملية وإعادة Error للزبون على أن يخصم رصيد أو يبيع قطعة غير متوفرة بسبب عدم اتساق البيانات بين السيرفرات!
+
+#### مثال 2: فخ شائع — الظن أن قواعد البيانات التقليدية Relational DBs تنطبق عليها CAP بنفس النمط
+
+من الفخاخ خلط مبدأ ACID في السيرفر الواحد مع CAP في الأنظمة الموزعة! مبدأ CAP صمم خصيصاً للأنظمة الموزعة (Distributed Systems) التي تتشارك البيانات عبر الشبكة، وليس لسيرفر MySQL واحد مغلق.
+
+#### مثال 3: حالة إنتاجية — اعتناق الـ Eventual Consistency في أنظمة الـ AP
+
+في نظام تقييمات المنتجات والإشعارات في المتجر، نختار **AP System** ونقبل بـ **Eventual Consistency**: عند إضافة الزبون لتقييم جديد، لا ينبغي إيقاف المتجر للتأكد من وصول التقييم لكل السيرفرات! تقبل السيرفرات التقييم وتتزامن البيانات في الخلفية خلال ثانيتين.
+
+---
+
+## Q60 — إمتى تعمل Database Normalization، وإمتى تكون الـ Denormalization هي القرار الصح؟
+
+### أصل الحكاية
+
+عند تصميم جداول قاعدة البيانات 관계ية (Relational DB)، يواجه المهندس قرارين معمارين متعارضين في هيكلة البيانات:� **Worker Threads (Q87)**.
+
+#### مثال 3: حالة إنتاجية — مراقبة الـ Event Loop Lag بـ Prometheus
+
+في بيئة Production، بنقيس مؤشر اسمه **Event Loop Lag** (بيحسب كم ميكروثانية بيتأخر الـ Event Loop عن تنفيذ التايمرز). لو المؤشر ده ارتفع عن 100ms، بيتبعت Alert فوري على Slack لمهندسي النظام لأن ده معناه إن فيه كود بيكسر القاعدة وبيعمل Blocking ولازم يتصلح.
+
+---
+
+## Q44 — إيه هي الـ Message Queues وإمتى بتحتاج تستخدم RabbitMQ أو Kafka؟
+
+### أصل الحكاية
+
+لما زبون المتجر يضغط على زرار "تأكيد الشراء"، السيستم محتاج يعمل حاجات كتير: يخصم الفلوس من الكارت، يقلل المخزون في الداتابيز، يعمل فاتورة PDF، يبعت إيميل للزبون، ويدير إشعار لشركة الشحن!
+لو نفذنا كل الحاجات دي ورا بعض بشكل مباشر (Synchronous) جوه طلب الـ HTTP الأصلي... الرد هياخد 8 ثواني كاملة! ولو خدمة الإيميلات كانت واقفه في اللحظة دي، طلب الشراء كله هيعدي بـ Error والزبون يفتكر إن الفلوس راحت عليه!
+
+الحل المعماري هو استخدام **Message Queue (طابور الرسائل)** زي **RabbitMQ** أو **BullMQ (Redis)** أو **Apache Kafka**.
+سيرفر الـ API بيتأكد بس من خصم الفلوس وحفظ الطلب، ويرمي رسالة شغلانة (**Job Event**) جوه الطابور، ويرجع رد سريع للزبون بـ `200 OK` في أقل من 50ms!
+وعلى الناحية التانية، فيه سيرفرات خلفية مستقلة (**Workers**) عيونها على الطابور، بتاخد الرسائل وتنفذ المهام الثقيلة دي (زي إرسال الإيميل والشحن) في الخلفية براحتها وبأمان.
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> تخيل إنك في مكتب البريد:
+> - بدل ما الموظف ياخد منك الخطاب ويركب عجلته ويروح يوصله لبيت صاحبك ويرجعلك (تأخير شديد)، هو بياخد منك الخطاب ويرميه في "صندوق البريد" ويديك إيصال في ثانية ويقولك "تمام اتفضل"!
+> - بالليل بييجي ساعي البريد (Worker) يفتح الصندوق وياخد كل الخطابات ويوصلها براحته في الخلفية.
 
 ```mermaid
 flowchart LR
@@ -1888,15 +2077,15 @@ app.post('/api/v1/orders', async (req, res) => {
 
 #### مثال 1: التطبيق العملي — تفكيك الاعتمادية (Decoupling) ومنع انهيار الخدمة
 
-في متجر التجارة الإلكترونية، لو خدمة إرسال البريد الإلكتروني الخارجية توقفت عن العمل، الـ Queue يحفظ كل الرسائل عنده بـ Persistence Storage. أول ما خدمة الإيميل ترجع يرسلهم Workers بالتتابع بدون ما يفقد المتجر طلب شراء واحد!
+في متجر التجارة، لو خدمة إرسال الإيميلات الخارجية وقعت، الـ Queue بيحفظ كل رسائل الإيميلات عنده في ذاكرة دائمية (Persistence Storage). أول ما خدمة الإيميلات ترجع تشتغل، الـ Workers بياخدوا الرسائل المتروكة ويبعتوها بالتتابع من غير ما يفقد المتجر طلب شراء واحد!
 
-#### مثال 2: فخ شائع — استخدام الـ Queue للبيانات الحساسة التي تتطلب Synchronous Response
+#### مثال 2: فخ شائع — استخدام الـ Queue للبيانات الحساسة اللي محتاجة رد فوري
 
-من الأخطاء الكارثية دفع عملية الخصم المالي البنكي لـ Background Queue والرد على الزبون بـ "تم الشراء" قبل التأكد من وجود رصيد بالبطاقة! العمليات المالية الحتمية يجب أن تكون **Synchronous**، بينما التبعات الجانبية تكون **Asynchronous Queue**.
+من الأخطاء الكارثية إنك ترمي عملية الخصم المالي البنكي جوه Background Queue وترد على الزبون بـ "تم الشراء" قبل ما تتأكد إن الكارت فيه رصيد! العمليات المالية الحتمية لازم تكون **Synchronous**، بينما التبعات الجانبية (زي الإيميل والإحصائيات) تكون **Asynchronous Queue**.
 
 #### مثال 3: حالة إنتاجية — سياسات إعادة المحاولة وإدارة الرسائل الميتة (Dead Letter Queue - DLQ)
 
-في الـ Queue الاحترافي، لو فشل إرسال إشعار الشحن لخطأ شبكة، الـ Queue يعيد المحاولة بـ **Exponential Backoff (Q85)**. لو فشل 5 مرات متتالية، ترحل الرسالة تلقائياً لـ **Dead Letter Queue (DLQ)** ليتم فحصها ودراستها يدوياً من فريق الهندسة.
+في الـ Queues الاحترافية، لو فشل إرسال إشعار الشحن بسبب مشكلة شبكة عابرة، الـ Queue بيعيد المحاولة أوتوماتيكياً بـ **Exponential Backoff (Q85)**. ولو فشل 5 مرات متتالية، بيزق الرسالة لـ طابور خاص اسمه **Dead Letter Queue (DLQ)** عشان المهندسين يفحصوها يدوياً ويعرفوا السبب.
 
 ---
 
@@ -1904,12 +2093,17 @@ app.post('/api/v1/orders', async (req, res) => {
 
 ### أصل الحكاية
 
-فتح اتصال جديد بقاعدة البيانات (PostgreSQL Connection) عملية غالية جداً على مستوى العتاد والشبكة: محتاجة تفتح TCP Socket، تعمل TLS Handshake، وتتأكد من كلمة السر وصلاحيات المستخدم جوا محرك الداتابيز. العملية دي بتاخد حوالي 50ms لـ100ms لكل Request!
+فتح اتصال جديد بقاعدة البيانات (PostgreSQL Connection) عملية مكلفة جداً عتادياً وشبكياً: بتتطلب فتح TCP Socket، عمل TLS Handshake، والتحقق من كلمة السر والـ Permissions جوه محرك الداتابيز. الخطوات دي بتاخد وقت حوالي من 50ms لـ 100ms مع كل طلب!
 
-لو سيرفر الـ API بيفتح اتصال جديد مع كل HTTP Request ويقفله في الآخر... السيرفر والداتابيز هيقفوا تماماً تحت ضغط الـ TCP Overhead، والداتابيز هتوصل لـ `FATAL: sorry, too many clients already`.
+لو سيرفر الـ API يفتح اتصال جديد مع قاعدة البيانات مع كل HTTP Request يقفله في الآخر... السيرفر والداتابيز هيتخنقوا تماماً تحت ضغط الـ Overhead، والداتابيز هتجيب خطأ شهير: `FATAL: sorry, too many clients already`.
 
 الحل هو **Database Connection Pooling (حوض اتصالات قاعدة البيانات)**:
-لما سيرفر الـ API يشتغل، بيتفتح عدد محدد من الاتصالات الدايمة الجاهزة مسبقاً (مثلاً 20 Connection) وتفضل مفتوحة. لما يوصل طلب جديد، بيستعير اتصال جاهز من الـ Pool وينفذ الاستعلام في 1ms، وبعدين يرجع الاتصال للـ Pool تاني عشان طلب تاني يستفاد منه!
+أول ما سيرفر الـ API يشتغل، بيفتح عدد محدد من الاتصالات الدائمة المجهزة مسبقاً (مثلاً 20 Connection) ويحافظ عليها مفتوحة. لما ييجي طلب جديد، بيستعير اتصال جاهز من الـ Pool ينفذ الاستعلام في 1ms، فوراً ويرجع الاتصال للـ Pool تاني عشان طلب تاني يستفيد منه!
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> تخيل إنك في مدرسة وعايز تشرّب الطلاب:
+> - **من غير Pool**: كل ما طالب يعطش، تروح تشتريله كازوزة جديدة وتفتحها وتديها له وتظرف الإزازة في الزبالة! (تكلفة ووقت رهيب!).
+> - **مع الـ Connection Pool**: إنت حاطط 5 كبابي على الترابيزة ممتلئين مية. الطالب بييجي يشرب من كباية جاهزة، يغسلها ويرجعها الترابيزة فوراً للطالب اللي بعده!
 
 ```mermaid
 flowchart TD
@@ -1940,17 +2134,17 @@ module.exports = {
 };
 ```
 
-#### مثال 1: التطبيق العملي — تحسين السرعة من 100ms إلى 2ms لكل استعلام
+#### مثال 1: التطبيق العملي — تحسين السرعة من 100ms لـ 2ms لكل استعلام
 
-في منصة المتجر، باستخدام Connection Pool مجهز، يستطيع السيرفر تنفيذ استعلامات السلة والمنتجات في 2ms فقط بدلاً من 100ms، مما يوفر 98% من زمن الانتظار للزبون.
+في منصة المتجر، بفضل الـ Connection Pool المجهز، السيرفر بيقدر ينفذ استعلامات السلة وتفاصيل المنتجات في 2ms بس بدل 100ms، وده بيوفر 98% من وقت الانتظار للزبون.
 
 #### مثال 2: فخ شائع — تسريب الاتصالات (Connection Leak) وعدم إعادة الاتصال للـ Pool
 
-من الأخطاء الكارثية استعارة client يدوياً `const client = await pool.connect()` وعدم إرجاعه بـ `client.release()` في بلوك `finally`! بعد 20 طلب، الـ Pool يتفرغ تماماً ويتجمد السيرفر وهو مستني اتصال مش هيرجع خالص.
+من الأخطاء القاتلة إنك تستعير client يدوياً `const client = await pool.connect()` وتنسى ترجعه بـ `client.release()` جوه بلوك `finally`! بعد 20 طلب، الـ Pool بيتفرغ تماماً والسيرفر بيتجمد في انتظار اتصال فاضي مش هييجي أبداً.
 
-#### مثال 3: حالة إنتاجية — إدارة الـ Max Connections مع Serverless/Lambdas بـ PgBouncer
+#### مثال 3: حالة إنتاجية — إدارة الـ Max Connections مع Serverless بـ PgBouncer
 
-في بيئات Serverless (زي AWS Lambda أو Vercel)، كل Lambda Function تنشئ instance جديد وقد تفتح آلاف الاتصالات التي تخنق الداتابيز! الحل في بيئات الإنتاج هو وضع **PgBouncer** أمام PostgreSQL ليعمل كـ Centralized Connection Pooler بين ملايين الـ Lambdas والداتابيز.
+في بيئات Serverless (زي AWS Lambda أو Vercel)، كل Lambda Function بتفتح instance جديد وممكن تفتح آلاف الاتصالات اللي تخنق الداتابيز! الحل في الإنتاج إننا نحط **PgBouncer** قدام PostgreSQL عشان يشتغل كـ Centralized Connection Pooler بيجمع اتصالات الـ Lambdas كلها ويديرها بكفاءة مع الداتابيز.
 
 ---
 
@@ -1958,15 +2152,20 @@ module.exports = {
 
 ### أصل الحكاية
 
-استعلام قايمة المنتجات الأكتر مبيعاً في منصة التجارة الإلكترونية محتاج استعلام SQL معقد بيجمع بين جداول `orders`, `products`, و `categories`. الاستعلام بياخد 400ms على PostgreSQL. لو 10,000 زبون طلبوا الصفحة في الدقيقة، الداتابيز هتاخد 100% CPU وهي بتكرر حساب نفس النتيجة!
+استعلام قائمة المنتجات الأكثر مبيعاً في منصة التجارة الإلكترونية بيتطلب استعلام SQL معقد بيجمع بين جداول `orders` و `products` و `categories`. الاستعلام ده بياخد 400ms على PostgreSQL. لو 10,000 زبون طلبوا الصفحة دي في الدقيقة، الداتابيز هتستهلك 100% CPU في تكرار حساب نفس النتيجة!
 
 الحل هو **In-Memory Caching** باستخدام **Redis**.
-بدل ما نقرا كل مرة من القرص الصلب في الداتابيز، بنحفظ نتيجة الاستعلام كـ JSON في ذاكرة Redis العشوائية (RAM). القراءة من Redis بتاخد **1ms بس** وتتحمل ملايين الطلبات في الثانية.
+بدل ما نقرأ كل مرة من القرص الصلب البطئ في قاعدة البيانات، بنحفظ نتيجة الاستعلام كـ JSON جوه ذاكرة Redis السريعة جداً (RAM). القراءة من Redis بتاخد **1ms بس** وبتحمل ملايين الطلبات في الثانية.
 
 النمط المعماري المعياري لاستخدام الكاش هو **Cache-Aside Pattern (Lazy Loading)**:
-1. لما طلب القراءة يوصل، الباك اند بيفحص Redis الأول (Cache Lookup).
-2. **Cache Hit**: لو البيانات موجودة في Redis، السيرفر بيرجعها فوراً للزبون في 1ms!
-3. **Cache Miss**: لو مش موجودة، السيرفر بيقراها من PostgreSQL، بيحفظ نسخة منها في Redis مع وقت انتهاء (TTL 5 minutes)، وبعدين يرجعها للزبون.
+1. لما يوصل طلب القراءة، الباك اند بيفحص Redis الأول (Cache Lookup).
+2. **Cache Hit**: لو البيانات موجودة في Redis، بيرجعها السيرفر فوراً للزبون في 1ms!
+3. **Cache Miss**: لو مش موجودة، بيقرأها السيرفر من PostgreSQL، ويحفظ نسختها في Redis مع وقت صلاحية (TTL 5 minutes)، وبعدين يرجعها للزبون.
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> تخيل إنك مدرس والطلاب بيسألوك كل يوم عن جدول الامتحانات:
+> - بدل ما تنزل كل مرة الدور الأرضي تفتح الأرشيف وتقرأ الورقة (PostgreSQL)، إنت بتكتب الجدول على **سبورة الفصل** (Redis Cache)!
+> - أي طالب يسألك، تبص على السبورة وترد عليه في ثانية! ولو الكود اتمسح من على السبورة، تنزل تقراه من الأرشيف وتكتبه على السبورة تاني.
 
 ```mermaid
 flowchart TD
@@ -2009,24 +2208,24 @@ app.get('/api/v1/products/top-selling', async (req, res) => {
 
 #### مثال 1: التطبيق العملي — تخفيض الحمل عن قاعدة البيانات الرئيسية بنسبة 90%
 
-في المتجر، تطبيق Cache-Aside على أسعار وتفاصيل المنتجات يجعل 90% من استعلامات الزبائن تُخدم مباشرة من Redis في 1ms، مما يحافظ على استقرار PostgreSQL لاستعلامات عمليات الشراء الحساسة فقط.
+في المتجر، تطبيق Cache-Aside على أسعار وتفاصيل المنتجات بيخلي 90% من استعلامات الزبائن تتخدم مباشرة من Redis في 1ms، وده بيحافظ على استقرار PostgreSQL لاستعلامات الشراء الحساسة بس.
 
 #### مثال 2: فخ شائع — الـ Cache Invalidation والمساحات الممتلئة بأحدث غير محدثة
 
-أصعب مشكلة في الكاش هي **Cache Invalidation**: لو التاجر غير سعر المنتج في الداتابيز، والزبائن لسه بيشوفوا السعر القديم من الكاش! الحل هو إما تحديد **TTL مناسب** (مثل 5 دقائق) أو إبادة الكاش صراحة `redis.del('product:42')` فور تحديث السعر في الداتابيز.
+أصعب مشكلة في الكاش هي **Cache Invalidation**: لو التاجر غير سعر المنتج في الداتابيز، والزبائن لسه بيشوفوا السعر القديم من الكاش! الحل إننا نحدد **TTL مناسب** (زي 5 دقائق) أو نمسح الكاش صراحة بـ `redis.del('products:top-selling')` أول ما السعر يتغير في الداتابيز.
 
 #### مثال 3: حالة إنتاجية — الوقاية من الـ Cache Stampede بـ Mutex Locks
 
-عند انتهاء صلاحية مفتاح كاش منتج شهير جداً في نفس الميكروثانية التي يطلبه فيها 5,000 زبون متزامن... سينطلق الـ 5,000 طلب لقاعدة البيانات في نفس اللحظة (**Cache Stampede**)! الوقاية تكون باستعمال **Distributed Lock (Q89)** ليقوم طلب واحد فقط بإعادة إعمار الكاش بينما تنتظر الطلبات الأخرى الرد المفحوص.
+لما وقت صلاحية مفتاح كاش منتج شهير ينتهي في نفس الميكروثانية اللي بيطلبه فيها 5,000 زبون متزامن... الـ 5,000 طلب هيهجموا على قاعدة البيانات في نفس اللحظة (**Cache Stampede**)! الوقاية بتكون باستخدام **Distributed Lock (Q89)** بحيث طلب واحد بس هو اللي يعيد إعمار الكاش وباقي الطلبات تستنى الرد الفريش.
 
 ---
 
 > [!tip] Checkpoint نهائي للموضوع (معمارية السيرفرات والـ Scaling)
 > **مراجعة محورية لمعمارية السيرفرات والتوسع:**
-> 1. **Horizontal Scaling (Q41)**: خلّي سيرفرات الباك اند Stateless عشان توسّعها أفقياً بسهولة ورا Load Balancer.
+> 1. **Horizontal Scaling (Q41)**: خلي سيرفرات الباك اند Stateless عشان تقدر تكبرها أفقياً بسهولة خلف Load Balancer.
 > 2. **Middlewares (Q42)**: نظّم العمليات المشتركة (Auth, Logging, Validation) كـ Pipeline متسلسل قابل للإعادة.
 > 3. **Event Loop Optimization (Q43)**: تجنب الـ CPU-blocking code لحماية أداء Node.js الفائق في الـ Non-blocking I/O.
-> 4. **Queues & Pooling (Q44 & Q45)**: أجّل المهام التقيلة لـ Message Queues واستخدم Connection Pooling لإدارة اتصالات قاعدة البيانات بكفاءة.
+> 4. **Queues & Pooling (Q44 & Q45)**: ارجئ المهام الثقيلة لـ Message Queues واستخدم Connection Pooling لإدارة اتصالات قاعدة البيانات بكفاءة.
 > 5. **Redis Caching (Q46)**: طبق Cache-Aside Pattern لتخفيض زمن الاستجابة إلى 1ms وتخفيف حمولة قاعدة البيانات.
 
 ---
@@ -2035,10 +2234,15 @@ app.get('/api/v1/products/top-selling', async (req, res) => {
 
 ### أصل الحكاية
 
-من أشهر نقط اللخبطة الأمنية عند المطورين الجداد: الخلط بين **Authentication (المصادقة - مين إنت؟)** و **Authorization (التفويض - مسموحلك تعمل إيه؟)**.
+من أكثـر نقاط الخلط الأمنية بين المطورين الجداد: الخلط بين **Authentication (المصادقة - مين إنت؟)** و **Authorization (التفويض - مسموحلك تعمل إيه؟)**.
 
-- **Authentication (المصادقة)**: هي العملية اللي المستخدم بيثبت فيها هويته للنظام (زي إدخال اسم المستخدم وكلمة السر، أو مسح البصمة، أو كود OTP). النتيجة: النظام بيتعرف على الشخص ("إنت الزبون أحمد رقم 42").
-- **Authorization (التفويض)**: هي العملية اللي النظام بيفحص فيها لو المستخدم ده معاه صلاحية يوصل لمورد معين أو ينفذ إجراء محدد (مثلاً: هل الزبون أحمد مسموحله يلغي طلب شراء الزبون محمد؟ طبعاً لأ!).
+- **Authentication (المصادقة - AuthN)**: هي العملية اللي بيثبت فيها المستخدم هويته للنظام (زي إدخال اسم المستخدم وكلمة السر، أو مسح البصمة، أو كود OTP). النتيجة: النظام بيتعرف على الشخص ("أنت الزبون أحمد #42").
+- **Authorization (التفويض - AuthZ)**: هي العملية اللي بيفحص فيها النظام هل المستخدم ده عنده الصلاحية للوصول لمورد معين أو تنفيذ إجراء محدد؟ (مثال: هل الزبون أحمد مسموح له يمسح طلب الشراء بتاع الزبون محمد؟ طبعاً لأ!).
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> تخيل إنك مسافر وركبت طيارة:
+> - **المصادقة (Authentication)**: موظف المطار بيفحص جواز سفرك وبصمتك عشان يتأكد إنك شخصك أحمد فعلاً.
+> - **التفويض (Authorization)**: موظف بوابه الطيارة بيفحص تذكرتك عشان يتأكد هل مسموحلك تدخل درجة رجال الأعمال ولا كرسيك في الدرجة الاقتصادية!
 
 ```mermaid
 flowchart LR
@@ -2072,15 +2276,15 @@ function authorizeAdmin(req, res, next) {
 
 #### مثال 1: التطبيق العملي — الـ HTTP Status Codes المعيارية (401 vs 403)
 
-في منصة المتجر، لو الزبون حاول يفتح صفحة سلة الشراء بدون ما يرفق كارت التوثيق، السيرفر يرجع **`401 Unauthorized`** (Authentication Error). لكن لو الزبون العادي حاول يدخل لوحة تحكم التاجر وحذف المنتجات، السيرفر يتعرف عليه ولكنه يرجع **`403 Forbidden`** (Authorization Error).
+في منصة المتجر، لو الزبون حاول يفتح صفحة السلة من غير ما يبعت كارت التوثيق، السيرفر بيرجع **`401 Unauthorized`** (Authentication Error). لكن لو الزبون العادي حاول يدخل لوحة تحكم التاجر ويمسح منتجات، السيرفر بيتعرف عليه ولكنه بيرجع **`403 Forbidden`** (Authorization Error).
 
 #### مثال 2: فخ شائع — الـ Broken Object Level Authorization (BOLA / IDOR)
 
-من أخطر الثغرات الأمنية في العالم (OWASP #1) هي الاعتماد على Authentication فقط ونسيان Authorization! مثل: الزبون أحمد يسجل دخول، فيطلب `GET /api/v1/orders/99` (طلب محمد). لو الباك اند يفحص فقط هل أحمد مسجل دخول أم لا، دون فحص هل الطلب #99 يخص أحمد فعلياً، سيستطيع أي زبون سرقة بيانات باقي الزبائن!
+من أخطر الثغرات الأمنية في العالم (OWASP #1) هي الاعتماد على Authentication بس ونسيان Authorization! زي إن الزبون أحمد يسجل دخول، فيطلب `GET /api/v1/orders/99` (طلب محمد). لو الباك اند بيفحص بس هل أحمد مسجل دخول ولا لأ، من غير ما يتأكد هل الطلب 99 يخص أحمد فعلاً، أي زبون هيقدر يسرق بيانات باقي الزبائن!
 
 #### مثال 3: حالة إنتاجية — تصميم الـ Access Control Layer بالـ ABAC / RBAC (Q51)
 
-في المنصات الكبيرة، بنبني **Authorization Middleware** موحد يقرأ الـ Role والـ Context (مثل: الزبون يملك هذا الطلب `order.userId === req.user.id` أو يملك دور `ADMIN`) لمنع الثغرات الأمنية بشكل شامل.
+في المنصات الكبيرة، بنبني **Authorization Middleware** موحد يقرأ الـ Role والـ Context (زي: هل الزبون بيملك الطلب ده `order.userId === req.user.id` أو بيملك دور `ADMIN`) لمنع الثغرات الأمنية بشكل كامل.
 
 ---
 
@@ -2088,11 +2292,15 @@ function authorizeAdmin(req, res, next) {
 
 ### أصل الحكاية
 
-لما المستخدم يثبت هويته، إزاي السيرفر يفضل متذكر هويته في الطلبات اللي جاية من غير ما يجبره يكتب كلمة السر في كل طلب؟
+لما المستخدم يثبت هويته، إزاي السيرفر بيفضل فاكر هويته في الطلبات اللي بعد كده من غير ما يخليه يكتب كلمة السر كل مرة؟
 
 قدامك طريقتين رئيسيتين:
-- **Session-Based Auth (Stateful)**: السيرفر بيولّد `sessionId` عشوائي، بيحفظ بيانات الجلسة في ذاكرة السيرفر/Redis، ويبعت الـ `sessionId` للمتصفح في Cookie مشفرة (`HttpOnly`). المتصفح بيرفق الـ Cookie تلقائياً مع كل طلب، والسيرفر بيفحص الـ Session ID في Redis.
-- **JWT (JSON Web Token) Auth (Stateless)**: السيرفر بيولّد Token مشفرة وموقعة أمنياً (Cryptographically Signed) فيها بيانات المستخدم (`userId`, `role`, `exp`). السيرفر **مش بيحفظ حاجة عنده خالص**! بيبعت الـ Token للعميل، والعميل بيرفقها في Header `Authorization: Bearer <token>`. السيرفر بيتحقق من صحة التوقيع رياضياً في 1ms.
+- **Session-Based Auth (Stateful)**: السيرفر بيولّد `sessionId` عشوائي، ويحفظ بيانات الجلسة عنده في الذاكرة/Redis، ويبعت الـ `sessionId` للمتصفح في Cookie مشفرة (`HttpOnly`). المتصفح يرفق الـ Cookie أوتوماتيكياً مع كل طلب، والسيرفر يفحص الـ Session ID في Redis.
+- **JWT (JSON Web Token) Auth (Stateless)**: السيرفر بيولّد Token مشفرة وموقعة أمنياً (Cryptographically Signed) فيها بيانات المستخدم (`userId`, `role`). السيرفر **مبيحفظش أي حاجة عنده**! بيبعت الـ Token للعميل، والعميل بيرفقها في Header `Authorization: Bearer <token>`. السيرفر بيتحقق من صحة التوقيع رياضياً في أقل من 1ms.
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> - **Session-Based**: زي نمرة الأمانات في المستشفى: يديك إيصال فيه رقم (Session ID)، وتفضل الأمانات شايلا حاجتك عندها في الرف (Redis Memory).
+> - **JWT Auth**: زي كارت الهوية المطبوع ومختوم بختم النسور: الكارت معروض في جيبك، أي ظابط يمسكه يبص على الختم الرياضي يعرف إنك فلان فوراً من غير ما يكلم إدارة الأحوال المدنية!
 
 ```mermaid
 flowchart TD
@@ -2125,15 +2333,15 @@ console.log(decodedPayload.userId); // 42
 
 #### مثال 1: التطبيق العملي — اختيار JWT لتطبيقات الموبايل والـ Microservices
 
-في منصة المتجر، بنستخدم **JWT Auth** لأن تطبيقات الموبايل لا تتعامل مع الـ Cookies بسلاسة، ولأن الـ JWT تسمح لـ 20 Microservice بتأكيد هوية الزبون فوراً دون الحاجة لضغط قاعدة بيانات الجلسات المركزية.
+في منصة المتجر، بنستخدم **JWT Auth** لأن تطبيقات الموبايل مابتتعاملش مع الـ Cookies بسلاسة، ولأن الـ JWT بتسمح لـ 20 Microservice بتأكيد هوية الزبون فوراً من غير ما يضغطوا داتابيز الجلسات المركزية.
 
 #### مثال 2: فخ شائع — تخزين البيانات الحساسة داخل الـ JWT Payload
 
-من الفخاخ الأمنية الكارثية كتابة كلمة السر أو الكارت البنكي داخل الـ JWT Payload! الـ JWT مسلسلة ومردودة بـ **Base64Url** وليست مشفرة (Not Encrypted, only Signed). أي شخص يقرأ الـ Token يقدر يفك Base64 ويشوف البيانات! الـ Payload يكتب فيه البيانات العامة فقط مثل `userId` و `role`.
+من الفخاخ الأمنية الكارثية كتابة كلمة السر أو الكارت البنكي جوه الـ JWT Payload! الـ JWT مسلسلة ومردودة بـ **Base64Url** ومش مشفرة (Not Encrypted, only Signed). أي حد يقرأ الـ Token يقدر يفك Base64 ويشوف البيانات! الـ Payload بيتكتب فيه البيانات العامة بس زي `userId` و `role`.
 
 #### مثال 3: حالة إنتاجية — حل مشكلة إلغاء الـ JWT قبل انتهائها (Token Revocation / Blacklist)
 
-لأن JWT Stateless، لو سرق هاتف زبون، لا يمكنك إلغاء الـ Token فوراً! الحل الإنتاجي هو استخدام **Short-Lived Access Tokens (15 min) مع Refresh Tokens (Q49)**، وحفظ قائمة سوداء سريعة (Blacklist) في Redis للـ Tokens المبلّغ عن سرقتها.
+لأن JWT Stateless، لو تليفون زبون اتسرق، مفيش طريقة مياشرة تلغي بيها الـ Token فوراً! الحل الإنتاجي هو استخدام **Short-Lived Access Tokens (15 min) مع Refresh Tokens (Q49)**، وحفظ قائمة سوداء سريعة (Blacklist) في Redis للـ Tokens المبلّغ عن سرقتها.
 
 ---
 
@@ -2141,13 +2349,17 @@ console.log(decodedPayload.userId); // 42
 
 ### أصل الحكاية
 
-لو خلينا عمر الـ JWT Access Token طويل (مثلاً 30 يوم)... ولو هكر سرق الـ Token، هيقدر يستخدمها للسرقة لمدة شهر كامل من غير ما تقدر توقفه!
-ولو خلينا عمر الـ Access Token قصير قوي (مثلاً 5 دقايق)... الزبون هيتفصل حسابه ويتطلب منه يكتب كلمة السر تاني كل 5 دقايق، وده هيخرب تجربة المستخدم!
+لو خلينا عمر الـ JWT Access Token طويل (مثلاً 30 يوم)... فلو هكر سرق الـ Token، هيقدر يستخدمها للسرقة لمدة شهر كامل من غير ما تقدر توقفه!
+ولو خلينا عمر الـ Access Token قصير جداً (مثلاً 5 دقائق)... فالزبون هيفصل حسابه وتطلب منه يكتب الباسورد كل 5 دقائق، وده هيدمر تجربة المستخدم!
 
-الحل هو **Dual Token Architecture (Access Token + Refresh Token)**:
-1. **Access Token (عمر قصير: 15 دقيقة)**: بتتبعت في الـ Header واستخدامها سريع للوصول للـ APIs.
-2. **Refresh Token (عمر طويل: 7 أيام)**: بتتحفظ في Cookie أمنية مشفرة (`HttpOnly, Secure, SameSite=Strict`) ونسخة مشفرة منها بتتخزن في قاعدة البيانات.
-لما الـ Access Token تنتهي، المتصفح بينادي في الخلفية `/api/v1/auth/refresh` عشان يتحقق من الـ Refresh Token ويولّد Access Token جديدة تلقائياً من غير ما يزعج الزبون!
+الحل المعماري هو **Dual Token Architecture (Access Token + Refresh Token)**:
+1. **Access Token (عمر قصير: 15 دقيقة)**: بتبعت في الـ Header واستخدامها سريع للوصول للـ APIs.
+2. **Refresh Token (عمر طويل: 7 أيام)**: بتحفظ في Cookie أمنية مشفرة (`HttpOnly, Secure, SameSite=Strict`) وتتخزن نسختها المشفرة في قاعدة البيانات.
+لما الـ Access Token تنتهي، المتصفح بينادي خلفياً `/api/v1/auth/refresh` للتحقق من الـ Refresh Token وتوليد Access Token جديدة تلقائياً من غير ما يزعج الزبون!
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> - **Access Token**: زي تصريح الدخول الفندقي السريع اللي معاك في جيبك، بتوريه للغفير وتدخل في ثانية. بس التصريح بيموت بعد 15 دقيقة.
+> - **Refresh Token**: زي كارت العضوية الرئيسي اللي محفوف في الخزنة عند الاستقبال. لما تصريح الـ 15 دقيقة ينتهي، تروح الاستقبال يتأكدوا إنك عضو ويجددولك تصريح 15 دقيقة جديد!
 
 ```mermaid
 sequenceDiagram
@@ -2196,15 +2408,15 @@ app.post('/api/v1/auth/refresh', async (req, res) => {
 
 #### مثال 1: التطبيق العملي — تجربة مستخدم سلسة بدون إعادة تسجيل الدخول
 
-في متجر التجارة، الزبون يظل مسجلاً لدخوله طوال الشهر بسلاسة، بينما في الخفاء يتم تجديد الـ Access Token كل 15 دقيقة أوتوماتيكياً عبر الـ Refresh Token في الخفاء.
+في متجر التجارة، الزبون بيظل مسجلاً لدخوله طوال الشهر بسلاسة، بينما في الخفاء بيتم تجديد الـ Access Token كل 15 دقيقة أوتوماتيكياً عبر الـ Refresh Token من غير ما الزبون يحس بحاجة.
 
 #### مثال 2: فخ شائع — تخزين الـ Refresh Token في الـ LocalStorage
 
-من الأخطاء الكارثية حفظ الـ Refresh Token في `localStorage` بالمتصفح! أي ثغرة **XSS (Q53)** صغيرة تستطيع سرقة الـ Refresh Token وإنشاء اتصالات غير محدودة. الصواب المطلق هو حفظ الـ Refresh Token داخل **`HttpOnly, Secure Cookie`** يمنع الـ JavaScript من قراءتها كلياً.
+من الأخطاء الكارثية حفظ الـ Refresh Token في `localStorage` بالمتصفح! أي ثغرة **XSS (Q53)** صغيرة تقدر تسرق الـ Refresh Token وتعمل اتصالات غير محدودة. الصواب المطلق هو حفظ الـ Refresh Token داخل **`HttpOnly, Secure Cookie`** تمنع الـ JavaScript من قراءتها كلياً.
 
 #### مثال 3: حالة إنتاجية — خاصية الـ Refresh Token Rotation وكشف السرقة التلقائي
 
-في الأنظمة البنكية، بنطبق **Refresh Token Rotation**: مع كل عملية تجديد، الـ Refresh Token القديمة تُبطل وتُستبدل بـ Refresh Token جديدة فوراً. لو حاول هكر استخدام Refresh Token قديمة تم استخدامها مسبقاً، النظام يكتشف السرقة فوراً ويقوم بـ **Security Lockdown**: إبطال كل الـ Refresh Tokens التابعة لهذا المستخدم فوراً وإجباره على تغيير كلمة السر!
+في الأنظمة البنكية، بنطبق **Refresh Token Rotation**: مع كل عملية تجديد، الـ Refresh Token القديمة بتتصفّر وتستبدل بـ Refresh Token جديدة فوراً. لو حاول هكر يستخدم Refresh Token قديمة تم استخدامها مسبقاً، النظام بيكتشف السرقة فوراً ويقوم بـ **Security Lockdown**: إبطال كل الـ Refresh Tokens التابعة لهذا المستخدم فوراً وإجباره على تغيير كلمة السر!
 
 ---
 
@@ -2212,14 +2424,20 @@ app.post('/api/v1/auth/refresh', async (req, res) => {
 
 ### أصل الحكاية
 
-لما تدوس على زرار "تسجيل الدخول بـGoogle" في منصة التجارة الإلكترونية، إزاي تثبت هويتك للمتجر من غير ما تدّي المتجر كلمة سر حسابك في Google؟
+لما تضغط على زرار "تسجيل الدخول باستخدام Google" في منصة التجارة الإلكترونية، إزاي بتثبت هويتك للمتجر من غير ما تدي المتجر كلمة سر حسابك في Google؟
 
 البروتوكول المعياري العالمي هو **OAuth 2.0 (Authorization Code Flow with PKCE)**:
 1. المتصفح بيوجه الزبون لصفحة تسجيل دخول Google الرسمية.
-2. الزبون بيدخل كلمة السر في سيرفرات Google المؤمّنة وبيوافق إنه يدّي المتجر صلاحية قراءة الإيميل والاسم.
-3. Google بيوجه الزبون تاني لـRedirect URI بتاع متجرك ومرفق معاه **`Authorization Code` مؤقت** (صالح لدقيقة واحدة).
-4. سيرفر الباك اند بتاع المتجر بياخد الـ Authorization Code ويتواصل **مباشرة (Server-to-Server)** مع Google API عشان يستبدل الكود بـ **Google ID Token & Access Token**.
-5. الباك اند بيفك تشفير الـ ID Token، يقرا الإيميل، وينشئ حساب للزبون أو يسجل دخوله بنجاح!
+2. الزبون بيدخل الباسورد في سيرفرات Google المؤمّنة ويوافق على منح المتجر صلاحية قراءة الإيميل والاسم.
+3. Google بيوجه الزبون مجدداً لـ Redirect URI الخاص بمتجرك مرفقاً معه **`Authorization Code` مؤقت** (صالح لدقيقة واحدة).
+4. سيرفر الباك اند للمتجر بياخد الـ Authorization Code ويتواصل **مباشرة (Server-to-Server)** مع Google API لاستبدال الكود بـ **Google ID Token & Access Token**.
+5. الباك اند بيفك تشفير ID Token، يقرأ الإيميل، وينشئ حساب للزبون أو يسجل دخوله بنجاح!
+
+> 💡 **إزاي تشرحها لطفل صغير؟**
+> تخيل إنك في فندق وعايز تدخل حمام السباحة:
+> - بدل ما تديهم مفتاح شقتك (Password)، الفندق بيبعتك لمكتب الاستقبال الرئيسي (Google).
+> - الاستقبال بيتأكد منك ويديك "ورقة موافقة مؤقتة" (Auth Code).
+> - بتدي ورقة الموافقة لمسؤول السباحة، هو بيكلم الاستقبال في التليفون للتأكد، ويديك حظاظة الدخول للمسبح!
 
 ```mermaid
 sequenceDiagram
@@ -2272,7 +2490,7 @@ app.get('/api/v1/auth/google/callback', async (req, res) => {
 
 #### مثال 1: التطبيق العملي — حماية أسرار المتجر بـ Server-to-Server Token Exchange
 
-في المتجر، استبدال الـ Authorization Code بـ Tokens يتم مباشرة بين سيرفر الباك اند وسيرفرات Google عبر اتصال مشفر، مما يضمن أن `GOOGLE_CLIENT_SECRET` لا يلمس جهاز الزبون أو المتصفح نهائياً.
+في المتجر، استبدال الـ Authorization Code بـ Tokens بيتم مباشرة بين سيرفر الباك اند وسيرفرات Google عبر اتصال مشفر، وده بيضمن إن `GOOGLE_CLIENT_SECRET` مبيلمسش تليفون الزبون أو المتصفح نهائياً.
 
 #### مثال 2: فخ شائع — نسيان تفعيل حماية `state` Parameter ومواجهة ثغرات CSRF
 
@@ -2280,7 +2498,7 @@ app.get('/api/v1/auth/google/callback', async (req, res) => {
 
 #### مثال 3: حالة إنتاجية — تطبيق PKCE (Proof Key for Code Exchange) للتطبيقات الذكية
 
-في تطبيقات الموبايل (iOS/Android)، بنطبق **PKCE (RFC 7636)**: الموبايل يولد `code_verifier` عشوائي ويدمج الـ Hash بتاعه `code_challenge`. ده يمنع أي تطبيق خبيث مثبت على الموبايل من اعتراض الـ Auth Code وتزوير تسجيل الدخول.
+في تطبيقات الموبايل (iOS/Android)، بنطبق **PKCE (RFC 7636)**: الموبايل بيولّد `code_verifier` عشوائي ويدمج الـ Hash بتاعه `code_challenge`. ده بيمنع أي تطبيق خبيث مثبت على الموبايل من اعتراض الـ Auth Code وتزوير تسجيل الدخول.
 
 ---
 
@@ -2288,15 +2506,15 @@ app.get('/api/v1/auth/google/callback', async (req, res) => {
 
 ### أصل الحكاية
 
-في منصة التجارة الإلكترونية، فيه أنواع مستخدمين كتير: **زبون (Customer)**، **تاجر (Merchant)**، **موظف دعم (Support)**، و **مدير منصة (Admin)**.
-لو كتبت فحص الصلاحيات يدوي جوا كل دالة بشروط زي `if (user.role === 'ADMIN' || (user.role === 'MERCHANT' && product.merchantId === user.id))`... الكود هيتحول لفوضى كبيرة، وهتظهر ثغرات أمنية أول ما تضيف أي ميزة جديدة!
+في منصة التجارة الإلكترونية، تتعدد أنواع المستخدمين: **زبون (Customer)**، **تاجر (Merchant)**، **موظف دعم (Support)**، و **مدير منصة (Admin)**.
+لو كتبت فحص الصلاحيات يدوياً داخل كل دالة بكتابة شروط `if (user.role === 'ADMIN' || (user.role === 'MERCHANT' && product.merchantId === user.id))`... الكود سيتحول لفوضى عارمة، وستظهر ثغرات أمنية عند إضافة أي ميزة جديدة!
 
 الحل هو تصميم **Role-Based Access Control (RBAC)** أو **Attribute-Based Access Control (ABAC)**.
-بنصلح المعمارية بفصل الصلاحيات لـ3 جداول:
+نصلح المعمارية بفصل الصلاحيات إلى 3 جداول:
 1. **Users**: المستخدمين.
-2. **Roles**: الأدوار (زي `ADMIN`, `MERCHANT`, `CUSTOMER`).
-3. **Permissions**: الصلاحيات الدقيقة (زي `products:create`, `orders:refund`, `users:delete`).
-الأدوار بتترابط بالصلاحيات، وفحص الصلاحية بيتم عن طريق **Authorize Guard / Middleware** موحد بيقرا الاسم المطلوب بس.
+2. **Roles**: الأدوار (مثل `ADMIN`, `MERCHANT`, `CUSTOMER`).
+3. **Permissions**: الصلاحيات الدقيقة (مثل `products:create`, `orders:refund`, `users:delete`).
+تُربط الأدوار بالصلاحيات، ويتم فحص الصلاحية عبر **Authorize Guard / Middleware** موحد يقرأ الاسم المطلوب فقط.
 
 ```mermaid
 flowchart LR
@@ -2348,17 +2566,17 @@ app.post('/api/v1/products', authenticate, requirePermission('products:create'),
 
 ### أصل الحكاية
 
-ثغرة **SQL Injection (حقن أوامر SQL)** من أقدم وأخطر الكوارث الأمنية في تاريخ الويب. بتحصل لما الباك اند يدمج مدخلات الزبون (User Inputs) مباشرة كـ String Concatenation جوا استعلام الـ SQL اللي بيتبعت لقاعدة البيانات!
+تعتبر ثغرة **SQL Injection (حقن أوامر SQL)** واحدة من أقدم وأخطر الكوارث الأمنية في تاريخ الويب. بتحصل لما الباك اند يدمج مدخلات الزبون (User Inputs) صراحة كـ String Concatenation داخل استعلام الـ SQL المرسل لقاعدة البيانات!
 
-تخيل كود تسجيل الدخول الغلط ده:
+تخيل كود تسجيل الدخول الخاطئ التالي:
 `SELECT * FROM users WHERE email = '` + req.body.email + `' AND password = '` + req.body.password + `'`
-لو الهكر كتب الإيميل ده في الخانة: `' OR '1'='1`
-الاستعلام هيتحول جوا قاعدة البيانات لـ:
+لو قام الهكر بكتابة الإيميل التالي في الخانة: `' OR '1'='1`
+الاستعلام يتحول في قاعدة البيانات إلى:
 `SELECT * FROM users WHERE email = '' OR '1'='1' AND password = ''`
-وبما إن `'1'='1'` صح دايماً، قاعدة البيانات هتلغي فحص كلمة السر وترجع أول حساب في الداتابيز (حساب المدير Admin)! والاختراق يكتمل!
+لأن `'1'='1'` صحيحة دائماً، قاعدة البيانات ستلغي فحص كلمة السر وترجع أول حساب في الداتابيز (حساب المدير Admin)! وتكتمل عملية الاختراق!
 
-الحل النهائي القاطع هو **Parameterized Queries (Prepared Statements)**:
-تفصل كود استعلام الـ SQL خالص عن البيانات! السيرفر بيبعت هيكل الاستعلام الأول لمحرك PostgreSQL عشان يعمله Compiling، وبعدين يبعت المدخلات كـ **Parameters معزولة**. قاعدة البيانات بتتعامل مع المدخلات كـ Plain Text ساكت بس، حتى لو النص فيه أوامر SQL خبيثة!
+الحل النهائي والمطلق هو **Parameterized Queries (Prepared Statements)**:
+فصل كود استعلام الـ SQL تماماً عن البيانات! السيرفر يرسل هيكل الاستعلام أولاً لمحرك PostgreSQL لـ Compiling، ثم يرسل المدخلات كـ **Parameters معزولة**. قاعدة البيانات تعامل المدخلات كـ Plain Text صامت فقط، حتى لو احتوى النص على أوامر SQL خبيثة!
 
 ```mermaid
 flowchart TD
@@ -2405,10 +2623,10 @@ const result = await db.query(
 
 ### أصل الحكاية
 
-من أكتر الكوارث الأمنية اللي بتتلخبط بين المهندسين هي الثغرتين المشهورين **XSS (Cross-Site Scripting)** و **CSRF (Cross-Site Request Forgery)**.
+من أكثر الكوارث الأمنية خلطاً بين المهندسين هي الثغرتين الشهيرتين **XSS (Cross-Site Scripting)** و **CSRF (Cross-Site Request Forgery)**.
 
-- **XSS (حقن السكريبتات)**: المهاجم بيحقن كود JavaScript خبيث جوا متجر التجارة (مثلاً في تقييمات المنتجات). لما أي زبون يفتح صفحة المنتج، كود الـ JS الخبيث بيتنفذ جوا متصفح الزبون، وبيقدر يسرق الـ Cookies والـ Access Tokens ويبعتهم لسيرفر المهاجم!
-- **CSRF (تزوير الطلبات عبر المواقع)**: المهاجم بيستغل إن متصفح الزبون بيحفظ Cookie الدخول المشفرة بتاعة المتجر. المهاجم بيغري الزبون يفتح موقع خبيث خارجي، والموقع الخبيث بيبعت طلب مخفي `POST https://store.com/api/v1/cart/checkout`! وبما إن الطلب موجه للمتجر، المتصفح بيرفق Cookie الدخول تلقائياً، فسيرفر المتجر بيفتكر إن الزبون نفسه اللي طلب الشراء!
+- **XSS (حقن السكريبتات)**: المهاجم يحقن كود JavaScript خبيث داخل متجر التجارة (مثلاً في تقييمات المنتجات). عند فتح أي زبون لصفحة المنتج، يتنفذ كود الـ JS الخبيث داخل متصفح الزبون، ويستطيع سرقة الـ Cookies والـ Access Tokens وإرسالها لسيرفر المهاجم!
+- **CSRF (تزوير الطلبات عبر المواقع)**: المهاجم يستغل أن متصفح الزبون يحفظ Cookie الدخول المشفرة الخاصة بالمتجر. المهاجم يغري الزبون بفتح موقع خبيث خارجي، والموقع الخبيث يرسل طلب خفي `POST https://store.com/api/v1/cart/checkout`! لأن الطلب موجه للمتجر، المتصفح يرفق Cookie الدخول تلقائياً، فيظن سيرفر المتجر أن الزبون هو من طلب الشراء!
 
 ```mermaid
 flowchart TD
@@ -2458,12 +2676,12 @@ res.cookie('refreshToken', token, {
 
 ### أصل الحكاية
 
-من أكبر الأخطاء الكارثية في تاريخ أمان الباك اند إنك تخزن كلمات سر المستخدمين بصيغة النص الصريح (Plaintext Passwords)، أو تستخدم تشفير عادي ثنائي الاتجاه (Symmetric Encryption)! لو قاعدة البيانات اتسربت أو اتخترقت، المهاجم هيسرق كلمات سر ملايين الزبائن ويستخدمها عشان يخترق إيميلاتهم وحساباتهم البنكية!
+من أكبر الأخطاء الكارثية في تاريخ أمان الباك اند هي تخزين كلمات سر المستخدمين بصيغة النص الصريح (Plaintext Passwords)، أو استخدام التشفير العادي ثنائي الاتجاه (Symmetric Encryption)! لو تعرضت قاعدة البيانات للتسريب أو الاختراق، سيسرق المهاجم كلمات السر الخاصة بملايين الزبائن واستخدامها في اختراق إيميلاتهم وحساباتهم البنكية!
 
 القواعد الأمنية الصارمة لتخزين كلمات السر:
-1. **استخدام Hashing مش Encryption**: التشفير (Encryption) عملية ثنائية الاتجاه (Two-Way) وليها مفتاح فك تشفير (Decryption Key) بينكشف لو السيرفر اتخترق. لكن الـ **Hashing** عملية اتجاه واحد (One-Way Cryptographic Function) مستحيل رياضياً ترجعها لأصلها!
-2. **إضافة Salt عشوائي فريد لكل كلمة سر**: الـ **Salt** نص عشوائي بيتضاف لكلمة السر قبل الـ Hash عشان يمنع هجمات الجدول الجاهز مسبقاً (**Rainbow Tables Attack**).
-3. **استخدام Slow Adaptive Hashing Algorithms**: تستخدم خوارزميات بطيئة مصممة خصيصاً للتشفير زي **Bcrypt**, **Argon2id**, أو **PBKDF2**. البطء المتعمد (Work Factor / Salt Rounds) بيمنع الهكر من تجربة مليارات كلمات السر في الثانية بكروت الشاشة (GPU Bruteforce Attacks).
+1. **استخدام Hashing مش Encryption**: التشفير (Encryption) هو عملية ثنائية الاتجاه (Two-Way) تملك مفتاح فك تشفير (Decryption Key) ينكشف لو اخترق السيرفر. بينما الـ **Hashing** هو عملية أحادية الاتجاه (One-Way Cryptographic Function) مستحيل رياضيًا عودتها لنصها الأصلي!
+2. **إضافة Salt عشوائي فريد لكل كلمة سر**: الـ **Salt** هو نص عشوائي يضاف لكلمة السر قبل الـ Hash لمنع هجمات الجدول المجهز مسبقاً (**Rainbow Tables Attack**).
+3. **استخدام Slow Adaptive Hashing Algorithms**: استخدام خوارزميات بطيئة مصممة خصيصاً للتشفير مثل **Bcrypt**, **Argon2id**, أو **PBKDF2**. البطء التعمدي (Work Factor / Salt Rounds) يمنع الهكر من تجربة مليارات كلمات السر في الثانية بكروت الشاشة (GPU Bruteforce Attacks).
 
 ```mermaid
 flowchart LR
@@ -2509,11 +2727,11 @@ async function verifyPassword(plainPassword, storedHash) {
 
 > [!tip] Checkpoint نهائي للموضوع (الأمان والـ Authentication)
 > **مراجعة محورية للأمان والتوثيق:**
-> 1. **AuthN vs AuthZ (Q47)**: فرّق بين إثبات الهوية (401) وفحص الصلاحيات (403) واحمي النظام من ثغرات BOLA/IDOR.
+> 1. **AuthN vs AuthZ (Q47)**: فرق بين إثبات الهوية (401) وفحص الصلاحيات (403) واحمِ النظام من ثغرات BOLA/IDOR.
 > 2. **JWT & Refresh Tokens (Q48 & Q49)**: اعتمد Access Tokens قصيرة العمر مع Refresh Tokens محفوفة في HttpOnly Cookies لمنع التجسس.
 > 3. **OAuth 2.0 (Q50)**: نفذ Authorization Code Flow مع PKCE وحماية `state` للتكامل الآمن مع خوادم التوثيق الخارجية.
-> 4. **RBAC & Parameterized Queries (Q51 & Q52)**: اعزل الصلاحيات في Guards مركزية واتخلص من SQL Injection بـ Parameterized Queries.
-> 5. **XSS, CSRF & Password Hashing (Q53 & Q54)**: نضّف مخرجات الكود ضد XSS، واضبط `SameSite=Strict` ضد CSRF، وشفّر كلمات السر بـ Bcrypt/Argon2id مع Salt.
+> 4. **RBAC & Parameterized Queries (Q51 & Q52)**: اعزل الصلاحيات في Guards مركزية واقضِ على SQL Injection بـ Parameterized Queries.
+> 5. **XSS, CSRF & Password Hashing (Q53 & Q54)**: طهر مخرجات الكود ضد XSS، واضبط `SameSite=Strict` ضد CSRF، وشفّر كلمات السر بـ Bcrypt/Argon2id مع Salt.
 
 ---
 
@@ -2521,10 +2739,10 @@ async function verifyPassword(plainPassword, storedHash) {
 
 ### أصل الحكاية
 
-تخيل جدول المنتجات في منصة التجارة الإلكترونية فيه 5,000,000 منتج. لو دورت على منتج برقم معرفه `SELECT * FROM products WHERE sku = 'IPHONE-15-PRO'`... لو الجدول مفيهوش **Index (فهرس)**، محرك قاعدة البيانات هيضطر يقرا الـ5 مليون صف من القرص الصلب صف صف (**Full Table Scan**) بأداء زمني $O(N)$ هياخد 5 ثواني!
+تخيل جدول المنتجات في منصة التجارة الإلكترونية يحتوي على 5,000,000 منتج. عند البحث عن منتج برقم معرفه الخاص `SELECT * FROM products WHERE sku = 'IPHONE-15-PRO'`... لو الجدول لا يحتوي على **Index (فهرس)**، محرك قاعدة البيانات سيضطر لقراءة الـ 5 مليون صف من القرص الصلب صفاً صفاً (**Full Table Scan**) بأداء زمني $O(N)$ يستغرق 5 ثوانٍ!
 
-الـ **Database Index** هو هيكل بيانات جانبي (غالباً **B-Tree Index**) بيحتفظ بعمود معين مرتب ومنسق في شجرة بحث متوازنة.
-البحث في شجرة الـ B-Tree بيقلل عدد عمليات القراءة من القرص بشكل خرافي: بدل ما تفحص 5,000,000 صف، المحرك بيقطع الشجرة في 4 خطوات بس ($O(\log N)$) ويلاقي مكان الصف بالظبط في أقل من **1 millisecond!**
+الـ **Database Index** هو هيكل بيانات جانبي (عادةً **B-Tree Index**) يحتفظ بعامود معين منسقاً ومترتباً في شجرة بحث متوازنة.
+البحث في شجرة الـ B-Tree يقلل عدد عمليات القراءة من القرص بشكل خرافي: بدلاً من فحص 5,000,000 صف، المحرك يقطع الشجرة في 4 خطوات فقط ($O(\log N)$) ويعثر على المكان الدقيق للصف في أقل من **1 millisecond!**
 
 ```mermaid
 flowchart TD
@@ -2562,13 +2780,13 @@ CREATE INDEX idx_products_category_price ON products(category_id, price DESC);
 
 ### أصل الحكاية
 
-لما تلاحظ إن صفحة الشراء بقت بطيئة وبتاخد ثانيتين عشان ترد، إزاي تكتشف المشكلة فين بالظبط جوا استعلام الـ SQL المشتبه فيه؟
+عندما تلاحظ أن صفحة الشراء أصبحت بطيئة وتأخذ ثانيتين للرد، كيف تكتشف أين المشكلة بدقة داخل استعلام الـ SQL المشتبه فيه؟
 
 الأداة التحليلية القياسية في قواعد البيانات هي **`EXPLAIN ANALYZE`**:
-أمر بيتحط قبل استعلام الـ SQL ويجبر قاعدة البيانات تنفذ الاستعلام حسب خطة المحرك (**Query Execution Plan**) وتطبع تقرير تفصيلي بيوضح:
-- **Scan Type**: المحرك استخدم Index Scan ولا Seq Scan (Full Table Scan)؟
-- **Execution Cost & Time**: الوقت والمجهود اللي اتاخد في كل خطوة بالملي ثانية.
-- **Rows Filtered**: عدد الصفوف اللي اترفضت واتقرت.
+أمر يسبق استعلام الـ SQL ويجبر قاعدة البيانات على تنفيذ الاستعلام طبقا لخطة المحرك (**Query Execution Plan**) وطباعة تقرير تفصيلي يوضح:
+- **Scan Type**: هل استخدم المحرك Index Scan أم Seq Scan (Full Table Scan)؟
+- **Execution Cost & Time**: الزمن المستغرق والمجهود في كل خطوة بالملي ثانية.
+- **Rows Filtered**: عدد الصفوف المرفوضة والمقروءة.
 
 ```sql
 -- Analyzing Query Performance in PostgreSQL
@@ -2610,11 +2828,11 @@ flowchart TD
 
 ### أصل الحكاية
 
-لما حجم قاعدة البيانات بتاعة منصة التجارة الإلكترونية يكبر ويعدي 1 Terabyte وجدول الطلبات يبقى فيه 500 مليون صف... أداء الـ Indexes بيقل والصيانة والـ Backups بتبقى معقدة قوي على سيرفر واحد!
+عندما ينمو حجم قاعدة البيانات لمنصة التجارة الإلكترونية ويتجاوز 1 Terabyte وتحتوي جدول الطلبات على 500 مليون صف... يقل أداء الـ Indexes وتصبح الصيانة والـ Backups معقدة جداً على سيرفر واحد!
 
-قدامك تقنيتين تقسم بيهم البيانات الضخمة:
-- **Vertical / Horizontal Partitioning (التقسيم الداخلي - بنفس السيرفر)**: تقسّم جدول ضخم واحد لجداول فرعية أصغر (Partitions) عايشة جوا **نفس سيرفر قاعدة البيانات الواحد** (مثال: تقسيم جدول `orders` حسب السنة: `orders_2024`, `orders_2025`).
-- **Sharding (التقسيم الموزع - على سيرفرات متعددة)**: تقسّم وتوزع بيانات الجدول على **أجهزة وسيرفرات قواعد بيانات مستقلة تماماً (Multiple Database Nodes / Shards)** عن طريق الـ **Shard Key** (مثال: الزبائن من ID 1-1M على Shard 1، والزبائن من ID 1M-2M على Shard 2).
+أمامك تقنيتان لتقسيم البيانات الضخمة:
+- **Vertical / Horizontal Partitioning (التقسيم الداخلي - بنفس السيرفر)**: تقسيم جدول ضخم واحد إلى جداول فرعية أصفر (Partitions) تعيش داخل **نفس سيرفر قاعدة البيانات الواحد** (مثال: تقسيم جدول `orders` بحسب السنة: `orders_2024`, `orders_2025`).
+- **Sharding (التقسيم الموزع - على سيرفرات متعددة)**: تقسيم وتوزيع بيانات الجدول على **أجهزة وسيرفرات قواعد بيانات مستقلة تماماً (Multiple Database Nodes / Shards)** عبر الـ **Shard Key** (مثال: الزبائن من ID 1-1M على Shard 1، والزبائن من ID 1M-2M على Shard 2).
 
 ```mermaid
 flowchart TD
@@ -2662,15 +2880,15 @@ const userOrders = await userShard.query('SELECT * FROM orders WHERE user_id = $
 
 ### أصل الحكاية
 
-تخيل لو مهاجم أو Bot حاول يبعت 10,000 طلب في الثانية لصفحة تسجيل الدخول عشان يجرب كلمات سر مسروقة (Brute Force Attack)، أو يبعت طلبات بحث كتير عشان يغرق السيرفر! من غير حماية، سيرفر API المتجر هيقف عن العمل تماماً تحت وطأة هجوم الـ Denial of Service (DoS).
+تخيل لو قادم مهاجم أو Bot وحاول إرسال 10,000 طلب في الثانية لصفحة تسجيل الدخول لطلب تجربة كلمات سر مسروقة (Brute Force Attack)، أو طلب مفاتيح البحث لإغراق السيرفر! بدون حماية، سيتوقف سيرفر API المتجر عن العمل كلياً تحت وطأة هجوم الـ Denial of Service (DoS).
 
 الحل هو **Rate Limiting (تحجيم معدل الطلبات)**:
-تحدد أقصى عدد طلبات مسموح بيه للمستخدم أو الـ IP خلال فترة زمنية معينة (مثال: مسموح بـ 100 طلب بس كل دقيقة لكل IP). لو العميل عدى الحد، السيرفر بيرفض الطلب فوراً ويرجع **`429 Too Many Requests`**.
+تحديد حد أقصى لعدد الطلبات المسموح بها للمستخدم أو الـ IP خلال نافذة زمنية محددة (مثال: مسموح بـ 100 طلب فقط كل دقيقة لكل IP). لو تجاوز العميل الحد، يرفض السيرفر الطلب فوراً ويرجع **`429 Too Many Requests`**.
 
 أشهر الخوارزميات:
-1. **Fixed Window**: عداد بسيط بيتصفر كل دقيقة.
-2. **Sliding Window Log / Counter (الأعدل والأشهر)**: بيحسب معدل الطلبات المتدفقة بسلاسة في الـ Redis.
-3. **Token Bucket / Leaky Bucket**: بيسمح بـ Traffic Spikes محدودة مع تنظيم التدفق.
+1. **Fixed Window**: عداد بسيط يصفر كل دقيقة.
+2. **Sliding Window Log / Counter (الأعدل والأشهر)**: حساب معدل الطلبات المتدفقة بسلاسة في الـ Redis.
+3. **Token Bucket / Leaky Bucket**: السماح بـ Traffic Spikes محدودة مع تنظيم التدفق.
 
 ```mermaid
 flowchart TD
@@ -2719,15 +2937,15 @@ app.use('/api/v1/auth/login', apiLimiter);
 
 ### أصل الحكاية
 
-لما تصمم أي نظام بيانات موزع (Distributed Data System) متكون من كذا جهاز موصولين بشبكة... مبرهنة **CAP Theorem (مبدأ بروور)** بتقول إنه **مستحيل علمياً وهندسياً لأي نظام بيانات موزع إنه يوفر الخصائص الثلاثة دول مع بعض في نفس اللحظة**:
+عند تصميم أي نظام بيانات موزع (Distributed Data System) يتكون من عدة أجهزة موصولة بشبكة... ينص مبرهنة **CAP Theorem (مبدأ بروور)** على أنه **من المستحيل علمياً وهندسياً لـ أي نظام بيانات موزع توفير الخصائص الثلاث التالية معاً في نفس اللحظة**:
 
-1. **Consistency (C - الاتساق المطلق)**: كل القراءات بترجع أحدث كتابة حصلت في النظام فوراً في كل الأجهزة في نفس الميكروثانية.
-2. **Availability (A - التوفرية الدائمة)**: كل طلب قراءة أو كتابة بيستقبل رد ناجح (مش خطأ) طول الوقت من أي جهاز شغال.
-3. **Partition Tolerance (P - تحمل انقطاع الشبكة)**: النظام بيفضل شغال حتى لو خطوط اتصال الشبكة بين أجهزة السيرفرات اتقطعت.
+1. **Consistency (C - الاتساق المطلق)**: كل القراءات ترجع أحدث كتابة تمت في النظام فوراً في كل الأجهزة بنفس الميكروثانية.
+2. **Availability (A - التوفرية الدائمة)**: كل طلب قراءة أو كتابة يستقبل رداً ناجحاً (غير خطأ) في كل الأوقات من أي جهاز يعمل.
+3. **Partition Tolerance (P - تحمل انقطاع الشبكة)**: يستمر النظام في العمل حتى لو انقطعت خطوط اتصالات الشبكة بين أجهزة السيرفرات.
 
-في الواقع، انقطاع الشبكة (Network Partition - P) حاجة حتمية هتحصل! فلما الشبكة تنقطع، المهندس بيبقى مضطر يختار بين نظامين:
-- **CP System (Consistency + Partition Tolerance)**: بيفضّل الاتساق والدقة؛ بيرفض أو يوقف استقبال الطلبات لو مش هيضمن مزامنتها مع باقي الأجهزة (مثال: MongoDB, HBase).
-- **AP System (Availability + Partition Tolerance)**: بيفضّل الاستمرارية والتوفر؛ بيرجع البيانات المتاحة فوراً حتى لو كانت قديمة ومتنقلتش لباقي الأجهزة لسه (مثال: Cassandra, DynamoDB).
+في العالم الحقيقي، انقطاع الشبكة (Network Partition - P) أمر حتمي وقوعه! بالتالي، عند حدوث انقطاع في الشبكة، يتوجب على المهندس الاختيار الحاسم بين نظامين:
+- **CP System (Consistency + Partition Tolerance)**: يفضل الاتساق والدقة؛ يرفض أو يوقف استقبال الطلبات لو لم يضمن مزامنتها مع باقي الأجهزة (مثال: MongoDB, HBase).
+- **AP System (Availability + Partition Tolerance)**: يفضل الاستمرارية والتوفر؛ يرجع البيانات المتاحة فوراً حتى لو كانت قديمة ولم تنقل لباقي الأجهزة بعد (مثال: Cassandra, DynamoDB).
 
 ```mermaid
 flowchart TD
@@ -2758,17 +2976,17 @@ flowchart TD
 
 ### أصل الحكاية
 
-لما تصمم جداول قاعدة بيانات علائقية (Relational DB)، المهندس بيواجه قرارين معماريين متعارضين في هيكلة البيانات:
+عند تصميم جداول قاعدة البيانات 관계ية (Relational DB)، يواجه المهندس قرارين معمارين متعارضين في هيكلة البيانات:
 
-- **Normalization (التطبيع الهيكلي - 3NF)**: تقسّم البيانات لجداول فرعية متعددة ومترابطة بـ Foreign Keys عشان تمنع تكرار البيانات وتضمن الـ Data Integrity. (مثال: جدول `orders` فيه بس `user_id` و `product_id` بدل ما نكرر اسم وعنوان الزبون في كل طلب).
-- **Denormalization (إلغاء التطبيع - التكرار الموجه)**: دمج متعمد للبيانات وتكرارها في نفس الجدول عشان نتفادى استعلامات الـ `JOIN` المعقدة والبطيئة ونسرّع القراءة بشكل كبير.
+- **Normalization (التطبيع الهيكلي - 3NF)**: تقسيم البيانات إلى جداول فرعية متعددة ومترابطة بـ Foreign Keys لمنع تكرار البيانات وضمان ناهية التضارب (Data Integrity). (مثال: جدول `orders` يحتوي فقط على `user_id` و `product_id` بدلاً من تكرار اسم وعنوان الزبون في كل طلب).
+- **Denormalization (إلغاء التطبيع - التكرار الموجه)**: الدمج التعمدي للبيانات وتكرارها في نفس الجدول لتفادي استعلامات الـ `JOIN` المعقدة والبطيئة وتسرع القراءة بشكل فائق.
 
 | وجه المقارنة | Normalization (3NF) | Denormalization |
 |---|---|---|
 | **الهدف الأساسي** | منع تكرار البيانات وضمان الـ Integrity | تسريع استعلامات القراءة (Read Performance) |
-| **سرعة الكتابة (Write)** | سريعة جداً (تعديل المكان الأصلي بس) | أبطأ (تعديل البيانات المكررة في أماكن متعددة) |
-| **سرعة القراءة (Read)** | أبطأ (محتاجة JOINs معقدة) | سريعة جداً (قراءة من جدول واحد مباشرة) |
-| **المساحة (Storage)** | توفير في مساحة القرص الصلب | استهلاك مساحة أكبر بسبب تكرار البيانات |
+| **سرعة الكتابة (Write)** | سريعة جداً (تعديل المكان الأصلي فقط) | أبطأ (تعديل البيانات المكررة في أماكن متعددة) |
+| **سرعة القراءة (Read)** | أبطأ (تتطلب JOINs معقدة) | سريعة جداً (قراءة من جدول واحد مباشرة) |
+| **المساحة (Storage)** | توفير في مساحة القرص الصلب | استهلاك مساحة أكبر بسب تكرار البيانات |
 
 ```mermaid
 flowchart TD
@@ -2813,7 +3031,7 @@ CREATE TABLE order_items (
 > 1. **B-Tree Indexes (Q55)**: استخدم الفهارس المركبة لتخفيض زمن البحث من $O(N)$ إلى $O(\log N)$.
 > 2. **EXPLAIN ANALYZE (Q56)**: حلل خطط تنفيذ SQL واستأصل استعلامات Seq Scan البطيئة.
 > 3. **Partitioning & Sharding (Q57)**: قسم الجداول الكبيرة محلياً بـ Partitioning أو وزعها على سيرفرات بـ Sharding.
-> 4. **Rate Limiting (Q58)**: احمي السيرفرات بـ Sliding Window Counter في Redis وارجع `429 Too Many Requests`.
+> 4. **Rate Limiting (Q58)**: احمِ السيرفرات بـ Sliding Window Counter في Redis وارجع `429 Too Many Requests`.
 > 5. **CAP Theorem & Denormalization (Q59 & Q60)**: اختر بين CP و AP بحسب طبيعة الخدمة، ووازن بين Normalization للأمان و Denormalization للأداء.
 
 ---
@@ -2882,7 +3100,7 @@ CMD ["node", "dist/main.js"]
 في الشركات والمشاريع الكبيرة، ممنوع منعاً باتاً إن المهندس يكتب كود على جهازه ويرفعه للسيرفر مباشرة يدوي بـ FTP أو SSH! الخطأ البشري وارد، وممكن المهندس يرفع كود مكسور فيه Syntax Error أو مش عادّي الـ Unit Tests، مما يتسبب في سقوط متجر التجارة الإلكترونية وخسارة آلاف المبيعات.
 
 الحل هو بناء **CI/CD Pipeline (خط الأنابيب الآلي للنشر والمكاملة)** باستخدام أدوات مثل GitHub Actions أو GitLab CI أو Jenkins.
-- **CI (Continuous Integration - المكاملة المستمرة)**: عند كل `git push` أو Pull Request، سيرفرات الـ CI بتسحب الكود أوتوماتيكياً، وتشغّل الـ Linter، وفحص نوع الـ Typescript، وتنفيذ كل الـ Unit & Integration Tests. لو أي test فشل، الـ PR بيتقفل فوراً ومابيتدمجش.
+- **CI (Continuous Integration - المكاملة المستمرة)**: عند كل `git push` أو Pull Request، سيرفرات الـ CI بتقوم أوتوماتيكياً بسحب الكود، تشغيل الـ Linter، وفحص نوع الـ Typescript، وتنفيذ كل الـ Unit & Integration Tests. لو أي test فشل، الـ PR بيتقفل فوراً ومابيتدمجش.
 - **CD (Continuous Deployment / Delivery - النشر المستمر)**: عند دمج الكود في الـ `main` branch، الـ CD بيولّد Docker Image جديدة، يرفعها للـ Container Registry (زي ECR/DockerHub)، وينشرها تلقائياً على سيرفرات Production بدون أي تدخل يدوي بشري.
 
 ```mermaid
@@ -3007,7 +3225,7 @@ export const env = envSchema.parse(process.env);
 
 ### أصل الحكاية
 
-في بيئة الإنتاج لمنصة التجارة الإلكترونية، ممنوع كلياً تعريض سيرفر Node.js (Express/NestJS) مباشرة للإنترنت العام! سيرفر Node.js اتصمم ليكون API Application Server ممتاز، لكنه مش مصمم لإدارة اتصالات الشبكة الخام بكفاءة، أو التصدّي لهجمات الـ Slowloris، أو تشفير شهادات الـ SSL/TLS، أو تقديم الملفات الاستاتيكية الصامتة.
+في بيئة الإنتاج لمنصة التجارة الإلكترونية، ممنوع كلياً تعريض سيرفر Node.js (Express/NestJS) مباشرة للإنترنت العام! سيرفر Node.js اتصمم ليكون API Application Server ممتاز، لكنه ليس مصمماً لإدارة اتصالات الشبكة الخام بكفاءة، أو التصدّي لهجمات الـ Slowloris، أو تشفير شهادات الـ SSL/TLS، أو تقديم الملفات الاستاتيكية الصامتة.
 
 الحل هو وضع **Nginx** أمام سيرفرات الباك اند ليعمل كـ **Reverse Proxy** و **Layer 7 Load Balancer**.
 الـ Reverse Proxy بيقف في المواجهة يستقبل كل طلبات الـ HTTP/HTTPS القادمة من المتصفحات، ينفذ فحص الأمان وفك تشفير الـ SSL/TLS (SSL Termination)، يوزع الحمل على سيرفرات Node.js الداخلية الخفية، ويدير الاتصالات بكفاءة فائقة جداً.
@@ -3276,11 +3494,11 @@ app.post('/api/v1/orders', (req, res) => {
 > [!tip] Checkpoint نهائي للموضوع (DevOps وInfrastructure)
 > **مراجعة محورية للـ DevOps والبنية التحتية:**
 > 1. **Docker Containerization (Q61)**: غلف الكود والـ Runtime والبيئة في Docker Image معزولة لضمان التوافق المطلق من Dev إلى Prod.
-> 2. **CI/CD Pipelines (Q62)**: خلّي الفحوصات والاختبارات والنشر بتتعمل أوتوماتيك لمنع الأخطاء البشرية وتسريع دورة التسليم.
+> 2. **CI/CD Pipelines (Q62)**: اتمت الفحوصات والاختبارات والنشر تلقائياً لمنع الأخطاء البشرية وتسريع دورة التسليم.
 > 3. **Secrets Management (Q63)**: اعزل الأسرار والـ Keys في البيئة الخارجية واستخدم Cloud Secret Managers وحذر من كتابتها في الكود أو Git.
-> 4. **Nginx Reverse Proxy (Q64)**: حط Nginx قدّام سيرفرات Node.js لإدارة الـ SSL والـ Caching والـ Load Balancing وحماية السيرفرات.
+> 4. **Nginx Reverse Proxy (Q64)**: حط Nginx قدام سيرفرات Node.js لإدارة الـ SSL والـ Caching والـ Load Balancing وحماية السيرفرات.
 > 5. **Zero-Downtime & K8s (Q65 & Q66)**: طبق Rolling Updates مع Graceful Shutdown لمنع انقطاع الخدمات، واستعن بـ Kubernetes لإدارة الحاويات الضخمة تلقائياً.
-> 6. **Observability (Q67)**: ابني شفافية النظام على الأعمدة الثلاثة (Metrics, Structured Logs, Distributed Traces) لكشف الأخطاء وتحليل الأداء.
+> 6. **Observability (Q67)**: ابنِ شفافية النظام على الأعمدة الثلاثة (Metrics, Structured Logs, Distributed Traces) لكشف الأخطاء وتحليل الأداء.
 
 ---
 
@@ -3292,7 +3510,7 @@ app.post('/api/v1/orders', (req, res) => {
 العميل (Client زي المتصفح أو تطبيق الموبايل) هو دايماً الطرف اللي بيبدأ الكلام. العميل يرسل **Request** عبر الاتصال، يظل ينتظر معلّقاً، والسيرفر يستقبل الطلب، يعالجه، ويرد بـ **Response** واحد وينهي المعاملة.
 
 كل بروتوكولات الـ Web الحديثة زي HTTP/1.1 وHTTP/2 وREST APIs مبنية صراحة فوق النمط ده. السؤال في الإنترفيو: إيه هي الحدود المعمارية للنمط ده، وإمتى بيتحول لـ Limitation محتاجة أنماط تانية؟
-الحد الرئيسي: **السيرفر مش بيقدر يبدأ الكلام من نفسه (Server cannot push data)!** السيرفر دايماً مفعول به (Passive). لو حصل حدث جديد في النظام (مثل تغيير حالة الشحنة لتصل لبيت الزبون)، السيرفر ميعرفش يبعت للعميل "إشعار" إلا لو العميل بعت يطلبه بنفسه أولاً.
+الحد الرئيسي: **السيرفر لا يستطيع البدء بالكلام من نفسه (Server cannot push data)!** السيرفر دايماً مفعول به (Passive). لو حصل حدث جديد في النظام (مثل تغيير حالة الشحنة لتصل لبيت الزبون)، السيرفر ميعرفش يبعت للعميل "إشعار" إلا لو العميل بعت يطلبه بنفسه أولاً.
 
 ```mermaid
 sequenceDiagram
@@ -3338,8 +3556,8 @@ app.get('/api/v1/products/:id', async (req, res) => {
 
 في تصميم الباك اند لمنصة التجارة الإلكترونية، المعالجات والمهام المطلوبة من السيرفر بتنقسم لنوعين معزولين تماماً من حيث طريقة التنفيذ وتجربة المستخدم (User Experience):
 
-- **Synchronous Workload (المعالجة المباشرة المتزامنة)**: العميل يبعت الطلب، ويفضل واقف ومستني في نفس الميكروثانية لحد ما السيرفر يخلص المعالجة بالكامل ويرجع الرد النهائي. (بتتنفذ خطوة بخطوة، والخطوة اللي بعدها مبتبدأش غير لما اللي قبلها يخلص).
-- **Asynchronous Workload (المعالجة غير المتزامنة المؤجلة)**: العميل يبعت الطلب، السيرفر يتأكد من صحة البيانات الأساسية، ويرجع رد فوري للعميل بـ `202 Accepted` بـ "استلمت طلبك وجاري المعالجة". المعالجة الفعلية بتتم في الخلفية بشكل مستقل من غير ما تجبر العميل ينتظر.
+- **Synchronous Workload (المعالجة المباشرة المتزامنة)**: العميل يبعت الطلب، ويفضل واقف ومستني في نفس الميكروثانية لحد ما السيرفر يخلص المعالجة بالكامل ويرجع الرد النهائي. (تنفيذ خطوة بخطوة، والخطوة التالية لا تبدأ إلا بعد اكتمال الحالية).
+- **Asynchronous Workload (المعالجة غير المتزامنة المؤجلة)**: العميل يبعت الطلب، السيرفر يتأكد من صحة البيانات الأساسية، ويرجع رد فوري للعميل بـ `202 Accepted` بـ "استلمت طلبك وجاري المعالجة". المعالجة الفعلية بتتم في الخلفية بشكل مستقل دون إجبار العميل على الانتظار.
 
 ```mermaid
 flowchart TD
@@ -3456,7 +3674,7 @@ useEffect(() => {
 
 ### أصل الحكاية
 
-في Q70 شفنا مشاكل الـ Short Polling الضخمة في الإنتاج. الحل اللي اتبتدع عشان يحسّن الاتصال من غير ما يخرج عن نطاق بروتوكول HTTP العادي هو **Long Polling (الاستطلاع الطويل)**:
+في Q70 شفنا مشاكل الـ Short Polling الضخمة في الإنتاج. الحل الذي ابتدع لتحسين الاتصال بدون الخروج عن نطاق بروتوكول HTTP العادي هو **Long Polling (الاستطلاع الطويل)**:
 الفرونت اند يرسل HTTP Request عادي جداً للسيرفر. السيرفر يستقبل الطلب، ولكن بدلاً من الرد الفوري بـ "مفيش جديد"، السيرفر **يمسك الاتصال ويخليه مفتوحاً (Hanging Connection)** ويرفض إغلاقه لحد ما يحصل حدث جديد بالفعل أو تنتهي فترة التايمات (مثلاً 30 ثانية). أول ما يحصل تغيير في البيانات (مثل تغيير حالة الشحنة)، السيرفر يكتب الـ Response فوراً ويغلق الاتصال! العميل يستقبل الرد ويفعل الطلب التالي مباشرة ليفتح اتصالا معلقاً جديداً.
 
 ```mermaid
@@ -3570,10 +3788,10 @@ app.get('/api/v1/products/:id/stock-stream', (req, res) => {
 
 ### أصل الحكاية
 
-في SSE (Q72)، الاتصال كان أحادي الاتجاه (Server-to-Client فقط). لكن لو التطبيق محتاج **تواصل لحظي ثنائي الاتجاه فائق السرعة وبأقل Overhead (Full-Duplex Bidirectional Communication)** — مثل محادثة دعم فني مباشرة بين الزبون وخدمة العملاء، أو مزاد لايف من الطرفين — فبروتوكول HTTP بشرائحه مبقاش كفاية.
+في SSE (Q72)، الاتصال كان أحادي الاتجاه (Server-to-Client فقط). لكن لو التطبيق محتاج **تواصل لحظي ثنائي الاتجاه فائق السرعة وبأقل Overhead (Full-Duplex Bidirectional Communication)** — مثل محادثة دعم فني مباشرة بين الزبون وخدمة العملاء، أو مزاد لايف من الطرفين — فبروتوكول HTTP بشرائحه لم يعد كافياً.
 
 الحل هو **WebSockets Protocol (`ws://` أو `wss://`)**.
-المعاملة تبدأ بـ **HTTP Handshake** العادي مع إرسال `Upgrade: websocket` Header. بمجرد ما السيرفر يوافق، **الاتصال بيترقّى من HTTP لـ WebSocket TCP Socket مستمر ومفتوح في الاتجاهين للأبد**. الطرفين (Client & Server) يقدروا يبعتوا ويستقبلوا البيانات في أي ميكروثانية بـ Overhead لا يتعدى 2 Bytes لكل Frame!
+المعاملة تبدأ بـ **HTTP Handshake** العادي مع إرسال `Upgrade: websocket` Header. بمجرد موافقة السيرفر، يتم **ترقية الاتصال من HTTP إلى WebSocket TCP Socket مستمر مفتوح في الاتجاهين للأبد**. الطرفان (Client & Server) يستطيعان إرسال واستقبال البيانات في أي ميكروثانية بـ Overhead لا يتعدى 2 Bytes لكل Frame!
 
 ```mermaid
 sequenceDiagram
@@ -3720,7 +3938,7 @@ async function checkoutOrder(orderData) {
 
 في معمارية الـ Microservices، لما يكون عندك 50 خدمة داخلية بيكلموا بعض ملايين المرات في الدقيقة (Service-to-Service Communication)... استخدام **REST APIs مع JSON over HTTP/1.1** بيتحول لـ Bottleneck بطيء جداً ومكلفة للغاية في الـ CPU والـ Bandwidth! السبب: JSON عبارة عن نص عادي (Text-based) ممتلئ بالحروف والاستبدالات يحتاج وقت كبير في الـ Parsing، والـ HTTP/1.1 بيفتح ويقفل اتصالات كثيرة.
 
-الحل اللي طورته Google هو **gRPC (Google Remote Procedure Call)**:
+الحل الذي طورته Google هو **gRPC (Google Remote Procedure Call)**:
 إطار عمل تواصل عالي الأداء مصمم خصيصاً للخدمات الداخلية:
 1. بيستخدم **Protocol Buffers (Protobuf)** بدل JSON: صيغة بيانات ثنائية مدمجة جداً (Binary Serialization) أصغر 6 مرات وأسرع 10 أضعاف في المعالجة!
 2. بيعتمد صراحة على **HTTP/2**: اتصال TCP واحد مفتوح يدعم Multiplexing وتدفق البيانات في الاتجاهين.
@@ -3821,7 +4039,7 @@ flowchart LR
 من أقدم الصدامات التاريخية بين مهندسي الـ Backend والـ Frontend هي مشكلة "عدم تطابق الـ API Specs": المهندس الباك اند يبني Endpoint ويرجع `user_name` بنص صغير، بينما الفرونت اند يكتب الكود مستنياً `userName` بالـ CamelCase، فيحصل `TypeError: Cannot read property of undefined` في Production!
 
 الحل الاحترافي هو **Contract-First API Design (التصميم القائم على العقد أولاً)**:
-قبل ما يتكتب سطر كود واحد في الباك اند أو الفرونت اند، الفريقين بيقعدوا مع بعض ويكتبوا **OpenAPI Specification (Swagger)** بملف YAML/JSON موحد يحدد بدقة متناهية: أسماء الـ Endpoints, الأشكال المتوقعة للـ Request Body, الـ Response Schema, وأكواد الـ HTTP Status.
+قبل كتابة سطر كود واحد في الباك اند أو الفرونت اند، الفريقان يجلسان معاً ويكتبان **OpenAPI Specification (Swagger)** بملف YAML/JSON موحد يحدد بدقة متناهية: أسماء الـ Endpoints, الأشكال المتوقعة للـ Request Body, الـ Response Schema, وأكواد الـ HTTP Status.
 من الملف ده (العقد)، بنستخدم أدوات تلقائية (زي **Orval** أو **OpenAPI Generator**) لتوليد الـ TypeScript Interfaces وAxios Fetchers للفرونت اند، والـ Controller Interfaces للباك اند أوتوماتيكياً!
 
 ```mermaid
@@ -4153,7 +4371,7 @@ app.get('/api/v1/jobs/:jobId', async (req, res) => {
 الـ Idempotency (التماثلية) معناه أن تنفيذ نفس الطلب 10 مرات متتالية ينتج عنه **نفس التأثير والنتيجة لمرة واحدة فقط دون تكرار الخصم**.
 الفرونت اند بيولّد UUID عشوائي يسمى **`Idempotency-Key`** ويرفقه في הـ Header مع طلب الدفع. السيرفر بيحفظ المفتاح ده في Redis قبل التنفيذ:
 - لو الطلب وصل لأول مرة: ينفذ الخصم ويحفظ النتيجة باسم المفتاح.
-- لو الطلب وصل بنفس المفتاح مرة تانية (بسبب انقطاع الشبكة أو التكرار): السيرفر مش بيلمس البنك خالص! هو بس بيرجع الرد الأصلي المخزّن مسبقاً فوراً!
+- لو الطلب وصل بنفس المفتاح مرة أخرى (بسبب انقطاع الشبكة أو التكرار): السيرفر لا يلمس البنك نهائياً! هو فقط يرجع الرد الأصلي المخزن مسبقاً فوراً!
 
 ```mermaid
 sequenceDiagram
@@ -4350,9 +4568,9 @@ async function fetchWithRetry(fn, maxRetries = 4, baseDelayMs = 1000) {
 > [!tip] Checkpoint نهائي للموضوع (تصميم APIs متقدم وواقعي)
 > **مراجعة محورية لتصميم الـ APIs المتقدم:**
 > 1. **Contract-First & Orval (Q78)**: اعتمد OpenAPI Spec كعقد موحد لتوليد كود التايب سكريبت والفرونت اند تلقائياً ومنع تضارب الخانات.
-> 2. **Secure Webhooks (Q79)**: احمي استقبال الـ Webhooks بـ HMAC Signature verification وافحص الـ Idempotency لمنع التكرار والتدليس.
+> 2. **Secure Webhooks (Q79)**: احمِ استقبال الـ Webhooks بـ HMAC Signature verification وافحص الـ Idempotency لمنع التكرار والتدليس.
 > 3. **API Versioning & S3 Uploads (Q80 & Q81)**: استخدم URL Path Versioning للتغيرات الجوهرية، وارفع ملفات الميديا الكبيرة مباشرة لـ S3 بـ Presigned URLs.
-> 4. **Resiliency Patterns (Q83, Q84 & Q85)**: احمي العمليات المالية بـ Idempotency Keys، واقطع الاتصالات بالخدمات المكسورة بـ Circuit Breaker، واستخدم Exponential Backoff مع Jitter في الـ Retries.
+> 4. **Resiliency Patterns (Q83, Q84 & Q85)**: احمِ العمليات المالية بـ Idempotency Keys، واقطع الاتصالات بالخدمات المكسورة بـ Circuit Breaker، واستخدم Exponential Backoff مع Jitter في الـ Retries.
 
 ---
 
@@ -4414,7 +4632,7 @@ process.nextTick(() => console.log('5. Top Priority Microtask (process.nextTick)
 
 #### مثال 2: فخ شائع — الـ Infinite Recursive `process.nextTick` وسد الـ Event Loop
 
-من الفخاخ الكارثية كتابة دالة `process.nextTick()` تنادي نفسها عودياً (Recursive)! لأن الـ Microtask Queue لازم يفضى تماماً قبل ما ينتقل للمرحلة اللي بعدها، الـ Event Loop هيتجمد في طابور Microtask للأبد ومش هيوصل لمرحلة الـ Poll، وده هيسبب **Event Loop Starvation** وتوقف سيرفر Node.js عن استلام طلبات الزبائن!
+من الفخاخ الكارثية كتابة دالة `process.nextTick()` تنادي نفسها عودياً (Recursive)! لأن الـ Microtask Queue يجب أن يفرغ تماماً قبل الانتقال للمرحلة التالية، الـ Event Loop سيتجمد في طابور Microtask للأبد ولن يصل لمرحلة الـ Poll، مما يتسبب في **Event Loop Starvation** وتوقف سيرفر Node.js عن استلام طلبات الزبائن!
 
 #### مثال 3: حالة إنتاجية — مراقبة الـ Event Loop Lag بـ `perf_hooks`
 
@@ -4426,9 +4644,9 @@ process.nextTick(() => console.log('5. Top Priority Microtask (process.nextTick)
 
 ### أصل الحكاية
 
-كل واحد عارف إن Node.js بيشتغل بـ Single Thread. بس لو متجر التجارة الإلكترونية احتاج ينفذ **CPU-Intensive Tasks** (زي: تشفير وفك تشفير ملفات ضخمة، معالجة وتعديل الصور، أو حساب معادلات رياضيات متقدمة)... تنفيذ العملية دي على الـ Main Thread هيسبب تجميد سيرفر Node.js تماماً ورفض طلبات كل الزبائن!
+الجميع يعلم أن Node.js يعمل بـ Single Thread. لكن لو احتاج متجر التجارة الإلكترونية لتنفيذ **CPU-Intensive Tasks** (مثل: تشفير وفك تشفير ملفات ضخمة، معالجة وتعديل الصور، أو حساب معادلات الرياضيات المتقدمة)... تنفيذ العملية دي على الـ Main Thread سيتسبب في تجميد سيرفر Node.js كلياً ورفض طلبات جميع الزبائن!
 
-عندك أداتين رسميين جوه Node.js لتوزيع الأحمال:
+لديك أداتان رسميتان داخل Node.js لتوزيع الأحمال:
 
 - **Cluster Module (توسع العمليات - Process Forking)**: تشغيل **نسخ ومحركات Node.js متعددة وكاملة (Multiple Processes)** تشترك جميعها في فتح نفس الـ Network Port (عادة بعدد كروت الـ CPU Cores). كل عملية لها الذاكرة والـ Event Loop المستقل الخاص بها. (مثالي للـ I/O Scaling واستغلال كروت الـ CPU).
 - **Worker Threads Module (تعدد الخيوط - Threading inside Process)**: تشغيل **خيوط تنفيذ متعددة داخل نفس عملية Node.js الواحدة (Multiple Threads in Single Process)** تتشارك نفس الذاكرة عبر `ArrayBuffer/SharedArrayBuffer`. (مثالي للـ CPU-Bound Calculations).
@@ -4547,8 +4765,8 @@ WHERE id = 42 AND version = 5 AND stock >= 1;
 
 في Q88 تعلمنا خطورة الـ Race Conditions. لحماية الأكواد والموارد المشتركة، بنستخدم **Locks (الأقفال)** لتضمن أن خيطاً أو سيرفر واحد فقط يستطيع تنفيذ العملية في الوقت الواحد.
 
-- **Mutex (Mutual Exclusion - القفل المحلي)**: أداة قفل عايشة جوا ذاكرة **عملية واحدة وسيرفر واحد (In-Memory Mutex)**. بتضمن إن Thread واحد بس هو اللي ينفذ الدالة. (تصلح للـ Single Server monolith).
-- **Distributed Lock (القفل الموزع - Redis Redlock)**: لما النظام يتوسع لـ 20 سيرفر API ورا Load Balancer، الـ Mutex المحلي مش هينفع لأن كل سيرفر له ذاكرته الخاصة! هنا بنحتاج **Distributed Lock** معتمد على سيرفر **Redis** أو Zookeeper مركزي، عشان السيرفر يطلب القفل عبر الشبكة من Redis قبل ما يبدأ.
+- **Mutex (Mutual Exclusion - القفل المحلي)**: أداة قفل تعيش داخل ذاكرة **عملية واحدة وسيرفر واحد (In-Memory Mutex)**. بتضمن إن Thread واحد فقط ينفذ الدالة. (تصلح للـ Single Server monolith).
+- **Distributed Lock (القفل الموزع - Redis Redlock)**: عندما يتوسع النظام لـ 20 سيرفر API ورا Load Balancer، الـ Mutex المحلي لن ينفع لأن كل سيرفر له ذاكرته الخاصة! هنا بنحتاج **Distributed Lock** معتمد على شارد **Redis** أو Zookeeper مركزياً، ليطلب السيرفر القفل عبر الشبكة من Redis قبل البدء.
 
 خوارزمية **Redlock** الصادرة من مؤلف Redis بتضمن الأمان حتى لو سقطت بعض خوادم Redis عبر أخذ موافقة أغلبية خوادم Redis (Quorum Majority).
 
@@ -4606,7 +4824,7 @@ async function processExclusivePayment(orderId, amount) {
 
 #### مثال 2: فخ شائع — نسيان تحديد زمن انتهاء تلقائي (TTL) للـ Lock
 
-من الفخاخ الكارثية أخذ Distributed Lock بدون `TTL` (Expirations)! لو سيرفر Node.js سقط أو حصل فيه `process.exit()` أثناء حيازة القفل قبل تنفيذه لـ `release()`، المورد هيتجمد للأبد ومش هيقدر أي زبون يشتري! الصواب هو تحديد TTL منطقي (مثلا 5 ثواني).
+من الفخاخ الكارثية أخذ Distributed Lock بدون `TTL` (Expirations)! لو سيرفر Node.js سقط أو حصل فيه `process.exit()` أثناء حيازة القفل قبل تنفيذه لـ `release()`، المورد سيتجمد للأبد ولن يستطيع أي زبون الشراء! الصواب هو تحديد TTL منطقي (مثلا 5 ثواني).
 
 #### مثال 3: حالة إنتاجية — الـ Automatic Lock Extension (Heartbeat Renewal)
 
@@ -4618,7 +4836,7 @@ async function processExclusivePayment(orderId, amount) {
 
 ### أصل الحكاية
 
-كل واحد عارف إن Node.js فيه مكتبة **libuv** في الخلفية، وفيها **Thread Pool افتراضي متكون من 4 خيوط (`UV_THREADPOOL_SIZE = 4`)**.
+الجميع يعلم أن Node.js يمتلك مكتبة **libuv** في الخلفية والتي تحتوي على **Thread Pool أفتراضي يتكون من 4 خيوط (`UV_THREADPOOL_SIZE = 4`)**.
 الـ Thread Pool ده مخصص لوظائف معينة: عمليات قراءة وكتابة الملفات (`fs`), العمليات المشفّرة (`crypto` زي `pbkdf2` و `bcrypt`), واستعلامات الـ DNS Lookup.
 
 المشكلة المعمارية الخطيرة: **Thread Pool Starvation (مجاعة وخنق طابور الـ Threads)**:
@@ -4656,7 +4874,7 @@ const crypto = require('crypto');
 
 #### مثال 2: فخ شائع — ضبط `UV_THREADPOOL_SIZE` بعد استدعاء `require('fs')`
 
-من الفخاخ ضبط المتغير البيئي في كود JavaScript بعد استيراد مكتبات Node.js الأولية! محرك libuv يقرأ قيمة `UV_THREADPOOL_SIZE` مرة واحدة فقط عند بداية التشغيل. ضبطها بعدين في الكود مش هيكون ليها أي تأثير وهتفضل القيمة 4.
+من الفخاخ ضبط المتغير البيئي في كود JavaScript بعد استيراد مكتبات Node.js الأولية! محرك libuv يقرأ قيمة `UV_THREADPOOL_SIZE` مرة واحدة فقط عند بداية التشغيل. ضبطها لاحقاً في الكود لن يكون له أي تأثير وتظل القيمة 4.
 
 #### مثال 3: حالة إنتاجية — استبدال الـ Sync crypto APIs بـ Async أو Worker Threads
 
@@ -4668,14 +4886,14 @@ const crypto = require('crypto');
 
 ### أصل الحكاية
 
-في Node.js، محرك V8 بيدير الذاكرة تلقائياً بواسطة **Garbage Collector (مجمع القمامة)**. الـ Garbage Collector بيطوف في ذاكرة الـ Heap، وأي متغيّر أو Object مبقاش ليه أي مرجع (Reference) بيشاور عليه، بيمسحه ويفرّغ ذاكرته.
+في Node.js، محرك V8 يتكفل بإدارة الذاكرة تلقائياً بواسطة **Garbage Collector (مجمع القمامة)**. الـ Garbage Collector بيطوف في ذاكرة الـ Heap، وأي متغيّر أو Object لم يعد هناك أي مرجع (Reference) يشير إليه، يقوم بمسحه وتفريغ ذاكرته.
 
-**Memory Leak (تسريب الذاكرة)** بيحصل لما الكود يفضل محتفظ بمرجع (Reference) لبيانات قديمة مش محتاجها خالص! الـ Garbage Collector بيفتكر إن التطبيق لسه محتاج البيانات دي، فبيرفض يمسحها. بمرور الوقت مع كل طلب زبون، استهلاك ذاكرة الـ RAM لسيرفر Node.js بيكبر من 200MB لـ4GB لحد ما السيرفر ينهار بـ **`FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory`**.
+**Memory Leak (تسريب الذاكرة)** يحصل لما الكود يحتفظ بمرجع (Reference) لبيانات قديمة لم تعد محتاجة صراحة! الـ Garbage Collector يظن أن التطبيق ما زال يحتاج هذه البيانات، فيرفض مسحها. بمرور الوقت مع كل طلب زبون، ينمو استهلاك ذاكرة الـ RAM لسيرفر Node.js من 200MB إلى 4GB حتى ينهار السيرفر بـ **`FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory`**.
 
 أشهر أسباب الـ Memory Leaks:
-1. **Global Variables**: المتغيرات العامة اللي عايشة للأبد.
-2. **Uncleared Event Listeners / Timers**: تنسى تعمل `clearInterval()` أو `removeListener()`.
-3. **Closures**: الاحتفاظ بمرجع لمتغيرات خارجية جوا الدوال المعلقة.
+1. **Global Variables**: المتغيرات العامة التي تعيش للأبد.
+2. **Uncleared Event Listeners / Timers**: نسى `clearInterval()` أو `removeListener()`.
+3. **Closures**: الاحتفاظ بمرجع لمتغيرات خارجية داخل الدوال المعلقة.
 
 ```mermaid
 flowchart TD
@@ -4778,8 +4996,8 @@ app.get('/api/v1/admin/export-logs', async (req, res) => {
 > **مراجعة محورية للـ Concurrency والذاكرة:**
 > 1. **Event Loop Phases (Q86)**: فهم ترتيب المراحل والـ Microtasks منعاً لـ Event Loop Starvation.
 > 2. **Worker Threads & Cluster (Q87)**: استخدم Cluster لمضاعفة العمليات وتوسع الـ I/O، واستعن بـ Worker Threads للأنشطة المجهدة للـ CPU.
-> 3. **Race Conditions & Redlock (Q88 & Q89)**: احمي البيانات الموزعة بـ DB Transactions والـ Distributed Locks عبر Redis Redlock.
-> 4. **Thread Pool & Memory Leaks (Q90 & Q91)**: زوّد `UV_THREADPOOL_SIZE` عشان تتفادى خنق الـ I/O، واكتشف الـ Memory Leaks بـ Heap Snapshots و WeakMaps.
+> 3. **Race Conditions & Redlock (Q88 & Q89)**: احمِ البيانات الموزعة بـ DB Transactions والـ Distributed Locks عبر Redis Redlock.
+> 4. **Thread Pool & Memory Leaks (Q90 & Q91)**: وسع `UV_THREADPOOL_SIZE` لتفادي خنق الـ I/O، واكشف الـ Memory Leaks بـ Heap Snapshots و WeakMaps.
 > 5. **Streams & Backpressure (Q92)**: اعتمد `stream.pipeline()` لتمرير البيانات الضخمة بحماية الـ RAM والتعامل التلقائي مع الـ Backpressure.
 
 ---
@@ -4831,15 +5049,15 @@ flowchart TD
 
 ### أصل الحكاية
 
-زي ما شفنا في Q93، حل مشكلة الـ Distributed Transactions في الأنظمة الحديثة هو **Saga Pattern**:
-سلسلة معاملات محلية متتابعة (Local Transactions). كل خدمة بتنفذ معاملتها المحلية وبتطلق حدث (Event) عشان يشغّل الخدمة اللي بعدها.
+كما رأينا في Q93، حل مشكلة الـ Distributed Transactions في الأنظمة الحديثة هو **Saga Pattern**:
+سلسلة من المعاملات المحلية التتابعية (Local Transactions). كل خدمة تنفذ معاملاتها المحلية وتطلق حدثاً (Event) لتشغيل الخدمة التالية.
 
-السؤال المهم: **إيه اللي بيحصل لو خطوة فشلت في النص (مثلاً: بطاقة الزبون معهاش رصيد كافي بعد ما اتحجز المخزون)؟**
-في Saga Pattern، النظام بيطلق **Compensating Transactions (المعاملات التعويضية)**: بيبعت أحداث عكسية للخلف عشان يلغي ويصلّح اللي اتعمل في الخطوات اللي فاتت (زي دالة `undoReserveInventory` اللي بترجع القطعة للمخزون) عشان يرجع النظام لحالة اتساق سليمة (**Eventual Consistency**).
+السؤال الحاسمي: **ماذا يحدث لو فشلت إحدى الخطوات في المنتصف (مثلاً: بطاقة الزبون ليس بها رصيد كافٍ بعد حجز المخزون)؟**
+في Saga Pattern، يطلق النظام **Compensating Transactions (المعاملات التعويضية)**: إرسال أحداث عكسية للخلف لإلغاء وتعديل ما تم بالخطوات السابقة (مثل: دالة `undoReserveInventory` لإعادة القطعة للمخزون) لإعادة النظام لحالة اتساق سلامة متكاملة (**Eventual Consistency**).
 
 أنماط Saga الرئيسية:
-1. **Choreography Saga (التناسق الذاتي)**: الخدمات بتتواصل وتسمع أحداث بعض مباشرة من غير مدير مركزي (Event-Driven via Kafka/RabbitMQ).
-2. **Orchestration Saga (الإدارة المركزية)**: فيه سيرفر مدير اسمه **Saga Orchestrator** بيوجّه الخدمات خطوة بخطوة ويبعت أوامر الـ Rollback لو حصل فشل.
+1. **Choreography Saga (التناسق الذاتي)**: الخدمات تتواصل وتسمع أحداث بعضها مباشرة دون وجود مدير مرجعي مركزياً (Event-Driven via Kafka/RabbitMQ).
+2. **Orchestration Saga (الإدارة المركزية)**: وجود سيرفر مدير يسمى **Saga Orchestrator** يوجه الخدمات خطوة بخطوة ويرسل أوامر الـ Rollback عند الفشل.
 
 ```mermaid
 flowchart TD
@@ -4897,13 +5115,13 @@ async function executeOrderSaga(orderData) {
 
 ### أصل الحكاية
 
-في قواعد البيانات التقليدية، بنحفظ بس **الحالة الحالية للنظام (Current State)**: جدول الحسابات بيظهرلك `balance = 500$`. لو عايز تعرف إزاي الحساب ده وصل لـ500$؟ ومن فين جت الخصومات؟ مش هتلاقي إجابة في الجدول إلا لو دورت في ملفات تاريخية جانبية!
+في قواعد البيانات التقليدية، بنحفظ فقط **الحالة الحالية للنظام (Current State)**: جدول الحسابات يظهر `balance = 500$`. لو أردت معرفة كيف وصل هذا الحساب لـ 500$؟ ومن أين جاءت الخصومات؟ لن تجد إجابة في الجدول إلا بالبحث في ملفات تاريخية جانبية!
 
 في المعمارية المتقدمة **Event Sourcing**:
-بنقرر إن **الحالة الحالية مش بتتحفظ خالص! بدل كده، بنحفظ كل الأحداث التاريخية اللي مش قابلة للتغيير (Append-Only Immutable Events) اللي حصلت في النظام بالترتيب الزمني بالظبط.**
-الحالة الحالية (`500$`) بتتحسب لايف عن طريق إعادة تشغيل (Replay) شريط الأحداث التاريخية: `AccountOpened ($0) -> Deposited ($1000) -> Withdrawn ($500) = Balance $500`.
+نحكم بأن **الحالة الحالية لا تُحفظ صراحة! بدلاً من ذلك، بنحفظ جميع الأحداث التاريخية غير القابلة للتقلب (Append-Only Immutable Events) التي وقعت في النظام بالترتيب الزمني الدقيق.**
+الحالة الحالية (`500$`) يتم استنتاجها وحسابها حياً عن طريق إعادة تشغيل (Replay) شريط الأحداث التاريخية: `AccountOpened ($0) -> Deposited ($1000) -> Withdrawn ($500) = Balance $500`.
 
-الـ **Event Store** هو مصدر الحقيقة الوحيد (Single Source of Truth).
+الـ **Event Store** يمثل المصدر الوحيد للحقيقة المطلقة (Single Source of Truth).
 
 ```mermaid
 flowchart LR
@@ -4938,8 +5156,8 @@ flowchart LR
 - **عمليات الكتابة (Commands)**: تحتاج إلى Normalization صارم، وأمان عالي، وقواعد ACID لضمان السلامة.
 - **عمليات القراءة (Queries)**: تحتاج إلى سرعة فائقة، وبيانات مدمجة (Denormalized)، وفهارس بحث مرنة.
 
-دمج الرغبتين في قاعدة بيانات واحدة بيخلي السيرفر بطيء.
-نمط **CQRS (Command Query Responsibility Segregation)** بينص على **فصل نماذج وقواعد بيانات القراءة عن نماذج وقواعد بيانات الكتابة تماماً**:
+دمج الرغبتين في قاعدة بيانات واحدة يجعل السيرفر بطيئاً.
+نمط **CQRS (Command Query Responsibility Segregation)** يقضي بـ **فصل نماذج وقواعد بيانات القراءة عن نماذج وقواعد بيانات الكتابة كلياً**:
 1. **Command Side (الكتابة)**: تستقبل `CreateOrderCommand` وتكتب في DB مخصصة للكتابة (Relational Postgres 3NF) لضمان الأمان.
 2. **Query Side (القراءة)**: تستقبل `GetProductCatalogQuery` وتتم القراءة من DB مخصصة للقراءة (Elasticsearch / Redis Denormalized Views) بسرعة ميكروثانية!
 
@@ -4995,19 +5213,19 @@ class GetOrderSummaryQueryHandler {
 
 ### أصل الحكاية
 
-تخيل الكارثة المعمارية دي في خدمة الطلبات:
-لما الزبون يشتري، الكود بينفذ خطوتين:
-1. يحفظ الطلب في قاعدة البيانات: `await db.orders.create(...)`.
-2. يبعت حدث للمسدج بروكر: `await kafka.publish('order.created', orderData)`.
+تخيل الكارثة المعمارية التالية في خدمة الطلبات:
+عند الشراء، الكود ينفذ خطوتين:
+1. حفظ الطلب في قاعدة البيانات: `await db.orders.create(...)`.
+2. إرسال حدث للمسدج بروكر: `await kafka.publish('order.created', orderData)`.
 
-إيه اللي بيحصل لو الطلب اتحفظ في الداتابيز بنجاح في الخطوة 1... وفي نفس الميكروثانية قبل ما تتنفذ الخطوة 2، شبكة Kafka اتقطعت أو السيرفر اتقفل فجأة (`process.exit()`)؟
-النتيجة: الطلب محفوظ في الداتابيز، لكن الحدث ما اتبعتش لـ Kafka! يعني مش هيتبعت إيميل للزبون، ومش هيتحجز المخزون، والنظام هيتخرب!
+ماذا يحدث لو حُفظ الطلب في الداتابيز بنجاح في الخطوة 1... وفي نفس الميكروثانية قبل تنفيذ الخطوة 2، انقطعت شبكة Kafka أو انطفأ السيرفر (`process.exit()`)؟
+النتيجة: الطلب محفوف في الداتابيز، ولكن لم يرسل حدث لـ Kafka! بالتالي لن يرسل إيميل للزبون، ولن يحجز المخزون، وسيتدمر النظام!
 
-المشكلة: **مش هتقدر تعمل Dual-Write Transaction متطابق بين Database وMessage Broker عبر الشبكة.**
+المشكلة: **لا يمكنك عمل Dual-Write Transaction متطابق بين Database و Message Broker عبر الشبكة.**
 
 الحل المعماري هو **Transactional Outbox Pattern**:
-متبعتش الحدث لـ Kafka مباشرة في الكود! بدل كده، احفظ الحدث جوا جدول جنب بعض في نفس قاعدة البيانات اسمه **`outbox_table`** جوا **نفس الـ Database Transaction الواحدة**!
-وبعدين أداة مستقلة شغالة في الخلفية اسمها **Message Relay / Debezium (CDC)** بتقرا جدول الـ Outbox باستمرار وتبعت الأحداث لـ Kafka بموثوقية كاملة (At-Least-Once Delivery).
+لا ترسل الحدث لـ Kafka مباشرة في الكود! بدلاً من ذلك، احفظ الحدث صراحة داخل جدول مجاور في نفس قاعدة البيانات يسمى **`outbox_table`** داخل **نفس الـ Database Transaction الواحدة**!
+ثم تعيش أداة مستقلة في الخلفية تسمى **Message Relay / Debezium (CDC)** تقرأ جدول الـ Outbox باستمرار وترسل الأحداث لـ Kafka بموثوقية كاملة (At-Least-Once Delivery).
 
 ```mermaid
 flowchart TD
@@ -5113,9 +5331,9 @@ app.listen(8000, () => console.log('API Gateway running on port 8000'));
 
 ### أصل الحكاية
 
-في المعمارية الموجهة بالأحداث **Event-Driven Architecture (EDA)**، التطبيق مبقاش متكون من أجزاء بتطلب بعض بلغة أوامر صريحة (Imperative Calls)، لكنه بقى متكون من مكونات مستقلة بتتفاعل على أساس **سريان وإطلاق الأحداث (Event Streams)**.
+في المعمارية الموجهة بالأحداث **Event-Driven Architecture (EDA)**، التطبيق لم يعد يتكون من أجزاء يطلب بعضها بعضاً بلغة الأوامر الصريحة (Imperative Calls)، بل يتكون من مكونات مستقلة تتفاعل بناءً على **سريان وإطلاق الأحداث (Event Streams)**.
 
-لازم تختار الأداة المناسبة بين الأداتين المشهورتين دول:
+تخيّر اختيار الرسائل المناسب بين الأداتين الشهيرتين:
 - **RabbitMQ (Message Queue - Smart Broker, Dumb Consumer)**: ممتاز لتوزيع المهام والرسائل المعقدة (Routing, Fanout, Topics) على Workers مع مسح الرسالة فور معالجتها. (مبني بـ Erlang، ومناسب للـ Background Job Queues والـ Webhooks).
 - **Apache Kafka (Event Streaming Platform - Dumb Broker, Smart Consumer)**: ممتازة لمعالجة مجاري البيانات الضخمة (High-Throughput Streaming). الرسائل تحفظ في Log دائم على القرص بالترتيب، ويستطيع كل Consumer قراءة السجل بسلاسة وإعادة القراءة عند الحاجة.
 
@@ -5227,11 +5445,11 @@ flowchart TD
 > **مراجعة ختامية لمعمارية الأنظمة الموزعة والعقلية القيادية:**
 > 1. **Distributed Transactions & Saga (Q93 & Q94)**: تجنب 2PC المقفل، واعتمد Saga Pattern مع Compensating Actions لإدارة المعاملات الموزعة بـ Eventual Consistency.
 > 2. **Event Sourcing & CQRS (Q95 & Q96)**: استخدم Event Log كمصدر حقيقة مطلق لا يتغير، وافصل نماذج القراءة السريعة (Read Models) عن نماذج الكتابة (Write Models) لتحقيق أعلى أداء scaling.
-> 3. **Outbox Pattern & API Gateway (Q97 & Q98)**: احمي إرسال الأحداث بـ Transactional Outbox عشان تمنع الفقد، واستخدم API Gateway كنقطة دخول وحماية موحدة للشبكة الداخلية.
+> 3. **Outbox Pattern & API Gateway (Q97 & Q98)**: احمِ إرسال الأحداث بـ Transactional Outbox لمنع الفقد، واستخدم API Gateway كنقطة دخول وحماية موحدة للشبكة الداخلية.
 > 4. **Event-Driven Architecture (Q99)**: استخدم RabbitMQ للـ Job Queues المتخصصة، واعتمد Apache Kafka لمجاري الأحداث عالية الأداء وتتبع السجلات.
 > 5. **Senior Mindset (Q100)**: صمم الأنظمة بمنهجية منظمة تبدأ بالمتطلبات والحسابات، ثم الرسم المعماري وحل الاختناقات، وتبرير المقايضات بـ Design for Failure.
 > 
 > ---
-> **مبروك! خلصت الدليل المرجعي الشامل ده (Q1 → Q100) بنجاح. دلوقتي معاك أعلى درجات المعرفة النظرية والعملية عشان تقود وتصمم أنظمة Backend حديثة ومتفوقة.**
+> **تهانينا! لقد أتممت هذا الدليل المرجعي الشامل المعماري (Q1 → Q100) بنجاح. أنت الآن مجهز بأعلى درجات المعرفة النظرية والعملية لقيادة وتصميم أنظمة الـ Backend الحديثة والمتفوقة.**
 
 ---
