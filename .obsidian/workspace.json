@@ -107,7 +107,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "b3f71f33ce591960",
@@ -266,6 +267,8 @@
   },
   "active": "fff9af8fd7507e02",
   "lastOpenFiles": [
+    "interviews/Backend-Web-Interview-Complete-FINAL (2).md",
+    "interviews/Unconfirmed 884319.crdownload",
     "interviews/Java-OOP-SOLID-Patterns.md",
     "interviews/SQL-NoSQL-Complete.md",
     "interviews/Backend-Web-Interview-Complete-FINAL.md",
@@ -290,7 +293,6 @@
     "interviews/Django & DRF من الصفر — إنترفيو الباك إند.md",
     "interviews/Unconfirmed 413511.crdownload",
     "python/بايثون_من_الصفر_الجزء_التاني.md",
-    "interviews/append_q15_q20.py",
     "interviews/Django-DRF-Interview-Complete.md",
     "python/python.md",
     "Untitled 7.md",
@@ -301,7 +303,6 @@
     "Untitled 5.md",
     "python/05-Functions-Deep-Dive.md",
     "python/04-Dictionaries-And-Sets.md",
-    "python/03-Lists-And-Tuples.md",
     "Pasted image 20260604225010.png",
     "Pasted image 20260604224954.png",
     "Pasted image 20260604224937.png",
