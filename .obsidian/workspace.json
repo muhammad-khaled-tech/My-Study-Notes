@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "interviews/SQL-NoSQL-Complete.md",
+                "file": "interviews/Backend-Web-Interview-Complete-Lean.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "SQL-NoSQL-Complete"
+              "title": "Backend-Web-Interview-Complete-Lean"
             }
           }
         ]
@@ -238,9 +238,10 @@
   },
   "active": "9ec9d56f69c62bfe",
   "lastOpenFiles": [
+    "interviews/Unconfirmed 635665.crdownload",
+    "interviews/SQL-NoSQL-Complete.md",
     "interviews/Backend-Web-Interview-Complete-Lean.md",
     "interviews/Backend-Web-Interview-Complete-FINAL (1).md",
-    "interviews/SQL-NoSQL-Complete.md",
     "interviews/Backend-Web-Interview-Complete-FINAL.md",
     "interviews/Backend-Web-Interview-Complete-FINAL (2).md",
     "interviews/Unconfirmed 884319.crdownload",
@@ -273,7 +274,6 @@
     "Untitled 6.md",
     "python/python_prompt_part1_to_8.md",
     "Untitled 5.md",
-    "python/05-Functions-Deep-Dive.md",
     "Pasted image 20260604225010.png",
     "Pasted image 20260604224954.png",
     "Pasted image 20260604224937.png",
