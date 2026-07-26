@@ -114,7 +114,8 @@
     "interviews/SQL-NoSQL-Complete.md": "rtl",
     "interviews/Java-OOP-SOLID-Patterns.md": "rtl",
     "interviews/Backend-Web-Interview-Complete-Lean.md": "rtl",
-    "interviews/Databases sql nosql.md": "rtl"
+    "interviews/Databases sql nosql.md": "rtl",
+    "interviews/ملخص-قواعد-البيانات-تدريجي.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
