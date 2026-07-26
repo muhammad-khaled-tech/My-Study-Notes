@@ -113,7 +113,8 @@
     "PR1_Extractor_Agent.md": "rtl",
     "interviews/SQL-NoSQL-Complete.md": "rtl",
     "interviews/Java-OOP-SOLID-Patterns.md": "rtl",
-    "interviews/Backend-Web-Interview-Complete-Lean.md": "rtl"
+    "interviews/Backend-Web-Interview-Complete-Lean.md": "rtl",
+    "interviews/Databases sql nosql.md": "rtl"
   },
   "defaultDirection": "auto",
   "rememberPerFile": true,
