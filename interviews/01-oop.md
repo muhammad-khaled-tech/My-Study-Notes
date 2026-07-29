@@ -585,7 +585,7 @@ class Dolphin implements Swimmer {
 
 ---
 
-### Interviewer: طب خلينا نغور أكتر — إيه الفرق الحقيقي بين abstract class و interface؟ ومتى أستخدم إيه؟
+### Interviewer: طب خلينا نغوص أكتر — إيه الفرق الحقيقي بين abstract class و interface؟ ومتى أستخدم إيه؟
 
 سؤال أساسي وهيتسأل بأشكال مختلفة، فخليني أدّيك الصورة الكاملة.
 
