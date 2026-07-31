@@ -41,16 +41,26 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Untitled 9.md",
+                "file": "Java Core/new notes/Sprint_2_DataTypes_Variables_Arrays.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled 9"
+              "title": "Sprint_2_DataTypes_Variables_Arrays"
+            }
+          },
+          {
+            "id": "e4ccae2746d29f52",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
             }
           }
         ],
-        "currentTab": 2
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -70,7 +80,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -200,8 +212,8 @@
             "state": {
               "type": "git-view",
               "state": {},
-              "icon": "git-pull-request",
-              "title": "Source Control"
+              "icon": "lucide-ghost",
+              "title": "git-view"
             }
           },
           {
@@ -210,8 +222,8 @@
             "state": {
               "type": "smart-connections-view",
               "state": {},
-              "icon": "smart-connections",
-              "title": "Connections"
+              "icon": "lucide-ghost",
+              "title": "smart-connections-view"
             }
           },
           {
@@ -220,8 +232,8 @@
             "state": {
               "type": "copilot-chat-view",
               "state": {},
-              "icon": "message-square",
-              "title": "Copilot"
+              "icon": "lucide-ghost",
+              "title": "copilot-chat-view"
             }
           },
           {
@@ -230,8 +242,8 @@
             "state": {
               "type": "antigravity-debugger-view",
               "state": {},
-              "icon": "bug",
-              "title": "AntiGravity Debugger"
+              "icon": "lucide-ghost",
+              "title": "antigravity-debugger-view"
             }
           }
         ],
@@ -264,12 +276,13 @@
       "antigravity-debugger:AntiGravity Debugger": false
     }
   },
-  "active": "302538a31d0f9e2b",
+  "active": "e4ccae2746d29f52",
   "lastOpenFiles": [
+    "Java Core/new notes/Sprint_2_DataTypes_Variables_Arrays.md",
+    "Java Core/new notes/Sprint_1_Java_Foundation.md",
     "Untitled 9.md",
     "Untitled 8.md",
     "Java Core/new notes/Sprint_4_Modifiers_Packages_Interfaces.md",
-    "Java Core/new notes/Sprint_1_Java_Foundation.md",
     "Java Core/Callback interface.md",
     "interviews/01-oop.md",
     "interviews/01-oop (1).md",
@@ -301,7 +314,6 @@
     "PR1_Extractor_Agent.md",
     "Unconfirmed 496746.crdownload",
     "interviews/Unconfirmed 463875.crdownload",
-    "interviews/karim_interview_questions_answers.md",
     "Pasted image 20260604225010.png",
     "Pasted image 20260604224954.png",
     "Pasted image 20260604224937.png",
