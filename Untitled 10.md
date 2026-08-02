@@ -31,10 +31,10 @@
     
 - **الوصول للميموري:** يقدر يوصل لكل الـ Static و Non-Static members بتاعة الـ Outer Class.
     
-
+n
 Java
 
-```
+```java
 // Outer Class
 class BankAccount {
     private double balance = 10000.0; // Private Field
