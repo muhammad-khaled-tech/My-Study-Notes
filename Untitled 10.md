@@ -114,7 +114,7 @@ public class Main {
 
 Java
 
-```
+```java
 class OrderProcessor {
     public void processOrder(double amount) {
         double taxRate = 0.14; // Effectively Final variable
