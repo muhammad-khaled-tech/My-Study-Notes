@@ -77,7 +77,7 @@ public class Main {
 
 Java
 
-```
+```java
 class FawryPaymentSystem {
     private static String systemVersion = "v2.4.0"; // Static
     private String merchantKey = "SECRET_KEY_123";  // Non-Static
