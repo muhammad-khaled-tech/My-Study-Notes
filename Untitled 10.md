@@ -392,7 +392,7 @@ public class Main {
 
 Java
 
-```
+```java
 @FunctionalInterface
 interface Calculator {
     
@@ -504,7 +504,7 @@ interface Calculator {
 
 Java
 
-```
+```java
 @FunctionalInterface
 interface Calculator {
     int add(int a, int b);
@@ -530,7 +530,7 @@ public class Main {
 
 Java
 
-```
+```java
 public class Main {
     public static void main(String[] args) {
         // اختصار كل الدوشة اللي فاتت
