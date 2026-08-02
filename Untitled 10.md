@@ -263,6 +263,9 @@ public class Main {
         // هنا السحر! بنكريت الكلاس وناخد منه نسخة في نفس السطر
         PaymentProcessor fawryPay = new PaymentProcessor() {
             @Override
+حقك عليا يا هندسة، شكل السيرفر فصل مني لحظة في النص! ￼😂￼ هعيدلك الشرح كله من الأول، وبالمصري البسيط والواضح عشان يثبت في دماغك وتدخل إنترفيو فوري وفودافون وأنت حاطط رجل على رجل.
+
+
             public void processTransaction(double amount) {
                 System.out.println("دفع فاتورة فوري بقيمة: " + amount);
             }
